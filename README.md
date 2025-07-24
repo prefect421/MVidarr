@@ -1,74 +1,162 @@
-# Lidarr
+# MVidarr
 
-[![Build Status](https://dev.azure.com/Lidarr/Lidarr/_apis/build/status/lidarr.Lidarr?branchName=develop)](https://dev.azure.com/Lidarr/Lidarr/_build/latest?definitionId=1&branchName=develop)
-[![Translation status](https://translate.servarr.com/widget/servarr/lidarr/svg-badge.svg)](https://translate.servarr.com/engage/servarr/?utm_source=widget)
-[![Docker Pulls](https://img.shields.io/docker/pulls/linuxserver/lidarr.svg)](https://wiki.servarr.com/lidarr/installation#docker)
-![Github Downloads](https://img.shields.io/github/downloads/lidarr/lidarr/total.svg)
-[![Backers on Open Collective](https://opencollective.com/lidarr/backers/badge.svg)](#backers) 
-[![Sponsors on Open Collective](https://opencollective.com/lidarr/sponsors/badge.svg)](#sponsors)
+**A comprehensive music video management and discovery platform** that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.
 
-Lidarr is a music collection manager for Usenet and BitTorrent users. It can monitor multiple RSS feeds for new tracks from your favorite artists and will grab, sort and rename them. It can also be configured to automatically upgrade the quality of files already downloaded when a better quality format becomes available.
+## ✨ Key Features
 
-## Major Features Include:
+- **🎯 Advanced Artist Management** - Multi-criteria search and bulk operations
+- **🔍 Comprehensive Video Discovery** - Dual-source integration (IMVDb + YouTube)  
+- **🖼️ Advanced Thumbnail Management** - Multi-source search and cropping
+- **📁 Intelligent Organization** - Automatic folder creation and cleanup
+- **🔎 Advanced Search System** - Real-time suggestions and filtering
+- **⚡ Bulk Operations** - Multi-select editing and batch processing
+- **📺 Video Streaming** - Built-in player with transcoding support
+- **💚 System Health Monitoring** - Comprehensive diagnostics
+- **⚙️ Database-Driven Settings** - Complete configuration management
+- **📥 Download Management** - Queue visualization and progress tracking
+- **👥 Multi-User Authentication** - Role-based access control
+- **🔒 Advanced Security** - Password policies and audit logging
+- **🎨 Modern UI** - Left sidebar navigation with theme system
+- **📺 MvTV Continuous Player** - Cinematic mode for uninterrupted viewing
+- **🔐 Two-Factor Authentication** - TOTP support for enhanced security
 
-* Support for major platforms: Windows, Linux, macOS, Raspberry Pi, etc.
-* Automatically detects new tracks.
-* Can scan your existing library and download any missing tracks.
-* Can watch for better quality of the tracks you already have and do an automatic upgrade.
-* Automatic failed download handling will try another release if one fails
-* Manual search so you can pick any release or to see why a release was not downloaded automatically
-* Fully configurable track renaming
-* Full integration with SABnzbd and NZBGet
-* Full integration with Kodi, Plex (notification, library update, metadata)
-* Full support for specials and multi-album releases
-* And a beautiful UI
+## 🚀 Quick Start
 
-## Support
+### Prerequisites
 
-Note: GitHub Issues are for Bugs and Feature Requests Only
+- **Python 3.8+** with pip
+- **MariaDB 10.5+** (recommended) or SQLite (for development)
+- **FFmpeg** (for video processing)
 
-[![Discord](https://img.shields.io/badge/discord-chat-7289DA.svg?maxAge=60)](https://lidarr.audio/discord)
-[![GitHub - Bugs and Feature Requests Only](https://img.shields.io/badge/github-issues-red.svg?maxAge=60)](https://github.com/Lidarr/Lidarr/issues)
-[![Wiki](https://img.shields.io/badge/servarr-wiki-181717.svg?maxAge=60)](https://wiki.servarr.com/lidarr)
+### Installation
 
-## Contributors
+#### Option 1: Automated Installation (Recommended)
 
-This project exists thanks to all the people who contribute. [Contribute](CONTRIBUTING.md).
-<a href="https://github.com/lidarr/Lidarr/graphs/contributors"><img src="https://opencollective.com/lidarr/contributors.svg?width=890&button=false" /></a>
+**Linux/macOS:**
+```bash
+chmod +x scripts/install.sh
+./scripts/install.sh
+```
 
-## Backers
+**Windows:**
+```cmd
+scripts\install.bat
+```
 
-Thank you to all our backers! 🙏 [Become a backer](https://opencollective.com/Lidarr#backer)
+#### Option 2: Manual Installation
 
-<img src="https://opencollective.com/Lidarr/backers.svg?width=890"></a>
+1. **Clone the repository:**
+```bash
+git clone https://github.com/yourusername/mvidarr.git
+cd mvidarr
+```
 
-## Sponsors
+2. **Install dependencies:**
+```bash
+pip install -r requirements.txt
+```
 
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [Become a sponsor](https://opencollective.com/Lidarr#sponsor)
+3. **Initialize the database:**
+```bash
+python scripts/setup_database.sh
+```
 
-<img src="https://opencollective.com/Lidarr/sponsors.svg?width=890"></a>
+4. **Start the application:**
+```bash
+python app.py
+```
 
-## Mega Sponsors
-<img src="https://opencollective.com/Lidarr/tiers/mega-sponsor.svg?width=890"></a>
+5. **Access MVidarr:**
+   - Open your browser to `http://localhost:5000`
+   - Create your admin account on first run
 
-## JetBrains
-Thank you to [<img src="/Logo/jetbrains.svg" alt="JetBrains" width="32"> JetBrains](http://www.jetbrains.com/) for providing us with free licenses to their great tools.
- 
-* [<img src="/Logo/resharper.svg" alt="ReSharper" width="32"> ReSharper](http://www.jetbrains.com/resharper/)
-* [<img src="/Logo/webstorm.svg" alt="WebStorm" width="32"> WebStorm](http://www.jetbrains.com/webstorm/)
-* [<img src="/Logo/rider.svg" alt="Rider" width="32"> Rider](http://www.jetbrains.com/rider/)
-* [<img src="/Logo/dottrace.svg" alt="dotTrace" width="32"> dotTrace](http://www.jetbrains.com/dottrace/)
+### Docker Deployment
 
-## DigitalOcean
+For production deployments, see our [Docker Quick Start Guide](DOCKER-QUICKSTART.md).
 
-This project is also supported by DigitalOcean
-<p>
-  <a href="https://www.digitalocean.com/">
-    <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/SVG/DO_Logo_horizontal_blue.svg" width="201px">
-  </a>
-</p>
+## 📚 Documentation
 
-### License
+- **[Installation Guide](INSTALLATION_GUIDE.md)** - Comprehensive setup instructions
+- **[Quick Start](QUICKSTART.md)** - Get running in 5 minutes
+- **[Docker Guide](DOCKER-QUICKSTART.md)** - Container deployment
+- **[User Guide](docs/USER-GUIDE.md)** - Feature documentation
+- **[API Documentation](docs/api/)** - REST API reference
 
-* [GNU GPL v3](http://www.gnu.org/licenses/gpl.html)
-* Copyright 2010-2021
+## 🏗️ Architecture
+
+MVidarr is built with:
+
+- **Backend**: Flask (Python 3.8+)
+- **Database**: MariaDB/MySQL or SQLite
+- **Frontend**: Modern HTML5/CSS3/JavaScript
+- **Media Processing**: FFmpeg, yt-dlp
+- **Authentication**: JWT with optional 2FA
+- **Security**: bcrypt, CSRF protection, rate limiting
+
+## 🔧 Configuration
+
+Configuration is managed through:
+- Database settings (preferred for production)
+- Environment variables
+- Configuration files in `src/config/`
+
+Key environment variables:
+```bash
+MVIDARR_SECRET_KEY=your-secret-key
+DATABASE_URL=mysql://user:pass@host/db
+YOUTUBE_API_KEY=your-youtube-api-key
+```
+
+## 🛡️ Security
+
+MVidarr includes enterprise-grade security features:
+
+- **Multi-user authentication** with role-based access
+- **Two-factor authentication** (TOTP)
+- **Password policies** and strength requirements
+- **Session management** with secure cookies
+- **Audit logging** for all user actions
+- **Rate limiting** and CSRF protection
+- **SQL injection prevention** with parameterized queries
+
+## 🎯 Use Cases
+
+- **Personal Music Video Collections** - Organize and stream your collection
+- **Music Discovery** - Find new videos through integrated search
+- **Media Center Integration** - Works with Plex and other media servers
+- **Home Entertainment** - MvTV mode for continuous viewing
+- **Music Research** - Advanced search and filtering capabilities
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+1. Fork the repository
+2. Create a virtual environment: `python -m venv venv`
+3. Activate it: `source venv/bin/activate` (Linux/macOS) or `venv\Scripts\activate` (Windows)
+4. Install dev dependencies: `pip install -r requirements.txt`
+5. Run tests: `pytest`
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **yt-dlp** - Video download and processing
+- **IMVDb** - Music video metadata database
+- **YouTube API** - Video discovery and streaming
+- **Flask** - Web framework
+- **MariaDB** - Database engine
+
+## 📞 Support
+
+- **Documentation**: Check the [docs/](docs/) directory
+- **Issues**: Report bugs via GitHub Issues
+- **Community**: Join our discussions
+
+---
+
+**MVidarr v0.9** - Built with ❤️ for music video enthusiasts
