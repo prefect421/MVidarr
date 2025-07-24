@@ -1,5 +1,5 @@
 """
-API routes registration for MVidarr Enhanced
+API routes registration for MVidarr
 """
 
 from flask import Blueprint

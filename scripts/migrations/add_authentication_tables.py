@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Database migration script to add authentication tables for MVidarr Enhanced
+Database migration script to add authentication tables for MVidarr
 This script adds the User and UserSession tables along with required enums.
 """
 
@@ -124,7 +124,7 @@ def rollback_authentication_tables():
 
 def main():
     """Main migration function"""
-    print("🔐 MVidarr Enhanced - Authentication Tables Migration")
+    print("🔐 MVidarr - Authentication Tables Migration")
     print("="*60)
     print(f"Migration started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()

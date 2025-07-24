@@ -1,9 +1,9 @@
-# 🛠️ MVidarr Enhanced - Complete Installation Guide
+# 🛠️ MVidarr - Complete Installation Guide
 
 ![Installation Banner](screenshots/installation-banner.png)
 *Professional installation guide with step-by-step screenshots and troubleshooting*
 
-This comprehensive guide will walk you through installing MVidarr Enhanced using multiple methods, with detailed screenshots and troubleshooting for each step.
+This comprehensive guide will walk you through installing MVidarr using multiple methods, with detailed screenshots and troubleshooting for each step.
 
 ---
 
@@ -190,11 +190,11 @@ curl -f http://localhost:5000/api/health
 
 ### Step 6: Initial Access
 ![Initial Access](screenshots/docker-step6-access.png)
-*Access your new MVidarr Enhanced installation*
+*Access your new MVidarr installation*
 
 1. **Open Web Browser**
    - Navigate to: http://localhost:5000
-   - You should see the MVidarr Enhanced welcome screen
+   - You should see the MVidarr welcome screen
 
 2. **Complete Setup Wizard**
    ![Setup Wizard](screenshots/setup-wizard-docker.png)
@@ -289,7 +289,7 @@ brew services start mariadb
 
 ### Step 1: Database Setup
 ![Database Setup](screenshots/local-step1-database.png)
-*Configure MariaDB database for MVidarr Enhanced*
+*Configure MariaDB database for MVidarr*
 
 ```bash
 # Secure MariaDB installation
@@ -331,7 +331,7 @@ EXIT;
 
 ### Step 2: Application Download and Setup
 ![App Setup](screenshots/local-step2-app.png)
-*Download and configure the MVidarr Enhanced application*
+*Download and configure the MVidarr application*
 
 ```bash
 # Create installation directory
@@ -444,7 +444,7 @@ ls -la ~/mvidarr-data/
 
 ### Step 6: Start Application
 ![App Start](screenshots/local-step6-start.png)
-*Launch MVidarr Enhanced application*
+*Launch MVidarr application*
 
 ```bash
 # Ensure virtual environment is active
@@ -479,7 +479,7 @@ chmod +x scripts/manage_service.sh
 
 1. **Access Web Interface**
    - Open browser to: http://localhost:5000
-   - You should see the MVidarr Enhanced welcome screen
+   - You should see the MVidarr welcome screen
 
 2. **Configure API Keys**
    ![API Configuration](screenshots/local-api-setup.png)
@@ -499,7 +499,7 @@ chmod +x scripts/manage_service.sh
 
 ### AWS EC2 Deployment
 ![AWS Deployment](screenshots/cloud-aws.png)
-*Deploy MVidarr Enhanced on Amazon Web Services*
+*Deploy MVidarr on Amazon Web Services*
 
 **EC2 Instance Requirements:**
 - **Instance Type**: t3.medium or larger (2 vCPU, 4GB RAM)
@@ -524,7 +524,7 @@ sudo usermod -aG docker ubuntu
 sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-# Clone and deploy MVidarr Enhanced
+# Clone and deploy MVidarr
 git clone <repository-url> mvidarr
 cd mvidarr
 # Follow Docker installation steps from above
@@ -581,7 +581,7 @@ cd mvidarr
 
 ### Security Hardening
 ![Security Setup](screenshots/post-install-security.png)
-*Secure your MVidarr Enhanced installation*
+*Secure your MVidarr installation*
 
 **Security Checklist:**
 - ✅ Change all default passwords
@@ -741,7 +741,7 @@ sudo systemctl restart mariadb
 
 ## 🎉 Installation Complete!
 
-Congratulations! You've successfully installed MVidarr Enhanced. Here are your next steps:
+Congratulations! You've successfully installed MVidarr. Here are your next steps:
 
 ### Immediate Actions
 1. **🎯 Add Your First Artist**
@@ -773,6 +773,6 @@ Congratulations! You've successfully installed MVidarr Enhanced. Here are your n
 
 ---
 
-**🎵 Welcome to MVidarr Enhanced! Enjoy building your music video collection! 🎵**
+**🎵 Welcome to MVidarr! Enjoy building your music video collection! 🎵**
 
 *For additional help, see the [Complete User Guide](USER-GUIDE.md) or [Docker Quick Start](../DOCKER-QUICKSTART.md).*

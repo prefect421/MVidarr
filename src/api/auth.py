@@ -1,5 +1,5 @@
 """
-Authentication API endpoints for MVidarr Enhanced
+Authentication API endpoints for MVidarr
 Provides login, logout, OAuth, and user session management.
 """
 

@@ -1,5 +1,5 @@
 """
-VLC Streaming Service for MVidarr Enhanced
+VLC Streaming Service for MVidarr
 
 Handles video streaming using VLC's built-in HTTP streaming capabilities
 to provide browser-compatible video playback for various formats including MKV.

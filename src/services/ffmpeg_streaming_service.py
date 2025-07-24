@@ -1,5 +1,5 @@
 """
-FFmpeg Streaming Service for MVidarr Enhanced
+FFmpeg Streaming Service for MVidarr
 
 A simpler, more reliable approach to stream MKV files using FFmpeg
 """

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Screenshot Capture Script for MVidarr Enhanced Documentation
+Screenshot Capture Script for MVidarr Documentation
 Captures all required screenshots systematically using Playwright
 """
 
@@ -464,7 +464,7 @@ class ScreenshotCapture:
                 print(f"  • {filename}: {error}")
 
 async def main():
-    print("🚀 MVidarr Enhanced Screenshot Capture")
+    print("🚀 MVidarr Screenshot Capture")
     print("=====================================")
     
     # Check if application is running

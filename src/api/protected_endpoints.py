@@ -1,5 +1,5 @@
 """
-API Endpoint Protection Configuration for MVidarr Enhanced
+API Endpoint Protection Configuration for MVidarr
 Applies authentication and authorization decorators to existing API endpoints.
 """
 

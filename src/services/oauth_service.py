@@ -1,5 +1,5 @@
 """
-OAuth authentication service for MVidarr Enhanced
+OAuth authentication service for MVidarr
 Supports multiple OAuth providers including Authentik, Google, GitHub, etc.
 """
 

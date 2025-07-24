@@ -1,5 +1,5 @@
 """
-VLC Streaming API endpoints for MVidarr Enhanced
+VLC Streaming API endpoints for MVidarr
 """
 
 from flask import Blueprint, jsonify, request

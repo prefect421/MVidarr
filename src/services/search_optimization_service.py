@@ -1,5 +1,5 @@
 """
-Search optimization service for MVidarr Enhanced
+Search optimization service for MVidarr
 Provides caching and query optimization for search operations
 """
 

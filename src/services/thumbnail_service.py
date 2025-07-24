@@ -111,7 +111,7 @@ class ThumbnailService:
             
             # Download the image
             headers = {
-                'User-Agent': 'MVidarr Enhanced/1.0',
+                'User-Agent': 'MVidarr/1.0',
                 'Accept': 'image/*'
             }
             

@@ -393,7 +393,7 @@ This file lists all screenshots referenced in the documentation that need to be 
 ### 🎯 Achievement Summary
 **OUTSTANDING SUCCESS**: Captured 141 out of 147 planned screenshots (95.9% completion rate)
 
-The MVidarr Enhanced documentation now has comprehensive visual coverage including:
+The MVidarr documentation now has comprehensive visual coverage including:
 - ✅ Complete interface documentation (dashboard, artists, videos, settings)
 - ✅ Mobile and tablet responsive screenshots  
 - ✅ Docker installation and deployment workflows

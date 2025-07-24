@@ -1,5 +1,5 @@
 """
-Thumbnail optimization service for MVidarr Enhanced
+Thumbnail optimization service for MVidarr
 Provides WebP conversion and storage optimization
 """
 

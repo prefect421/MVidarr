@@ -1,5 +1,5 @@
 """
-Authentication Integration for MVidarr Enhanced
+Authentication Integration for MVidarr
 Integrates authentication middleware, routes, and endpoint protection.
 """
 
@@ -26,7 +26,7 @@ class AuthenticationIntegration:
     def init_app(self, app: Flask):
         """Initialize authentication system with Flask app"""
         try:
-            logger.info("Initializing MVidarr Enhanced authentication system...")
+            logger.info("Initializing MVidarr authentication system...")
             
             # Step 1: Initialize authentication middleware
             logger.info("Step 1: Initializing authentication middleware...")
@@ -160,7 +160,7 @@ auth_integration = AuthenticationIntegration()
 
 def init_authentication(app: Flask):
     """
-    Initialize authentication system for MVidarr Enhanced
+    Initialize authentication system for MVidarr
     
     Args:
         app: Flask application instance
@@ -169,7 +169,7 @@ def init_authentication(app: Flask):
         bool: True if initialization successful
     """
     try:
-        logger.info("🔐 Initializing MVidarr Enhanced Authentication System")
+        logger.info("🔐 Initializing MVidarr Authentication System")
         logger.info("=" * 60)
         
         # Initialize authentication integration

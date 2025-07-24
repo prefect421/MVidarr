@@ -15,7 +15,7 @@ logger = get_logger('mvidarr.scripts.fix_missing_videos')
 
 def main():
     """Main function to fix missing downloaded videos"""
-    print("MVidarr Enhanced - Fix Missing Downloaded Videos")
+    print("MVidarr - Fix Missing Downloaded Videos")
     print("=" * 50)
     
     try:

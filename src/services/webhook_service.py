@@ -317,7 +317,7 @@ class WebhookService:
                 timestamp=datetime.now(),
                 data={
                     'test': True,
-                    'message': 'This is a test webhook from MVidarr Enhanced',
+                    'message': 'This is a test webhook from MVidarr',
                     'version': '1.0.0'
                 },
                 metadata={

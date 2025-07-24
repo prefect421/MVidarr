@@ -1,5 +1,5 @@
 """
-Authentication and authorization decorators for MVidarr Enhanced
+Authentication and authorization decorators for MVidarr
 """
 
 from functools import wraps

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MVidarr Enhanced - Comprehensive Testing Script
+MVidarr - Comprehensive Testing Script
 Executes automated tests across all core functionality.
 """
 
@@ -19,7 +19,7 @@ from typing import Dict, List, Any
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 class ComprehensiveTestRunner:
-    """Executes comprehensive tests for MVidarr Enhanced"""
+    """Executes comprehensive tests for MVidarr"""
     
     def __init__(self, base_url: str = "http://localhost:5000"):
         self.base_url = base_url
@@ -36,7 +36,7 @@ class ComprehensiveTestRunner:
     
     def run_tests(self, categories: List[str] = None):
         """Run comprehensive tests"""
-        print("🧪 MVidarr Enhanced - Comprehensive Testing")
+        print("🧪 MVidarr - Comprehensive Testing")
         print("=" * 50)
         
         if not categories:
@@ -524,7 +524,7 @@ class ComprehensiveTestRunner:
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description='Run comprehensive tests for MVidarr Enhanced')
+    parser = argparse.ArgumentParser(description='Run comprehensive tests for MVidarr')
     parser.add_argument('--category', action='append', choices=['health', 'core', 'auth', 'ui', 'api', 'service'],
                        help='Test categories to run (default: all)')
     parser.add_argument('--url', default='http://localhost:5000',

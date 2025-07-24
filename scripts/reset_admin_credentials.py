@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Reset Admin Credentials Script
-Resets admin login credentials to default values in MVidarr Enhanced
+Resets admin login credentials to default values in MVidarr
 """
 
 import subprocess
@@ -162,7 +162,7 @@ def main():
     """Main execution function"""
     
     print("=" * 60)
-    print("MVidarr Enhanced - Reset Admin Credentials")
+    print("MVidarr - Reset Admin Credentials")
     print("=" * 60)
     
     # Test MySQL connection

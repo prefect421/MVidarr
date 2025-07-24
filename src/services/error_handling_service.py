@@ -1,5 +1,5 @@
 """
-Enhanced error handling service for MVidarr Enhanced
+Enhanced error handling service for MVidarr
 Provides comprehensive error categorization, recovery, and user feedback
 """
 

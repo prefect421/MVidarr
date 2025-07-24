@@ -1,5 +1,5 @@
 """
-MVidarr Enhanced - Music Video Management System
+MVidarr - Music Video Management System
 """
 
 __version__ = "1.0.0"

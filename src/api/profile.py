@@ -1,5 +1,5 @@
 """
-User Profile Management API for MVidarr Enhanced
+User Profile Management API for MVidarr
 Provides self-service user account management functionality.
 """
 

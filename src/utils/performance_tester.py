@@ -1,5 +1,5 @@
 """
-Performance testing utilities for MVidarr Enhanced
+Performance testing utilities for MVidarr
 """
 
 import time

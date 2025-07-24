@@ -242,7 +242,7 @@ def main():
     """Main execution function"""
     
     print("=" * 60)
-    print("MVidarr Enhanced - Fix Download Completion Issue")
+    print("MVidarr - Fix Download Completion Issue")
     print("=" * 60)
     
     # Test MySQL connection

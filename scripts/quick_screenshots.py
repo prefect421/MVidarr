@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Quick Screenshot Capture for MVidarr Enhanced Documentation
+Quick Screenshot Capture for MVidarr Documentation
 """
 
 import asyncio

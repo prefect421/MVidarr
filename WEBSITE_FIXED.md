@@ -79,7 +79,7 @@ python3 scripts/reset_database.py
 
 ### 1. **Successful Startup**
 ```
-🎵 MVidarr Enhanced v2.0 - Refactored Music Video Downloader
+🎵 MVidarr v2.0 - Refactored Music Video Downloader
 ==============================================================
 ✅ Configuration loaded
 ✅ Connected to MariaDB database
@@ -148,7 +148,7 @@ When everything is working, you should see:
 4. **Dashboard**: System status and feature overview
 5. **Settings**: Comprehensive configuration options
 
-Your MVidarr Enhanced v2.0 installation is now complete and fully functional! 🎵
+Your MVidarr v2.0 installation is now complete and fully functional! 🎵
 
 ---
 

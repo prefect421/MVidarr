@@ -1,4 +1,4 @@
-# MVidarr Enhanced v2.0 - Quick Start Guide
+# MVidarr v2.0 - Quick Start Guide
 
 ## 🚀 Getting Started in 5 Minutes
 
@@ -148,7 +148,7 @@ FLUSH PRIVILEGES;
 When you start the application, you'll see:
 
 ```
-🎵 MVidarr Enhanced v2.0 - Refactored Music Video Downloader
+🎵 MVidarr v2.0 - Refactored Music Video Downloader
 ======================================================================
 🏗️  Modular Architecture:
    ✅ Configuration Management

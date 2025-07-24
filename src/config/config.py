@@ -1,5 +1,5 @@
 """
-Configuration Management for MVidarr Enhanced
+Configuration Management for MVidarr
 """
 
 import os
@@ -27,7 +27,7 @@ class Config:
     @classmethod 
     def create_default_env(cls):
         """Create default .env file"""
-        env_content = '''# MVidarr Enhanced Configuration
+        env_content = '''# MVidarr Configuration
 
 # Database configuration
 DB_HOST=localhost

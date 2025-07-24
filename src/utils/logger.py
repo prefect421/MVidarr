@@ -1,5 +1,5 @@
 """
-Logging utilities for MVidarr Enhanced
+Logging utilities for MVidarr
 """
 
 import logging

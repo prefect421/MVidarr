@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MVidarr Enhanced - Main Application Entry Point
+MVidarr - Main Application Entry Point
 """
 
 import os
@@ -126,7 +126,7 @@ def main():
     # Get port from settings (default 5000)
     port = app.config.get('PORT', 5000)
     
-    app.logger.info(f"Starting MVidarr Enhanced on port {port}")
+    app.logger.info(f"Starting MVidarr on port {port}")
     
     try:
         app.run(

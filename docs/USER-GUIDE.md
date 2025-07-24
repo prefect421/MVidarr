@@ -1,8 +1,8 @@
-# 📖 MVidarr Enhanced - Complete User Guide
+# 📖 MVidarr - Complete User Guide
 
 > **🎯 Master your music video collection with this comprehensive step-by-step guide**
 
-This guide will take you through every aspect of MVidarr Enhanced, from initial setup to advanced features. Each section includes screenshots and detailed explanations to help you get the most from your music video management system.
+This guide will take you through every aspect of MVidarr, from initial setup to advanced features. Each section includes screenshots and detailed explanations to help you get the most from your music video management system.
 
 ---
 
@@ -32,7 +32,7 @@ After installation, navigate to `http://localhost:5000` in your web browser.
 
 ### Step 1: Welcome Screen
 ![Welcome Screen](screenshots/welcome-screen.png)
-*Welcome to MVidarr Enhanced - your journey begins here*
+*Welcome to MVidarr - your journey begins here*
 
 The welcome screen provides:
 - **Quick start options** for immediate setup
@@ -581,7 +581,7 @@ The download manager provides:
 ![Thumbnail Overview](screenshots/thumbnail-overview.png)
 *Beautiful, high-quality thumbnails from multiple sources*
 
-MVidarr Enhanced automatically manages thumbnails from:
+MVidarr automatically manages thumbnails from:
 - **IMVDb**: Official music video artwork
 - **YouTube**: Video thumbnails and channel art
 - **Wikipedia**: Artist photos and album covers
@@ -984,7 +984,7 @@ The advanced search provides:
 ![Mobile Overview](screenshots/mobile-overview.png)
 *Full-featured mobile experience optimized for touch interfaces*
 
-MVidarr Enhanced provides a complete mobile experience:
+MVidarr provides a complete mobile experience:
 - **Touch-optimized controls** for easy navigation
 - **Responsive design** that adapts to any screen size
 - **Swipe gestures** for intuitive interaction
@@ -1306,7 +1306,7 @@ DEBUG: Cache miss for thumbnail → Performance info
 
 ## 🎉 Conclusion
 
-Congratulations! You've mastered MVidarr Enhanced. This comprehensive guide has covered:
+Congratulations! You've mastered MVidarr. This comprehensive guide has covered:
 
 - ✅ **Initial setup and configuration**
 - ✅ **Artist and video management**
@@ -1340,6 +1340,6 @@ Congratulations! You've mastered MVidarr Enhanced. This comprehensive guide has 
 
 ---
 
-*Thank you for using MVidarr Enhanced! We hope this guide helps you build and manage the perfect music video collection.*
+*Thank you for using MVidarr! We hope this guide helps you build and manage the perfect music video collection.*
 
 **🎵 Happy music video collecting! 🎵**

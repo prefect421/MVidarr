@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate a secure secret key for MVidarr Enhanced
+Generate a secure secret key for MVidarr
 """
 
 import secrets

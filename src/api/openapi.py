@@ -1,5 +1,5 @@
 """
-OpenAPI documentation and specification for MVidarr Enhanced REST API
+OpenAPI documentation and specification for MVidarr REST API
 """
 
 from flask import Blueprint, jsonify, render_template_string
@@ -15,11 +15,11 @@ openapi_bp = Blueprint('openapi', __name__, url_prefix='/api/docs')
 OPENAPI_SPEC = {
     "openapi": "3.0.0",
     "info": {
-        "title": "MVidarr Enhanced API",
+        "title": "MVidarr API",
         "version": "1.0.0",
         "description": "Professional music video management system with artist tracking, video discovery, and external service integration",
         "contact": {
-            "name": "MVidarr Enhanced",
+            "name": "MVidarr",
             "url": "https://github.com/mvidarr/mvidarr-enhanced"
         },
         "license": {
@@ -753,7 +753,7 @@ def swagger_ui():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>MVidarr Enhanced API Documentation</title>
+        <title>MVidarr API Documentation</title>
         <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
         <style>
             html {
@@ -839,7 +839,7 @@ def redoc_ui():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>MVidarr Enhanced API Documentation</title>
+        <title>MVidarr API Documentation</title>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
@@ -865,7 +865,7 @@ def api_docs_index():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>MVidarr Enhanced API Documentation</title>
+        <title>MVidarr API Documentation</title>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
@@ -970,7 +970,7 @@ def api_docs_index():
     </head>
     <body>
         <div class="container">
-            <h1>MVidarr Enhanced API</h1>
+            <h1>MVidarr API</h1>
             <p class="subtitle">Professional music video management system with comprehensive REST API</p>
             
             <div class="docs-grid">
@@ -1008,7 +1008,7 @@ def api_docs_index():
             
             <div class="api-info">
                 <h3>Getting Started</h3>
-                <p>The MVidarr Enhanced API uses standard HTTP methods and returns JSON responses. All endpoints are prefixed with <code>/api</code>.</p>
+                <p>The MVidarr API uses standard HTTP methods and returns JSON responses. All endpoints are prefixed with <code>/api</code>.</p>
                 <p>Base URL: <code>http://localhost:5000/api</code></p>
                 <p>For detailed information about authentication, rate limiting, and usage examples, please refer to the interactive documentation above.</p>
             </div>

@@ -1,7 +1,7 @@
-# 🐳 MVidarr Enhanced - Docker Deployment Guide
+# 🐳 MVidarr - Docker Deployment Guide
 
 ![Docker Deployment](docs/screenshots/docker-banner.png)
-*Professional Docker deployment for MVidarr Enhanced - Production ready in minutes*
+*Professional Docker deployment for MVidarr - Production ready in minutes*
 
 ## 🚀 Quick Start (30 Seconds)
 
@@ -50,7 +50,7 @@ docker-compose --env-file docker-config.yml -f docker-compose.production.yml up 
    - **Setup Wizard**: Follow the initial setup prompts
 
 ![Deployment Success](docs/screenshots/docker-success.png)
-*Successful deployment - MVidarr Enhanced ready for use*
+*Successful deployment - MVidarr ready for use*
 
 ## 📋 Configuration Guide
 
@@ -90,7 +90,7 @@ YOUTUBE_API_KEY=your_youtube_api_key   # Get from console.developers.google.com
 
 ### docker-compose.production.yml
 Production Docker Compose file with:
-- **MVidarr Enhanced**: Main application container
+- **MVidarr**: Main application container
 - **MariaDB 11.4**: Database server
 - **Volume mounts**: Persistent storage for your data
 - **Health checks**: Automatic service monitoring

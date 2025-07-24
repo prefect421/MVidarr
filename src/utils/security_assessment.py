@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Security Assessment and Vulnerability Scanner for MVidarr Enhanced
+Security Assessment and Vulnerability Scanner for MVidarr
 """
 
 import os
@@ -16,7 +16,7 @@ import sqlite3
 import re
 
 class SecurityAssessment:
-    """Comprehensive security assessment for MVidarr Enhanced"""
+    """Comprehensive security assessment for MVidarr"""
     
     def __init__(self, project_root: str = None):
         self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent.parent
@@ -243,7 +243,7 @@ class SecurityAssessment:
     
     def run_assessment(self) -> Dict[str, Any]:
         """Run complete security assessment"""
-        print("🛡️  Starting MVidarr Enhanced Security Assessment")
+        print("🛡️  Starting MVidarr Security Assessment")
         print("=" * 60)
         
         results = {
@@ -261,7 +261,7 @@ class SecurityAssessment:
     def generate_report(self) -> str:
         """Generate comprehensive security report"""
         report = []
-        report.append("# MVidarr Enhanced Security Assessment Report")
+        report.append("# MVidarr Security Assessment Report")
         report.append(f"Generated: {os.popen('date').read().strip()}")
         report.append("")
         

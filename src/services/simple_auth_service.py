@@ -1,5 +1,5 @@
 """
-Simple single-user authentication service for MVidarr Enhanced
+Simple single-user authentication service for MVidarr
 Replaces complex multi-user system with simple username/password authentication
 """
 

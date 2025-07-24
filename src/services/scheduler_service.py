@@ -1,5 +1,5 @@
 """
-Background Scheduler Service for MVidarr Enhanced
+Background Scheduler Service for MVidarr
 Handles scheduled tasks like automated video downloads
 """
 

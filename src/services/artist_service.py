@@ -1,5 +1,5 @@
 """
-MVidarr Enhanced - Artist Management Service
+MVidarr - Artist Management Service
 Handles tracked artists and their automatic video discovery
 """
 

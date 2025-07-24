@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Improved restart script for MVidarr Enhanced that works from web interface
+Improved restart script for MVidarr that works from web interface
 """
 
 import os
@@ -99,7 +99,7 @@ def check_port_available(port=5000):
 
 def start_application():
     """Start the MVidarr application"""
-    logger.info("Starting MVidarr Enhanced...")
+    logger.info("Starting MVidarr...")
     
     # Determine the application directory
     script_dir = Path(__file__).parent
@@ -177,7 +177,7 @@ def start_application():
         time.sleep(3)
         
         if process.poll() is None:
-            logger.info("MVidarr Enhanced started successfully")
+            logger.info("MVidarr started successfully")
             
             # Check if port is now in use (indicating successful start)
             for i in range(10):
@@ -208,7 +208,7 @@ def start_application():
 
 def main():
     """Main restart function"""
-    logger.info("=== MVidarr Enhanced Restart Script ===")
+    logger.info("=== MVidarr Restart Script ===")
     
     try:
         # Step 1: Graceful shutdown

@@ -91,7 +91,7 @@ def main():
     """Main execution function"""
     
     print("=" * 60)
-    print("MVidarr Enhanced - Fix Simple Auth Credentials")
+    print("MVidarr - Fix Simple Auth Credentials")
     print("=" * 60)
     
     # Test MySQL connection

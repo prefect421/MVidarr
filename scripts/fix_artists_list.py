@@ -203,7 +203,7 @@ def main():
     """Main execution function"""
     
     print("=" * 60)
-    print("MVidarr Enhanced - Fix Artists List Display")
+    print("MVidarr - Fix Artists List Display")
     print("=" * 60)
     
     if patch_artists_template():

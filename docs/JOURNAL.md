@@ -1,4 +1,4 @@
-# Development Journal - MVidarr Enhanced
+# Development Journal - MVidarr
 
 ## Purpose
 This journal tracks mistakes, issues, lessons learned, and coding patterns to prevent recurring problems and maintain development context.

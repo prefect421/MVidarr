@@ -1,5 +1,5 @@
 """
-Two-Factor Authentication API for MVidarr Enhanced
+Two-Factor Authentication API for MVidarr
 Provides TOTP setup, verification, and management endpoints.
 """
 

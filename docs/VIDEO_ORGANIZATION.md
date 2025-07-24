@@ -2,7 +2,7 @@
 
 ## Overview
 
-MVidarr Enhanced now includes an automatic video organization system that cleans up downloaded video filenames and organizes them into artist-specific folders.
+MVidarr now includes an automatic video organization system that cleans up downloaded video filenames and organizes them into artist-specific folders.
 
 ## Features
 

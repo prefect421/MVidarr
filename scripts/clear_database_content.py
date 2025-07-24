@@ -159,7 +159,7 @@ def main():
     """Main execution function"""
     
     logger.info("=" * 60)
-    logger.info("MVidarr Enhanced - Database Content Clearing")
+    logger.info("MVidarr - Database Content Clearing")
     logger.info("=" * 60)
     
     # Confirm operation

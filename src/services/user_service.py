@@ -1,5 +1,5 @@
 """
-MVidarr Enhanced - User Management Service
+MVidarr - User Management Service
 Handles user authentication, password management, and user operations
 """
 

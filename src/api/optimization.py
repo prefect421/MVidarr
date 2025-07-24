@@ -1,5 +1,5 @@
 """
-Optimization API endpoints for MVidarr Enhanced
+Optimization API endpoints for MVidarr
 """
 
 from flask import Blueprint, jsonify, request

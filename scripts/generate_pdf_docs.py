@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PDF Documentation Generator for MVidarr Enhanced
+PDF Documentation Generator for MVidarr
 Converts Markdown documentation to professional PDFs with embedded screenshots
 """
 
@@ -61,7 +61,7 @@ class PDFDocumentGenerator:
             size: A4;
             margin: 2cm 1.5cm 2cm 1.5cm;
             @top-center {
-                content: "MVidarr Enhanced Documentation";
+                content: "MVidarr Documentation";
                 font-size: 10pt;
                 color: #666;
                 border-bottom: 1px solid #ddd;
@@ -306,7 +306,7 @@ class PDFDocumentGenerator:
                 <span class="badge">Professional Edition</span>
             </div>
             <div class="cover-info">
-                <p><strong>MVidarr Enhanced</strong><br/>
+                <p><strong>MVidarr</strong><br/>
                 Professional Music Video Management System</p>
                 <p>Generated: {today}</p>
             </div>
@@ -378,7 +378,7 @@ class PDFDocumentGenerator:
     
     def generate_all_pdfs(self):
         """Generate all PDF documents"""
-        print("🚀 MVidarr Enhanced PDF Documentation Generator")
+        print("🚀 MVidarr PDF Documentation Generator")
         print("=" * 60)
         
         generated_pdfs = []
@@ -388,20 +388,20 @@ class PDFDocumentGenerator:
             {
                 'file': self.project_root / 'README.md',
                 'output': 'MVidarr-Enhanced-Overview.pdf',
-                'title': 'MVidarr Enhanced',
+                'title': 'MVidarr',
                 'subtitle': 'Professional Music Video Management System - Overview'
             },
             {
                 'file': self.docs_dir / 'INSTALLATION-GUIDE.md',
                 'output': 'MVidarr-Enhanced-Installation-Guide.pdf',
                 'title': 'Installation Guide',
-                'subtitle': 'Complete Setup Instructions for MVidarr Enhanced'
+                'subtitle': 'Complete Setup Instructions for MVidarr'
             },
             {
                 'file': self.docs_dir / 'USER-GUIDE.md',
                 'output': 'MVidarr-Enhanced-User-Guide.pdf',
                 'title': 'User Guide',
-                'subtitle': 'Complete User Manual for MVidarr Enhanced'
+                'subtitle': 'Complete User Manual for MVidarr'
             },
             {
                 'file': self.docs_dir / 'VIDEO_ORGANIZATION.md',

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Favicon Generator for MVidarr Enhanced
+Favicon Generator for MVidarr
 Creates multiple favicon sizes and formats for optimal browser support
 """
 
@@ -135,7 +135,7 @@ class FaviconGenerator:
     
     def generate_all_favicons(self):
         """Generate all favicon files"""
-        print("🎨 MVidarr Enhanced Favicon Generator")
+        print("🎨 MVidarr Favicon Generator")
         print("=" * 50)
         
         generated_files = []
@@ -166,7 +166,7 @@ class FaviconGenerator:
     def generate_manifest_json(self):
         """Generate web app manifest for PWA support"""
         manifest = {
-            "name": "MVidarr Enhanced",
+            "name": "MVidarr",
             "short_name": "MVidarr",
             "description": "Professional Music Video Management System",
             "start_url": "/",

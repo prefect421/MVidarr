@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Video organization script for MVidarr Enhanced
+Video organization script for MVidarr
 Cleans up filenames and organizes downloaded videos by artist
 """
 

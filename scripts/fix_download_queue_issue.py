@@ -138,7 +138,7 @@ def main():
     """Main execution function"""
     
     print("=" * 60)
-    print("MVidarr Enhanced - Fix Download Queue Display Issue")
+    print("MVidarr - Fix Download Queue Display Issue")
     print("=" * 60)
     
     # Test MySQL connection

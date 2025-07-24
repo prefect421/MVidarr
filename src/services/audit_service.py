@@ -1,5 +1,5 @@
 """
-Audit and security event logging service for MVidarr Enhanced
+Audit and security event logging service for MVidarr
 Provides comprehensive logging of authentication, authorization, and security events.
 """
 

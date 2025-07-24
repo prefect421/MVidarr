@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MVidarr Enhanced - Version Management Script
+MVidarr - Version Management Script
 Handles semantic versioning, changelog generation, and release preparation.
 """
 
@@ -206,7 +206,7 @@ class VersionManager:
         # Create changelog if it doesn't exist
         if not self.changelog_file.exists():
             with open(self.changelog_file, 'w') as f:
-                f.write("# Changelog\n\nAll notable changes to MVidarr Enhanced will be documented in this file.\n\n")
+                f.write("# Changelog\n\nAll notable changes to MVidarr will be documented in this file.\n\n")
         
         # Read existing content
         with open(self.changelog_file, 'r') as f:
@@ -292,7 +292,7 @@ def main():
     """Main CLI interface"""
     import argparse
     
-    parser = argparse.ArgumentParser(description='MVidarr Enhanced Version Management')
+    parser = argparse.ArgumentParser(description='MVidarr Version Management')
     
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
     

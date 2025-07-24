@@ -11,7 +11,7 @@
 
 ## 🚀 **Overview**
 
-MVidarr Enhanced has been upgraded with a comprehensive multi-user authentication and authorization system that supports:
+MVidarr has been upgraded with a comprehensive multi-user authentication and authorization system that supports:
 
 - **Role-Based Access Control (RBAC)** with hierarchical permissions
 - **OAuth 2.0 / OpenID Connect** integration (Authentik, Google, GitHub)

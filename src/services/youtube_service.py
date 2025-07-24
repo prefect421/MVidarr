@@ -1,5 +1,5 @@
 """
-MVidarr Enhanced - YouTube API Service
+MVidarr - YouTube API Service
 Handles YouTube API integration for video search and data retrieval
 """
 

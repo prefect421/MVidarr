@@ -1,4 +1,4 @@
-# MVidarr Enhanced v2.0 - Refactoring Complete! 🎉
+# MVidarr v2.0 - Refactoring Complete! 🎉
 
 ## ✅ What We've Accomplished
 
@@ -137,7 +137,7 @@ python app.py
 When you run the new version, you'll see:
 
 ```
-🎵 MVidarr Enhanced v2.0 - Refactored Music Video Downloader
+🎵 MVidarr v2.0 - Refactored Music Video Downloader
 ======================================================================
 🏗️  Modular Architecture:
    ✅ Configuration Management
@@ -265,7 +265,7 @@ sudo systemctl status mvidarr
 
 ## 🎉 Conclusion
 
-MVidarr Enhanced v2.0 represents a complete transformation from a monolithic application to a modern, modular, and maintainable system. The refactoring provides:
+MVidarr v2.0 represents a complete transformation from a monolithic application to a modern, modular, and maintainable system. The refactoring provides:
 
 - **🏗️ Solid Foundation**: For future feature development
 - **🛡️ Enhanced Reliability**: With comprehensive error handling
@@ -274,7 +274,7 @@ MVidarr Enhanced v2.0 represents a complete transformation from a monolithic app
 
 **Ready to experience the difference?** 
 
-Run the installer and see MVidarr Enhanced v2.0 in action:
+Run the installer and see MVidarr v2.0 in action:
 
 ```bash
 # Get started in seconds!
@@ -283,4 +283,4 @@ Run the installer and see MVidarr Enhanced v2.0 in action:
 
 ---
 
-**🎵 MVidarr Enhanced v2.0 - Refactored, Refined, Ready! 🚀**
+**🎵 MVidarr v2.0 - Refactored, Refined, Ready! 🚀**

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple Screenshot Capture Script for MVidarr Enhanced
+Simple Screenshot Capture Script for MVidarr
 Captures screenshots of specific pages without authentication issues
 """
 
@@ -42,7 +42,7 @@ async def capture_single_screenshot(page, filename, url_path, wait_time=3000):
         return False
 
 async def main():
-    print("🚀 MVidarr Enhanced Simple Screenshot Capture")
+    print("🚀 MVidarr Simple Screenshot Capture")
     print("=============================================")
     
     async with async_playwright() as playwright:

@@ -1,5 +1,5 @@
 """
-Lidarr API integration for MVidarr Enhanced
+Lidarr API integration for MVidarr
 """
 
 from flask import Blueprint, request, jsonify

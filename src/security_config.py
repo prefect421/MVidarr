@@ -1,5 +1,5 @@
 """
-Security configuration and initialization for MVidarr Enhanced
+Security configuration and initialization for MVidarr
 """
 
 import os

@@ -1,5 +1,5 @@
 """
-Administrative Web Interface for MVidarr Enhanced
+Administrative Web Interface for MVidarr
 Provides web-based user management and system administration.
 """
 

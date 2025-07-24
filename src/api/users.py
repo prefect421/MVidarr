@@ -1,5 +1,5 @@
 """
-User management API endpoints for MVidarr Enhanced
+User management API endpoints for MVidarr
 Provides administrative user management functionality.
 """
 

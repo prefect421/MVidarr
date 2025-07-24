@@ -1,5 +1,5 @@
 """
-Two-Factor Authentication Service for MVidarr Enhanced
+Two-Factor Authentication Service for MVidarr
 Provides TOTP (Time-based One-Time Password) authentication functionality.
 """
 
@@ -40,7 +40,7 @@ class TwoFactorService:
     @staticmethod
     def get_qr_code_uri(user: User, secret: str) -> str:
         """Generate QR code URI for TOTP setup"""
-        service_name = "MVidarr Enhanced"
+        service_name = "MVidarr"
         account_name = f"{user.username}@mvidarr"
         
         totp = pyotp.TOTP(secret)

@@ -1,5 +1,5 @@
 """
-Database models for MVidarr Enhanced
+Database models for MVidarr
 """
 
 from datetime import datetime, timedelta

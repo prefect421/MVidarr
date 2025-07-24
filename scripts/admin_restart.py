@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Secure Application Restart Script for MVidarr Enhanced
+Secure Application Restart Script for MVidarr
 This script provides admin-only restart functionality with proper security checks.
 """
 
@@ -166,7 +166,7 @@ class SecureRestartManager:
 
 def interactive_restart():
     """Interactive restart with admin authentication"""
-    print("🔐 MVidarr Enhanced - Secure Application Restart")
+    print("🔐 MVidarr - Secure Application Restart")
     print("=" * 50)
     
     restart_manager = SecureRestartManager()

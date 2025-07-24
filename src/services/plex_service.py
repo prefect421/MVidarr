@@ -29,7 +29,7 @@ class PlexService:
             self.session.headers.update({
                 'X-Plex-Token': self.server_token,
                 'X-Plex-Client-Identifier': 'mvidarr-enhanced',
-                'X-Plex-Product': 'MVidarr Enhanced',
+                'X-Plex-Product': 'MVidarr',
                 'X-Plex-Version': '1.0.0'
             })
     

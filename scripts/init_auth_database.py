@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Initialize Database and Authentication System for MVidarr Enhanced
+Initialize Database and Authentication System for MVidarr
 """
 
 import sys
@@ -155,7 +155,7 @@ def create_auth_tables():
 def main():
     """Main initialization function"""
     try:
-        print("🔐 MVidarr Enhanced - Database & Authentication Initialization")
+        print("🔐 MVidarr - Database & Authentication Initialization")
         print("=" * 70)
         
         # Step 1: Create database

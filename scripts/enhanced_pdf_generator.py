@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Enhanced PDF Documentation Generator for MVidarr Enhanced
+Enhanced PDF Documentation Generator for MVidarr
 Creates professional PDFs with intelligent screenshot mapping and enhanced formatting
 """
 
@@ -176,7 +176,7 @@ class EnhancedPDFGenerator:
             size: A4;
             margin: 2cm 1.5cm 2cm 1.5cm;
             @top-center {
-                content: "MVidarr Enhanced - Professional Music Video Management System";
+                content: "MVidarr - Professional Music Video Management System";
                 font-size: 9pt;
                 color: #666;
                 border-bottom: 1px solid #e0e0e0;
@@ -487,7 +487,7 @@ class EnhancedPDFGenerator:
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>{title} - MVidarr Enhanced</title>
+                <title>{title} - MVidarr</title>
             </head>
             <body>
                 {cover_page}
@@ -522,7 +522,7 @@ class EnhancedPDFGenerator:
     
     def generate_complete_documentation_suite(self):
         """Generate complete enhanced PDF documentation suite"""
-        print("🚀 MVidarr Enhanced - Professional PDF Documentation Suite")
+        print("🚀 MVidarr - Professional PDF Documentation Suite")
         print("=" * 70)
         print(f"📸 Using {len(self.screenshot_mapping)} screenshot mappings")
         print()
@@ -534,7 +534,7 @@ class EnhancedPDFGenerator:
             {
                 'file': self.project_root / 'README.md',
                 'output': 'MVidarr-Enhanced-Complete-Overview.pdf',
-                'title': 'MVidarr Enhanced',
+                'title': 'MVidarr',
                 'subtitle': 'Professional Music Video Management System - Complete Overview & Features'
             },
             {

@@ -1,5 +1,5 @@
 """
-Authentication middleware for MVidarr Enhanced
+Authentication middleware for MVidarr
 Provides central authentication handling and request context setup.
 """
 

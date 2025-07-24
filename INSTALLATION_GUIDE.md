@@ -2,7 +2,7 @@
 
 ## Overview
 
-MVidarr Enhanced v2.0 now includes automatic handling of pip installation and modern Python environment management, including support for externally-managed Python environments found on newer Linux distributions.
+MVidarr v2.0 now includes automatic handling of pip installation and modern Python environment management, including support for externally-managed Python environments found on newer Linux distributions.
 
 ## What's New
 

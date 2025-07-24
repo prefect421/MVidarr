@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple Authentication Tables Migration for MVidarr Enhanced
+Simple Authentication Tables Migration for MVidarr
 Creates authentication tables using direct database connection.
 """
 
@@ -120,7 +120,7 @@ def create_default_admin():
 def main():
     """Main migration function"""
     try:
-        print("🔐 MVidarr Enhanced - Simple Authentication Migration")
+        print("🔐 MVidarr - Simple Authentication Migration")
         print("=" * 60)
         
         # Step 1: Create tables

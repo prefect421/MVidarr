@@ -130,7 +130,7 @@ def main():
     """Main execution function"""
     
     print("=" * 60)
-    print("MVidarr Enhanced - Database Content Clearing")
+    print("MVidarr - Database Content Clearing")
     print("=" * 60)
     
     # Test MySQL connection

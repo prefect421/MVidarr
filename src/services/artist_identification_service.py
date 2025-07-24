@@ -1,5 +1,5 @@
 """
-Artist Identification Service for MVidarr Enhanced
+Artist Identification Service for MVidarr
 
 This service attempts to identify the correct artist for songs currently assigned to "Unknown Artist"
 by using song titles and various matching algorithms.

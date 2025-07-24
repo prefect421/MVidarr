@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Video indexing script for MVidarr Enhanced
+Video indexing script for MVidarr
 Scans existing videos and adds them to database with IMVDb metadata
 """
 

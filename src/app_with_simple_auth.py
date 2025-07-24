@@ -1,5 +1,5 @@
 """
-MVidarr Enhanced Flask Application with Simple Authentication
+MVidarr Flask Application with Simple Authentication
 Single-user authentication system for simple username/password access
 """
 
@@ -102,7 +102,7 @@ def create_app():
         else:
             return 'Internal Server Error', 500
     
-    logger.info("MVidarr Enhanced app with simple authentication created")
+    logger.info("MVidarr app with simple authentication created")
     return app
 
 def run_app():
@@ -117,7 +117,7 @@ def run_app():
         debug = SettingsService.get_bool('debug_mode', False)
         
         logger = get_logger('mvidarr.app')
-        logger.info(f"Starting MVidarr Enhanced with Simple Authentication on {host}:{port}")
+        logger.info(f"Starting MVidarr with Simple Authentication on {host}:{port}")
         
         if debug:
             logger.warning("Debug mode is enabled - do not use in production!")

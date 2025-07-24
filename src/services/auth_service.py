@@ -1,5 +1,5 @@
 """
-Authentication and user management service for MVidarr Enhanced
+Authentication and user management service for MVidarr
 """
 
 from datetime import datetime, timedelta

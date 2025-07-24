@@ -1,5 +1,5 @@
 """
-Database connection management for MVidarr Enhanced
+Database connection management for MVidarr
 """
 
 import pymysql

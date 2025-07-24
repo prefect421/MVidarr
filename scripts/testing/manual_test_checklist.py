@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MVidarr Enhanced - Manual Testing Checklist
+MVidarr - Manual Testing Checklist
 Interactive checklist for manual testing procedures.
 """
 
@@ -20,7 +20,7 @@ class ManualTestChecklist:
     
     def run_checklist(self):
         """Run the interactive manual testing checklist"""
-        print("🧪 MVidarr Enhanced - Manual Testing Checklist")
+        print("🧪 MVidarr - Manual Testing Checklist")
         print("=" * 60)
         print("This interactive checklist will guide you through manual testing.")
         print("For each item, press 'p' for pass, 'f' for fail, 's' for skip, or 'q' to quit.")
@@ -214,7 +214,7 @@ class ManualTestChecklist:
         report_path.parent.mkdir(parents=True, exist_ok=True)
         
         with open(report_path, 'w') as f:
-            f.write("MVidarr Enhanced - Manual Testing Report\n")
+            f.write("MVidarr - Manual Testing Report\n")
             f.write("=" * 50 + "\n\n")
             f.write(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"Total Items: {total_items}\n")

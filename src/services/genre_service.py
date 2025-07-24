@@ -1,5 +1,5 @@
 """
-Genre management service for MVidarr Enhanced
+Genre management service for MVidarr
 """
 
 import json

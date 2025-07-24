@@ -1,5 +1,5 @@
 """
-MVidarr Enhanced - Main Application with Authentication
+MVidarr - Main Application with Authentication
 This is the main application entry point with full authentication integration.
 """
 
@@ -30,7 +30,7 @@ logger = get_logger('mvidarr.app')
 
 def create_app(config_name='default'):
     """
-    Application factory for MVidarr Enhanced with Authentication
+    Application factory for MVidarr with Authentication
     
     Args:
         config_name: Configuration profile to use
@@ -50,7 +50,7 @@ def create_app(config_name='default'):
     app.secret_key = config.SECRET_KEY or os.urandom(24)
     
     try:
-        logger.info("🚀 Starting MVidarr Enhanced with Authentication")
+        logger.info("🚀 Starting MVidarr with Authentication")
         logger.info("=" * 60)
         
         # Step 1: Setup logging
@@ -111,7 +111,7 @@ def create_app(config_name='default'):
                 'user_role': g.get('user_role'),
             }
         
-        logger.info("✅ MVidarr Enhanced application created successfully!")
+        logger.info("✅ MVidarr application created successfully!")
         logger.info("🔐 Authentication system: ENABLED")
         logger.info("👥 Multi-user support: ENABLED")
         logger.info("🛡️ Role-based access control: ENABLED")
@@ -148,7 +148,7 @@ def register_main_routes(app):
         @login_required
         def _dashboard():
             return jsonify({
-                'message': 'Welcome to MVidarr Enhanced!',
+                'message': 'Welcome to MVidarr!',
                 'user': request.current_user.username,
                 'role': request.current_user.role.value
             })

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MVidarr Enhanced Smart Application Launcher
+MVidarr Smart Application Launcher
 Automatically detects authentication settings and starts the appropriate application version
 """
 
@@ -19,7 +19,7 @@ logging.basicConfig(
 logger = logging.getLogger('mvidarr.launcher')
 
 class MVidarrLauncher:
-    """Smart launcher for MVidarr Enhanced applications"""
+    """Smart launcher for MVidarr applications"""
     
     def __init__(self):
         self.base_dir = Path(__file__).parent
@@ -29,17 +29,17 @@ class MVidarrLauncher:
         self.app_configs = {
             'simple_auth': {
                 'file': 'src/app_with_simple_auth.py',
-                'name': 'MVidarr Enhanced with Simple Authentication',
+                'name': 'MVidarr with Simple Authentication',
                 'description': 'Single-user authentication with username/password'
             },
             'full_auth': {
                 'file': 'app.py',
-                'name': 'MVidarr Enhanced with Full Authentication',
+                'name': 'MVidarr with Full Authentication',
                 'description': 'Multi-user authentication with roles and OAuth'
             },
             'no_auth': {
                 'file': 'app.py',  # Could be a separate no-auth version if needed
-                'name': 'MVidarr Enhanced without Authentication',
+                'name': 'MVidarr without Authentication',
                 'description': 'Open access without authentication'
             }
         }
@@ -148,7 +148,7 @@ class MVidarrLauncher:
         app_file = self.base_dir / app_config['file']
         
         logger.info("=" * 60)
-        logger.info("MVidarr Enhanced Smart Launcher")
+        logger.info("MVidarr Smart Launcher")
         logger.info("=" * 60)
         logger.info(f"Selected Mode: {auth_mode}")
         logger.info(f"Application: {app_config['name']}")
@@ -183,7 +183,7 @@ class MVidarrLauncher:
     def show_status(self):
         """Show current configuration and available applications"""
         print("\n" + "=" * 60)
-        print("MVidarr Enhanced Launcher Status")
+        print("MVidarr Launcher Status")
         print("=" * 60)
         
         # Check database
@@ -227,7 +227,7 @@ def main():
             if not success:
                 sys.exit(1)
         elif command in ['help', '-h', '--help']:
-            print("MVidarr Enhanced Smart Launcher")
+            print("MVidarr Smart Launcher")
             print("\nUsage:")
             print("  python3 app_launcher.py [command]")
             print("\nCommands:")

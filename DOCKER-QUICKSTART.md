@@ -1,8 +1,8 @@
-# MVidarr Enhanced - Docker Quick Start
+# MVidarr - Docker Quick Start
 
 ## 🚀 Ready to Deploy!
 
-Your MVidarr Enhanced Docker containerization is complete and production-ready!
+Your MVidarr Docker containerization is complete and production-ready!
 
 ### ✅ What's Been Built
 
@@ -14,7 +14,7 @@ Your MVidarr Enhanced Docker containerization is complete and production-ready!
    - Image size: 1.35GB
 
 2. **Docker Compose Configuration** (`docker-compose.production.yml`)
-   - MVidarr Enhanced application container
+   - MVidarr application container
    - MariaDB 11.4 database container
    - Persistent volume mounts for data
    - Health monitoring and auto-restart
@@ -52,7 +52,7 @@ open http://localhost:5000
 
 ### 📊 Container Details
 
-**MVidarr Enhanced Container:**
+**MVidarr Container:**
 - **Base**: Python 3.12-slim
 - **Size**: 1.35GB
 - **User**: mvidarr (UID: 1001)
@@ -107,7 +107,7 @@ docker-compose -f docker-compose.production.yml logs -f mvidarr
 
 ### 🆙 Next Steps
 
-Your MVidarr Enhanced is now ready for:
+Your MVidarr is now ready for:
 1. **Production Deployment** - All containers tested and working
 2. **Data Migration** - Import existing music video collections
 3. **API Integration** - Configure IMVDb and YouTube APIs
@@ -123,4 +123,4 @@ Your MVidarr Enhanced is now ready for:
 
 ---
 
-**🎉 Congratulations!** Your MVidarr Enhanced music video management system is containerized and ready for production deployment. The Docker setup provides enterprise-grade reliability, security, and maintainability.
+**🎉 Congratulations!** Your MVidarr music video management system is containerized and ready for production deployment. The Docker setup provides enterprise-grade reliability, security, and maintainability.

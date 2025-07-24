@@ -49,7 +49,7 @@ class IMVDbService:
         
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         headers = {
-            'User-Agent': 'MVidarr Enhanced/1.0',
+            'User-Agent': 'MVidarr/1.0',
             'Authorization': f'Bearer {api_key}'
         }
         
