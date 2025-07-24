@@ -16,147 +16,122 @@ jobs:
   test:
     name: Test Application
     runs-on: ubuntu-latest
-    
-    services:
-      mariadb:
-        image: mariadb:10.6
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: mvidarr_test
-          MYSQL_USER: mvidarr
-          MYSQL_PASSWORD: mvidarr
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
 
-    - name: Install system dependencies
+    - name: Create test environment file
       run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg libmariadb-dev pkg-config
+        cat > .env << EOF
+        DB_HOST=mvidarr-mariadb
+        DB_PORT=3306
+        DB_USER=mvidarr
+        DB_PASSWORD=test_password
+        DB_NAME=mvidarr_test
+        SECRET_KEY=test_secret_key_for_ci
+        DEBUG=true
+        IMVDB_API_KEY=test_key
+        YOUTUBE_API_KEY=test_key
+        EOF
 
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    - name: Install Python dependencies
+    - name: Start MariaDB container
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-cov requests
+        docker network create mvidarr-test-network
+        docker run -d \
+          --name mvidarr-mariadb \
+          --network mvidarr-test-network \
+          -e MYSQL_ROOT_PASSWORD=test_root_password \
+          -e MYSQL_DATABASE=mvidarr_test \
+          -e MYSQL_USER=mvidarr \
+          -e MYSQL_PASSWORD=test_password \
+          -p 3306:3306 \
+          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password" \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=5 \
+          --health-start-period=30s \
+          mariadb:11.4
 
-    - name: Wait for MariaDB
+    - name: Wait for MariaDB to be healthy
       run: |
-        timeout=60
+        timeout=180
         count=0
         while [ $count -lt $timeout ]; do
-          if mysqladmin ping -h"localhost" -P3306 -uroot -proot --silent 2>/dev/null; then
-            echo "MariaDB is ready!"
+          if docker inspect --format='{{.State.Health.Status}}' mvidarr-mariadb | grep -q healthy; then
+            echo "MariaDB is healthy!"
             break
           fi
-          echo "Waiting for MariaDB to be ready... ($count/$timeout)"
-          sleep 2
-          count=$((count + 1))
+          echo "Waiting for MariaDB to be healthy... ($count/$timeout)"
+          sleep 3
+          count=$((count + 3))
         done
-        if [ $count -eq $timeout ]; then
-          echo "MariaDB failed to start within timeout"
+        if [ $count -ge $timeout ]; then
+          echo "MariaDB failed to become healthy within timeout"
+          docker logs mvidarr-mariadb
           exit 1
         fi
 
-    - name: Set up test environment
+    - name: Build and start MVidarr test container
       run: |
-        mkdir -p data/logs data/downloads data/thumbnails
-        export DB_HOST=localhost
-        export DB_PORT=3306
-        export DB_NAME=mvidarr_test
-        export DB_USER=mvidarr
-        export DB_PASSWORD=mvidarr
-        export SECRET_KEY=test-secret-key-for-ci
+        docker build -f Dockerfile.production -t mvidarr:test .
+        docker run -d \
+          --name mvidarr-test \
+          --network mvidarr-test-network \
+          -p 5000:5000 \
+          --env-file .env \
+          -e DB_HOST=mvidarr-mariadb \
+          -v $(pwd)/data:/app/data \
+          mvidarr:test
 
-    - name: Initialize database
+    - name: Wait for MVidarr application to be ready
       run: |
-        export MVIDARR_DB_HOST=localhost
-        export MVIDARR_DB_PORT=3306
-        export MVIDARR_DB_NAME=mvidarr_test
-        export MVIDARR_DB_USER=mvidarr
-        export MVIDARR_DB_PASSWORD=mvidarr
-        python scripts/migrations/add_authentication_tables.py || true
-        python scripts/migrations/add_genre_columns.py || true
-
-    - name: Run unit tests
-      run: |
-        export DB_HOST=localhost
-        export DB_PORT=3306
-        export DB_NAME=mvidarr_test
-        export DB_USER=mvidarr
-        export DB_PASSWORD=mvidarr
-        export SECRET_KEY=test-secret-key-for-ci
-        pytest tests/unit/ -v --cov=src --cov-report=xml || echo "Unit tests not yet implemented"
-
-    - name: Start application for integration tests
-      run: |
-        export DB_HOST=localhost
-        export DB_PORT=3306
-        export DB_NAME=mvidarr_test
-        export DB_USER=mvidarr
-        export DB_PASSWORD=mvidarr
-        export SECRET_KEY=test-secret-key-for-ci
-        export FLASK_ENV=testing
-        export DEBUG=true
-        
-        # Create required directories
-        mkdir -p data/logs data/downloads data/thumbnails
-        
-        # Start application in background
-        python app.py > app.log 2>&1 &
-        APP_PID=$!
-        echo "Started app with PID: $APP_PID"
-        
-        # Wait for application to be ready with proper health check
-        timeout=60
+        timeout=120
         count=0
         while [ $count -lt $timeout ]; do
           if curl -f http://localhost:5000/api/health >/dev/null 2>&1; then
-            echo "Application is ready!"
+            echo "MVidarr application is ready!"
             break
           fi
-          echo "Waiting for application to start... ($count/$timeout)"
-          sleep 2
-          count=$((count + 1))
+          echo "Waiting for MVidarr to be ready... ($count/$timeout)"
+          sleep 3
+          count=$((count + 3))
         done
-        
-        if [ $count -eq $timeout ]; then
-          echo "Application failed to start within timeout"
-          echo "Application logs:"
-          cat app.log || echo "No log file found"
-          kill $APP_PID || true
+        if [ $count -ge $timeout ]; then
+          echo "MVidarr failed to start within timeout"
+          docker logs mvidarr-test
           exit 1
         fi
 
     - name: Run comprehensive tests
       run: |
-        export DB_HOST=localhost
-        export DB_PORT=3306
-        export DB_NAME=mvidarr_test
-        export DB_USER=mvidarr
-        export DB_PASSWORD=mvidarr
-        export SECRET_KEY=test-secret-key-for-ci
-        python scripts/testing/run_comprehensive_tests.py --url http://localhost:5000
+        # Run tests against the running containerized application
+        docker exec mvidarr-test python scripts/testing/run_comprehensive_tests.py --url http://localhost:5000
+
+    - name: Run unit tests (if available)
+      run: |
+        # Run unit tests inside the container  
+        docker exec mvidarr-test pytest tests/unit/ -v --cov=src --cov-report=xml || echo "Unit tests not yet implemented"
+
+
+    - name: Extract test results
+      if: always()
+      run: |
+        # Copy test results from container if they exist
+        docker cp mvidarr-test:/app/coverage.xml ./coverage.xml || echo "No coverage report found"
+        
+    - name: Cleanup containers
+      if: always()
+      run: |
+        docker stop mvidarr-test mvidarr-mariadb || true
+        docker rm mvidarr-test mvidarr-mariadb || true
+        docker network rm mvidarr-test-network || true
 
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       if: github.event_name == 'push'
       with:
         file: ./coverage.xml
@@ -238,10 +213,10 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: Log in to Container Registry
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
@@ -260,94 +235,11 @@ jobs:
           type=raw,value=latest,enable={{is_default_branch}}
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: .
         file: ./Dockerfile.production
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        platforms: linux/amd64,linux/arm64
-
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [build-and-push]
-    if: github.ref == 'refs/heads/develop'
-    environment: staging
-    
-    steps:
-    - name: Deploy to staging environment
-      run: |
-        echo "Deploying to staging environment..."
-        echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop"
-        # Add deployment script here
-        # This could include:
-        # - SSH to staging server
-        # - Pull latest image
-        # - Update docker-compose files
-        # - Restart services
-        # - Run health checks
-
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [build-and-push]
-    if: github.event_name == 'release'
-    environment: production
-    
-    steps:
-    - name: Deploy to production environment
-      run: |
-        echo "Deploying to production environment..."
-        echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-        # Add production deployment script here
-        # This could include:
-        # - Blue-green deployment
-        # - Database migrations
-        # - Health checks
-        # - Rollback capability
-
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [test, security-scan, lint]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Generate changelog
-      id: changelog
-      run: |
-        # Simple changelog generation
-        echo "## Changes in this release" > CHANGELOG.md
-        git log --pretty=format:"- %s (%h)" --since="$(git describe --tags --abbrev=0)" >> CHANGELOG.md || echo "- Initial release" >> CHANGELOG.md
-        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-        cat CHANGELOG.md >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-
-    - name: Get next version
-      id: version
-      run: |
-        # Simple semantic versioning
-        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-        echo "Latest tag: $LATEST_TAG"
-        # For simplicity, increment patch version
-        NEW_VERSION=$(echo $LATEST_TAG | awk -F. '{$NF++; print}' OFS=.)
-        echo "New version: $NEW_VERSION"
-        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-    - name: Create Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.version.outputs.version }}
-        release_name: Release ${{ steps.version.outputs.version }}
-        body: ${{ steps.changelog.outputs.CHANGELOG }}
-        draft: false
-        prerelease: false
+        platforms: linux/amd64
