@@ -51,21 +51,28 @@ jobs:
           -p 3306:3306 \
           mariadb:11.4
 
-    - name: Wait for MariaDB to be healthy
+    - name: Wait for MariaDB to be ready
       run: |
         timeout=180
         count=0
+        echo "Waiting for MariaDB to be ready..."
+        
         while [ $count -lt $timeout ]; do
-          if docker inspect --format='{{.State.Health.Status}}' mvidarr-mariadb | grep -q healthy; then
-            echo "MariaDB is healthy!"
-            break
+          if docker exec mvidarr-mariadb mysqladmin ping -h 127.0.0.1 -u root -ptest_root_password --silent 2>/dev/null; then
+            echo "MariaDB is ready! Testing database connection..."
+            if docker exec mvidarr-mariadb mysql -h 127.0.0.1 -u mvidarr -ptest_password -e "SELECT 1" mvidarr_test >/dev/null 2>&1; then
+              echo "MariaDB is ready and database mvidarr_test is accessible!"
+              break
+            else
+              echo "Ping successful but database connection failed, retrying..."
+            fi
           fi
-          echo "Waiting for MariaDB to be healthy... ($count/$timeout)"
+          echo "Waiting for MariaDB to be ready... ($count/$timeout)"
           sleep 3
           count=$((count + 3))
         done
         if [ $count -ge $timeout ]; then
-          echo "MariaDB failed to become healthy within timeout"
+          echo "MariaDB failed to start within $timeout seconds"
           docker logs mvidarr-mariadb
           exit 1
         fi
