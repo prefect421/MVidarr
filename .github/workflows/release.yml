@@ -141,8 +141,6 @@ jobs:
         platforms: ${{ steps.platform.outputs.platform }}
         push: true
         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-${{ matrix.platform }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
 
   create-manifest:
     name: Create Multi-Platform Manifest
