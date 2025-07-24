@@ -87,6 +87,9 @@ jobs:
         count=0
         echo "Waiting for MariaDB service to be ready..."
         
+        # Install MariaDB client tools
+        sudo apt-get update && sudo apt-get install -y mariadb-client
+        
         while [ $count -lt $timeout ]; do
           if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -ptest_password --silent 2>/dev/null; then
             echo "MariaDB ping successful! Testing database connection..."
