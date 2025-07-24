@@ -102,8 +102,36 @@ jobs:
         export MVIDARR_DB_PASSWORD=mvidarr
         export MVIDARR_SECRET_KEY=test-secret-key-for-ci
         export FLASK_ENV=testing
-        python app.py &
-        sleep 15  # Wait for application to start
+        export DEBUG=true
+        
+        # Create required directories
+        mkdir -p data/logs data/downloads data/thumbnails
+        
+        # Start application in background
+        python app.py > app.log 2>&1 &
+        APP_PID=$!
+        echo "Started app with PID: $APP_PID"
+        
+        # Wait for application to be ready with proper health check
+        timeout=60
+        count=0
+        while [ $count -lt $timeout ]; do
+          if curl -f http://localhost:5000/api/health >/dev/null 2>&1; then
+            echo "Application is ready!"
+            break
+          fi
+          echo "Waiting for application to start... ($count/$timeout)"
+          sleep 2
+          count=$((count + 1))
+        done
+        
+        if [ $count -eq $timeout ]; then
+          echo "Application failed to start within timeout"
+          echo "Application logs:"
+          cat app.log || echo "No log file found"
+          kill $APP_PID || true
+          exit 1
+        fi
 
     - name: Run comprehensive tests
       run: |
