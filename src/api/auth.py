@@ -8,12 +8,20 @@ from flask import session as flask_session
 from flask import url_for
 
 from src.database.models import UserRole
-from src.services.audit_service import (AuditEventType, AuditService,
-                                        log_login_failed, log_login_success,
-                                        log_logout, log_oauth_login_failed,
-                                        log_oauth_login_success)
-from src.services.auth_service import (AuthenticationError, AuthorizationError,
-                                       AuthService)
+from src.services.audit_service import (
+    AuditEventType,
+    AuditService,
+    log_login_failed,
+    log_login_success,
+    log_logout,
+    log_oauth_login_failed,
+    log_oauth_login_success,
+)
+from src.services.auth_service import (
+    AuthenticationError,
+    AuthorizationError,
+    AuthService,
+)
 from src.services.oauth_service import oauth_service
 from src.utils.auth_decorators import admin_required, login_required
 from src.utils.logger import get_logger

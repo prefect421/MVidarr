@@ -5,8 +5,7 @@ Provides TOTP setup, verification, and management endpoints.
 
 from datetime import datetime, timezone
 
-from flask import (Blueprint, flash, jsonify, redirect, render_template,
-                   request, url_for)
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 
 from src.database.connection import get_db
 from src.database.models import User, UserRole

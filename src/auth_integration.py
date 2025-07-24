@@ -6,8 +6,10 @@ Integrates authentication middleware, routes, and endpoint protection.
 from flask import Flask
 
 from src.api.auth import register_auth_routes
-from src.api.protected_endpoints import (apply_authentication_protection,
-                                         create_endpoint_protection_report)
+from src.api.protected_endpoints import (
+    apply_authentication_protection,
+    create_endpoint_protection_report,
+)
 from src.api.users import register_users_routes
 from src.middleware.auth_middleware import AuthMiddleware
 from src.services.auth_service import AuthService
@@ -142,7 +144,8 @@ class AuthenticationIntegration:
                 try:
                     from src.api.protected_endpoints import (
                         apply_authentication_protection,
-                        create_endpoint_protection_report)
+                        create_endpoint_protection_report,
+                    )
 
                     protected_count = apply_authentication_protection(app)
 

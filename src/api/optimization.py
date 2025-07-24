@@ -4,10 +4,8 @@ Optimization API endpoints for MVidarr
 
 from flask import Blueprint, jsonify, request
 
-from src.services.search_optimization_service import \
-    search_optimization_service
-from src.services.thumbnail_optimization_service import \
-    thumbnail_optimization_service
+from src.services.search_optimization_service import search_optimization_service
+from src.services.thumbnail_optimization_service import thumbnail_optimization_service
 from src.utils.logger import get_logger
 
 optimization_bp = Blueprint("optimization", __name__, url_prefix="/optimization")

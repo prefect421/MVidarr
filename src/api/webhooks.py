@@ -4,8 +4,11 @@ Webhook API endpoints for event-driven notifications
 
 from flask import Blueprint, jsonify, request
 
-from src.services.webhook_service import (WebhookEndpoint, WebhookEventType,
-                                          webhook_service)
+from src.services.webhook_service import (
+    WebhookEndpoint,
+    WebhookEventType,
+    webhook_service,
+)
 from src.utils.logger import get_logger
 
 webhooks_bp = Blueprint("webhooks", __name__, url_prefix="/webhooks")
