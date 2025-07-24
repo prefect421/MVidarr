@@ -51,6 +51,9 @@ jobs:
           -e MYSQL_PASSWORD=test_password \
           -p 3306:3306 \
           mariadb:11.4
+        
+        echo "MariaDB container started on network:"
+        docker network inspect mvidarr-test-network
 
     - name: Wait for MariaDB to be ready
       run: |
@@ -108,6 +111,9 @@ jobs:
         echo "Container started. Checking initial status:"
         sleep 2
         docker ps | grep mvidarr-test || echo "Container not running"
+        echo "Network connectivity test from container:"
+        docker exec mvidarr-test nc -z mvidarr-mariadb 3306 && echo "✅ Can reach MariaDB" || echo "❌ Cannot reach MariaDB"
+        docker exec mvidarr-test nslookup mvidarr-mariadb || echo "DNS resolution failed"
         echo "Initial container logs:"
         docker logs mvidarr-test 2>&1 || echo "Cannot get container logs yet"
 
