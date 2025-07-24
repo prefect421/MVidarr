@@ -15,8 +15,7 @@ from werkzeug.utils import secure_filename
 from src.database.connection import get_db
 from src.database.models import Artist, Download, Video, VideoStatus
 from src.services.imvdb_service import imvdb_service
-from src.services.search_optimization_service import \
-    search_optimization_service
+from src.services.search_optimization_service import search_optimization_service
 from src.services.thumbnail_service import thumbnail_service
 from src.services.wikipedia_service import wikipedia_service
 from src.services.youtube_search_service import youtube_search_service
@@ -2456,8 +2455,9 @@ def search_artist_thumbnail(artist_id):
 
         # Search YouTube (try to find artist's channel thumbnail)
         try:
-            from src.services.youtube_search_service import \
-                search_artist_channel_thumbnail
+            from src.services.youtube_search_service import (
+                search_artist_channel_thumbnail,
+            )
 
             youtube_thumbnail = search_artist_channel_thumbnail(artist_name)
             if youtube_thumbnail:

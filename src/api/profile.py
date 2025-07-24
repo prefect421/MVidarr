@@ -6,8 +6,7 @@ Provides self-service user account management functionality.
 import json
 from datetime import datetime, timezone
 
-from flask import (Blueprint, flash, jsonify, redirect, render_template,
-                   request, url_for)
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from src.database.connection import get_db

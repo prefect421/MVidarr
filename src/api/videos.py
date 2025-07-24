@@ -649,8 +649,9 @@ def identify_artist(video_id):
             current_artist = video.artist.name if video.artist else None
 
         # Import the identification service
-        from src.services.artist_identification_service import \
-            artist_identification_service
+        from src.services.artist_identification_service import (
+            artist_identification_service,
+        )
 
         # Get identification candidates
         candidates = artist_identification_service.identify_artist_from_title(
@@ -848,8 +849,7 @@ def get_video_thumbnail(video_id):
             # If we have a thumbnail URL but no local file, download and cache it
             if video.thumbnail_url and not video.thumbnail_path:
                 try:
-                    from src.services.thumbnail_service import \
-                        thumbnail_service
+                    from src.services.thumbnail_service import thumbnail_service
 
                     artist_name = video.artist.name if video.artist else "Unknown"
                     thumbnail_path = thumbnail_service.download_video_thumbnail(
@@ -1025,8 +1025,7 @@ def update_video_thumbnail(video_id):
                 video.thumbnail_source = "manual"
                 # Clear cached thumbnail path so new URL will be used
                 if video.thumbnail_path:
-                    from src.services.thumbnail_service import \
-                        thumbnail_service
+                    from src.services.thumbnail_service import thumbnail_service
 
                     thumbnail_service.delete_thumbnail_files(video.thumbnail_path)
                     video.thumbnail_path = None
@@ -1383,8 +1382,9 @@ def stream_video(video_id):
                         ".avi"
                     ):
                         # Use FFmpeg streaming for MKV/AVI files
-                        from src.services.ffmpeg_streaming_service import \
-                            ffmpeg_streaming_service
+                        from src.services.ffmpeg_streaming_service import (
+                            ffmpeg_streaming_service,
+                        )
 
                         return ffmpeg_streaming_service.stream_video(full_path)
 
@@ -3306,8 +3306,7 @@ def import_video_from_youtube():
             title = data.get("title")
             if not title:
                 # Try to fetch title from YouTube API
-                from src.services.youtube_search_service import \
-                    youtube_search_service
+                from src.services.youtube_search_service import youtube_search_service
 
                 try:
                     # Get video details from YouTube

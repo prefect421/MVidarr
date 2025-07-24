@@ -9,8 +9,11 @@ from flask import session as flask_session
 from flask import url_for
 
 from src.database.models import UserRole
-from src.services.auth_service import (AuthenticationError, AuthorizationError,
-                                       AuthService)
+from src.services.auth_service import (
+    AuthenticationError,
+    AuthorizationError,
+    AuthService,
+)
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.auth.decorators")

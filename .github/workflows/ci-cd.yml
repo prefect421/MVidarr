@@ -121,7 +121,7 @@ jobs:
     - name: Check code formatting
       run: |
         black --check src/
-        isort --check-only src/
+        isort --profile black --check-only src/
     
     - name: Run tests
       run: |

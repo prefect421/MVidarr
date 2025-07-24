@@ -421,6 +421,7 @@ def trigger_scheduled_download():
     """Manually trigger a scheduled download"""
     try:
         from src.services.scheduler_service import scheduler_service
+
         # Get max videos setting
         from src.services.settings_service import SettingsService
 

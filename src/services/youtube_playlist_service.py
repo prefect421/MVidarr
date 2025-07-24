@@ -14,8 +14,7 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from src.database.connection import get_db
-from src.database.models import (Artist, Download, PlaylistMonitor, Video,
-                                 VideoStatus)
+from src.database.models import Artist, Download, PlaylistMonitor, Video, VideoStatus
 from src.services.imvdb_service import imvdb_service
 from src.services.settings_service import settings
 from src.utils.logger import get_logger
