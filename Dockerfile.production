@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
     mariadb-client \
     build-essential \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
@@ -58,7 +59,7 @@ EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+    CMD curl -f http://localhost:5000/api/health/status || exit 1
 
 # Switch to non-root user
 USER mvidarr
@@ -70,25 +71,36 @@ set -e
 
 # Wait for database to be ready
 echo "Waiting for MariaDB to be ready..."
-timeout=120
+timeout=180
 count=0
 while [ $count -lt $timeout ]; do
-    if mysqladmin ping -h"${DB_HOST:-mariadb}" -P"${DB_PORT:-3306}" -u"${DB_USER:-mvidarr}" -p"${DB_PASSWORD}" --silent 2>/dev/null; then
-        echo "MariaDB is ready!"
-        break
+    if [ -z "${DB_PASSWORD}" ]; then
+        # No password case
+        if mysqladmin ping -h"${DB_HOST:-mariadb}" -P"${DB_PORT:-3306}" -u"${DB_USER:-mvidarr}" --silent 2>/dev/null; then
+            echo "MariaDB is ready!"
+            break
+        fi
+    else
+        # With password case
+        if mysqladmin ping -h"${DB_HOST:-mariadb}" -P"${DB_PORT:-3306}" -u"${DB_USER:-mvidarr}" --password="${DB_PASSWORD}" --silent 2>/dev/null; then
+            echo "MariaDB is ready!"
+            break
+        fi
     fi
-    echo "MariaDB is unavailable - sleeping ($count/$timeout)"
+    echo "MariaDB is unavailable - sleeping ($count/$timeout seconds)"
     sleep 3
-    count=$((count + 1))
+    count=$((count + 3))
 done
 
-if [ $count -eq $timeout ]; then
-    echo "MariaDB failed to start within timeout"
+if [ $count -ge $timeout ]; then
+    echo "MariaDB failed to start within timeout ($timeout seconds)"
     echo "Checking MariaDB connection details:"
     echo "Host: ${DB_HOST:-mariadb}"
     echo "Port: ${DB_PORT:-3306}"
     echo "User: ${DB_USER:-mvidarr}"
     echo "Database: ${DB_NAME:-mvidarr}"
+    echo "Testing basic connectivity..."
+    nc -z "${DB_HOST:-mariadb}" "${DB_PORT:-3306}" && echo "Port is reachable" || echo "Port is not reachable"
     exit 1
 fi
 
@@ -97,8 +109,18 @@ echo "MariaDB is ready - starting application"
 # Initialize database if needed
 if [ ! -f /app/data/database/.initialized ]; then
     echo "Initializing database..."
-    python3 scripts/setup_database.sh || true
-    python3 scripts/init_auth_database.py || true
+    # Use Python to initialize the database through the app's init_db function
+    python3 -c "
+import sys
+sys.path.insert(0, '/app/src')
+from src.database.init_db import initialize_database
+try:
+    initialize_database()
+    print('Database initialized successfully')
+except Exception as e:
+    print(f'Database initialization failed: {e}')
+    # Don't exit on database init failure in case it already exists
+" || echo "Database initialization failed or already exists"
     touch /app/data/database/.initialized
 fi
 
