@@ -24,7 +24,8 @@ services:
       - PYTHONUNBUFFERED=1
       - TZ=${TZ:-UTC}
     volumes:
-      - ${MUSIC_VIDEOS_PATH:-./musicvideos}:/app/data/downloads
+      - ${DOWNLOADS_PATH:-./downloads}:/app/data/downloads
+      - ${MUSIC_VIDEOS_PATH:-./musicvideos}:/app/data/musicvideos
       - ${DATABASE_FOLDER:-./database}:/app/data/database
       - ${THUMBNAILS_PATH:-./thumbnails}:/app/data/thumbnails
       - ${LOGS_PATH:-./logs}:/app/data/logs

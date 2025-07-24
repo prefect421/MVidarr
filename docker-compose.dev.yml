@@ -34,7 +34,8 @@ services:
       - /app/__pycache__
       - /app/src/__pycache__
       # Data volumes for development
-      - ${MUSIC_VIDEOS_PATH:-./data/musicvideos}:/app/data/downloads
+      - ${DOWNLOADS_PATH:-./data/downloads}:/app/data/downloads
+      - ${MUSIC_VIDEOS_PATH:-./data/musicvideos}:/app/data/musicvideos
       - ${DATABASE_FOLDER:-./data/database}:/app/data/database
       - ${THUMBNAILS_PATH:-./data/thumbnails}:/app/data/thumbnails
       - ${LOGS_PATH:-./data/logs}:/app/data/logs

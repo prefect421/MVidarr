@@ -145,7 +145,7 @@ fi
 
 # Create necessary directories
 print_status "Creating necessary directories..."
-mkdir -p data/{database,musicvideos,thumbnails,logs,cache,backups}
+mkdir -p data/{database,downloads,musicvideos,thumbnails,logs,cache,backups}
 mkdir -p docker/mariadb
 
 # Set proper permissions
