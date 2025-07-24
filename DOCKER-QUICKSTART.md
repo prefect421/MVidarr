@@ -4,6 +4,12 @@
 
 Your MVidarr Docker containerization is complete and production-ready!
 
+### ✅ **CI/CD Tests Passed Successfully**
+- **MariaDB Health Checks**: Fixed and working correctly
+- **Code Quality**: All linting and formatting checks passed  
+- **Security Scans**: No vulnerabilities detected
+- **Container Integration**: MariaDB connectivity verified
+
 ### ✅ What's Been Built
 
 1. **Production Dockerfile** (`Dockerfile.production`)
@@ -32,8 +38,22 @@ Your MVidarr Docker containerization is complete and production-ready!
    - Security considerations
    - Maintenance procedures
 
-### 🎯 30-Second Deployment
+### 🎯 Quick Start Deployment
 
+#### Option 1: Simple Setup (Recommended for testing)
+```bash
+# 1. Clone and navigate
+git clone https://github.com/prefect421/mvidarr.git
+cd mvidarr
+
+# 2. Start with defaults
+docker-compose up -d
+
+# 3. Access application
+open http://localhost:5000
+```
+
+#### Option 2: Production Setup
 ```bash
 # 1. Copy and configure
 cp docker-config.yml.sample docker-config.yml
