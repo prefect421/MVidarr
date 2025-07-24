@@ -174,3 +174,4 @@ node_modules.nosync
 pdf_env/
 screenshot_env/
 # Trigger Docker build
+# Restart CI/CD with all fixes
