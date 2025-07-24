@@ -2,14 +2,16 @@
 OpenAPI documentation and specification for MVidarr REST API
 """
 
-from flask import Blueprint, jsonify, render_template_string
-from src.utils.logger import get_logger
 import os
 
-logger = get_logger('mvidarr.api.openapi')
+from flask import Blueprint, jsonify, render_template_string
+
+from src.utils.logger import get_logger
+
+logger = get_logger("mvidarr.api.openapi")
 
 # Create OpenAPI blueprint
-openapi_bp = Blueprint('openapi', __name__, url_prefix='/api/docs')
+openapi_bp = Blueprint("openapi", __name__, url_prefix="/api/docs")
 
 # OpenAPI specification
 OPENAPI_SPEC = {
@@ -20,19 +22,11 @@ OPENAPI_SPEC = {
         "description": "Professional music video management system with artist tracking, video discovery, and external service integration",
         "contact": {
             "name": "MVidarr",
-            "url": "https://github.com/mvidarr/mvidarr-enhanced"
+            "url": "https://github.com/mvidarr/mvidarr-enhanced",
         },
-        "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
-        }
+        "license": {"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
     },
-    "servers": [
-        {
-            "url": "http://localhost:5000",
-            "description": "Development server"
-        }
-    ],
+    "servers": [{"url": "http://localhost:5000", "description": "Development server"}],
     "components": {
         "schemas": {
             "Artist": {
@@ -41,20 +35,44 @@ OPENAPI_SPEC = {
                     "id": {"type": "integer", "example": 1},
                     "name": {"type": "string", "example": "Taylor Swift"},
                     "imvdb_id": {"type": "string", "example": "1234"},
-                    "spotify_id": {"type": "string", "example": "06HL4z0CvFAxyc27GXpf02"},
+                    "spotify_id": {
+                        "type": "string",
+                        "example": "06HL4z0CvFAxyc27GXpf02",
+                    },
                     "lastfm_name": {"type": "string", "example": "Taylor Swift"},
-                    "thumbnail_url": {"type": "string", "example": "https://example.com/thumb.jpg"},
-                    "thumbnail_path": {"type": "string", "example": "/data/thumbnails/artist_1.jpg"},
-                    "thumbnail_source": {"type": "string", "enum": ["imvdb", "wikipedia", "manual", "generated"]},
+                    "thumbnail_url": {
+                        "type": "string",
+                        "example": "https://example.com/thumb.jpg",
+                    },
+                    "thumbnail_path": {
+                        "type": "string",
+                        "example": "/data/thumbnails/artist_1.jpg",
+                    },
+                    "thumbnail_source": {
+                        "type": "string",
+                        "enum": ["imvdb", "wikipedia", "manual", "generated"],
+                    },
                     "auto_download": {"type": "boolean", "example": True},
                     "keywords": {"type": "array", "items": {"type": "string"}},
-                    "folder_path": {"type": "string", "example": "/data/downloads/Taylor Swift"},
+                    "folder_path": {
+                        "type": "string",
+                        "example": "/data/downloads/Taylor Swift",
+                    },
                     "monitored": {"type": "boolean", "example": True},
-                    "source": {"type": "string", "enum": ["imvdb", "spotify_import", "lastfm_import", "plex_sync", "manual"]},
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "imvdb",
+                            "spotify_import",
+                            "lastfm_import",
+                            "plex_sync",
+                            "manual",
+                        ],
+                    },
                     "last_discovery": {"type": "string", "format": "date-time"},
                     "created_at": {"type": "string", "format": "date-time"},
-                    "updated_at": {"type": "string", "format": "date-time"}
-                }
+                    "updated_at": {"type": "string", "format": "date-time"},
+                },
             },
             "Video": {
                 "type": "object",
@@ -64,14 +82,35 @@ OPENAPI_SPEC = {
                     "title": {"type": "string", "example": "Shake It Off"},
                     "imvdb_id": {"type": "string", "example": "5678"},
                     "youtube_id": {"type": "string", "example": "nfWlot6h_JM"},
-                    "youtube_url": {"type": "string", "example": "https://www.youtube.com/watch?v=nfWlot6h_JM"},
-                    "url": {"type": "string", "example": "https://example.com/video.mp4"},
-                    "playlist_id": {"type": "string", "example": "PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG"},
+                    "youtube_url": {
+                        "type": "string",
+                        "example": "https://www.youtube.com/watch?v=nfWlot6h_JM",
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://example.com/video.mp4",
+                    },
+                    "playlist_id": {
+                        "type": "string",
+                        "example": "PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG",
+                    },
                     "playlist_position": {"type": "integer", "example": 1},
-                    "source": {"type": "string", "enum": ["imvdb", "youtube_playlist", "manual"]},
-                    "thumbnail_url": {"type": "string", "example": "https://example.com/thumb.jpg"},
-                    "thumbnail_path": {"type": "string", "example": "/data/thumbnails/video_1.jpg"},
-                    "local_path": {"type": "string", "example": "/data/downloads/Taylor Swift/Shake It Off.mp4"},
+                    "source": {
+                        "type": "string",
+                        "enum": ["imvdb", "youtube_playlist", "manual"],
+                    },
+                    "thumbnail_url": {
+                        "type": "string",
+                        "example": "https://example.com/thumb.jpg",
+                    },
+                    "thumbnail_path": {
+                        "type": "string",
+                        "example": "/data/thumbnails/video_1.jpg",
+                    },
+                    "local_path": {
+                        "type": "string",
+                        "example": "/data/downloads/Taylor Swift/Shake It Off.mp4",
+                    },
                     "duration": {"type": "integer", "example": 242},
                     "year": {"type": "integer", "example": 2014},
                     "release_date": {"type": "string", "format": "date"},
@@ -79,12 +118,22 @@ OPENAPI_SPEC = {
                     "view_count": {"type": "integer", "example": 1000000},
                     "directors": {"type": "array", "items": {"type": "string"}},
                     "producers": {"type": "array", "items": {"type": "string"}},
-                    "status": {"type": "string", "enum": ["WANTED", "DOWNLOADING", "DOWNLOADED", "IGNORED", "FAILED", "MONITORED"]},
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "WANTED",
+                            "DOWNLOADING",
+                            "DOWNLOADED",
+                            "IGNORED",
+                            "FAILED",
+                            "MONITORED",
+                        ],
+                    },
                     "quality": {"type": "string", "example": "720p"},
                     "discovered_date": {"type": "string", "format": "date-time"},
                     "created_at": {"type": "string", "format": "date-time"},
-                    "updated_at": {"type": "string", "format": "date-time"}
-                }
+                    "updated_at": {"type": "string", "format": "date-time"},
+                },
             },
             "Download": {
                 "type": "object",
@@ -93,38 +142,66 @@ OPENAPI_SPEC = {
                     "artist_id": {"type": "integer", "example": 1},
                     "video_id": {"type": "integer", "example": 1},
                     "title": {"type": "string", "example": "Shake It Off"},
-                    "original_url": {"type": "string", "example": "https://www.youtube.com/watch?v=nfWlot6h_JM"},
-                    "file_path": {"type": "string", "example": "/data/downloads/Taylor Swift/Shake It Off.mp4"},
+                    "original_url": {
+                        "type": "string",
+                        "example": "https://www.youtube.com/watch?v=nfWlot6h_JM",
+                    },
+                    "file_path": {
+                        "type": "string",
+                        "example": "/data/downloads/Taylor Swift/Shake It Off.mp4",
+                    },
                     "file_size": {"type": "integer", "example": 52428800},
                     "download_date": {"type": "string", "format": "date-time"},
                     "metube_id": {"type": "string", "example": "abc123"},
-                    "status": {"type": "string", "enum": ["pending", "downloading", "completed", "failed"]},
-                    "priority": {"type": "integer", "minimum": 1, "maximum": 10, "example": 5},
-                    "progress": {"type": "integer", "minimum": 0, "maximum": 100, "example": 75},
+                    "status": {
+                        "type": "string",
+                        "enum": ["pending", "downloading", "completed", "failed"],
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10,
+                        "example": 5,
+                    },
+                    "progress": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100,
+                        "example": 75,
+                    },
                     "error_message": {"type": "string"},
                     "quality": {"type": "string", "example": "720p"},
                     "format": {"type": "string", "example": "mp4"},
                     "created_at": {"type": "string", "format": "date-time"},
-                    "updated_at": {"type": "string", "format": "date-time"}
-                }
+                    "updated_at": {"type": "string", "format": "date-time"},
+                },
             },
             "PlaylistMonitor": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "integer", "example": 1},
-                    "playlist_id": {"type": "string", "example": "PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG"},
-                    "playlist_url": {"type": "string", "example": "https://www.youtube.com/playlist?list=PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG"},
+                    "playlist_id": {
+                        "type": "string",
+                        "example": "PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG",
+                    },
+                    "playlist_url": {
+                        "type": "string",
+                        "example": "https://www.youtube.com/playlist?list=PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG",
+                    },
                     "name": {"type": "string", "example": "My Favorite Music Videos"},
                     "channel_title": {"type": "string", "example": "TaylorSwiftVEVO"},
-                    "channel_id": {"type": "string", "example": "UCqECaJ8Gagnn7YCbPEzWH6g"},
+                    "channel_id": {
+                        "type": "string",
+                        "example": "UCqECaJ8Gagnn7YCbPEzWH6g",
+                    },
                     "auto_download": {"type": "boolean", "example": True},
                     "quality": {"type": "string", "example": "720p"},
                     "keywords": {"type": "array", "items": {"type": "string"}},
                     "last_check": {"type": "string", "format": "date-time"},
                     "last_video_count": {"type": "integer", "example": 42},
                     "created_at": {"type": "string", "format": "date-time"},
-                    "updated_at": {"type": "string", "format": "date-time"}
-                }
+                    "updated_at": {"type": "string", "format": "date-time"},
+                },
             },
             "Setting": {
                 "type": "object",
@@ -132,27 +209,36 @@ OPENAPI_SPEC = {
                     "id": {"type": "integer", "example": 1},
                     "key": {"type": "string", "example": "metube_host"},
                     "value": {"type": "string", "example": "localhost"},
-                    "description": {"type": "string", "example": "MeTube server hostname"},
+                    "description": {
+                        "type": "string",
+                        "example": "MeTube server hostname",
+                    },
                     "created_at": {"type": "string", "format": "date-time"},
-                    "updated_at": {"type": "string", "format": "date-time"}
-                }
+                    "updated_at": {"type": "string", "format": "date-time"},
+                },
             },
             "Error": {
                 "type": "object",
                 "properties": {
                     "error": {"type": "string", "example": "Resource not found"},
-                    "message": {"type": "string", "example": "The requested resource could not be found"},
-                    "code": {"type": "integer", "example": 404}
-                }
+                    "message": {
+                        "type": "string",
+                        "example": "The requested resource could not be found",
+                    },
+                    "code": {"type": "integer", "example": 404},
+                },
             },
             "Success": {
                 "type": "object",
                 "properties": {
                     "success": {"type": "boolean", "example": True},
-                    "message": {"type": "string", "example": "Operation completed successfully"},
-                    "data": {"type": "object"}
-                }
-            }
+                    "message": {
+                        "type": "string",
+                        "example": "Operation completed successfully",
+                    },
+                    "data": {"type": "object"},
+                },
+            },
         },
         "responses": {
             "NotFound": {
@@ -161,7 +247,7 @@ OPENAPI_SPEC = {
                     "application/json": {
                         "schema": {"$ref": "#/components/schemas/Error"}
                     }
-                }
+                },
             },
             "BadRequest": {
                 "description": "Bad request",
@@ -169,7 +255,7 @@ OPENAPI_SPEC = {
                     "application/json": {
                         "schema": {"$ref": "#/components/schemas/Error"}
                     }
-                }
+                },
             },
             "InternalServerError": {
                 "description": "Internal server error",
@@ -177,9 +263,9 @@ OPENAPI_SPEC = {
                     "application/json": {
                         "schema": {"$ref": "#/components/schemas/Error"}
                     }
-                }
-            }
-        }
+                },
+            },
+        },
     },
     "paths": {
         "/api/artists": {
@@ -193,50 +279,72 @@ OPENAPI_SPEC = {
                         "in": "query",
                         "description": "Page number",
                         "required": False,
-                        "schema": {"type": "integer", "default": 1}
+                        "schema": {"type": "integer", "default": 1},
                     },
                     {
                         "name": "limit",
                         "in": "query",
                         "description": "Number of items per page",
                         "required": False,
-                        "schema": {"type": "integer", "default": 50, "maximum": 200}
+                        "schema": {"type": "integer", "default": 50, "maximum": 200},
                     },
                     {
                         "name": "search",
                         "in": "query",
                         "description": "Search term for artist name",
                         "required": False,
-                        "schema": {"type": "string"}
+                        "schema": {"type": "string"},
                     },
                     {
                         "name": "monitored",
                         "in": "query",
                         "description": "Filter by monitored status",
                         "required": False,
-                        "schema": {"type": "boolean"}
+                        "schema": {"type": "boolean"},
                     },
                     {
                         "name": "source",
                         "in": "query",
                         "description": "Filter by source",
                         "required": False,
-                        "schema": {"type": "string", "enum": ["imvdb", "spotify_import", "lastfm_import", "plex_sync", "manual"]}
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "imvdb",
+                                "spotify_import",
+                                "lastfm_import",
+                                "plex_sync",
+                                "manual",
+                            ],
+                        },
                     },
                     {
                         "name": "sort",
                         "in": "query",
                         "description": "Sort field",
                         "required": False,
-                        "schema": {"type": "string", "enum": ["name", "created_at", "updated_at", "last_discovery"], "default": "name"}
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "created_at",
+                                "updated_at",
+                                "last_discovery",
+                            ],
+                            "default": "name",
+                        },
                     },
                     {
                         "name": "order",
                         "in": "query",
                         "description": "Sort order",
                         "required": False,
-                        "schema": {"type": "string", "enum": ["asc", "desc"], "default": "asc"}
-                    }
+                        "schema": {
+                            "type": "string",
+                            "enum": ["asc", "desc"],
+                            "default": "asc",
+                        },
+                    },
                 ],
                 "responses": {
                     "200": {
@@ -248,18 +356,20 @@ OPENAPI_SPEC = {
                                     "properties": {
                                         "artists": {
                                             "type": "array",
-                                            "items": {"$ref": "#/components/schemas/Artist"}
+                                            "items": {
+                                                "$ref": "#/components/schemas/Artist"
+                                            },
                                         },
                                         "total": {"type": "integer"},
                                         "page": {"type": "integer"},
                                         "limit": {"type": "integer"},
-                                        "pages": {"type": "integer"}
-                                    }
+                                        "pages": {"type": "integer"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             },
             "post": {
                 "summary": "Create new artist",
@@ -277,14 +387,20 @@ OPENAPI_SPEC = {
                                     "imvdb_id": {"type": "string"},
                                     "spotify_id": {"type": "string"},
                                     "lastfm_name": {"type": "string"},
-                                    "auto_download": {"type": "boolean", "default": False},
-                                    "keywords": {"type": "array", "items": {"type": "string"}},
+                                    "auto_download": {
+                                        "type": "boolean",
+                                        "default": False,
+                                    },
+                                    "keywords": {
+                                        "type": "array",
+                                        "items": {"type": "string"},
+                                    },
                                     "monitored": {"type": "boolean", "default": True},
-                                    "source": {"type": "string", "default": "manual"}
-                                }
+                                    "source": {"type": "string", "default": "manual"},
+                                },
                             }
                         }
-                    }
+                    },
                 },
                 "responses": {
                     "201": {
@@ -293,12 +409,12 @@ OPENAPI_SPEC = {
                             "application/json": {
                                 "schema": {"$ref": "#/components/schemas/Artist"}
                             }
-                        }
+                        },
                     },
                     "400": {"$ref": "#/components/responses/BadRequest"},
-                    "500": {"$ref": "#/components/responses/InternalServerError"}
-                }
-            }
+                    "500": {"$ref": "#/components/responses/InternalServerError"},
+                },
+            },
         },
         "/api/artists/{id}": {
             "get": {
@@ -311,7 +427,7 @@ OPENAPI_SPEC = {
                         "in": "path",
                         "description": "Artist ID",
                         "required": True,
-                        "schema": {"type": "integer"}
+                        "schema": {"type": "integer"},
                     }
                 ],
                 "responses": {
@@ -321,10 +437,10 @@ OPENAPI_SPEC = {
                             "application/json": {
                                 "schema": {"$ref": "#/components/schemas/Artist"}
                             }
-                        }
+                        },
                     },
-                    "404": {"$ref": "#/components/responses/NotFound"}
-                }
+                    "404": {"$ref": "#/components/responses/NotFound"},
+                },
             },
             "put": {
                 "summary": "Update artist",
@@ -336,7 +452,7 @@ OPENAPI_SPEC = {
                         "in": "path",
                         "description": "Artist ID",
                         "required": True,
-                        "schema": {"type": "integer"}
+                        "schema": {"type": "integer"},
                     }
                 ],
                 "requestBody": {
@@ -351,13 +467,16 @@ OPENAPI_SPEC = {
                                     "spotify_id": {"type": "string"},
                                     "lastfm_name": {"type": "string"},
                                     "auto_download": {"type": "boolean"},
-                                    "keywords": {"type": "array", "items": {"type": "string"}},
+                                    "keywords": {
+                                        "type": "array",
+                                        "items": {"type": "string"},
+                                    },
                                     "monitored": {"type": "boolean"},
-                                    "source": {"type": "string"}
-                                }
+                                    "source": {"type": "string"},
+                                },
                             }
                         }
-                    }
+                    },
                 },
                 "responses": {
                     "200": {
@@ -366,12 +485,12 @@ OPENAPI_SPEC = {
                             "application/json": {
                                 "schema": {"$ref": "#/components/schemas/Artist"}
                             }
-                        }
+                        },
                     },
                     "400": {"$ref": "#/components/responses/BadRequest"},
                     "404": {"$ref": "#/components/responses/NotFound"},
-                    "500": {"$ref": "#/components/responses/InternalServerError"}
-                }
+                    "500": {"$ref": "#/components/responses/InternalServerError"},
+                },
             },
             "delete": {
                 "summary": "Delete artist",
@@ -383,15 +502,15 @@ OPENAPI_SPEC = {
                         "in": "path",
                         "description": "Artist ID",
                         "required": True,
-                        "schema": {"type": "integer"}
+                        "schema": {"type": "integer"},
                     },
                     {
                         "name": "delete_videos",
                         "in": "query",
                         "description": "Delete associated videos",
                         "required": False,
-                        "schema": {"type": "boolean", "default": False}
-                    }
+                        "schema": {"type": "boolean", "default": False},
+                    },
                 ],
                 "responses": {
                     "200": {
@@ -400,12 +519,12 @@ OPENAPI_SPEC = {
                             "application/json": {
                                 "schema": {"$ref": "#/components/schemas/Success"}
                             }
-                        }
+                        },
                     },
                     "404": {"$ref": "#/components/responses/NotFound"},
-                    "500": {"$ref": "#/components/responses/InternalServerError"}
-                }
-            }
+                    "500": {"$ref": "#/components/responses/InternalServerError"},
+                },
+            },
         },
         "/api/videos": {
             "get": {
@@ -418,57 +537,78 @@ OPENAPI_SPEC = {
                         "in": "query",
                         "description": "Page number",
                         "required": False,
-                        "schema": {"type": "integer", "default": 1}
+                        "schema": {"type": "integer", "default": 1},
                     },
                     {
                         "name": "limit",
                         "in": "query",
                         "description": "Number of items per page",
                         "required": False,
-                        "schema": {"type": "integer", "default": 50, "maximum": 200}
+                        "schema": {"type": "integer", "default": 50, "maximum": 200},
                     },
                     {
                         "name": "search",
                         "in": "query",
                         "description": "Search term for video title",
                         "required": False,
-                        "schema": {"type": "string"}
+                        "schema": {"type": "string"},
                     },
                     {
                         "name": "artist_id",
                         "in": "query",
                         "description": "Filter by artist ID",
                         "required": False,
-                        "schema": {"type": "integer"}
+                        "schema": {"type": "integer"},
                     },
                     {
                         "name": "status",
                         "in": "query",
                         "description": "Filter by status",
                         "required": False,
-                        "schema": {"type": "string", "enum": ["WANTED", "DOWNLOADING", "DOWNLOADED", "IGNORED", "FAILED", "MONITORED"]}
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "WANTED",
+                                "DOWNLOADING",
+                                "DOWNLOADED",
+                                "IGNORED",
+                                "FAILED",
+                                "MONITORED",
+                            ],
+                        },
                     },
                     {
                         "name": "source",
                         "in": "query",
                         "description": "Filter by source",
                         "required": False,
-                        "schema": {"type": "string", "enum": ["imvdb", "youtube_playlist", "manual"]}
+                        "schema": {
+                            "type": "string",
+                            "enum": ["imvdb", "youtube_playlist", "manual"],
+                        },
                     },
                     {
                         "name": "sort",
                         "in": "query",
                         "description": "Sort field",
                         "required": False,
-                        "schema": {"type": "string", "enum": ["title", "created_at", "updated_at", "year"], "default": "title"}
+                        "schema": {
+                            "type": "string",
+                            "enum": ["title", "created_at", "updated_at", "year"],
+                            "default": "title",
+                        },
                     },
                     {
                         "name": "order",
                         "in": "query",
                         "description": "Sort order",
                         "required": False,
-                        "schema": {"type": "string", "enum": ["asc", "desc"], "default": "asc"}
-                    }
+                        "schema": {
+                            "type": "string",
+                            "enum": ["asc", "desc"],
+                            "default": "asc",
+                        },
+                    },
                 ],
                 "responses": {
                     "200": {
@@ -480,18 +620,20 @@ OPENAPI_SPEC = {
                                     "properties": {
                                         "videos": {
                                             "type": "array",
-                                            "items": {"$ref": "#/components/schemas/Video"}
+                                            "items": {
+                                                "$ref": "#/components/schemas/Video"
+                                            },
                                         },
                                         "total": {"type": "integer"},
                                         "page": {"type": "integer"},
                                         "limit": {"type": "integer"},
-                                        "pages": {"type": "integer"}
-                                    }
+                                        "pages": {"type": "integer"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/api/spotify/status": {
@@ -510,13 +652,13 @@ OPENAPI_SPEC = {
                                         "configured": {"type": "boolean"},
                                         "authenticated": {"type": "boolean"},
                                         "profile": {"type": "object"},
-                                        "client_id": {"type": "string"}
-                                    }
+                                        "client_id": {"type": "string"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/api/youtube/playlists": {
@@ -534,15 +676,17 @@ OPENAPI_SPEC = {
                                     "properties": {
                                         "playlists": {
                                             "type": "array",
-                                            "items": {"$ref": "#/components/schemas/PlaylistMonitor"}
+                                            "items": {
+                                                "$ref": "#/components/schemas/PlaylistMonitor"
+                                            },
                                         },
-                                        "count": {"type": "integer"}
-                                    }
+                                        "count": {"type": "integer"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             },
             "post": {
                 "summary": "Create YouTube playlist monitor",
@@ -558,13 +702,19 @@ OPENAPI_SPEC = {
                                 "properties": {
                                     "playlist_url": {"type": "string"},
                                     "name": {"type": "string"},
-                                    "auto_download": {"type": "boolean", "default": True},
+                                    "auto_download": {
+                                        "type": "boolean",
+                                        "default": True,
+                                    },
                                     "quality": {"type": "string", "default": "720p"},
-                                    "keywords": {"type": "array", "items": {"type": "string"}}
-                                }
+                                    "keywords": {
+                                        "type": "array",
+                                        "items": {"type": "string"},
+                                    },
+                                },
                             }
                         }
-                    }
+                    },
                 },
                 "responses": {
                     "200": {
@@ -573,11 +723,11 @@ OPENAPI_SPEC = {
                             "application/json": {
                                 "schema": {"$ref": "#/components/schemas/Success"}
                             }
-                        }
+                        },
                     },
-                    "400": {"$ref": "#/components/responses/BadRequest"}
-                }
-            }
+                    "400": {"$ref": "#/components/responses/BadRequest"},
+                },
+            },
         },
         "/api/lastfm/status": {
             "get": {
@@ -597,13 +747,13 @@ OPENAPI_SPEC = {
                                         "username": {"type": "string"},
                                         "subscriber": {"type": "boolean"},
                                         "profile": {"type": "object"},
-                                        "api_key": {"type": "string"}
-                                    }
+                                        "api_key": {"type": "string"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/api/plex/status": {
@@ -623,13 +773,13 @@ OPENAPI_SPEC = {
                                         "connected": {"type": "boolean"},
                                         "server_url": {"type": "string"},
                                         "token": {"type": "string"},
-                                        "server_info": {"type": "object"}
-                                    }
+                                        "server_info": {"type": "object"},
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/api/health": {
@@ -645,23 +795,33 @@ OPENAPI_SPEC = {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "status": {"type": "string", "enum": ["healthy", "degraded", "unhealthy"]},
-                                        "timestamp": {"type": "string", "format": "date-time"},
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "healthy",
+                                                "degraded",
+                                                "unhealthy",
+                                            ],
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                        },
                                         "services": {
                                             "type": "object",
                                             "properties": {
                                                 "database": {"type": "object"},
                                                 "metube": {"type": "object"},
                                                 "imvdb": {"type": "object"},
-                                                "filesystem": {"type": "object"}
-                                            }
-                                        }
-                                    }
+                                                "filesystem": {"type": "object"},
+                                            },
+                                        },
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             }
         },
         "/api/settings": {
@@ -679,14 +839,16 @@ OPENAPI_SPEC = {
                                     "properties": {
                                         "settings": {
                                             "type": "array",
-                                            "items": {"$ref": "#/components/schemas/Setting"}
+                                            "items": {
+                                                "$ref": "#/components/schemas/Setting"
+                                            },
                                         }
-                                    }
+                                    },
                                 }
                             }
-                        }
+                        },
                     }
-                }
+                },
             },
             "put": {
                 "summary": "Update settings",
@@ -698,10 +860,10 @@ OPENAPI_SPEC = {
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "additionalProperties": {"type": "string"}
+                                "additionalProperties": {"type": "string"},
                             }
                         }
-                    }
+                    },
                 },
                 "responses": {
                     "200": {
@@ -710,43 +872,33 @@ OPENAPI_SPEC = {
                             "application/json": {
                                 "schema": {"$ref": "#/components/schemas/Success"}
                             }
-                        }
+                        },
                     },
-                    "400": {"$ref": "#/components/responses/BadRequest"}
-                }
-            }
-        }
+                    "400": {"$ref": "#/components/responses/BadRequest"},
+                },
+            },
+        },
     },
     "tags": [
-        {
-            "name": "Artists",
-            "description": "Artist management operations"
-        },
-        {
-            "name": "Videos",
-            "description": "Video management operations"
-        },
+        {"name": "Artists", "description": "Artist management operations"},
+        {"name": "Videos", "description": "Video management operations"},
         {
             "name": "External Integrations",
-            "description": "External service integrations (Spotify, YouTube, Last.fm, Plex)"
+            "description": "External service integrations (Spotify, YouTube, Last.fm, Plex)",
         },
-        {
-            "name": "System",
-            "description": "System health and monitoring"
-        },
-        {
-            "name": "Settings",
-            "description": "System configuration and settings"
-        }
-    ]
+        {"name": "System", "description": "System health and monitoring"},
+        {"name": "Settings", "description": "System configuration and settings"},
+    ],
 }
 
-@openapi_bp.route('/openapi.json', methods=['GET'])
+
+@openapi_bp.route("/openapi.json", methods=["GET"])
 def get_openapi_spec():
     """Get OpenAPI specification in JSON format"""
     return jsonify(OPENAPI_SPEC)
 
-@openapi_bp.route('/swagger', methods=['GET'])
+
+@openapi_bp.route("/swagger", methods=["GET"])
 def swagger_ui():
     """Serve Swagger UI for API documentation"""
     swagger_html = """
@@ -832,7 +984,8 @@ def swagger_ui():
     """
     return render_template_string(swagger_html)
 
-@openapi_bp.route('/redoc', methods=['GET'])
+
+@openapi_bp.route("/redoc", methods=["GET"])
 def redoc_ui():
     """Serve ReDoc UI for API documentation"""
     redoc_html = """
@@ -858,7 +1011,8 @@ def redoc_ui():
     """
     return render_template_string(redoc_html)
 
-@openapi_bp.route('/', methods=['GET'])
+
+@openapi_bp.route("/", methods=["GET"])
 def api_docs_index():
     """API documentation index page"""
     index_html = """
