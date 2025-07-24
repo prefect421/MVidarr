@@ -29,9 +29,17 @@ jobs:
           MYSQL_PASSWORD: test_password
           MYSQL_CHARSET: utf8mb4
           MYSQL_COLLATION: utf8mb4_unicode_ci
+          MARIADB_AUTO_UPGRADE: 1
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping -h localhost -u root -ptest_password" --health-interval=5s --health-timeout=3s --health-retries=10 --health-start-period=60s
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root --password=test_password --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=15
+          --health-start-period=90s
+          --tmpfs /tmp:rw,noexec,nosuid,size=512m
+          --tmpfs /var/lib/mysql-logs:rw,noexec,nosuid,size=128m
     
     steps:
     - uses: actions/checkout@v4
@@ -80,25 +88,37 @@ jobs:
     
     - name: Wait for MariaDB
       run: |
-        timeout=180
+        timeout=240
         count=0
         echo "Waiting for MariaDB service to be ready..."
+        echo "Checking initial container status:"
+        docker ps -a | grep mariadb || true
+        
         while [ $count -lt $timeout ]; do
-          if mysqladmin ping -h localhost -P 3306 -u root -ptest_password --silent 2>/dev/null; then
-            echo "MariaDB is ready! Testing connection..."
-            if mysql -h localhost -P 3306 -u root -ptest_password -e "SELECT 1" >/dev/null 2>&1; then
+          if mysqladmin ping -h localhost -P 3306 -u root --password=test_password --silent 2>/dev/null; then
+            echo "MariaDB ping successful! Testing full connection..."
+            if mysql -h localhost -P 3306 -u root --password=test_password -e "SELECT 1" >/dev/null 2>&1; then
               echo "MariaDB connection verified successfully!"
+              echo "Testing database access:"
+              mysql -h localhost -P 3306 -u mvidarr --password=test_password -e "SELECT 1" mvidarr_test >/dev/null 2>&1 && echo "Database mvidarr_test accessible!"
               break
+            else
+              echo "Ping successful but connection test failed, retrying..."
             fi
+          else
+            echo "MariaDB ping failed, checking container status:"
+            docker ps -a | grep mariadb || true
           fi
           echo "Waiting for MariaDB to be ready... ($count/$timeout seconds)"
-          sleep 3
-          count=$((count + 3))
+          sleep 5
+          count=$((count + 5))
         done
         if [ $count -ge $timeout ]; then
           echo "MariaDB failed to start within $timeout seconds"
-          echo "Checking service status:"
-          docker ps -a || true
+          echo "Final container status:"
+          docker ps -a | grep mariadb || true
+          echo "Container logs:"
+          docker logs $(docker ps -a --filter ancestor=mariadb:11.4 --format "{{.ID}}" | head -1) || true
           exit 1
         fi
     
