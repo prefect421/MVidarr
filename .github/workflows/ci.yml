@@ -59,23 +59,35 @@ jobs:
 
     - name: Wait for MariaDB
       run: |
-        while ! mysqladmin ping -h"127.0.0.1" -P3306 -uroot -proot --silent; do
-          sleep 1
+        timeout=60
+        count=0
+        while [ $count -lt $timeout ]; do
+          if mysqladmin ping -h"localhost" -P3306 -uroot -proot --silent 2>/dev/null; then
+            echo "MariaDB is ready!"
+            break
+          fi
+          echo "Waiting for MariaDB to be ready... ($count/$timeout)"
+          sleep 2
+          count=$((count + 1))
         done
+        if [ $count -eq $timeout ]; then
+          echo "MariaDB failed to start within timeout"
+          exit 1
+        fi
 
     - name: Set up test environment
       run: |
         mkdir -p data/logs data/downloads data/thumbnails
-        export MVIDARR_DB_HOST=127.0.0.1
-        export MVIDARR_DB_PORT=3306
-        export MVIDARR_DB_NAME=mvidarr_test
-        export MVIDARR_DB_USER=mvidarr
-        export MVIDARR_DB_PASSWORD=mvidarr
-        export MVIDARR_SECRET_KEY=test-secret-key-for-ci
+        export DB_HOST=localhost
+        export DB_PORT=3306
+        export DB_NAME=mvidarr_test
+        export DB_USER=mvidarr
+        export DB_PASSWORD=mvidarr
+        export SECRET_KEY=test-secret-key-for-ci
 
     - name: Initialize database
       run: |
-        export MVIDARR_DB_HOST=127.0.0.1
+        export MVIDARR_DB_HOST=localhost
         export MVIDARR_DB_PORT=3306
         export MVIDARR_DB_NAME=mvidarr_test
         export MVIDARR_DB_USER=mvidarr
@@ -85,22 +97,22 @@ jobs:
 
     - name: Run unit tests
       run: |
-        export MVIDARR_DB_HOST=127.0.0.1
-        export MVIDARR_DB_PORT=3306
-        export MVIDARR_DB_NAME=mvidarr_test
-        export MVIDARR_DB_USER=mvidarr
-        export MVIDARR_DB_PASSWORD=mvidarr
-        export MVIDARR_SECRET_KEY=test-secret-key-for-ci
+        export DB_HOST=localhost
+        export DB_PORT=3306
+        export DB_NAME=mvidarr_test
+        export DB_USER=mvidarr
+        export DB_PASSWORD=mvidarr
+        export SECRET_KEY=test-secret-key-for-ci
         pytest tests/unit/ -v --cov=src --cov-report=xml || echo "Unit tests not yet implemented"
 
     - name: Start application for integration tests
       run: |
-        export MVIDARR_DB_HOST=127.0.0.1
-        export MVIDARR_DB_PORT=3306
-        export MVIDARR_DB_NAME=mvidarr_test
-        export MVIDARR_DB_USER=mvidarr
-        export MVIDARR_DB_PASSWORD=mvidarr
-        export MVIDARR_SECRET_KEY=test-secret-key-for-ci
+        export DB_HOST=localhost
+        export DB_PORT=3306
+        export DB_NAME=mvidarr_test
+        export DB_USER=mvidarr
+        export DB_PASSWORD=mvidarr
+        export SECRET_KEY=test-secret-key-for-ci
         export FLASK_ENV=testing
         export DEBUG=true
         
@@ -135,12 +147,12 @@ jobs:
 
     - name: Run comprehensive tests
       run: |
-        export MVIDARR_DB_HOST=127.0.0.1
-        export MVIDARR_DB_PORT=3306
-        export MVIDARR_DB_NAME=mvidarr_test
-        export MVIDARR_DB_USER=mvidarr
-        export MVIDARR_DB_PASSWORD=mvidarr
-        export MVIDARR_SECRET_KEY=test-secret-key-for-ci
+        export DB_HOST=localhost
+        export DB_PORT=3306
+        export DB_NAME=mvidarr_test
+        export DB_USER=mvidarr
+        export DB_PASSWORD=mvidarr
+        export SECRET_KEY=test-secret-key-for-ci
         python scripts/testing/run_comprehensive_tests.py --url http://localhost:5000
 
     - name: Upload coverage reports
