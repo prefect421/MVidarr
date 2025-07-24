@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI Integration Tests
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
     branches: [ main, develop ]
   release:
     types: [ published ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -57,17 +58,20 @@ jobs:
         count=0
         echo "Waiting for MariaDB to be ready..."
         
+        # Install MariaDB client tools for direct connection testing
+        sudo apt-get update && sudo apt-get install -y mariadb-client
+        
         while [ $count -lt $timeout ]; do
-          if docker exec mvidarr-mariadb mysqladmin ping -h 127.0.0.1 -u root -ptest_root_password --silent 2>/dev/null; then
-            echo "MariaDB is ready! Testing database connection..."
-            if docker exec mvidarr-mariadb mysql -h 127.0.0.1 -u mvidarr -ptest_password -e "SELECT 1" mvidarr_test >/dev/null 2>&1; then
+          if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -ptest_root_password --silent 2>/dev/null; then
+            echo "MariaDB ping successful! Testing database connection..."
+            if mysql -h 127.0.0.1 -P 3306 -u mvidarr -ptest_password -e "SELECT 1" mvidarr_test >/dev/null 2>&1; then
               echo "MariaDB is ready and database mvidarr_test is accessible!"
               break
             else
               echo "Ping successful but database connection failed, retrying..."
             fi
           fi
-          echo "Waiting for MariaDB to be ready... ($count/$timeout)"
+          echo "Waiting for MariaDB to be ready... ($count/$timeout seconds)"
           sleep 3
           count=$((count + 3))
         done
