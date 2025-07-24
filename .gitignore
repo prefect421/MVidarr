@@ -1,0 +1,175 @@
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Database
+data/mvidarr.db
+data/*.db
+
+# Logs
+data/logs/
+*.log
+*.log.*
+
+# Downloads and media
+data/downloads/
+data/music_videos/
+data/musicvideos/
+
+# Thumbnails (keep directory structure but ignore content)
+data/thumbnails/artists/*
+data/thumbnails/videos/*
+data/thumbnails/uploads/*
+!data/thumbnails/artists/.gitkeep
+!data/thumbnails/videos/.gitkeep
+!data/thumbnails/uploads/.gitkeep
+
+# Cache
+data/cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Cookie files
+cookies.txt
+browser_cookies.txt
+test_cookies.txt
+data/cookies/
+
+# Virtual environments
+venv/
+pdf_env/
+screenshot_env/
+env/
+ENV/
+
+# Development files
+debug_*.py
+test_*.py
+*.tmp
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backups
+data/backups/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archive directory
+archive/
+
+# Migration and debug scripts
+migrate_*.py
+restart_*.py
+
+# JSON data files
+*.json
+!version.json
+!package.json
+
+# Original Lidarr build files
+src/**/[Bb]in/
+src/**/[Oo]bj/
+*.suo
+*.user
+*.sln.docstates
+.vs/
+.vscode/
+*_i.c
+*_p.c
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.vspscc
+*.vssscc
+.builds
+*.psess
+*.vsp
+*.vspx
+_ReSharper*
+_dotCover*
+src/.cr/
+*~
+\#*\#
+*.ncrunch*
+.*crunch*.local.xml
+DocProject/
+publish
+*.Publish.xml
+packages
+csx
+*.build.csdef
+AppPackages/
+TestResults
+[Tt]est[Rr]esult*
+*.Cache
+ClientBin
+~$*
+*.dbmdl
+Generated_Code
+_UpgradeReport_Files/
+UpgradeLog*.XML
+App_Data/*.mdf
+App_Data/*.ldf
+*.orig
+_NCrunch_*
+_TeamCity*
+config.xml
+nzbdrone.log*txt
+UpdateLogs/
+*workspace.xml
+*.test-cache
+*.userprefs
+*/test-results/*
+src/UI/.idea/*
+*log.txt
+node_modules/
+_output*
+_artifacts
+_rawPackage/
+_dotTrace*
+_tests/
+_temp*
+*.Result.xml
+coverage*.xml
+coverage*.json
+setup/Output/
+*.~is
+.mono
+bin
+obj
+output/*
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+._*
+_start
+_temp_*/**/*
+Thumbs.db
+/tools/cake/
+/_artifacts/
+/tools/Addins/*
+packages.config.md5sum
+node_modules.nosync
+.config/
+.idea/*.pdf
+pdf_env/
+screenshot_env/

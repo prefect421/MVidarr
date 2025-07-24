@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create User - Admin Dashboard - MVidarr Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #495057;
+            font-size: 1.5rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 80px;
+            width: 250px;
+            height: calc(100vh - 80px);
+            background: white;
+            border-right: 1px solid #e9ecef;
+            padding: 1rem 0;
+        }
+        
+        .sidebar nav a {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: #495057;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .sidebar nav a:hover,
+        .sidebar nav a.active {
+            background: #f8f9fa;
+            border-left-color: #007bff;
+            color: #007bff;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+            max-width: 800px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header h2 {
+            font-size: 1.5rem;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-header p {
+            color: #6c757d;
+            margin: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        
+        .form-group small {
+            display: block;
+            color: #6c757d;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .role-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        
+        .role-info h4 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .role-info ul {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: #6c757d;
+        }
+        
+        .role-info li {
+            margin-bottom: 0.25rem;
+        }
+        
+        .required {
+            color: #dc3545;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>➕ Create User - Admin Dashboard</h1>
+        <div class="user-info">
+            <span>Welcome, {{ current_user.username }}</span>
+            <a href="/auth/logout" class="btn btn-secondary">Logout</a>
+        </div>
+    </div>
+    
+    <div class="sidebar">
+        <nav>
+            <a href="/admin/">📊 Dashboard</a>
+            <a href="/admin/users" class="active">👥 Users</a>
+            <a href="/admin/system">⚙️ System</a>
+            <a href="/admin/audit">📋 Audit Log</a>
+            <a href="/">🏠 Back to App</a>
+        </nav>
+    </div>
+    
+    <div class="main-content">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>➕ Create New User</h2>
+                <p>Add a new user to the MVidarr Enhanced system</p>
+            </div>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label for="username">Username <span class="required">*</span></label>
+                    <input type="text" id="username" name="username" required 
+                           minlength="3" maxlength="50" pattern="[a-zA-Z0-9_-]+"
+                           value="{{ request.form.username or '' }}">
+                    <small>3-50 characters, letters, numbers, underscore and dash only</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required 
+                           maxlength="255" value="{{ request.form.email or '' }}">
+                    <small>Valid email address for notifications and account recovery</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" required 
+                           minlength="8" maxlength="128">
+                    <small>Minimum 8 characters, include uppercase, lowercase, numbers and symbols</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password <span class="required">*</span></label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                    <small>Must match the password above</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="role">User Role <span class="required">*</span></label>
+                    <select id="role" name="role" required>
+                        {% for role in roles %}
+                            <option value="{{ role.value }}" 
+                                    {% if request.form.role == role.value %}selected{% endif %}>
+                                {{ role.value|title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    
+                    <div class="role-info">
+                        <h4>Role Permissions:</h4>
+                        <div id="roleDescription">
+                            <strong>USER:</strong> Basic access to view and manage own content
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <a href="/admin/users" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">➕ Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Role descriptions
+        const roleDescriptions = {
+            'ADMIN': {
+                title: 'ADMINISTRATOR',
+                permissions: [
+                    'Full system access and control',
+                    'User management and role assignment',
+                    'System configuration and settings',
+                    'Application restart and maintenance',
+                    'Audit log access and monitoring',
+                    'All video and artist management functions'
+                ]
+            },
+            'MANAGER': {
+                title: 'MANAGER',
+                permissions: [
+                    'Advanced content management',
+                    'Bulk video operations',
+                    'Artist and metadata management',
+                    'Download queue management',
+                    'View system statistics',
+                    'Limited user management (non-admin users)'
+                ]
+            },
+            'USER': {
+                title: 'USER',
+                permissions: [
+                    'View and search videos and artists',
+                    'Basic video management functions',
+                    'Download individual videos',
+                    'Manage personal playlists',
+                    'Update own profile settings'
+                ]
+            },
+            'READONLY': {
+                title: 'READ-ONLY',
+                permissions: [
+                    'View videos and artists only',
+                    'Search and browse content',
+                    'View system statistics',
+                    'No modification permissions'
+                ]
+            }
+        };
+
+        // Update role description when selection changes
+        document.getElementById('role').addEventListener('change', function() {
+            const selectedRole = this.value;
+            const description = roleDescriptions[selectedRole];
+            const descriptionDiv = document.getElementById('roleDescription');
+            
+            if (description) {
+                descriptionDiv.innerHTML = `
+                    <strong>${description.title}:</strong>
+                    <ul>
+                        ${description.permissions.map(p => `<li>${p}</li>`).join('')}
+                    </ul>
+                `;
+            }
+        });
+
+        // Password confirmation validation
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            
+            if (password !== confirmPassword) {
+                this.setCustomValidity('Passwords do not match');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Password strength indicator
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const small = this.nextElementSibling;
+            
+            let strength = 0;
+            let feedback = [];
+            
+            if (password.length >= 8) strength++;
+            else feedback.push('at least 8 characters');
+            
+            if (/[a-z]/.test(password)) strength++;
+            else feedback.push('lowercase letters');
+            
+            if (/[A-Z]/.test(password)) strength++;
+            else feedback.push('uppercase letters');
+            
+            if (/[0-9]/.test(password)) strength++;
+            else feedback.push('numbers');
+            
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            else feedback.push('symbols');
+            
+            if (feedback.length === 0) {
+                small.innerHTML = '<span style="color: #28a745;">✓ Strong password</span>';
+            } else {
+                small.innerHTML = `Need: ${feedback.join(', ')}`;
+            }
+        });
+
+        // Initialize role description
+        document.getElementById('role').dispatchEvent(new Event('change'));
+    </script>
+</body>
+</html>

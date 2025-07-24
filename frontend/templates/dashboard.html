@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MVidarr Enhanced</title>
+    <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+        
+        /* Light theme override for dashboard */
+        body.light-theme {
+            background: transparent !important;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #495057;
+            font-size: 1.5rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .welcome-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .welcome-card h2 {
+            color: #495057;
+            margin-bottom: 1rem;
+        }
+        
+        .welcome-card p {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .action-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .action-card .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .action-card h3 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .action-card p {
+            color: #6c757d;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .role-badge.admin { background: #dc3545; color: white; }
+        .role-badge.manager { background: #fd7e14; color: white; }
+        .role-badge.user { background: #007bff; color: white; }
+        .role-badge.readonly { background: #6c757d; color: white; }
+        
+        .user-status {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Light theme override for user status */
+        body.light-theme .user-status {
+            background: transparent;
+            border: 1px solid #e1e5e9;
+        }
+        
+        /* Comprehensive light theme overrides */
+        body.light-theme .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid #e1e5e9;
+            backdrop-filter: blur(10px);
+        }
+        
+        body.light-theme .header h1 {
+            color: #667eea;
+        }
+        
+        body.light-theme .welcome-card {
+            background: white;
+            border: 1px solid #e1e5e9;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        
+        body.light-theme .welcome-card h2 {
+            color: #667eea;
+        }
+        
+        body.light-theme .welcome-card p {
+            color: #666;
+        }
+        
+        body.light-theme .action-card {
+            background: white;
+            border: 1px solid #e1e5e9;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .action-card:hover {
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+        }
+        
+        body.light-theme .action-card h3 {
+            color: #333;
+        }
+        
+        body.light-theme .action-card p {
+            color: #666;
+        }
+        
+        body.light-theme .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        body.light-theme .btn-primary:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            transform: translateY(-1px);
+        }
+        
+        body.light-theme .btn-secondary {
+            background: white;
+            border: 2px solid #e1e5e9;
+            color: #333;
+        }
+        
+        body.light-theme .btn-secondary:hover {
+            background: #f0f0ff;
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        body.light-theme .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+        
+        body.light-theme .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        }
+        
+        body.light-theme .user-status h4 {
+            color: #333;
+        }
+        
+        body.light-theme .status-badge.active {
+            background: rgba(72, 187, 120, 0.2);
+            color: #2f855a;
+        }
+        
+        body.light-theme .status-badge.enabled {
+            background: rgba(102, 126, 234, 0.2);
+            color: #4c51bf;
+        }
+        
+        body.light-theme .status-badge.disabled {
+            background: rgba(255, 193, 7, 0.2);
+            color: #d69e2e;
+        }
+        
+        .user-status h4 {
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.enabled {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-badge.disabled {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><iconify-icon icon="mdi:music" style="vertical-align: middle;"></iconify-icon> MVidarr Enhanced - Dashboard</h1>
+        <div class="user-info">
+            <span>Welcome, {{ user.username }}</span>
+            <span class="role-badge {{ user.role.value.lower() }}">{{ user.role.value }}</span>
+            <a href="/auth/logout" class="btn btn-secondary">Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="welcome-card">
+            <h2>Welcome to MVidarr Enhanced! <iconify-icon icon="mdi:star" style="vertical-align: middle;"></iconify-icon></h2>
+            <p>Your secure music video management system is ready to use.</p>
+            
+            <div class="user-status">
+                <h4><iconify-icon icon="mdi:account" style="vertical-align: middle;"></iconify-icon> Account Status</h4>
+                <div class="status-item">
+                    <span>Account Status:</span>
+                    <span class="status-badge active">Active</span>
+                </div>
+                <div class="status-item">
+                    <span>Role:</span>
+                    <span class="role-badge {{ user.role.value.lower() }}">{{ user.role.value }}</span>
+                </div>
+                <div class="status-item">
+                    <span>Two-Factor Authentication:</span>
+                    <span class="status-badge {% if user.two_factor_enabled %}enabled{% else %}disabled{% endif %}">
+                        {% if user.two_factor_enabled %}Enabled{% else %}Disabled{% endif %}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span>Last Login:</span>
+                    <span>
+                        {% if user.last_login %}
+                            {{ user.last_login.strftime('%Y-%m-%d %H:%M UTC') }}
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-grid">
+            <!-- Profile Management -->
+            <div class="action-card">
+                <div class="icon">👤</div>
+                <h3>User Profile</h3>
+                <p>Manage your account settings, change password, and configure preferences.</p>
+                <a href="/profile/" class="btn btn-primary">Manage Profile</a>
+            </div>
+            
+            <!-- Two-Factor Authentication -->
+            <div class="action-card">
+                <div class="icon">🔐</div>
+                <h3>Security Settings</h3>
+                <p>{% if user.two_factor_enabled %}Manage your two-factor authentication settings.{% else %}Enable two-factor authentication for enhanced security.{% endif %}</p>
+                {% if user.two_factor_enabled %}
+                    <a href="/profile/#security" class="btn btn-success">Manage 2FA</a>
+                {% else %}
+                    <a href="/2fa/setup" class="btn btn-primary">Enable 2FA</a>
+                {% endif %}
+            </div>
+            
+            <!-- Content Management -->
+            <div class="action-card">
+                <div class="icon"><iconify-icon icon="mdi:music" style="font-size: 2rem;"></iconify-icon></div>
+                <h3>Music Videos</h3>
+                <p>Browse, search, and manage your music video collection.</p>
+                <a href="/videos" class="btn btn-primary">Browse Videos</a>
+            </div>
+            
+            <!-- Artist Management -->
+            <div class="action-card">
+                <div class="icon"><iconify-icon icon="mdi:account-music" style="font-size: 2rem;"></iconify-icon></div>
+                <h3>Artists</h3>
+                <p>Manage artists, discover new music, and track releases.</p>
+                <a href="/artists" class="btn btn-primary">Browse Artists</a>
+            </div>
+            
+            <!-- Cookie Management -->
+            <div class="action-card">
+                <div class="icon"><iconify-icon icon="mdi:key" style="font-size: 2rem;"></iconify-icon></div>
+                <h3>YouTube Authentication</h3>
+                <p>Upload cookies for age-restricted video downloads.</p>
+                <div id="cookieStatus" style="margin: 0.5rem 0; font-size: 0.9rem; color: #666;"></div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button id="uploadCookieBtn" class="btn btn-success" onclick="document.getElementById('cookieFileInput').click()">
+                        <iconify-icon icon="mdi:upload" style="vertical-align: middle;"></iconify-icon> Upload Cookies
+                    </button>
+                    <button id="deleteCookieBtn" class="btn btn-danger" onclick="deleteCookies()" style="display: none;">
+                        <iconify-icon icon="mdi:delete" style="vertical-align: middle;"></iconify-icon> Delete Cookies
+                    </button>
+                </div>
+                <input type="file" id="cookieFileInput" accept=".txt,.cookies" style="display: none;" onchange="uploadCookies(this)">
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">
+                    <a href="#" onclick="showCookieInstructions()"><iconify-icon icon="mdi:book" style="vertical-align: middle;"></iconify-icon> How to get cookies</a>
+                </div>
+            </div>
+            
+            {% if user.role.value == 'ADMIN' %}
+            <!-- Admin Dashboard -->
+            <div class="action-card">
+                <div class="icon"><iconify-icon icon="mdi:cog" style="font-size: 2rem;"></iconify-icon></div>
+                <h3>Administration</h3>
+                <p>Manage users, system settings, and application configuration.</p>
+                <a href="/admin/" class="btn btn-danger">Admin Dashboard</a>
+            </div>
+            
+            <!-- User Management -->
+            <div class="action-card">
+                <div class="icon"><iconify-icon icon="mdi:account-group" style="font-size: 2rem;"></iconify-icon></div>
+                <h3>User Management</h3>
+                <p>Create, edit, and manage user accounts and permissions.</p>
+                <a href="/admin/users" class="btn btn-danger">Manage Users</a>
+            </div>
+            {% endif %}
+            
+            {% if user.role.value in ['ADMIN', 'MANAGER'] %}
+            <!-- System Status -->
+            <div class="action-card">
+                <div class="icon"><iconify-icon icon="mdi:chart-line" style="font-size: 2rem;"></iconify-icon></div>
+                <h3>System Status</h3>
+                <p>Monitor system health, view logs, and check performance metrics.</p>
+                <a href="/admin/system" class="btn btn-secondary">System Status</a>
+            </div>
+            {% endif %}
+            
+            <!-- Activity & History -->
+            <div class="action-card">
+                <div class="icon"><iconify-icon icon="mdi:clipboard-list" style="font-size: 2rem;"></iconify-icon></div>
+                <h3>Activity</h3>
+                <p>View your recent activity, downloads, and system events.</p>
+                <a href="/activity" class="btn btn-secondary">View Activity</a>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div style="margin-top: 2rem; text-align: center;">
+            <h3 style="margin-bottom: 1rem; color: #495057;">Quick Actions</h3>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="/search" class="btn btn-primary"><iconify-icon icon="mdi:magnify" style="vertical-align: middle;"></iconify-icon> Search</a>
+                <a href="/downloads" class="btn btn-success"><iconify-icon icon="mdi:download" style="vertical-align: middle;"></iconify-icon> Downloads</a>
+                <a href="/calendar" class="btn btn-secondary"><iconify-icon icon="mdi:calendar" style="vertical-align: middle;"></iconify-icon> Calendar</a>
+                <a href="/settings" class="btn btn-secondary"><iconify-icon icon="mdi:cog" style="vertical-align: middle;"></iconify-icon> Settings</a>
+                {% if user.role.value == 'ADMIN' %}
+                    <a href="/admin/system/restart" class="btn btn-danger" onclick="return confirm('Are you sure you want to restart the application?')"><iconify-icon icon="mdi:restart" style="vertical-align: middle;"></iconify-icon> Restart System</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Cookie Management Functions
+        async function checkCookieStatus() {
+            try {
+                const response = await fetch('/api/metube/cookies/status');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('cookieStatus');
+                const deleteBtn = document.getElementById('deleteCookieBtn');
+                
+                if (data.cookies_available) {
+                    statusDiv.innerHTML = '✅ Cookies uploaded - Age-restricted videos supported';
+                    statusDiv.style.color = '#28a745';
+                    deleteBtn.style.display = 'inline-block';
+                } else {
+                    statusDiv.innerHTML = '❌ No cookies uploaded - Age-restricted videos will fail';
+                    statusDiv.style.color = '#dc3545';
+                    deleteBtn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to check cookie status:', error);
+                document.getElementById('cookieStatus').innerHTML = '❓ Status unknown';
+                document.getElementById('cookieStatus').style.color = '#666';
+            }
+        }
+        
+        async function uploadCookies(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const uploadBtn = document.getElementById('uploadCookieBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '⏳ Uploading...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch('/api/metube/cookies/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('✅ Cookies uploaded successfully!', 'success');
+                    await checkCookieStatus();
+                } else {
+                    showToast(`❌ Upload failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showToast('❌ Upload failed due to network error', 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '📤 Upload Cookies';
+                input.value = '';
+            }
+        }
+        
+        async function deleteCookies() {
+            if (!confirm('Are you sure you want to delete the uploaded cookies?')) return;
+            
+            try {
+                const response = await fetch('/api/metube/cookies/delete', {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('✅ Cookies deleted successfully', 'success');
+                    await checkCookieStatus();
+                } else {
+                    showToast(`❌ Delete failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showToast('❌ Delete failed due to network error', 'error');
+            }
+        }
+        
+        function showCookieInstructions() {
+            const instructions = `
+How to export YouTube cookies:
+
+1. Chrome/Edge:
+   - Install "Get cookies.txt" extension
+   - Go to YouTube.com and sign in
+   - Click extension icon → Download cookies
+   - Save as .txt file
+
+2. Firefox:
+   - Install "cookies.txt" add-on
+   - Go to YouTube.com and sign in  
+   - Click add-on icon → Export cookies
+   - Save as .txt file
+
+3. Manual method:
+   - Use browser developer tools (F12)
+   - Go to Application/Storage → Cookies
+   - Copy YouTube cookies to .txt file in Netscape format
+
+⚠️ Security: Only upload cookies from your personal computer. Never share cookie files.
+
+The cookie file should contain YouTube authentication data including session tokens.
+            `;
+            
+            alert(instructions);
+        }
+        
+        function showToast(message, type = 'info') {
+            // Check if toast system exists
+            if (window.showToast) {
+                window.showToast(message, type);
+            } else {
+                // Fallback to alert if no toast system
+                alert(message);
+            }
+        }
+        
+        // Check cookie status on page load
+        document.addEventListener('DOMContentLoaded', checkCookieStatus);
+    </script>
+</body>
+</html>

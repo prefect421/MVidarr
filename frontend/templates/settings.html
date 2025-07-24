@@ -1,0 +1,3955 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - MVidarr Enhanced{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    
+    <div class="settings-actions">
+        <button onclick="saveSettings()" class="btn btn-primary">Save Settings</button>
+        <button onclick="restartApp()" class="btn btn-warning">Restart Application</button>
+    </div>
+
+    <!-- Settings Tabs -->
+    <div class="settings-tabs">
+        <button class="settings-tab-btn active" onclick="switchTab(event, 'general-tab')">
+            <iconify-icon icon="tabler:settings" class="tab-icon"></iconify-icon> General
+        </button>
+        <button class="settings-tab-btn" onclick="switchTab(event, 'security-tab')">
+            <iconify-icon icon="tabler:lock" class="tab-icon"></iconify-icon> Security
+        </button>
+        <button class="settings-tab-btn" onclick="switchTab(event, 'services-tab')">
+            <iconify-icon icon="tabler:link" class="tab-icon"></iconify-icon> Services
+        </button>
+        <button class="settings-tab-btn" onclick="switchTab(event, 'downloads-tab')">
+            <iconify-icon icon="tabler:download" class="tab-icon"></iconify-icon> Downloads
+        </button>
+        <button class="settings-tab-btn" onclick="switchTab(event, 'database-tab')">
+            <iconify-icon icon="tabler:database" class="tab-icon"></iconify-icon> Database
+        </button>
+        <button class="settings-tab-btn" onclick="switchTab(event, 'system-tab')">
+            <iconify-icon icon="tabler:tool" class="tab-icon"></iconify-icon> System
+        </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="settings-tab-content">
+
+        <!-- General Tab -->
+        <div id="general-tab" class="settings-tab-panel active">
+            <div class="settings-sections">
+        <div class="settings-section">
+            <h2>Application</h2>
+            <div class="form-group">
+                <label for="app_port">Port:</label>
+                <input type="number" id="app_port" name="app_port" min="1" max="65535">
+            </div>
+            <div class="form-group">
+                <label for="debug_mode">Debug Mode:</label>
+                <select id="debug_mode" name="debug_mode">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="secret_key">Secret Key:</label>
+                <input type="password" id="secret_key" name="secret_key" placeholder="Flask secret key for sessions">
+            </div>
+            <div class="form-group">
+                <label for="require_authentication">Require User Authentication:</label>
+                <select id="require_authentication" name="require_authentication">
+                    <option value="false">Disabled - Open Access</option>
+                    <option value="true">Enabled - Login Required</option>
+                </select>
+                <div class="form-help">
+                    <small>When enabled, users must log in with username/password to access the system. Requires application restart to take effect.</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section" id="userCredentialsSection" style="display: none;">
+            <h2>👤 User Credentials</h2>
+            <div class="form-help">
+                <small>Configure the username and password for accessing the system when authentication is enabled.</small>
+            </div>
+            <div class="form-group">
+                <label for="auth_username">Username:</label>
+                <input type="text" id="auth_username" name="auth_username" placeholder="Enter username" minlength="3">
+                <div class="form-help">
+                    <small>Username must be at least 3 characters long</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="auth_password">Password:</label>
+                <input type="password" id="auth_password" name="auth_password" placeholder="Enter new password" minlength="6">
+                <div class="form-help">
+                    <small>Password must be at least 6 characters long</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="auth_password_confirm">Confirm Password:</label>
+                <input type="password" id="auth_password_confirm" name="auth_password_confirm" placeholder="Confirm new password" minlength="6">
+                <div class="form-help">
+                    <small>Re-enter the password to confirm</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <button onclick="updateCredentials()" class="btn btn-primary">🔑 Update Credentials</button>
+                <button onclick="resetCredentials()" class="btn btn-secondary">🔄 Reset to Default</button>
+            </div>
+        </div>
+
+
+        <div class="settings-section">
+            <h2>Paths</h2>
+            <div class="form-group">
+                <label for="downloads_path">Downloads Directory:</label>
+                <input type="text" id="downloads_path" name="downloads_path">
+            </div>
+            <div class="form-group">
+                <label for="music_videos_path">Music Videos Directory:</label>
+                <input type="text" id="music_videos_path" name="music_videos_path" placeholder="Organized music videos by artist">
+            </div>
+            <div class="form-group">
+                <label for="thumbnails_path">Thumbnails Directory:</label>
+                <input type="text" id="thumbnails_path" name="thumbnails_path">
+            </div>
+        </div>
+        
+            </div>
+        </div>
+        
+        <!-- Security Tab -->
+        <div id="security-tab" class="settings-tab-panel">
+            <div class="settings-sections">
+
+        <div class="settings-section">
+            <h2>🔒 SSL/TLS Security</h2>
+            <div class="form-group">
+                <label for="ssl_required">Enforce HTTPS:</label>
+                <select id="ssl_required" name="ssl_required">
+                    <option value="false">Disabled - Allow HTTP</option>
+                    <option value="true">Enabled - Redirect HTTP to HTTPS</option>
+                </select>
+                <div class="form-help">
+                    <small>When enabled, all HTTP requests will be redirected to HTTPS. Requires SSL termination at reverse proxy or web server level.</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ssl_port">HTTPS Port:</label>
+                <input type="number" id="ssl_port" name="ssl_port" min="1" max="65535" value="443">
+                <div class="form-help">
+                    <small>Default port for HTTPS connections (typically 443).</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ssl_hsts_enabled">HTTP Strict Transport Security (HSTS):</label>
+                <select id="ssl_hsts_enabled" name="ssl_hsts_enabled">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+                <div class="form-help">
+                    <small>HSTS tells browsers to only access the site over HTTPS. Only enable if SSL is properly configured.</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ssl_hsts_max_age">HSTS Max Age (seconds):</label>
+                <input type="number" id="ssl_hsts_max_age" name="ssl_hsts_max_age" min="300" max="31536000" value="31536000">
+                <div class="form-help">
+                    <small>How long browsers should enforce HTTPS-only access (31536000 = 1 year).</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ssl_redirect_permanent">Use Permanent Redirects:</label>
+                <select id="ssl_redirect_permanent" name="ssl_redirect_permanent">
+                    <option value="false">Temporary (302)</option>
+                    <option value="true">Permanent (301)</option>
+                </select>
+                <div class="form-help">
+                    <small>Permanent redirects are cached by browsers and search engines.</small>
+                </div>
+            </div>
+            <div class="ssl-warning">
+                <strong>⚠️ Important:</strong> Only enable SSL enforcement if you have properly configured SSL termination at your reverse proxy (nginx, Apache, Cloudflare, etc.) or web server level. Enabling this without proper SSL setup will make the application inaccessible.
+            </div>
+        </div>
+        
+            </div>
+        </div>
+        
+        <!-- Services Tab -->
+        <div id="services-tab" class="settings-tab-panel">
+            <div class="settings-sections">
+        
+        <div class="settings-section">
+            <h2>Core Services</h2>
+            <div class="form-group">
+                <label for="imvdb_api_key">IMVDB API Key:</label>
+                <input type="password" id="imvdb_api_key" name="imvdb_api_key">
+            </div>
+            <div class="form-group">
+                <label for="youtube_api_key">YouTube API Key:</label>
+                <input type="password" id="youtube_api_key" name="youtube_api_key">
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>YouTube Integration</h2>
+            <div class="form-group">
+                <label for="youtube_enabled">Enable YouTube Integration:</label>
+                <select id="youtube_enabled" name="youtube_enabled">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="youtube_playlist_sync_interval">Playlist Sync Interval (minutes):</label>
+                <input type="number" id="youtube_playlist_sync_interval" name="youtube_playlist_sync_interval" min="5" max="1440" value="60">
+            </div>
+            <div class="form-group">
+                <label for="youtube_auto_download">Auto-download New Videos:</label>
+                <select id="youtube_auto_download" name="youtube_auto_download">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+            </div>
+            <div class="integration-actions">
+                <button onclick="testYouTubeIntegration()" class="btn btn-info">Test Connection</button>
+                <button onclick="syncYouTubePlaylists()" class="btn btn-secondary">Sync Playlists</button>
+                <a href="/youtube-playlists" class="btn btn-primary">📺 YouTube Playlists Manager</a>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>Spotify Integration</h2>
+            <div class="form-group">
+                <label for="spotify_enabled">Enable Spotify Integration:</label>
+                <select id="spotify_enabled" name="spotify_enabled">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="spotify_client_id">Spotify Client ID:</label>
+                <input type="text" id="spotify_client_id" name="spotify_client_id">
+            </div>
+            <div class="form-group">
+                <label for="spotify_client_secret">Spotify Client Secret:</label>
+                <input type="password" id="spotify_client_secret" name="spotify_client_secret">
+            </div>
+            <div class="form-group">
+                <label for="spotify_redirect_uri">Redirect URI:</label>
+                <input type="text" id="spotify_redirect_uri" name="spotify_redirect_uri" placeholder="http://localhost:5000/api/spotify/callback">
+            </div>
+            <div class="integration-actions">
+                <button onclick="testSpotifyIntegration()" class="btn btn-info">Test Connection</button>
+                <button onclick="authorizeSpotify()" class="btn btn-success">Authorize</button>
+                <button onclick="importSpotifyPlaylists()" class="btn btn-secondary">Import Playlists</button>
+                <a href="/spotify" class="btn btn-primary">🎵 Spotify Manager</a>
+            </div>
+        </div>
+
+
+
+        <div class="settings-section">
+            <h2>Lidarr Integration</h2>
+            <div class="form-group">
+                <label for="lidarr_enabled">Enable Lidarr Integration:</label>
+                <select id="lidarr_enabled" name="lidarr_enabled">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="lidarr_server_url">Lidarr Server URL:</label>
+                <input type="text" id="lidarr_server_url" name="lidarr_server_url" placeholder="http://localhost:8686">
+            </div>
+            <div class="form-group">
+                <label for="lidarr_api_key">Lidarr API Key:</label>
+                <input type="password" id="lidarr_api_key" name="lidarr_api_key">
+            </div>
+            <div class="form-group">
+                <label for="lidarr_sync_interval">Sync Interval (hours):</label>
+                <input type="number" id="lidarr_sync_interval" name="lidarr_sync_interval" min="1" max="168" value="6">
+            </div>
+            <div class="form-group">
+                <label for="lidarr_sync_monitored_only">Sync Monitored Artists Only:</label>
+                <select id="lidarr_sync_monitored_only" name="lidarr_sync_monitored_only">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+            <div class="integration-actions">
+                <button onclick="testLidarrIntegration()" class="btn btn-info">Test Connection</button>
+                <button onclick="syncLidarrLibrary()" class="btn btn-secondary">Sync Library</button>
+                <button onclick="importLidarrArtists()" class="btn btn-secondary">Import Artists</button>
+                <button onclick="syncLidarrAlbums()" class="btn btn-secondary">Sync Albums</button>
+                <a href="/lidarr" class="btn btn-primary">🎵 Lidarr Manager</a>
+            </div>
+        </div>
+        
+            </div>
+        </div>
+        
+        <!-- Downloads Tab -->
+        <div id="downloads-tab" class="settings-tab-panel">
+            <div class="settings-sections">
+
+        <div class="settings-section">
+            <h2>Download Settings</h2>
+            <div class="form-group">
+                <label for="auto_organize_downloads">Auto-organize Downloads:</label>
+                <select id="auto_organize_downloads" name="auto_organize_downloads">
+                    <option value="true">Enabled</option>
+                    <option value="false">Disabled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="auto_index_organized_videos">Auto-index Organized Videos:</label>
+                <select id="auto_index_organized_videos" name="auto_index_organized_videos">
+                    <option value="true">Enabled</option>
+                    <option value="false">Disabled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="video_quality_preference">Video Quality:</label>
+                <select id="video_quality_preference" name="video_quality_preference">
+                    <option value="best">Best Available</option>
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="download_subtitles">Download Closed Captions:</label>
+                <select id="download_subtitles" name="download_subtitles">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+                <small class="help-text">Download and embed closed captions/subtitles when available</small>
+            </div>
+            
+            <!-- YouTube Cookie Authentication -->
+            <div class="form-group cookie-management-section">
+                <label>🍪 YouTube Authentication:</label>
+                <div class="cookie-upload-container">
+                    <div id="cookieStatusSettings" class="cookie-status">
+                        <span class="status-text">Checking cookie status...</span>
+                    </div>
+                    
+                    <div class="cookie-actions">
+                        <button type="button" id="uploadCookieBtnSettings" class="btn btn-success btn-sm" onclick="document.getElementById('cookieFileInputSettings').click()">
+                            📤 Upload Cookies
+                        </button>
+                        <button type="button" id="deleteCookieBtnSettings" class="btn btn-danger btn-sm" onclick="deleteCookiesSettings()" style="display: none;">
+                            🗑️ Delete Cookies
+                        </button>
+                        <button type="button" class="btn btn-info btn-sm" onclick="showCookieInstructionsSettings()">
+                            ❓ Help
+                        </button>
+                    </div>
+                    
+                    <input type="file" id="cookieFileInputSettings" accept=".txt,.cookies" style="display: none;" onchange="uploadCookiesSettings(this)">
+                    
+                    <small class="help-text">
+                        Upload your YouTube cookies to enable downloads of age-restricted videos. 
+                        The cookie file should be in Netscape format exported from your browser.
+                    </small>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="max_concurrent_downloads">Max Concurrent Downloads:</label>
+                <input type="number" id="max_concurrent_downloads" name="max_concurrent_downloads" min="1" max="10">
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>Scheduled Downloads</h2>
+            <div class="form-group">
+                <label for="auto_download_schedule_enabled">Enable Scheduled Downloads:</label>
+                <select id="auto_download_schedule_enabled" name="auto_download_schedule_enabled">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="auto_download_schedule_time">Schedule Time:</label>
+                <input type="time" id="auto_download_schedule_time" name="auto_download_schedule_time" title="Time to run automatic downloads (24-hour format)">
+            </div>
+            <div class="form-group">
+                <label for="auto_download_schedule_days">Schedule Frequency:</label>
+                <select id="auto_download_schedule_days" name="auto_download_schedule_days">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly (Sunday)</option>
+                    <option value="monday">Monday Only</option>
+                    <option value="tuesday">Tuesday Only</option>
+                    <option value="wednesday">Wednesday Only</option>
+                    <option value="thursday">Thursday Only</option>
+                    <option value="friday">Friday Only</option>
+                    <option value="saturday">Saturday Only</option>
+                    <option value="sunday">Sunday Only</option>
+                    <option value="monday,wednesday,friday">Mon, Wed, Fri</option>
+                    <option value="tuesday,thursday">Tue, Thu</option>
+                    <option value="saturday,sunday">Weekends</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="auto_download_max_videos">Max Videos per Run:</label>
+                <input type="number" id="auto_download_max_videos" name="auto_download_max_videos" min="1" max="500" title="Maximum number of videos to download per scheduled run">
+            </div>
+            <div class="form-group">
+                <label>Scheduler Status:</label>
+                <div id="scheduler-status">
+                    <span id="scheduler-loading">Loading...</span>
+                </div>
+            </div>
+            <div class="scheduler-actions">
+                <button onclick="testScheduledDownload()" class="btn btn-info">Test Download Now</button>
+                <button onclick="startScheduler()" class="btn btn-success">Start Scheduler</button>
+                <button onclick="stopScheduler()" class="btn btn-warning">Stop Scheduler</button>
+                <button onclick="reloadScheduler()" class="btn btn-secondary">Reload Schedule</button>
+                <button onclick="refreshSchedulerStatus()" class="btn btn-light">Refresh Status</button>
+            </div>
+        </div>
+        
+            </div>
+        </div>
+        
+        <!-- Database Tab -->
+        <div id="database-tab" class="settings-tab-panel">
+            <div class="settings-sections">
+
+        <div class="settings-section">
+            <h2>Database</h2>
+            <div class="form-group">
+                <label for="db_host">Database Host:</label>
+                <input type="text" id="db_host" name="db_host">
+            </div>
+            <div class="form-group">
+                <label for="db_port">Database Port:</label>
+                <input type="number" id="db_port" name="db_port" min="1" max="65535">
+            </div>
+            <div class="form-group">
+                <label for="db_name">Database Name:</label>
+                <input type="text" id="db_name" name="db_name">
+            </div>
+            <div class="form-group">
+                <label for="db_user">Database User:</label>
+                <input type="text" id="db_user" name="db_user">
+            </div>
+            <div class="form-group">
+                <label for="db_password">Database Password:</label>
+                <input type="password" id="db_password" name="db_password">
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>Database Pool Settings</h2>
+            <div class="form-group">
+                <label for="db_pool_size">Pool Size:</label>
+                <input type="number" id="db_pool_size" name="db_pool_size" min="1" max="100">
+            </div>
+            <div class="form-group">
+                <label for="db_pool_overflow">Pool Overflow:</label>
+                <input type="number" id="db_pool_overflow" name="db_pool_overflow" min="0" max="100">
+            </div>
+            <div class="form-group">
+                <label for="db_pool_recycle">Pool Recycle (seconds):</label>
+                <input type="number" id="db_pool_recycle" name="db_pool_recycle" min="300" max="86400">
+            </div>
+            <div class="form-group">
+                <label for="db_pool_timeout">Pool Timeout (seconds):</label>
+                <input type="number" id="db_pool_timeout" name="db_pool_timeout" min="5" max="300">
+            </div>
+        </div>
+        
+            </div>
+        </div>
+        
+        <!-- System Tab -->
+        <div id="system-tab" class="settings-tab-panel">
+            <div class="settings-sections">
+
+        <div class="settings-section">
+            <h2>Video Indexing</h2>
+            <div class="form-group">
+                <label>Database Status:</label>
+                <div id="indexing-stats">
+                    <span id="stats-loading">Loading...</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>IMVDB Connection:</label>
+                <div id="imvdb-status">
+                    <span id="imvdb-loading">Checking...</span>
+                </div>
+            </div>
+            <div class="indexing-actions">
+                <button onclick="testImvdbConnection()" class="btn btn-info">Test IMVDB Connection</button>
+                <button onclick="indexAllVideos()" class="btn btn-primary">Index All Videos</button>
+                <button onclick="indexAllVideosNoMeta()" class="btn btn-secondary">Index Without Metadata</button>
+                <button onclick="scanVideoFiles()" class="btn btn-info">Scan Video Files</button>
+                <button onclick="populateArtistThumbnails()" class="btn btn-warning">Populate Artist Thumbnails</button>
+                <button onclick="fixMissingVideos()" class="btn btn-warning">Fix Missing Videos</button>
+                <button onclick="cleanupZeroVideoArtists()" class="btn btn-danger">Remove Artists with 0 Videos</button>
+                <button onclick="refreshStats()" class="btn btn-light">Refresh Stats</button>
+            </div>
+            <div id="indexing-progress" class="progress-container" style="display: none;">
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <span id="progress-text">Processing...</span>
+            </div>
+            <div id="indexing-results" class="results-container" style="display: none;"></div>
+        </div>
+
+        <div class="settings-section">
+            <h2>Logging</h2>
+            <div class="form-group">
+                <label for="log_level">Log Level:</label>
+                <select id="log_level" name="log_level">
+                    <option value="DEBUG">Debug</option>
+                    <option value="INFO">Info</option>
+                    <option value="WARNING">Warning</option>
+                    <option value="ERROR">Error</option>
+                    <option value="CRITICAL">Critical</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="log_max_size">Max Log File Size (bytes):</label>
+                <input type="number" id="log_max_size" name="log_max_size" min="1048576" max="104857600">
+            </div>
+            <div class="form-group">
+                <label for="log_backup_count">Log Backup Count:</label>
+                <input type="number" id="log_backup_count" name="log_backup_count" min="1" max="20">
+            </div>
+        </div>
+        
+            </div>
+        </div>
+        
+    </div>
+    </div>
+    
+    <!-- Duplicate Save Settings button at bottom -->
+    <div class="settings-actions bottom-actions">
+        <button onclick="saveSettings()" class="btn btn-primary">Save Settings</button>
+    </div>
+</div>
+
+<script>
+
+// Tab switching functionality
+function switchTab(event, tabId) {
+    // Remove active class from all tabs and panels
+    const tabButtons = document.querySelectorAll('.settings-tab-btn');
+    const tabPanels = document.querySelectorAll('.settings-tab-panel');
+    
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabPanels.forEach(panel => panel.classList.remove('active'));
+    
+    // Add active class to clicked tab and corresponding panel
+    event.target.classList.add('active');
+    const targetPanel = document.getElementById(tabId);
+    if (targetPanel) {
+        targetPanel.classList.add('active');
+    }
+    
+    // Update URL hash for navigation
+    window.location.hash = tabId;
+}
+
+// Initialize tab based on URL hash
+function initializeTab() {
+    const hash = window.location.hash.substring(1);
+    if (hash && document.getElementById(hash)) {
+        const tabButton = document.querySelector(`[onclick*="${hash}"]`);
+        if (tabButton) {
+            // Simulate click on the tab
+            tabButton.click();
+        }
+    }
+}
+
+// Handle hash changes
+window.addEventListener('hashchange', initializeTab);
+
+function loadSettings() {
+    fetch('/api/settings/')
+        .then(response => response.json())
+        .then(data => {
+            const settings = data.settings;
+            
+            // Populate form fields
+            Object.keys(settings).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = settings[key].value;
+                }
+            });
+            
+            // After settings are loaded, update the user credentials section visibility
+            updateUserCredentialsSection();
+        })
+        .catch(error => {
+            console.error('Error loading settings:', error);
+            if (typeof showError === 'function') {
+                showError('Error loading settings');
+            } else {
+                alert('Error loading settings');
+            }
+        });
+}
+
+// Update user credentials section visibility based on authentication setting
+function updateUserCredentialsSection() {
+    const authEnabled = document.getElementById('require_authentication').value === 'true';
+    const credentialsSection = document.getElementById('userCredentialsSection');
+    
+    if (credentialsSection) {
+        if (authEnabled) {
+            credentialsSection.style.display = 'block';
+        } else {
+            credentialsSection.style.display = 'none';
+        }
+    }
+}
+
+// Set up authentication toggle event listener and load settings on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Load settings when page loads
+    loadSettings();
+    
+    // Set up authentication toggle event listener
+    const authToggle = document.getElementById('require_authentication');
+    if (authToggle) {
+        authToggle.addEventListener('change', updateUserCredentialsSection);
+    }
+    
+    // Initialize tab from URL hash
+    initializeTab();
+});
+
+function saveSettings() {
+    const settingsData = {};
+    
+    // Collect all form values
+    const inputs = document.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        if (input.name) {
+            settingsData[input.name] = input.value;
+        }
+    });
+    
+    fetch('/api/settings/bulk', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ settings: settingsData })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            if (typeof showError === 'function') {
+                showError('Error: ' + result.error);
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } else {
+            if (typeof showSuccess === 'function') {
+                showSuccess('Settings saved successfully!');
+            } else {
+                alert('Settings saved successfully!');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error saving settings:', error);
+        if (typeof showError === 'function') {
+            showError('Error saving settings');
+        } else {
+            alert('Error saving settings');
+        }
+    });
+}
+
+function restartApp() {
+    const message = 'Are you sure you want to restart the application?';
+    
+    // Check if toastConfirm is available, otherwise use standard confirm
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(message, () => {
+            proceedRestart();
+        });
+    } else {
+        if (confirm(message)) {
+            proceedRestart();
+        }
+    }
+}
+
+function proceedRestart() {
+    fetch('/api/settings/restart', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (typeof showInfo === 'function') {
+            showInfo('Application restart initiated. Please wait a moment and refresh the page.');
+        } else {
+            alert('Application restart initiated. Please wait a moment and refresh the page.');
+        }
+    })
+    .catch(error => {
+        console.error('Error restarting application:', error);
+        if (typeof showError === 'function') {
+            showError('Error restarting application');
+        } else {
+            alert('Error restarting application');
+        }
+    });
+}
+
+// Video Indexing Functions
+function loadIndexingStats() {
+    fetch('/api/video-indexing/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('indexing-stats').innerHTML = 
+                    '<span class="error">Error loading stats: ' + data.error + '</span>';
+            } else {
+                const stats = `
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <strong>Artists:</strong> ${data.total_artists}
+                        </div>
+                        <div class="stat-item">
+                            <strong>Videos:</strong> ${data.total_videos}
+                        </div>
+                        <div class="stat-item">
+                            <strong>Downloaded:</strong> ${data.downloaded_videos}
+                        </div>
+                        <div class="stat-item">
+                            <strong>With Files:</strong> ${data.videos_with_files}
+                        </div>
+                        <div class="stat-item">
+                            <strong>IMVDb Data:</strong> ${data.videos_with_imvdb}
+                        </div>
+                        <div class="stat-item">
+                            <strong>Coverage:</strong> ${data.imvdb_coverage}%
+                        </div>
+                    </div>
+                `;
+                document.getElementById('indexing-stats').innerHTML = stats;
+                
+                // Add thumbnail stats if available
+                if (data.thumbnail_stats) {
+                    const thumbStats = data.thumbnail_stats;
+                    const thumbInfo = `
+                        <div class="thumbnail-stats">
+                            <strong>Thumbnails:</strong> ${thumbStats.total_files} files (${thumbStats.total_size_mb} MB)
+                        </div>
+                    `;
+                    document.getElementById('indexing-stats').innerHTML += thumbInfo;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading indexing stats:', error);
+            document.getElementById('indexing-stats').innerHTML = 
+                '<span class="error">Failed to load stats</span>';
+        });
+}
+
+function checkImvdbConnection() {
+    fetch('/api/video-indexing/imvdb/test')
+        .then(response => response.json())
+        .then(data => {
+            const statusElement = document.getElementById('imvdb-status');
+            if (data.status === 'success') {
+                statusElement.innerHTML = '<span class="success">✅ Connected</span>';
+            } else if (data.status === 'error' && data.message.includes('api key')) {
+                statusElement.innerHTML = '<span class="warning">⚠️ API Key not configured</span>';
+            } else {
+                statusElement.innerHTML = '<span class="error">❌ Connection failed</span>';
+            }
+        })
+        .catch(error => {
+            console.error('Error checking IMVDb connection:', error);
+            document.getElementById('imvdb-status').innerHTML = 
+                '<span class="error">❌ Check failed</span>';
+        });
+}
+
+function testImvdbConnection() {
+    const statusElement = document.getElementById('imvdb-status');
+    statusElement.innerHTML = '<span class="loading">🔄 Testing...</span>';
+    
+    fetch('/api/video-indexing/imvdb/test')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                statusElement.innerHTML = '<span class="success">✅ Connection successful!</span>';
+                if (typeof showSuccess === 'function') {
+                    showSuccess('IMVDb connection test passed! API is working correctly.');
+                } else {
+                    alert('IMVDb connection test passed! API is working correctly.');
+                }
+            } else {
+                statusElement.innerHTML = '<span class="error">❌ Connection failed</span>';
+                if (typeof showError === 'function') {
+                    showError('IMVDb connection failed: ' + data.message);
+                } else {
+                    alert('IMVDb connection failed: ' + data.message);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error testing IMVDb connection:', error);
+            statusElement.innerHTML = '<span class="error">❌ Test failed</span>';
+            if (typeof showError === 'function') {
+                showError('IMVDb connection test failed: ' + error.message);
+            } else {
+                alert('IMVDb connection test failed: ' + error.message);
+            }
+        });
+}
+
+function scanVideoFiles() {
+    showProgress('Scanning video files...');
+    
+    fetch('/api/video-indexing/scan-files')
+        .then(response => response.json())
+        .then(data => {
+            hideProgress();
+            if (data.error) {
+                showResults('<span class="error">Scan failed: ' + data.error + '</span>');
+            } else {
+                const result = `
+                    <div class="scan-results">
+                        <h4>📁 Video Files Scan Results</h4>
+                        <p><strong>Directory:</strong> ${data.directory}</p>
+                        <p><strong>Total video files found:</strong> ${data.count}</p>
+                        <p>Ready for indexing: ${data.count} files</p>
+                    </div>
+                `;
+                showResults(result);
+            }
+        })
+        .catch(error => {
+            hideProgress();
+            console.error('Error scanning video files:', error);
+            showResults('<span class="error">Scan failed: ' + error.message + '</span>');
+        });
+}
+
+function indexAllVideos() {
+    const message = 'This will index all videos in your music videos directory with IMVDb metadata. This may take a while. Continue?';
+    
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(message, () => {
+            proceedIndexAllVideos();
+        });
+    } else {
+        if (confirm(message)) {
+            proceedIndexAllVideos();
+        }
+    }
+}
+
+function proceedIndexAllVideos() {
+    
+    startIndexing(true);
+}
+
+function indexAllVideosNoMeta() {
+    const message = 'This will index all videos without fetching metadata (faster). Continue?';
+    
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(message, () => {
+            proceedIndexAllVideosNoMeta();
+        });
+    } else {
+        if (confirm(message)) {
+            proceedIndexAllVideosNoMeta();
+        }
+    }
+}
+
+function proceedIndexAllVideosNoMeta() {
+    
+    startIndexing(false);
+}
+
+function startIndexing(fetchMetadata) {
+    showProgress('Starting video indexing...');
+    
+    const requestData = {
+        fetch_metadata: fetchMetadata,
+        max_files: null // Process all files
+    };
+    
+    fetch('/api/video-indexing/index-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgress();
+        
+        if (data.success) {
+            const summary = data.summary;
+            const result = `
+                <div class="indexing-results">
+                    <h4>🎬 Video Indexing Complete</h4>
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <strong>Total files:</strong> ${summary.total_files}
+                        </div>
+                        <div class="result-item">
+                            <strong>Successfully indexed:</strong> ${summary.successful}
+                        </div>
+                        <div class="result-item">
+                            <strong>Already indexed:</strong> ${summary.already_indexed}
+                        </div>
+                        <div class="result-item">
+                            <strong>Failed:</strong> ${summary.failed}
+                        </div>
+                        <div class="result-item">
+                            <strong>Artists created:</strong> ${summary.artists_created}
+                        </div>
+                        <div class="result-item">
+                            <strong>Videos created:</strong> ${summary.videos_created}
+                        </div>
+                        ${fetchMetadata ? `
+                        <div class="result-item">
+                            <strong>IMVDb metadata found:</strong> ${summary.imvdb_metadata_found}
+                        </div>
+                        <div class="result-item">
+                            <strong>Thumbnails downloaded:</strong> ${summary.thumbnails_downloaded}
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            showResults(result);
+            
+            // Refresh stats after indexing
+            setTimeout(refreshStats, 1000);
+        } else {
+            showResults('<span class="error">Indexing failed: ' + data.error + '</span>');
+        }
+    })
+    .catch(error => {
+        hideProgress();
+        console.error('Error during indexing:', error);
+        showResults('<span class="error">Indexing failed: ' + error.message + '</span>');
+    });
+}
+
+function refreshStats() {
+    loadIndexingStats();
+    checkImvdbConnection();
+}
+
+function populateArtistThumbnails() {
+    const message = 'This will scan all artists missing thumbnails and attempt to find images from IMVDb and Wikipedia. This may take a while. Continue?';
+    
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(message, () => {
+            proceedPopulateArtistThumbnails();
+        });
+    } else {
+        if (confirm(message)) {
+            proceedPopulateArtistThumbnails();
+        }
+    }
+}
+
+function proceedPopulateArtistThumbnails() {
+    
+    showProgress('Scanning artists for missing thumbnails...');
+    
+    fetch('/api/artists/scan-missing-thumbnails', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgress();
+        
+        if (data.success) {
+            const result = `
+                <div class="scan-results">
+                    <h4>🖼️ Artist Thumbnail Scan Complete</h4>
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <strong>Artists without thumbnails:</strong> ${data.missing_count}
+                        </div>
+                        <div class="result-item">
+                            <strong>Thumbnails found:</strong> ${data.updated_count}
+                        </div>
+                        <div class="result-item">
+                            <strong>Success rate:</strong> ${data.missing_count > 0 ? Math.round((data.updated_count / data.missing_count) * 100) : 0}%
+                        </div>
+                    </div>
+                    <p>${data.message}</p>
+                </div>
+            `;
+            showResults(result);
+            
+            // Refresh stats after thumbnail scan
+            setTimeout(refreshStats, 1000);
+        } else {
+            showResults('<span class="error">Thumbnail scan failed: ' + data.error + '</span>');
+        }
+    })
+    .catch(error => {
+        hideProgress();
+        console.error('Error scanning thumbnails:', error);
+        showResults('<span class="error">Thumbnail scan failed: ' + error.message + '</span>');
+    });
+}
+
+function showProgress(text) {
+    document.getElementById('progress-text').textContent = text;
+    document.getElementById('indexing-progress').style.display = 'block';
+    document.getElementById('indexing-results').style.display = 'none';
+    
+    // Disable buttons during processing
+    const buttons = document.querySelectorAll('.indexing-actions button');
+    buttons.forEach(btn => btn.disabled = true);
+}
+
+function hideProgress() {
+    document.getElementById('indexing-progress').style.display = 'none';
+    
+    // Re-enable buttons
+    const buttons = document.querySelectorAll('.indexing-actions button');
+    buttons.forEach(btn => btn.disabled = false);
+}
+
+function showResults(html) {
+    document.getElementById('indexing-results').innerHTML = html;
+    document.getElementById('indexing-results').style.display = 'block';
+}
+
+function fixMissingVideos() {
+    const message = 'This will scan all videos marked as downloaded and check if their files exist. Missing videos will be marked as wanted for re-download and artists will be monitored. Continue?';
+    
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(message, () => {
+            proceedFixMissingVideos();
+        });
+    } else {
+        if (confirm(message)) {
+            proceedFixMissingVideos();
+        }
+    }
+}
+
+function proceedFixMissingVideos() {
+    showProgress('Fixing missing videos...');
+    
+    fetch('/api/videos/recovery/fix-missing', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgress();
+        if (data.error) {
+            showResults('<span class="error">Fix missing videos failed: ' + data.error + '</span>');
+        } else {
+            const stats = data.statistics;
+            const result = `
+                <div class="fix-missing-results">
+                    <h4>🔧 Fix Missing Videos Complete</h4>
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <strong>Downloaded videos checked:</strong> ${stats.total_downloaded}
+                        </div>
+                        <div class="result-item">
+                            <strong>Videos with missing files:</strong> ${stats.missing_files}
+                        </div>
+                        <div class="result-item">
+                            <strong>Videos recovered:</strong> ${stats.recovered_videos}
+                        </div>
+                        <div class="result-item">
+                            <strong>Videos marked as wanted:</strong> ${stats.marked_wanted}
+                        </div>
+                        <div class="result-item">
+                            <strong>Artists set to monitored:</strong> ${stats.artists_monitored}
+                        </div>
+                    </div>
+                    ${stats.missing_files > 0 ? 
+                        `<p class="success-message">✅ Successfully processed ${stats.missing_files} missing videos!</p>` :
+                        `<p class="success-message">✅ No missing videos found! All downloaded videos have valid file paths.</p>`
+                    }
+                </div>
+            `;
+            showResults(result);
+            
+            // Show success toast
+            if (typeof showSuccess === 'function') {
+                showSuccess(`Fixed ${stats.missing_files} missing videos: ${stats.recovered_videos} recovered, ${stats.marked_wanted} marked as wanted`);
+            }
+            
+            // Refresh stats to show updated data
+            loadIndexingStats();
+        }
+    })
+    .catch(error => {
+        hideProgress();
+        console.error('Error fixing missing videos:', error);
+        showResults('<span class="error">Fix missing videos failed: ' + error.message + '</span>');
+        
+        if (typeof showError === 'function') {
+            showError('Failed to fix missing videos: ' + error.message);
+        }
+    });
+}
+
+function cleanupZeroVideoArtists() {
+    const message = 'This will permanently delete ALL artists with 0 videos associated. This action cannot be undone. Are you sure you want to continue?';
+    
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(message, () => {
+            proceedCleanupZeroVideoArtists();
+        });
+    } else {
+        if (confirm(message)) {
+            proceedCleanupZeroVideoArtists();
+        }
+    }
+}
+
+function proceedCleanupZeroVideoArtists() {
+    
+    showProgress('Removing artists with 0 videos...');
+    
+    fetch('/api/artists/cleanup-zero-videos', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgress();
+        
+        if (data.success) {
+            if (data.deleted_count > 0) {
+                const result = `
+                    <div class="cleanup-results">
+                        <h4>🗑️ Artist Cleanup Complete</h4>
+                        <div class="results-grid">
+                            <div class="result-item">
+                                <strong>Artists removed:</strong> ${data.deleted_count}
+                            </div>
+                        </div>
+                        <div class="deleted-artists">
+                            <strong>Deleted artists:</strong>
+                            <ul>
+                                ${data.deleted_artists.map(name => `<li>${name}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                showResults(result);
+                
+                // Refresh stats after cleanup
+                setTimeout(refreshStats, 1000);
+            } else {
+                showResults('<div class="cleanup-results"><h4>ℹ️ No Artists Found</h4><p>No artists with 0 videos found to remove.</p></div>');
+            }
+        } else {
+            showResults('<span class="error">Cleanup failed: ' + data.error + '</span>');
+        }
+    })
+    .catch(error => {
+        hideProgress();
+        console.error('Error cleaning up artists:', error);
+        showResults('<span class="error">Cleanup failed: ' + error.message + '</span>');
+    });
+}
+
+// Scheduler management functions
+function refreshSchedulerStatus() {
+    // Set loading status - check if element exists first
+    const loadingElement = document.getElementById('scheduler-loading');
+    if (loadingElement) {
+        loadingElement.textContent = 'Loading...';
+    } else {
+        // Element doesn't exist (likely already replaced), show loading in status div
+        const statusDiv = document.getElementById('scheduler-status');
+        if (statusDiv) {
+            statusDiv.innerHTML = '<span id="scheduler-loading">Loading...</span>';
+        }
+    }
+    
+    fetch('/api/settings/scheduler/status')
+    .then(response => response.json())
+    .then(data => {
+        const statusDiv = document.getElementById('scheduler-status');
+        const scheduler = data.scheduler;
+        
+        const scheduleInfo = scheduler.schedule_info;
+        const nextRun = scheduleInfo.next_run_human ? scheduleInfo.next_run_human : 'Not scheduled';
+        
+        if (scheduler.running) {
+            statusDiv.innerHTML = `
+                <div class="status-info">
+                    <div class="status-item running">
+                        <strong>Service Status:</strong> Running
+                    </div>
+                    <div class="status-item">
+                        <strong>Scheduling Enabled:</strong> ${scheduleInfo.enabled ? 'Yes' : 'No'}
+                    </div>
+                    ${scheduleInfo.enabled ? `
+                    <div class="status-item">
+                        <strong>Schedule:</strong> ${scheduleInfo.schedule_days} at ${scheduleInfo.schedule_time}
+                    </div>
+                    <div class="status-item">
+                        <strong>Max Videos:</strong> ${scheduleInfo.max_videos}
+                    </div>
+                    <div class="status-item">
+                        <strong>Next Run:</strong> ${nextRun}
+                    </div>
+                    <div class="status-item">
+                        <strong>Active Jobs:</strong> ${scheduleInfo.job_count || 0}
+                    </div>
+                    ` : `
+                    <div class="status-item warning">
+                        <strong>Note:</strong> Scheduling is disabled. Enable it in settings to schedule downloads.
+                    </div>
+                    `}
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="status-info">
+                    <div class="status-item ${scheduleInfo.enabled ? 'warning' : 'stopped'}">
+                        <strong>Service Status:</strong> ${scheduleInfo.enabled ? 'Scheduled (Service Stopped)' : 'Not Scheduled'}
+                    </div>
+                    <div class="status-item">
+                        <strong>Scheduling Enabled:</strong> ${scheduleInfo.enabled ? 'Yes' : 'No'}
+                    </div>
+                    ${scheduleInfo.enabled ? `
+                    <div class="status-item">
+                        <strong>Configured Schedule:</strong> ${scheduleInfo.schedule_days} at ${scheduleInfo.schedule_time}
+                    </div>
+                    <div class="status-item warning">
+                        <strong>Note:</strong> Scheduler service needs to be started to run scheduled downloads
+                    </div>
+                    ` : `
+                    <div class="status-item">
+                        <strong>Note:</strong> Enable scheduling in settings to schedule automatic downloads
+                    </div>
+                    `}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error getting scheduler status:', error);
+        const statusDiv = document.getElementById('scheduler-status');
+        if (statusDiv) {
+            statusDiv.innerHTML = '<span class="error">Error loading status</span>';
+        }
+    });
+}
+
+function startScheduler() {
+    // Update status display to show loading
+    const statusDiv = document.getElementById('scheduler-status');
+    if (statusDiv) {
+        statusDiv.innerHTML = '<span class="status-loading">Starting scheduler...</span>';
+    }
+    
+    fetch('/api/settings/scheduler/start', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showSuccess(data.message);
+            refreshSchedulerStatus();
+        } else {
+            showError('Failed to start scheduler: ' + (data.error || 'Unknown error'));
+            refreshSchedulerStatus();
+        }
+    })
+    .catch(error => {
+        console.error('Error starting scheduler:', error);
+        showError('Error starting scheduler: ' + error.message);
+        refreshSchedulerStatus();
+    });
+}
+
+function stopScheduler() {
+    // Update status display to show loading
+    const statusDiv = document.getElementById('scheduler-status');
+    if (statusDiv) {
+        statusDiv.innerHTML = '<span class="status-loading">Stopping scheduler...</span>';
+    }
+    
+    fetch('/api/settings/scheduler/stop', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showSuccess(data.message);
+            refreshSchedulerStatus();
+        } else {
+            showError('Failed to stop scheduler: ' + (data.error || 'Unknown error'));
+            refreshSchedulerStatus();
+        }
+    })
+    .catch(error => {
+        console.error('Error stopping scheduler:', error);
+        showError('Error stopping scheduler: ' + error.message);
+        refreshSchedulerStatus();
+    });
+}
+
+function reloadScheduler() {
+    // Update status display to show loading
+    const statusDiv = document.getElementById('scheduler-status');
+    if (statusDiv) {
+        statusDiv.innerHTML = '<span class="status-loading">Reloading scheduler configuration...</span>';
+    }
+    
+    fetch('/api/settings/scheduler/reload', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showSuccess(data.message);
+            refreshSchedulerStatus();
+        } else {
+            showError('Failed to reload scheduler: ' + (data.error || 'Unknown error'));
+            refreshSchedulerStatus();
+        }
+    })
+    .catch(error => {
+        console.error('Error reloading scheduler:', error);
+        showError('Error reloading scheduler: ' + error.message);
+        refreshSchedulerStatus();
+    });
+}
+
+function testScheduledDownload() {
+    // Update status display to show loading
+    const statusDiv = document.getElementById('scheduler-status');
+    if (statusDiv) {
+        statusDiv.innerHTML = '<span class="status-loading">Running test download...</span>';
+    }
+    
+    fetch('/api/settings/scheduler/trigger', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            const result = data.result;
+            const message = `${data.message}<br>
+                           Success: ${result.success_count} videos queued<br>
+                           Failed: ${result.failed_count} videos<br>
+                           Total Wanted: ${result.total_wanted} videos`;
+            showSuccess(message);
+            refreshSchedulerStatus();
+        } else {
+            showError('Test download failed: ' + (data.error || 'Unknown error'));
+            refreshSchedulerStatus();
+        }
+    })
+    .catch(error => {
+        console.error('Error running test download:', error);
+        showError('Error running test download: ' + error.message);
+        refreshSchedulerStatus();
+    });
+}
+
+// External Services Integration Functions
+function testYouTubeIntegration() {
+    showIntegrationLoading('YouTube');
+    
+    fetch('/api/youtube/playlists/test', {
+        method: 'POST'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            showSuccessMessage('YouTube integration test passed! API is working correctly.');
+        } else {
+            showErrorMessage('YouTube integration test failed: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error testing YouTube integration:', error);
+        showErrorMessage('YouTube integration test failed: ' + error.message);
+    });
+}
+
+function syncYouTubePlaylists() {
+    showIntegrationLoading('YouTube');
+    
+    fetch('/api/youtube/playlists/sync', {
+        method: 'POST'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage(`YouTube playlists synced successfully! ${data.synced_count} playlists processed.`);
+        } else {
+            showErrorMessage('YouTube playlist sync failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error syncing YouTube playlists:', error);
+        showErrorMessage('YouTube playlist sync failed: ' + error.message);
+    });
+}
+
+function testSpotifyIntegration() {
+    showIntegrationLoading('Spotify');
+    
+    fetch('/api/spotify/test', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSuccessMessage('Spotify integration test passed! API credentials are valid.');
+        } else {
+            showErrorMessage('Spotify integration test failed: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error testing Spotify integration:', error);
+        showErrorMessage('Spotify integration test failed: ' + error.message);
+    });
+}
+
+function authorizeSpotify() {
+    fetch('/api/spotify/authorize', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.authorization_url) {
+            window.open(data.authorization_url, '_blank');
+            showInfoMessage('Please complete authorization in the new window, then test the connection.');
+        } else {
+            showErrorMessage('Failed to get Spotify authorization URL: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error authorizing Spotify:', error);
+        showErrorMessage('Spotify authorization failed: ' + error.message);
+    });
+}
+
+function importSpotifyPlaylists() {
+    showIntegrationLoading('Spotify');
+    
+    fetch('/api/spotify/import-playlists', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage(`Spotify playlists imported successfully! ${data.imported_count} playlists processed.`);
+        } else {
+            showErrorMessage('Spotify playlist import failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error importing Spotify playlists:', error);
+        showErrorMessage('Spotify playlist import failed: ' + error.message);
+    });
+}
+
+
+
+function testLidarrIntegration() {
+    showIntegrationLoading('Lidarr');
+    
+    fetch('/api/lidarr/test', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSuccessMessage('Lidarr integration test passed! ' + data.message);
+        } else {
+            showErrorMessage('Lidarr integration test failed: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error testing Lidarr integration:', error);
+        showErrorMessage('Lidarr integration test failed: ' + error.message);
+    });
+}
+
+function syncLidarrLibrary() {
+    showIntegrationLoading('Lidarr');
+    
+    fetch('/api/lidarr/sync-library', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage(`Lidarr library synced successfully! ${data.synced_count} artists processed.`);
+        } else {
+            showErrorMessage('Lidarr library sync failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error syncing Lidarr library:', error);
+        showErrorMessage('Lidarr library sync failed: ' + error.message);
+    });
+}
+
+function importLidarrArtists() {
+    showIntegrationLoading('Lidarr');
+    
+    fetch('/api/lidarr/import-artists', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage(`Lidarr artists imported successfully! ${data.imported_count} monitored artists processed.`);
+        } else {
+            showErrorMessage('Lidarr artist import failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error importing Lidarr artists:', error);
+        showErrorMessage('Lidarr artist import failed: ' + error.message);
+    });
+}
+
+function syncLidarrAlbums() {
+    showIntegrationLoading('Lidarr');
+    
+    fetch('/api/lidarr/sync-albums', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage(`Lidarr albums synced successfully! ${data.processed_count} albums processed.`);
+        } else {
+            showErrorMessage('Lidarr album sync failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error syncing Lidarr albums:', error);
+        showErrorMessage('Lidarr album sync failed: ' + error.message);
+    });
+}
+
+function showIntegrationLoading(service) {
+    if (typeof showInfo === 'function') {
+        showInfo(`Testing ${service} integration...`);
+    } else {
+        showInfoMessage(`Testing ${service} integration...`);
+    }
+}
+
+// Helper functions for notifications
+function showSuccessMessage(message) {
+    if (typeof showSuccess === 'function') {
+        showSuccess(message);
+    } else {
+        alert('✅ ' + message);
+    }
+}
+
+function showErrorMessage(message) {
+    if (typeof showError === 'function') {
+        showError(message);
+    } else {
+        alert('❌ ' + message);
+    }
+}
+
+function showInfoMessage(message) {
+    if (typeof showInfo === 'function') {
+        showInfo(message);
+    } else {
+        alert('ℹ️ ' + message);
+    }
+}
+
+
+// ================================
+// USER MANAGEMENT FUNCTIONS
+// ================================
+
+function initializeUserManagement() {
+    // Simplified authentication - no complex user management needed
+    // User credentials can be updated in Settings > General tab
+    console.log('User management simplified - using single user authentication');
+}
+
+function loadCurrentUserInfo() {
+    fetch('/api/users/me')
+        .then(response => response.json())
+        .then(data => {
+            if (data.user) {
+                const user = data.user;
+                const permissions = data.permissions;
+                
+                // Update current user info
+                document.getElementById('currentUsername').textContent = user.username;
+                document.getElementById('currentUserEmail').textContent = user.email || 'Not provided';
+                
+                // Update role badge
+                const roleElement = document.getElementById('currentUserRole');
+                roleElement.textContent = user.role;
+                roleElement.className = `role-badge role-${user.role.toLowerCase()}`;
+                
+                // Update last login
+                const lastLogin = user.last_login ? new Date(user.last_login).toLocaleString() : 'Never';
+                document.getElementById('lastLoginTime').textContent = lastLogin;
+                
+                // Update 2FA status
+                const twoFactorElement = document.getElementById('twoFactorStatus');
+                if (user.two_factor_enabled) {
+                    twoFactorElement.innerHTML = '<span class="status-enabled">✅ Enabled</span>';
+                } else {
+                    twoFactorElement.innerHTML = '<span class="status-disabled">❌ Disabled</span>';
+                }
+                
+                // Show admin section if user has admin privileges
+                if (permissions.can_manage_users) {
+                    document.getElementById('adminUserManagement').style.display = 'block';
+                    loadUserList();
+                }
+                
+            }
+        })
+        .catch(error => {
+            console.error('Error loading user info:', error);
+        });
+}
+
+function checkUserPermissions() {
+    fetch('/auth/check')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.authenticated) {
+                // User is not authenticated, hide user management
+                document.getElementById('userManagementSection').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error checking authentication:', error);
+        });
+}
+
+function loadUserList() {
+    fetch('/api/users/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.users) {
+                renderUserList(data.users);
+                updateUserStats(data.users);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading user list:', error);
+            document.getElementById('userList').innerHTML = '<div class="error">Error loading users</div>';
+        });
+}
+
+function renderUserList(users) {
+    const userListElement = document.getElementById('userList');
+    
+    if (users.length === 0) {
+        userListElement.innerHTML = '<div class="no-users">No users found</div>';
+        return;
+    }
+    
+    const userListHTML = users.map(user => {
+        const statusClass = user.is_active ? 'active' : 'inactive';
+        const lockedStatus = user.is_locked ? '🔒 Locked' : '';
+        const twoFactorStatus = user.two_factor_enabled ? '🔐' : '';
+        
+        return `
+            <div class="user-item ${statusClass}">
+                <div class="user-info">
+                    <div class="user-primary">
+                        <strong>${user.username}</strong>
+                        <span class="role-badge role-${user.role.toLowerCase()}">${user.role}</span>
+                        ${twoFactorStatus}
+                        ${lockedStatus}
+                    </div>
+                    <div class="user-secondary">
+                        <span>${user.email}</span>
+                        <span>Last login: ${user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}</span>
+                    </div>
+                </div>
+                <div class="user-actions">
+                    <button onclick="editUser(${user.id})" class="btn btn-sm btn-secondary">✏️ Edit</button>
+                    <button onclick="viewUserSessions(${user.id})" class="btn btn-sm btn-info">📱 Sessions</button>
+                    ${user.is_active 
+                        ? `<button onclick="deactivateUser(${user.id})" class="btn btn-sm btn-warning">⏸️ Deactivate</button>`
+                        : `<button onclick="activateUser(${user.id})" class="btn btn-sm btn-success">▶️ Activate</button>`
+                    }
+                    ${user.is_locked 
+                        ? `<button onclick="unlockUser(${user.id})" class="btn btn-sm btn-warning">🔓 Unlock</button>`
+                        : ''
+                    }
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    userListElement.innerHTML = userListHTML;
+}
+
+function updateUserStats(users) {
+    const totalUsers = users.length;
+    const activeUsers = users.filter(u => u.is_active).length;
+    const twoFactorUsers = users.filter(u => u.two_factor_enabled).length;
+    
+    document.getElementById('totalUsers').textContent = totalUsers;
+    document.getElementById('activeUsers').textContent = activeUsers;
+    document.getElementById('twoFactorUsers').textContent = twoFactorUsers;
+}
+
+
+function refreshUserList() {
+    loadUserList();
+}
+
+// Modal Functions
+function showCreateUserModal() {
+    const modalHTML = `
+        <div class="modal-overlay" id="createUserModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Create New User</h3>
+                    <button onclick="closeModal('createUserModal')" class="btn-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <form id="createUserForm">
+                        <div class="form-group">
+                            <label for="newUsername">Username:</label>
+                            <input type="text" id="newUsername" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newEmail">Email:</label>
+                            <input type="email" id="newEmail" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">Password:</label>
+                            <input type="password" id="newPassword" name="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newRole">Role:</label>
+                            <select id="newRole" name="role">
+                                <option value="USER">User</option>
+                                <option value="MANAGER">Manager</option>
+                                <option value="ADMIN">Administrator</option>
+                                <option value="READONLY">Read Only</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="createUser()" class="btn btn-primary">Create User</button>
+                    <button onclick="closeModal('createUserModal')" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function createUser() {
+    const form = document.getElementById('createUserForm');
+    const formData = new FormData(form);
+    const userData = {
+        username: formData.get('username'),
+        email: formData.get('email'),
+        password: formData.get('password'),
+        role: formData.get('role')
+    };
+    
+    fetch('/api/users/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success || data.user) {
+            showSuccess('User created successfully');
+            closeModal('createUserModal');
+            loadUserList();
+        } else {
+            showError(data.error || 'Failed to create user');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating user:', error);
+        showError('Error creating user');
+    });
+}
+
+function showChangePasswordModal() {
+    const modalHTML = `
+        <div class="modal-overlay" id="changePasswordModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Change Password</h3>
+                    <button onclick="closeModal('changePasswordModal')" class="btn-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password:</label>
+                            <input type="password" id="currentPassword" name="current_password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password:</label>
+                            <input type="password" id="newPassword" name="new_password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm New Password:</label>
+                            <input type="password" id="confirmPassword" name="confirm_password" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="changePassword()" class="btn btn-primary">Change Password</button>
+                    <button onclick="closeModal('changePasswordModal')" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function changePassword() {
+    const form = document.getElementById('changePasswordForm');
+    const formData = new FormData(form);
+    
+    const newPassword = formData.get('new_password');
+    const confirmPassword = formData.get('confirm_password');
+    
+    if (newPassword !== confirmPassword) {
+        showError('New passwords do not match');
+        return;
+    }
+    
+    const passwordData = {
+        current_password: formData.get('current_password'),
+        new_password: newPassword
+    };
+    
+    fetch('/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(passwordData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Password changed successfully');
+            closeModal('changePasswordModal');
+        } else {
+            showError(data.error || 'Failed to change password');
+        }
+    })
+    .catch(error => {
+        console.error('Error changing password:', error);
+        showError('Error changing password');
+    });
+}
+
+function showTwoFactorModal() {
+    fetch('/2fa/api/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status && data.status.enabled) {
+                showTwoFactorManageModal();
+            } else {
+                showTwoFactorSetupModal();
+            }
+        })
+        .catch(error => {
+            console.error('Error getting 2FA status:', error);
+            showError('Error loading 2FA status');
+        });
+}
+
+function showTwoFactorSetupModal() {
+    const modalHTML = `
+        <div class="modal-overlay" id="twoFactorModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3>Setup Two-Factor Authentication</h3>
+                    <button onclick="closeModal('twoFactorModal')" class="btn-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div id="twoFactorSetup">
+                        <p>Two-factor authentication adds an extra layer of security to your account.</p>
+                        <button onclick="initiateTwoFactorSetup()" class="btn btn-primary">Setup 2FA</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function showUserSessionsModal() {
+    fetch('/api/users/me')
+        .then(response => response.json())
+        .then(data => {
+            if (data.user) {
+                return fetch(`/api/users/${data.user.id}/sessions`);
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.sessions) {
+                renderSessionsModal(data.sessions);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sessions:', error);
+            showError('Error loading sessions');
+        });
+}
+
+function renderSessionsModal(sessions) {
+    const sessionsHTML = sessions.map(session => {
+        const isCurrentSession = session.is_current;
+        const currentBadge = isCurrentSession ? '<span class="current-session">Current</span>' : '';
+        
+        return `
+            <div class="session-item ${isCurrentSession ? 'current' : ''}">
+                <div class="session-info">
+                    <div><strong>IP Address:</strong> ${session.ip_address || 'Unknown'}</div>
+                    <div><strong>User Agent:</strong> ${session.user_agent || 'Unknown'}</div>
+                    <div><strong>Created:</strong> ${new Date(session.created_at).toLocaleString()}</div>
+                    <div><strong>Last Activity:</strong> ${new Date(session.last_activity).toLocaleString()}</div>
+                    ${currentBadge}
+                </div>
+                <div class="session-actions">
+                    ${!isCurrentSession ? `<button onclick="revokeSession(${session.id})" class="btn btn-sm btn-danger">Revoke</button>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    const modalHTML = `
+        <div class="modal-overlay" id="sessionsModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3>Manage Sessions</h3>
+                    <button onclick="closeModal('sessionsModal')" class="btn-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="sessions-list">
+                        ${sessionsHTML}
+                    </div>
+                    <div class="session-actions-footer">
+                        <button onclick="revokeAllSessions()" class="btn btn-danger">Revoke All Other Sessions</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function revokeSession(sessionId) {
+    fetch('/api/users/me')
+        .then(response => response.json())
+        .then(data => {
+            if (data.user) {
+                return fetch(`/api/users/${data.user.id}/sessions/${sessionId}`, { method: 'DELETE' });
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('Session revoked successfully');
+                closeModal('sessionsModal');
+                if (data.redirect_to_login) {
+                    window.location.href = '/auth/login';
+                }
+            } else {
+                showError(data.error || 'Failed to revoke session');
+            }
+        })
+        .catch(error => {
+            console.error('Error revoking session:', error);
+            showError('Error revoking session');
+        });
+}
+
+function revokeAllSessions() {
+    fetch('/api/users/me')
+        .then(response => response.json())
+        .then(data => {
+            if (data.user) {
+                return fetch(`/api/users/${data.user.id}/sessions`, { method: 'DELETE' });
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('All sessions revoked successfully');
+                closeModal('sessionsModal');
+                if (data.redirect_to_login) {
+                    window.location.href = '/auth/login';
+                }
+            } else {
+                showError(data.error || 'Failed to revoke sessions');
+            }
+        })
+        .catch(error => {
+            console.error('Error revoking sessions:', error);
+            showError('Error revoking sessions');
+        });
+}
+
+function logoutUser() {
+    if (confirm('Are you sure you want to logout?')) {
+        fetch('/auth/logout', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/auth/login';
+                } else {
+                    showError('Logout failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+                showError('Logout failed');
+            });
+    }
+}
+
+function deactivateUser(userId) {
+    if (confirm('Are you sure you want to deactivate this user?')) {
+        fetch(`/api/users/${userId}/deactivate`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess('User deactivated successfully');
+                    loadUserList();
+                } else {
+                    showError(data.error || 'Failed to deactivate user');
+                }
+            })
+            .catch(error => {
+                console.error('Error deactivating user:', error);
+                showError('Error deactivating user');
+            });
+    }
+}
+
+function activateUser(userId) {
+    fetch(`/api/users/${userId}/activate`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('User activated successfully');
+                loadUserList();
+            } else {
+                showError(data.error || 'Failed to activate user');
+            }
+        })
+        .catch(error => {
+            console.error('Error activating user:', error);
+            showError('Error activating user');
+        });
+}
+
+function unlockUser(userId) {
+    fetch(`/api/users/${userId}/unlock`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('User unlocked successfully');
+                loadUserList();
+            } else {
+                showError(data.error || 'Failed to unlock user');
+            }
+        })
+        .catch(error => {
+            console.error('Error unlocking user:', error);
+            showError('Error unlocking user');
+        });
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Helper functions
+function showSuccess(message) {
+    if (typeof toastSuccess === 'function') {
+        toastSuccess(message);
+    } else {
+        alert(message);
+    }
+}
+
+function showError(message) {
+    if (typeof toastError === 'function') {
+        toastError(message);
+    } else {
+        alert('Error: ' + message);
+    }
+}
+
+function showInfo(message) {
+    if (typeof toastInfo === 'function') {
+        toastInfo(message);
+    } else {
+        alert(message);
+    }
+}
+
+// Missing function implementations
+function showUserProfileModal() {
+    const modalHTML = `
+        <div class="modal-overlay" id="userProfileModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>User Profile</h3>
+                    <button onclick="closeModal('userProfileModal')" class="btn-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <form id="userProfileForm">
+                        <div class="form-group">
+                            <label for="profileEmail">Email:</label>
+                            <input type="email" id="profileEmail" name="email" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="updateUserProfile()" class="btn btn-primary">Update Profile</button>
+                    <button onclick="closeModal('userProfileModal')" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Load current user data
+    fetch('/api/users/me')
+        .then(response => response.json())
+        .then(data => {
+            if (data.user) {
+                document.getElementById('profileEmail').value = data.user.email || '';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading profile:', error);
+        });
+}
+
+function updateUserProfile() {
+    const form = document.getElementById('userProfileForm');
+    const formData = new FormData(form);
+    const preferences = {};
+    
+    fetch('/api/users/me/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preferences: preferences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Profile updated successfully');
+            closeModal('userProfileModal');
+            loadCurrentUserInfo();
+        } else {
+            showError(data.error || 'Failed to update profile');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating profile:', error);
+        showError('Error updating profile');
+    });
+}
+
+function editUser(userId) {
+    // Fetch user data and show edit modal
+    fetch(`/api/users/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.user) {
+                showEditUserModal(data.user);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading user:', error);
+            showError('Error loading user data');
+        });
+}
+
+function showEditUserModal(user) {
+    const modalHTML = `
+        <div class="modal-overlay" id="editUserModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit User: ${user.username}</h3>
+                    <button onclick="closeModal('editUserModal')" class="btn-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId" value="${user.id}">
+                        <div class="form-group">
+                            <label for="editEmail">Email:</label>
+                            <input type="email" id="editEmail" name="email" value="${user.email || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editRole">Role:</label>
+                            <select id="editRole" name="role">
+                                <option value="USER" ${user.role === 'USER' ? 'selected' : ''}>User</option>
+                                <option value="MANAGER" ${user.role === 'MANAGER' ? 'selected' : ''}>Manager</option>
+                                <option value="ADMIN" ${user.role === 'ADMIN' ? 'selected' : ''}>Administrator</option>
+                                <option value="READONLY" ${user.role === 'READONLY' ? 'selected' : ''}>Read Only</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="editActive" ${user.is_active ? 'checked' : ''}> 
+                                Active
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="updateUser()" class="btn btn-primary">Update User</button>
+                    <button onclick="closeModal('editUserModal')" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function updateUser() {
+    const userId = document.getElementById('editUserId').value;
+    const role = document.getElementById('editRole').value;
+    
+    fetch(`/api/users/${userId}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: role })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('User updated successfully');
+            closeModal('editUserModal');
+            loadUserList();
+        } else {
+            showError(data.error || 'Failed to update user');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating user:', error);
+        showError('Error updating user');
+    });
+}
+
+function viewUserSessions(userId) {
+    fetch(`/api/users/${userId}/sessions`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.sessions) {
+                renderUserSessionsModal(userId, data.sessions);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading user sessions:', error);
+            showError('Error loading user sessions');
+        });
+}
+
+function renderUserSessionsModal(userId, sessions) {
+    const sessionsHTML = sessions.map(session => {
+        return `
+            <div class="session-item">
+                <div class="session-info">
+                    <div><strong>IP Address:</strong> ${session.ip_address || 'Unknown'}</div>
+                    <div><strong>User Agent:</strong> ${session.user_agent || 'Unknown'}</div>
+                    <div><strong>Created:</strong> ${new Date(session.created_at).toLocaleString()}</div>
+                    <div><strong>Last Activity:</strong> ${new Date(session.last_activity).toLocaleString()}</div>
+                    <div><strong>Status:</strong> ${session.status}</div>
+                </div>
+                <div class="session-actions">
+                    <button onclick="adminRevokeSession(${userId}, ${session.id})" class="btn btn-sm btn-danger">Revoke</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    const modalHTML = `
+        <div class="modal-overlay" id="userSessionsModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3>User Sessions</h3>
+                    <button onclick="closeModal('userSessionsModal')" class="btn-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="sessions-list">
+                        ${sessionsHTML}
+                    </div>
+                    <div class="session-actions-footer">
+                        <button onclick="adminRevokeAllSessions(${userId})" class="btn btn-danger">Revoke All Sessions</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function adminRevokeSession(userId, sessionId) {
+    fetch(`/api/users/${userId}/sessions/${sessionId}`, { method: 'DELETE' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('Session revoked successfully');
+                closeModal('userSessionsModal');
+            } else {
+                showError(data.error || 'Failed to revoke session');
+            }
+        })
+        .catch(error => {
+            console.error('Error revoking session:', error);
+            showError('Error revoking session');
+        });
+}
+
+function adminRevokeAllSessions(userId) {
+    if (confirm('Are you sure you want to revoke all sessions for this user?')) {
+        fetch(`/api/users/${userId}/sessions`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess('All sessions revoked successfully');
+                    closeModal('userSessionsModal');
+                } else {
+                    showError(data.error || 'Failed to revoke sessions');
+                }
+            })
+            .catch(error => {
+                console.error('Error revoking sessions:', error);
+                showError('Error revoking sessions');
+            });
+    }
+}
+
+function initiateTwoFactorSetup() {
+    fetch('/2fa/api/setup', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.setup_data) {
+                showTwoFactorSetupData(data.setup_data);
+            } else {
+                showError(data.error || 'Failed to setup 2FA');
+            }
+        })
+        .catch(error => {
+            console.error('Error setting up 2FA:', error);
+            showError('Error setting up 2FA');
+        });
+}
+
+function showTwoFactorSetupData(setupData) {
+    const setupHTML = `
+        <div class="twofa-setup">
+            <h4>Step 1: Scan QR Code</h4>
+            <div class="qr-code-container">
+                <img src="data:image/png;base64,${setupData.qr_code}" alt="2FA QR Code">
+            </div>
+            
+            <h4>Step 2: Manual Entry Key</h4>
+            <p>If you can't scan the QR code, enter this key manually:</p>
+            <div class="manual-key">
+                <code>${setupData.manual_entry_key}</code>
+                <button onclick="copyToClipboard('${setupData.manual_entry_key}')" class="btn btn-sm btn-secondary">Copy</button>
+            </div>
+            
+            <h4>Step 3: Verify Setup</h4>
+            <div class="form-group">
+                <label for="verifyToken">Enter verification code from your authenticator app:</label>
+                <input type="text" id="verifyToken" placeholder="123456" maxlength="6">
+            </div>
+            <button onclick="verifyTwoFactorSetup()" class="btn btn-primary">Verify & Enable 2FA</button>
+            
+            <h4>Backup Codes</h4>
+            <p>Save these backup codes in a safe place. You can use them if you lose access to your authenticator app:</p>
+            <div class="backup-codes">
+                ${setupData.backup_codes.map(code => `<code>${code}</code>`).join('')}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('twoFactorSetup').innerHTML = setupHTML;
+}
+
+function verifyTwoFactorSetup() {
+    const token = document.getElementById('verifyToken').value;
+    
+    fetch('/2fa/api/verify-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('2FA enabled successfully!');
+            closeModal('twoFactorModal');
+            loadCurrentUserInfo();
+        } else {
+            showError(data.error || 'Failed to verify 2FA');
+        }
+    })
+    .catch(error => {
+        console.error('Error verifying 2FA:', error);
+        showError('Error verifying 2FA');
+    });
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showSuccess('Copied to clipboard');
+    }).catch(() => {
+        showError('Failed to copy to clipboard');
+    });
+}
+
+// Handle hash-based navigation from dropdown menu
+function handleHashNavigation() {
+    const hash = window.location.hash.substring(1);
+    console.log('Hash navigation triggered for:', hash);
+    
+    if (hash === 'profile') {
+        // Trigger user profile modal
+        console.log('Triggering profile modal...');
+        console.log('showUserProfileModal function exists:', typeof showUserProfileModal === 'function');
+        
+        // Check if authentication is enabled and user section is visible
+        const userSection = document.getElementById('userManagementSection');
+        const authEnabled = document.getElementById('require_authentication').value === 'true';
+        
+        if (!authEnabled) {
+            console.log('Authentication not enabled, enabling first...');
+            document.getElementById('require_authentication').value = 'true';
+            document.getElementById('require_authentication').dispatchEvent(new Event('change'));
+            
+            // Wait for user section to be shown, then call modal
+            setTimeout(() => {
+                if (typeof showUserProfileModal === 'function') {
+                    showUserProfileModal();
+                    console.log('Profile modal function called after enabling auth');
+                } else {
+                    console.error('showUserProfileModal function not found after enabling auth');
+                }
+            }, 500);
+        } else {
+            // Authentication is enabled, call modal directly
+            setTimeout(() => {
+                if (typeof showUserProfileModal === 'function') {
+                    console.log('Calling showUserProfileModal function...');
+                    showUserProfileModal();
+                    console.log('Profile modal function called');
+                    
+                    // Verify modal was created
+                    setTimeout(() => {
+                        const modal = document.getElementById('userProfileModal');
+                        if (modal) {
+                            console.log('Profile modal successfully created in DOM');
+                        } else {
+                            console.error('Profile modal not found in DOM after creation');
+                        }
+                    }, 100);
+                } else {
+                    console.error('showUserProfileModal function not found');
+                }
+            }, 200);
+        }
+    } else if (hash === 'password') {
+        // Trigger change password modal  
+        console.log('Triggering password modal...');
+        console.log('showChangePasswordModal function exists:', typeof showChangePasswordModal === 'function');
+        
+        // Check if authentication is enabled
+        const authEnabled = document.getElementById('require_authentication').value === 'true';
+        
+        if (!authEnabled) {
+            console.log('Authentication not enabled, enabling first...');
+            document.getElementById('require_authentication').value = 'true';
+            document.getElementById('require_authentication').dispatchEvent(new Event('change'));
+            
+            setTimeout(() => {
+                if (typeof showChangePasswordModal === 'function') {
+                    showChangePasswordModal();
+                    console.log('Password modal function called after enabling auth');
+                } else {
+                    console.error('showChangePasswordModal function not found after enabling auth');
+                }
+            }, 500);
+        } else {
+            setTimeout(() => {
+                if (typeof showChangePasswordModal === 'function') {
+                    console.log('Calling showChangePasswordModal function...');
+                    showChangePasswordModal();
+                    console.log('Password modal function called');
+                    
+                    // Verify modal was created
+                    setTimeout(() => {
+                        const modal = document.getElementById('changePasswordModal');
+                        if (modal) {
+                            console.log('Password modal successfully created in DOM');
+                        } else {
+                            console.error('Password modal not found in DOM after creation');
+                        }
+                    }, 100);
+                } else {
+                    console.error('showChangePasswordModal function not found');
+                }
+            }, 200);
+        }
+    } else if (hash === 'userManagement') {
+        // Scroll to user management section
+        console.log('Scrolling to user management...');
+        setTimeout(() => {
+            const userMgmtSection = document.getElementById('userManagementSection');
+            if (userMgmtSection) {
+                userMgmtSection.scrollIntoView({ behavior: 'smooth' });
+                console.log('Scrolled to user management section');
+            } else {
+                console.error('User management section not found');
+            }
+        }, 200);
+    }
+    
+    // Clear the hash to prevent repeated triggers
+    if (hash) {
+        setTimeout(() => {
+            history.replaceState(null, null, window.location.pathname);
+        }, 2000);
+    }
+}
+
+// Run hash navigation on page load
+
+// Also run when hash changes (for single-page navigation)
+window.addEventListener('hashchange', function() {
+    handleHashNavigation();
+});
+
+// Cookie Management Functions for Settings Page
+async function checkCookieStatusSettings() {
+    try {
+        const response = await fetch('/api/metube/cookies/status');
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('cookieStatusSettings');
+        const deleteBtn = document.getElementById('deleteCookieBtnSettings');
+        
+        if (data.cookies_available) {
+            statusDiv.innerHTML = '<span class="status-text success">✅ Cookies uploaded - Age-restricted videos supported</span>';
+            deleteBtn.style.display = 'inline-block';
+        } else {
+            statusDiv.innerHTML = '<span class="status-text error">❌ No cookies uploaded - Age-restricted videos will fail</span>';
+            deleteBtn.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Failed to check cookie status:', error);
+        document.getElementById('cookieStatusSettings').innerHTML = '<span class="status-text">❓ Status unknown</span>';
+    }
+}
+
+async function uploadCookiesSettings(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const uploadBtn = document.getElementById('uploadCookieBtnSettings');
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '⏳ Uploading...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('/api/metube/cookies/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (typeof showSuccess === 'function') {
+                showSuccess('✅ Cookies uploaded successfully!');
+            } else {
+                alert('✅ Cookies uploaded successfully!');
+            }
+            await checkCookieStatusSettings();
+        } else {
+            const errorMsg = `❌ Upload failed: ${data.error}`;
+            if (typeof showError === 'function') {
+                showError(errorMsg);
+            } else {
+                alert(errorMsg);
+            }
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        const errorMsg = '❌ Upload failed due to network error';
+        if (typeof showError === 'function') {
+            showError(errorMsg);
+        } else {
+            alert(errorMsg);
+        }
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '📤 Upload Cookies';
+        input.value = '';
+    }
+}
+
+async function deleteCookiesSettings() {
+    if (!confirm('Are you sure you want to delete the uploaded cookies?')) return;
+    
+    try {
+        const response = await fetch('/api/metube/cookies/delete', {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (typeof showSuccess === 'function') {
+                showSuccess('✅ Cookies deleted successfully');
+            } else {
+                alert('✅ Cookies deleted successfully');
+            }
+            await checkCookieStatusSettings();
+        } else {
+            const errorMsg = `❌ Delete failed: ${data.error}`;
+            if (typeof showError === 'function') {
+                showError(errorMsg);
+            } else {
+                alert(errorMsg);
+            }
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        const errorMsg = '❌ Delete failed due to network error';
+        if (typeof showError === 'function') {
+            showError(errorMsg);
+        } else {
+            alert(errorMsg);
+        }
+    }
+}
+
+function showCookieInstructionsSettings() {
+    const instructions = `
+How to export YouTube cookies:
+
+1. Chrome/Edge:
+   - Install "Get cookies.txt" extension
+   - Go to YouTube.com and sign in
+   - Click extension icon → Download cookies
+   - Save as .txt file
+
+2. Firefox:
+   - Install "cookies.txt" add-on
+   - Go to YouTube.com and sign in  
+   - Click add-on icon → Export cookies
+   - Save as .txt file
+
+3. Manual method:
+   - Use browser developer tools (F12)
+   - Go to Application/Storage → Cookies
+   - Copy YouTube cookies to .txt file in Netscape format
+
+⚠️ Security: Only upload cookies from your personal computer. Never share cookie files.
+
+The cookie file should contain YouTube authentication data including session tokens.
+    `;
+    
+    alert(instructions);
+}
+
+</script>
+
+<style>
+.settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Settings Tab Styles */
+.settings-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-color, #38383a);
+    margin-bottom: 2rem;
+    background: var(--surface-color, #2c2c2e);
+    border-radius: 8px 8px 0 0;
+    overflow-x: auto;
+}
+
+.settings-tab-btn {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-muted, #98989d);
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.settings-tab-btn:hover {
+    color: var(--text-color, #ffffff);
+    background: var(--hover-color, #3c3c3e);
+}
+
+.settings-tab-btn.active {
+    color: var(--accent-color, #a8b9be);
+    border-bottom-color: var(--accent-color, #a8b9be);
+    background: var(--hover-color, #3c3c3e);
+}
+
+.tab-icon {
+    font-size: 1.1rem;
+}
+
+.settings-tab-content {
+    min-height: 500px;
+}
+
+.settings-tab-panel {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.settings-tab-panel.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive tabs */
+@media (max-width: 768px) {
+    .settings-tabs {
+        flex-direction: column;
+        border-radius: 8px;
+    }
+    
+    .settings-tab-btn {
+        text-align: left;
+        border-bottom: 1px solid var(--border-color, #38383a);
+        border-right: none;
+    }
+    
+    .settings-tab-btn.active {
+        border-bottom: 1px solid var(--border-color, #38383a);
+        border-left: 3px solid var(--accent-color, #a8b9be);
+    }
+}
+
+/* User Management Styles */
+.user-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.user-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.role-badge.role-admin {
+    background-color: #dc3545;
+    color: white;
+}
+
+.role-badge.role-manager {
+    background-color: #fd7e14;
+    color: white;
+}
+
+.role-badge.role-user {
+    background-color: #28a745;
+    color: white;
+}
+
+.role-badge.role-readonly {
+    background-color: #6c757d;
+    color: white;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.status-enabled {
+    color: #28a745;
+}
+
+.status-disabled {
+    color: #dc3545;
+}
+
+/* Cookie Management Styles */
+.cookie-management-section {
+    border: 1px solid var(--border-color, #38383a);
+    border-radius: 8px;
+    padding: 15px;
+    background: var(--surface-color, #2c2c2e);
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px var(--shadow-color, rgba(108, 123, 127, 0.2));
+}
+
+.cookie-upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cookie-status {
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.cookie-status .status-text.success {
+    color: #28a745;
+}
+
+.cookie-status .status-text.error {
+    color: #dc3545;
+}
+
+.cookie-status .status-text {
+    color: #6c757d;
+}
+
+.cookie-upload-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.cookie-upload-actions button {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+}
+
+.help-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+/* SSL Warning Section */
+.ssl-warning {
+    background: var(--surface-color, #2c2c2e);
+    border: 1px solid var(--warning-color, #ff9f0a);
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 10px;
+    box-shadow: 0 2px 8px var(--shadow-color, rgba(108, 123, 127, 0.2));
+}
+
+.ssl-warning strong {
+    color: var(--warning-color, #ff9f0a);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.status-item label {
+    font-weight: bold;
+    color: #ccc;
+}
+
+.admin-only {
+    color: #ffc107;
+    font-size: 0.8em;
+    font-weight: normal;
+}
+
+.user-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.user-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+.user-stats span {
+    white-space: nowrap;
+}
+
+.user-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #2a2a2a;
+    transition: all 0.2s ease;
+}
+
+.user-item:hover {
+    background-color: #333;
+    border-color: #666;
+}
+
+.user-item.inactive {
+    opacity: 0.6;
+    background-color: #1a1a1a;
+}
+
+.user-item .user-info {
+    flex: 1;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.user-primary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1em;
+}
+
+.user-secondary {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+.user-item .user-actions {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.no-users, .loading, .error {
+    text-align: center;
+    color: #ccc;
+    padding: 40px;
+    font-style: italic;
+}
+
+.error {
+    color: #dc3545;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #2a2a2a;
+    border: 1px solid #555;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content.modal-large {
+    max-width: 700px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #555;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #00d4ff;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close:hover {
+    color: #fff;
+    background-color: #444;
+    border-radius: 50%;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid #555;
+}
+
+.sessions-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 15px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #333;
+}
+
+.session-item.current {
+    border-color: #00d4ff;
+    background-color: #1a3a4a;
+}
+
+.session-info {
+    flex: 1;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.session-info div {
+    margin-bottom: 5px;
+}
+
+.current-session {
+    background-color: #00d4ff;
+    color: #000;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-top: 5px;
+    display: inline-block;
+}
+
+.session-actions {
+    flex-shrink: 0;
+    margin-left: 15px;
+}
+
+.session-actions-footer {
+    text-align: center;
+    padding-top: 15px;
+    border-top: 1px solid #555;
+}
+
+
+/* Button size variants */
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 0.875em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .user-management-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .user-stats {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .user-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .user-primary {
+        flex-wrap: wrap;
+    }
+    
+    .user-secondary {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .modal-content {
+        margin: 20px;
+        width: calc(100% - 40px);
+    }
+    
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .user-info {
+        grid-template-columns: 1fr;
+    }
+}
+
+.settings-container h1 {
+    color: #00d4ff;
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    text-align: center;
+}
+
+.page-description {
+    text-align: center;
+    color: #ccc;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.settings-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.settings-section {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.settings-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
+}
+
+.settings-section h2 {
+    color: #00d4ff;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+    border-bottom: 2px solid #00d4ff;
+    padding-bottom: 8px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    color: #00d4ff;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group .help-text {
+    display: block;
+    color: #999;
+    font-size: 12px;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    background: #333;
+    border: 2px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+
+.form-group option {
+    background: #333;
+    color: #fff;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0099cc 0%, #007799 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: #fff;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+    color: #fff;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #117a8b 0%, #0c5460 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
+    color: #000;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #d39e00 0%, #b08800 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #5a6268 0%, #484e53 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #bd2130 0%, #a01e2a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-light {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #333;
+}
+
+.btn-light:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(248, 249, 250, 0.3);
+}
+
+/* Action Button Groups */
+.integration-actions,
+.indexing-actions,
+.scheduler-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.integration-actions button,
+.indexing-actions button,
+.scheduler-actions button {
+    flex: 1;
+    min-width: 120px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.stat-item {
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #00d4ff;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.result-item {
+    background-color: #3d3d3d;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.thumbnail-stats {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: #3d3d3d;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.progress-container {
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: #3d3d3d;
+    border-radius: 4px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #555;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00d4ff, #0099cc);
+    width: 0%;
+    transition: width 0.3s ease;
+    animation: progress-pulse 2s infinite;
+}
+
+@keyframes progress-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.results-container {
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: #3d3d3d;
+    border-radius: 4px;
+}
+
+.scan-results, .indexing-results, .cleanup-results {
+    color: #fff;
+}
+
+.scan-results h4, .indexing-results h4, .cleanup-results h4 {
+    color: #00d4ff;
+    margin-bottom: 0.5rem;
+}
+
+.deleted-artists {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #444;
+    border-radius: 4px;
+}
+
+.deleted-artists ul {
+    list-style-type: disc;
+    margin-left: 1rem;
+    margin-top: 0.5rem;
+}
+
+.deleted-artists li {
+    margin-bottom: 0.25rem;
+}
+
+.success {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.warning {
+    color: #ff9800;
+    font-weight: bold;
+}
+
+.error {
+    color: #f44336;
+    font-weight: bold;
+}
+
+.loading {
+    color: #00bcd4;
+    font-weight: bold;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+button:disabled:hover {
+    background-color: inherit !important;
+}
+
+/* Scheduler Status Styles */
+.scheduler-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.scheduler-actions button {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.status-info {
+    background-color: #333;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.status-item {
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.status-item:last-child {
+    margin-bottom: 0;
+}
+
+.status-item.running {
+    color: #4caf50;
+}
+
+.status-item.stopped {
+    color: #f44336;
+}
+
+.status-item.warning {
+    color: #ff9800;
+    font-style: italic;
+}
+
+.status-loading {
+    color: #00d4ff;
+    font-style: italic;
+}
+
+/* External Services Subsections */
+.subsection {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background-color: #353535;
+}
+
+.subsection h3 {
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #555;
+    padding-bottom: 0.5rem;
+}
+
+.subsection:last-child {
+    margin-bottom: 0;
+}
+
+.integration-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.integration-actions button {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+    .settings-sections {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .settings-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .settings-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .settings-container {
+        padding: 15px;
+    }
+    
+    .settings-section {
+        padding: 20px;
+    }
+    
+    .integration-actions {
+        flex-direction: column;
+    }
+    
+    .integration-actions button {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .subsection {
+        padding: 0.75rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .scheduler-actions {
+        flex-direction: column;
+    }
+    
+    .scheduler-actions button {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .indexing-actions {
+        flex-direction: column;
+    }
+    
+    .indexing-actions button {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Form improvements for external services */
+.external-services .form-group {
+    margin-bottom: 1rem;
+}
+
+.external-services input[type="text"],
+.external-services input[type="password"],
+.external-services input[type="number"],
+.external-services select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #444;
+    color: #fff;
+}
+
+.external-services input[type="text"]:focus,
+.external-services input[type="password"]:focus,
+.external-services input[type="number"]:focus,
+.external-services select:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.external-services label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #ccc;
+    font-weight: 500;
+}
+
+/* Integration status indicators */
+.integration-status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-left: 0.5rem;
+}
+
+.integration-status.enabled {
+    background-color: #4caf50;
+    color: #fff;
+}
+
+.integration-status.disabled {
+    background-color: #f44336;
+    color: #fff;
+}
+
+.integration-status.testing {
+    background-color: #ff9800;
+    color: #fff;
+}
+
+/* Responsive design for external services */
+@media (max-width: 768px) {
+    .integration-actions {
+        flex-direction: column;
+    }
+    
+    .integration-actions button {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .subsection {
+        padding: 0.75rem;
+    }
+}
+
+/* Integration Notice */
+.integration-notice {
+    background-color: #f0f8ff;
+    border: 1px solid #00d4ff;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.integration-notice p {
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.integration-links {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.integration-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #00d4ff;
+    color: #000;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.integration-link:hover {
+    background-color: #0099cc;
+    transform: translateY(-1px);
+}
+
+/* Dark theme adjustments */
+
+
+
+
+/* Bauhaus theme adjustments */
+
+
+
+
+
+
+
+
+.theme-preview.bauhaus-preview .preview-card .btn-primary {
+    background-color: var(--bauhaus-blue);
+    border-color: var(--bauhaus-blue);
+}
+
+.theme-preview.bauhaus-preview .preview-card .btn-secondary {
+    background-color: var(--bauhaus-gray-600);
+    border-color: var(--bauhaus-gray-600);
+    color: var(--bauhaus-white);
+}
+
+/* Light Theme Overrides for Settings */
+body.light-theme .btn-light {
+    background: white;
+    border: 2px solid #e1e5e9;
+    color: #333;
+}
+
+body.light-theme .btn-light:hover {
+    background: #f0f0ff;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+body.light-theme .settings-container {
+    background: transparent;
+}
+
+body.light-theme .settings-section {
+    background: white;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .form-group input,
+body.light-theme .form-group select,
+body.light-theme .form-group textarea {
+    background: white;
+    border: 2px solid #e1e5e9;
+    color: #333;
+    border-radius: 8px;
+}
+
+body.light-theme .form-group input:focus,
+body.light-theme .form-group select:focus,
+body.light-theme .form-group textarea:focus {
+    border-color: #667eea;
+    box-shadow: none;
+    outline: none;
+}
+
+body.light-theme .form-group label {
+    color: #333;
+}
+
+/* Light theme tab styling */
+body.light-theme .settings-tabs {
+    background: white;
+    border-bottom: 2px solid #e1e5e9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .settings-tab-btn {
+    color: #666;
+}
+
+body.light-theme .settings-tab-btn:hover {
+    color: #667eea;
+    background: #f0f0ff;
+}
+
+body.light-theme .settings-tab-btn.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    background: #f0f0ff;
+}
+
+/* Light theme SSL warning */
+body.light-theme .ssl-warning {
+    color: #cc7a00;
+    background: rgba(255, 193, 7, 0.1);
+    border-left: 4px solid #ffc107;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+
+/* Light theme YouTube Authentication section */
+body.light-theme .cookie-management-section {
+    background: rgba(255, 165, 0, 0.1);
+    border: 1px solid #ffaa55;
+}
+</style>
+{% endblock %}

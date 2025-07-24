@@ -1,0 +1,1194 @@
+{% extends "base.html" %}
+
+{% block title %}Video Details - MVidarr Enhanced{% endblock %}
+
+{% block content %}
+<div class="video-detail-container">
+    <!-- Video Header -->
+    <div class="video-header" id="videoHeader">
+        <div class="loading-placeholder">Loading video details...</div>
+    </div>
+    
+    <!-- Video Content -->
+    <div class="video-content">
+        <div class="video-main">
+            <!-- Video Player/Thumbnail -->
+            <div class="video-player-section" id="videoPlayerSection">
+                <div class="loading-placeholder">Loading video player...</div>
+            </div>
+            
+            <!-- Video Info -->
+            <div class="video-info-section" id="videoInfoSection">
+                <div class="loading-placeholder">Loading video information...</div>
+            </div>
+            
+            <!-- Video Actions -->
+            <div class="video-actions-section" id="videoActionsSection">
+                <div class="loading-placeholder">Loading video actions...</div>
+            </div>
+        </div>
+        
+        <div class="video-sidebar">
+            <!-- Related Videos -->
+            <div class="related-videos-section">
+                <h3>Related Videos</h3>
+                <div class="related-videos-list" id="relatedVideosList">
+                    <div class="loading-placeholder">Loading related videos...</div>
+                </div>
+            </div>
+            
+            <!-- Video Statistics -->
+            <div class="video-stats-section">
+                <h3>Statistics</h3>
+                <div class="video-stats" id="videoStats">
+                    <div class="loading-placeholder">Loading statistics...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Video Modal -->
+<div id="editVideoModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Video Metadata</h3>
+            <span class="modal-close" onclick="closeEditVideoModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editVideoForm">
+                <div class="form-group">
+                    <label for="videoTitle">Video Title:</label>
+                    <input type="text" id="videoTitle" name="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoArtist">Artist Name:</label>
+                    <div class="artist-input-container">
+                        <input type="text" id="videoArtist" name="artist_name" required>
+                        <button type="button" id="identifyArtistBtn" class="btn btn-secondary btn-small" onclick="identifyArtist()" style="margin-left: 10px;">
+                            🔍 Identify Artist
+                        </button>
+                    </div>
+                    <div id="artistSuggestions" class="artist-suggestions" style="display: none;"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoYear">Year:</label>
+                    <input type="number" id="videoYear" name="year" min="1900" max="2050">
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoStatus">Status:</label>
+                    <select id="videoStatus" name="status" required>
+                        <option value="WANTED">Wanted</option>
+                        <option value="DOWNLOADING">Downloading</option>
+                        <option value="DOWNLOADED">Downloaded</option>
+                        <option value="FAILED">Failed</option>
+                        <option value="IGNORED">Ignored</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoUrl">Video URL:</label>
+                    <input type="url" id="videoUrl" name="video_url" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoThumbnailUrl">Thumbnail URL:</label>
+                    <input type="url" id="videoThumbnailUrl" name="thumbnail_url" placeholder="https://...">
+                    <button type="button" onclick="openVideoThumbnailManager()" class="btn btn-info btn-small" style="margin-top: 5px;">
+                        🖼️ Manage Thumbnail
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoDuration">Duration (seconds):</label>
+                    <input type="number" id="videoDuration" name="duration" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoImvdbId">IMVDb ID:</label>
+                    <input type="number" id="videoImvdbId" name="imvdb_id" placeholder="Leave blank if unknown">
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoGenres">Genres:</label>
+                    <input type="text" id="videoGenres" name="genres" placeholder="Enter genres separated by commas (e.g., Rock, Pop, Alternative)">
+                    <small class="help-text">Separate multiple genres with commas</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="moveFile" name="move_file" checked>
+                        Move file to artist folder if needed
+                    </label>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" onclick="closeEditVideoModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Video Thumbnail Management Modal -->
+<div id="videoThumbnailModal" class="modal" style="z-index: 2000;">
+    <div class="modal-content" style="width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h3>🖼️ Video Thumbnail Management</h3>
+            <span class="modal-close" onclick="closeVideoThumbnailModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <!-- Current Thumbnail Display -->
+            <div class="current-thumbnail-section">
+                <div class="thumbnail-display">
+                    <div class="thumbnail-container" id="videoThumbnailContainer">
+                        <img id="currentVideoThumbnailImg" src="" alt="Video thumbnail" style="display: none; max-width: 300px; max-height: 300px;">
+                        <div id="noVideoThumbnailPlaceholder" class="no-thumbnail-placeholder">
+                            <div class="placeholder-icon">🖼️</div>
+                            <div class="placeholder-text">No thumbnail available</div>
+                        </div>
+                        <div class="thumbnail-overlay" id="videoThumbnailOverlay" style="display: none;">
+                            <div class="thumbnail-actions-overlay">
+                                <button onclick="cropVideoThumbnail()" class="btn-overlay" title="Crop">✂️</button>
+                                <button onclick="replaceVideoThumbnail()" class="btn-overlay" title="Replace">🔄</button>
+                                <button onclick="deleteVideoThumbnail()" class="btn-overlay" title="Delete">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Thumbnail Metadata -->
+                    <div class="thumbnail-metadata" id="videoThumbnailMetadata" style="display: none;">
+                        <h5>Thumbnail Information:</h5>
+                        <div class="metadata-grid">
+                            <div class="metadata-item">
+                                <span class="metadata-label">Source:</span>
+                                <span class="metadata-value" id="videoThumbnailSource">-</span>
+                            </div>
+                            <div class="metadata-item">
+                                <span class="metadata-label">Size:</span>
+                                <span class="metadata-value" id="videoThumbnailSize">-</span>
+                            </div>
+                            <div class="metadata-item">
+                                <span class="metadata-label">Format:</span>
+                                <span class="metadata-value" id="videoThumbnailFormat">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upload Methods -->
+            <div class="upload-methods">
+                <div class="upload-tabs">
+                    <button class="upload-tab active" onclick="switchVideoUploadTab('manual')" id="videoManualUploadTab">
+                        📁 Manual Upload
+                    </button>
+                    <button class="upload-tab" onclick="switchVideoUploadTab('url')" id="videoUrlUploadTab">
+                        🔗 From URL
+                    </button>
+                    <button class="upload-tab" onclick="switchVideoUploadTab('search')" id="videoSearchUploadTab">
+                        🔍 Search Online
+                    </button>
+                </div>
+                
+                <!-- Manual Upload Panel -->
+                <div class="upload-panel active" id="videoManualUploadPanel">
+                    <div class="drag-drop-area" id="videoDragDropArea">
+                        <div class="drag-drop-content">
+                            <div class="upload-icon">📤</div>
+                            <div class="upload-text">
+                                <h4>Drag & Drop Image Here</h4>
+                                <p>Or click to browse and select an image</p>
+                                <small>Supported formats: JPEG, PNG, WebP, GIF (max 10MB)</small>
+                            </div>
+                            <input type="file" id="videoThumbnailFileInput" accept="image/*" style="display: none;">
+                        </div>
+                        <div class="upload-progress" id="videoUploadProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="videoUploadProgressFill"></div>
+                            </div>
+                            <div class="progress-text" id="videoUploadProgressText">Uploading...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- URL Upload Panel -->
+                <div class="upload-panel" id="videoUrlUploadPanel" style="display: none;">
+                    <div class="url-upload-form">
+                        <div class="form-group">
+                            <label for="videoThumbnailUrlInput">Image URL:</label>
+                            <input type="url" id="videoThumbnailUrlInput" placeholder="https://example.com/image.jpg" class="form-control">
+                        </div>
+                        <div class="form-actions">
+                            <button onclick="previewVideoUrlImage()" class="btn btn-info">🔍 Preview</button>
+                            <button onclick="uploadVideoFromUrl()" class="btn btn-primary">📥 Upload</button>
+                        </div>
+                        <div class="url-preview" id="videoUrlPreview" style="display: none;">
+                            <img id="videoUrlPreviewImg" alt="URL preview" style="max-width: 300px; max-height: 200px;">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Search Upload Panel -->
+                <div class="upload-panel" id="videoSearchUploadPanel" style="display: none;">
+                    <div class="search-options">
+                        <div class="form-group">
+                            <label>Search Sources:</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" id="searchYoutube" checked> YouTube</label>
+                                <label><input type="checkbox" id="searchImvdb" checked> IMVDb</label>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button onclick="searchVideoThumbnails()" class="btn btn-primary">🔍 Search Thumbnails</button>
+                            <button onclick="refreshVideoThumbnailSearch()" class="btn btn-secondary" id="videoThumbnailRefreshBtn" style="display: none;">🔄 Refresh</button>
+                        </div>
+                        
+                        <div class="search-results" id="videoThumbnailSearchResults" style="display: none;">
+                            <h5>Search Results:</h5>
+                            <div class="thumbnail-results-grid" id="videoThumbnailResultsGrid">
+                                <!-- Search results will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeVideoThumbnailModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentVideoId = null;
+let currentVideo = null;
+
+// Video Thumbnail Management Functions
+let currentVideoThumbnailId = null;
+
+function openVideoThumbnailManager() {
+    if (!currentVideoId) {
+        showError('No video selected for thumbnail management');
+        return;
+    }
+    
+    currentVideoThumbnailId = currentVideoId;
+    document.getElementById('videoThumbnailModal').style.display = 'block';
+    
+    // Load current thumbnail info
+    loadVideoThumbnailInfo();
+    
+    // Initialize drag & drop
+    initializeVideoThumbnailUpload();
+}
+
+function closeVideoThumbnailModal() {
+    document.getElementById('videoThumbnailModal').style.display = 'none';
+    currentVideoThumbnailId = null;
+}
+
+function switchVideoUploadTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.upload-tab').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(`video${tabName.charAt(0).toUpperCase() + tabName.slice(1)}UploadTab`).classList.add('active');
+    
+    // Update panels
+    document.querySelectorAll('.upload-panel').forEach(panel => panel.style.display = 'none');
+    document.getElementById(`video${tabName.charAt(0).toUpperCase() + tabName.slice(1)}UploadPanel`).style.display = 'block';
+}
+
+function loadVideoThumbnailInfo() {
+    if (!currentVideoThumbnailId) return;
+    
+    fetch(`/api/videos/${currentVideoThumbnailId}/thumbnail/info`)
+        .then(response => response.json())
+        .then(data => {
+            const thumbnailImg = document.getElementById('currentVideoThumbnailImg');
+            const placeholder = document.getElementById('noVideoThumbnailPlaceholder');
+            const overlay = document.getElementById('videoThumbnailOverlay');
+            const metadata = document.getElementById('videoThumbnailMetadata');
+            
+            if (data.has_thumbnail) {
+                // Show thumbnail image with cache busting
+                thumbnailImg.src = `/api/videos/${currentVideoThumbnailId}/thumbnail?t=${Date.now()}`;
+                thumbnailImg.style.display = 'block';
+                placeholder.style.display = 'none';
+                overlay.style.display = 'block';
+                
+                // Update metadata
+                document.getElementById('videoThumbnailSource').textContent = data.thumbnail_source || 'Unknown';
+                document.getElementById('videoThumbnailSize').textContent = data.file_size || 'Unknown';
+                document.getElementById('videoThumbnailFormat').textContent = data.format || 'Unknown';
+                metadata.style.display = 'block';
+            } else {
+                // Show placeholder
+                thumbnailImg.style.display = 'none';
+                placeholder.style.display = 'block';
+                overlay.style.display = 'none';
+                metadata.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading thumbnail info:', error);
+            showError('Failed to load thumbnail information');
+        });
+}
+
+function initializeVideoThumbnailUpload() {
+    const dragDropArea = document.getElementById('videoDragDropArea');
+    const fileInput = document.getElementById('videoThumbnailFileInput');
+    
+    if (!dragDropArea || !fileInput) return;
+    
+    // Remove existing event listeners to prevent duplicates
+    dragDropArea.replaceWith(dragDropArea.cloneNode(true));
+    fileInput.replaceWith(fileInput.cloneNode(true));
+    
+    // Re-get elements after cloning
+    const newDragDropArea = document.getElementById('videoDragDropArea');
+    const newFileInput = document.getElementById('videoThumbnailFileInput');
+    
+    // Drag & drop handlers
+    newDragDropArea.addEventListener('click', () => newFileInput.click());
+    
+    newDragDropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        newDragDropArea.classList.add('drag-over');
+    });
+    
+    newDragDropArea.addEventListener('dragleave', () => {
+        newDragDropArea.classList.remove('drag-over');
+    });
+    
+    newDragDropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        newDragDropArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleVideoThumbnailFile(files[0]);
+        }
+    });
+    
+    newFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleVideoThumbnailFile(e.target.files[0]);
+        }
+    });
+}
+
+function handleVideoThumbnailFile(file) {
+    if (!file.type.startsWith('image/')) {
+        showError('Please select an image file');
+        return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+        showError('File size must be less than 10MB');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const progress = document.getElementById('videoUploadProgress');
+    const progressFill = document.getElementById('videoUploadProgressFill');
+    const progressText = document.getElementById('videoUploadProgressText');
+    
+    progress.style.display = 'block';
+    progressFill.style.width = '0%';
+    
+    fetch(`/api/videos/${currentVideoThumbnailId}/thumbnail/upload`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        progressFill.style.width = '100%';
+        return response.json();
+    })
+    .then(data => {
+        progress.style.display = 'none';
+        
+        if (data.error) {
+            showError('Upload failed: ' + data.error);
+        } else {
+            showSuccess('Thumbnail uploaded successfully');
+            loadVideoThumbnailInfo();
+            refreshVideoDisplayThumbnail();
+            
+            // Update the thumbnail URL field in the edit form
+            document.getElementById('videoThumbnailUrl').value = '';
+        }
+    })
+    .catch(error => {
+        progress.style.display = 'none';
+        console.error('Upload error:', error);
+        showError('Upload failed: ' + error.message);
+    });
+}
+
+function previewVideoUrlImage() {
+    const url = document.getElementById('videoThumbnailUrlInput').value;
+    if (!url) {
+        showError('Please enter an image URL');
+        return;
+    }
+    
+    const preview = document.getElementById('videoUrlPreview');
+    const img = document.getElementById('videoUrlPreviewImg');
+    
+    img.src = url;
+    preview.style.display = 'block';
+}
+
+function uploadVideoFromUrl() {
+    const url = document.getElementById('videoThumbnailUrlInput').value;
+    if (!url) {
+        showError('Please enter an image URL');
+        return;
+    }
+    
+    fetch(`/api/videos/${currentVideoThumbnailId}/thumbnail`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            action: 'update',
+            thumbnail_url: url
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showError('Failed to update thumbnail: ' + data.error);
+        } else {
+            showSuccess('Thumbnail URL updated successfully');
+            loadVideoThumbnailInfo();
+            refreshVideoDisplayThumbnail();
+            
+            // Update the thumbnail URL field in the edit form
+            document.getElementById('videoThumbnailUrl').value = url;
+        }
+    })
+    .catch(error => {
+        console.error('Error updating thumbnail:', error);
+        showError('Failed to update thumbnail');
+    });
+}
+
+function searchVideoThumbnails() {
+    console.log('searchVideoThumbnails called, currentVideoThumbnailId:', currentVideoThumbnailId);
+    
+    const youtubeCheckbox = document.getElementById('searchYoutube');
+    const imvdbCheckbox = document.getElementById('searchImvdb');
+    
+    console.log('YouTube checkbox element:', youtubeCheckbox);
+    console.log('IMVDb checkbox element:', imvdbCheckbox);
+    
+    if (!youtubeCheckbox || !imvdbCheckbox) {
+        showError('Search checkboxes not found');
+        return;
+    }
+    
+    const includeYoutube = youtubeCheckbox.checked;
+    const includeImvdb = imvdbCheckbox.checked;
+    
+    const sources = [];
+    if (includeYoutube) sources.push('youtube');
+    if (includeImvdb) sources.push('imvdb');
+    
+    console.log('Sources array:', sources);
+    
+    if (sources.length === 0) {
+        showError('Please select at least one search source');
+        return;
+    }
+    
+    if (!currentVideoThumbnailId) {
+        showError('No video selected for thumbnail search');
+        return;
+    }
+    
+    console.log('Making API call with sources:', sources);
+    
+    fetch(`/api/videos/${currentVideoThumbnailId}/thumbnail/search`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            sources: sources
+        })
+    })
+    .then(response => {
+        console.log('API response received:', response.status, response.statusText);
+        return response.json();
+    })
+    .then(data => {
+        console.log('API response data:', data);
+        if (data.error) {
+            showError('Search failed: ' + data.error);
+        } else {
+            displayVideoThumbnailResults(data.results);
+        }
+    })
+    .catch(error => {
+        console.error('Search error:', error);
+        showError('Search failed: ' + error.message);
+    });
+}
+
+function displayVideoThumbnailResults(results) {
+    console.log('displayVideoThumbnailResults called with:', results);
+    const resultsContainer = document.getElementById('videoThumbnailSearchResults');
+    const grid = document.getElementById('videoThumbnailResultsGrid');
+    
+    console.log('Results container:', resultsContainer);
+    console.log('Grid container:', grid);
+    
+    if (!resultsContainer || !grid) {
+        console.error('Results container or grid not found');
+        showError('Search results container not found');
+        return;
+    }
+    
+    if (results.length === 0) {
+        grid.innerHTML = '<p>No thumbnails found</p>';
+    } else {
+        grid.innerHTML = results.map(result => `
+            <div class="thumbnail-result" onclick="selectVideoThumbnailResult('${result.url}')">
+                <img src="${result.url}" alt="${result.title || 'Thumbnail'}" 
+                     style="max-width: 150px; max-height: 150px; cursor: pointer;"
+                     onerror="this.style.display='none'">
+                <div class="result-info">
+                    <small>${result.source} - ${result.quality || 'Standard'}</small>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    resultsContainer.style.display = 'block';
+    console.log('Results container display set to block');
+    
+    // Show the refresh button once results are displayed
+    document.getElementById('videoThumbnailRefreshBtn').style.display = 'inline-block';
+}
+
+function selectVideoThumbnailResult(url) {
+    // Update the URL input and preview
+    document.getElementById('videoThumbnailUrlInput').value = url;
+    previewVideoUrlImage();
+    
+    // Automatically upload the selected thumbnail
+    uploadVideoFromUrl();
+    
+    // Switch back to the URL tab to show the selection
+    switchVideoUploadTab('url');
+}
+
+function refreshVideoThumbnailSearch() {
+    if (!currentVideoThumbnailId) {
+        showError('No video selected for thumbnail refresh');
+        return;
+    }
+    
+    // Clear current results
+    const resultsContainer = document.getElementById('videoThumbnailSearchResults');
+    const grid = document.getElementById('videoThumbnailResultsGrid');
+    
+    if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+    }
+    
+    if (grid) {
+        grid.innerHTML = '<div class="loading-placeholder">Refreshing search results...</div>';
+    }
+    
+    // Hide refresh button during refresh
+    document.getElementById('videoThumbnailRefreshBtn').style.display = 'none';
+    
+    // Trigger a new search with current settings
+    searchVideoThumbnails();
+}
+
+function deleteVideoThumbnail() {
+    if (!confirm('Are you sure you want to delete this thumbnail?')) {
+        return;
+    }
+    
+    fetch(`/api/videos/${currentVideoThumbnailId}/thumbnail`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            action: 'remove'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showError('Failed to delete thumbnail: ' + data.error);
+        } else {
+            showSuccess('Thumbnail deleted successfully');
+            loadVideoThumbnailInfo();
+            refreshVideoDisplayThumbnail();
+            
+            // Clear the thumbnail URL field in the edit form
+            document.getElementById('videoThumbnailUrl').value = '';
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting thumbnail:', error);
+        showError('Failed to delete thumbnail');
+    });
+}
+
+function replaceVideoThumbnail() {
+    // Switch to manual upload tab for replacement
+    switchVideoUploadTab('manual');
+}
+
+function cropVideoThumbnail() {
+    if (!currentVideoThumbnailId) {
+        showError('No video selected for cropping');
+        return;
+    }
+    
+    // Load the current thumbnail image
+    const thumbnailImg = document.getElementById('currentVideoThumbnailImg');
+    if (!thumbnailImg.src || thumbnailImg.style.display === 'none') {
+        showError('No thumbnail available to crop');
+        return;
+    }
+    
+    showSuccess('Cropping feature available - advanced cropping modal would open here');
+}
+
+function refreshVideoDisplayThumbnail() {
+    // Refresh the main video thumbnail in the video detail view
+    const mainThumbnail = document.getElementById('mainVideoThumbnail');
+    if (mainThumbnail && currentVideoThumbnailId) {
+        mainThumbnail.src = `/api/videos/${currentVideoThumbnailId}/thumbnail?t=${Date.now()}`;
+    }
+    
+    // Also refresh the video details
+    loadVideoDetails();
+}
+
+function loadVideoDetails() {
+    // Extract video ID from URL
+    const pathParts = window.location.pathname.split('/');
+    currentVideoId = parseInt(pathParts[pathParts.length - 1]);
+    
+    if (!currentVideoId) {
+        showError('Invalid video ID');
+        return Promise.reject('Invalid video ID');
+    }
+    
+    // Load video data and return Promise
+    return fetch(`/api/videos/${currentVideoId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError(data.error);
+                throw new Error(data.error);
+            } else {
+                currentVideo = data;
+                renderVideoDetails(data);
+                loadRelatedVideos(data.artist_id);
+                return data; // Return the video data
+            }
+        })
+        .catch(error => {
+            console.error('Error loading video details:', error);
+            showError('Failed to load video details');
+            throw error;
+        });
+}
+
+function renderVideoDetails(video) {
+    // Render header
+    const headerHtml = `
+        <div class="video-header-content">
+            <div class="video-breadcrumb">
+                <a href="/artists">Artists</a> >
+                <a href="/artist/${video.artist_id}">${video.artist_name}</a> >
+                <span>${video.title}</span>
+            </div>
+            <h1>${video.title}</h1>
+            <div class="video-metadata">
+                <span class="video-artist">by ${video.artist_name}</span>
+                ${video.year ? `<span class="video-year">${video.year}</span>` : ''}
+                <span class="video-status status-${video.status ? video.status.toLowerCase() : 'unknown'}">${video.status || 'Unknown'}</span>
+            </div>
+        </div>
+    `;
+    document.getElementById('videoHeader').innerHTML = headerHtml;
+    
+    // Render player section
+    const playerHtml = `
+        <div class="video-player">
+            ${video.local_path ? `
+                <video controls class="video-element">
+                    <source src="/api/videos/${video.id}/stream" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            ` : `
+                <div class="video-thumbnail-large">
+                    <img id="mainVideoThumbnail" src="${video.thumbnail_url || '/static/placeholder-video.png'}" alt="${video.title}">
+                    <div class="play-overlay">
+                        ${video.video_url ? `<button onclick="playExternalVideo()" class="btn btn-primary">Play on YouTube</button>` : '<span>No video available</span>'}
+                    </div>
+                </div>
+            `}
+        </div>
+    `;
+    document.getElementById('videoPlayerSection').innerHTML = playerHtml;
+    
+    // Render video info
+    const infoHtml = `
+        <div class="video-details">
+            <div class="detail-group">
+                <label>Title:</label>
+                <span>${video.title}</span>
+            </div>
+            <div class="detail-group">
+                <label>Artist:</label>
+                <a href="/artist/${video.artist_id}">${video.artist_name}</a>
+            </div>
+            ${video.year ? `
+                <div class="detail-group">
+                    <label>Year:</label>
+                    <span>${video.year}</span>
+                </div>
+            ` : ''}
+            ${video.duration ? `
+                <div class="detail-group">
+                    <label>Duration:</label>
+                    <span>${formatDuration(video.duration)}</span>
+                </div>
+            ` : ''}
+            ${video.genres && video.genres.length > 0 ? `
+                <div class="detail-group">
+                    <label>Genres:</label>
+                    <span class="genre-tags">${video.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join(' ')}</span>
+                </div>
+            ` : ''}
+            <div class="detail-group">
+                <label>Status:</label>
+                <span class="status-badge status-${video.status ? video.status.toLowerCase() : 'unknown'}">${video.status || 'Unknown'}</span>
+            </div>
+            <div class="detail-group">
+                <label>Added:</label>
+                <span>${new Date(video.created_at).toLocaleString()}</span>
+            </div>
+            ${video.imvdb_id ? `
+                <div class="detail-group">
+                    <label>IMVDb ID:</label>
+                    <a href="https://imvdb.com/video/${video.imvdb_id}" target="_blank">${video.imvdb_id}</a>
+                </div>
+            ` : ''}
+            ${video.local_path ? `
+                <div class="detail-group">
+                    <label>Local File:</label>
+                    <span>${video.local_path}</span>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    document.getElementById('videoInfoSection').innerHTML = infoHtml;
+    
+    // Render actions
+    const actionsHtml = `
+        <div class="video-action-buttons">
+            ${video.status !== 'DOWNLOADED' ? `<button onclick="downloadVideo()" class="btn btn-primary">Download</button>` : ''}
+            ${video.local_path ? `<button onclick="playLocalVideo()" class="btn btn-secondary">Play Local</button>` : ''}
+            ${video.video_url ? `<button onclick="playExternalVideo()" class="btn btn-secondary">Play on YouTube</button>` : ''}
+            <button onclick="editVideo()" class="btn btn-info">Edit Details</button>
+            <button onclick="refreshMetadata()" class="btn btn-info">Refresh Metadata</button>
+            <button onclick="updateStatus()" class="btn btn-secondary">Update Status</button>
+            <button onclick="deleteVideo()" class="btn btn-danger">Delete Video</button>
+        </div>
+    `;
+    document.getElementById('videoActionsSection').innerHTML = actionsHtml;
+    
+    // Render stats
+    const statsHtml = `
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-label">Video ID</span>
+                <span class="stat-value">${video.id}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Status</span>
+                <span class="stat-value">${video.status || 'Unknown'}</span>
+            </div>
+            ${video.duration ? `
+                <div class="stat-item">
+                    <span class="stat-label">Duration</span>
+                    <span class="stat-value">${formatDuration(video.duration)}</span>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    document.getElementById('videoStats').innerHTML = statsHtml;
+}
+
+function loadRelatedVideos(artistId) {
+    // Load other videos by the same artist
+    fetch(`/api/artists/${artistId}/detailed`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.videos) {
+                const relatedVideos = data.videos.filter(v => v.id !== currentVideoId).slice(0, 10);
+                renderRelatedVideos(relatedVideos);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading related videos:', error);
+            document.getElementById('relatedVideosList').innerHTML = '<p>Failed to load related videos</p>';
+        });
+}
+
+function renderRelatedVideos(videos) {
+    if (!videos || videos.length === 0) {
+        document.getElementById('relatedVideosList').innerHTML = '<p>No related videos found</p>';
+        return;
+    }
+    
+    const videosHtml = videos.map(video => `
+        <div class="related-video-item" onclick="navigateToVideo(${video.id})">
+            <div class="related-video-thumbnail">
+                <img src="${video.thumbnail_url || '/static/placeholder-video.png'}" alt="${video.title}">
+                <div class="video-status-mini status-${video.status ? video.status.toLowerCase() : 'unknown'}">${video.status || 'Unknown'}</div>
+            </div>
+            <div class="related-video-info">
+                <h5>${video.title}</h5>
+                ${video.year ? `<p>${video.year}</p>` : ''}
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('relatedVideosList').innerHTML = videosHtml;
+}
+
+function navigateToVideo(videoId) {
+    window.location.href = `/video/${videoId}`;
+}
+
+function downloadVideo() {
+    if (!currentVideo) return;
+    
+    fetch(`/api/videos/${currentVideo.id}/download`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess('Download started successfully');
+            loadVideoDetails(); // Refresh to show new status
+        }
+    })
+    .catch(error => {
+        console.error('Error starting download:', error);
+        showError('Error starting download');
+    });
+}
+
+function playLocalVideo() {
+    if (!currentVideo || !currentVideo.local_path) return;
+    
+    const video = document.querySelector('.video-element');
+    if (video) {
+        video.play();
+    }
+}
+
+function playExternalVideo() {
+    if (!currentVideo || !currentVideo.video_url) return;
+    
+    window.open(currentVideo.video_url, '_blank');
+}
+
+function editVideo() {
+    if (!currentVideo) return;
+    
+    // Populate the form with current video data
+    document.getElementById('videoTitle').value = currentVideo.title || '';
+    document.getElementById('videoArtist').value = currentVideo.artist_name || '';
+    document.getElementById('videoYear').value = currentVideo.year || '';
+    document.getElementById('videoStatus').value = currentVideo.status || 'DOWNLOADED';
+    document.getElementById('videoUrl').value = currentVideo.video_url || '';
+    document.getElementById('videoThumbnailUrl').value = currentVideo.thumbnail_url || '';
+    document.getElementById('videoDuration').value = currentVideo.duration || '';
+    document.getElementById('videoImvdbId').value = currentVideo.imvdb_id || '';
+    document.getElementById('videoGenres').value = currentVideo.genres ? currentVideo.genres.join(', ') : '';
+    document.getElementById('moveFile').checked = true;
+    
+    // Reset the identify artist button and hide suggestions
+    resetIdentifyArtistButton();
+    document.getElementById('artistSuggestions').style.display = 'none';
+    
+    // Show the edit modal
+    document.getElementById('editVideoModal').style.display = 'block';
+}
+
+function refreshMetadata() {
+    if (!currentVideo) return;
+    
+    fetch(`/api/videos/${currentVideo.id}/refresh-metadata`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess('Metadata refreshed successfully');
+            loadVideoDetails(); // Refresh to show updated data
+        }
+    })
+    .catch(error => {
+        console.error('Error refreshing metadata:', error);
+        showError('Error refreshing metadata');
+    });
+}
+
+function updateStatus() {
+    if (!currentVideo) return;
+    
+    const newStatus = prompt('Enter new status (WANTED/DOWNLOADING/DOWNLOADED/FAILED/IGNORED):', currentVideo.status);
+    if (newStatus) {
+        fetch(`/api/videos/${currentVideo.id}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status: newStatus.toUpperCase()
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.error) {
+                showError('Error: ' + result.error);
+            } else {
+                showSuccess('Status updated successfully');
+                loadVideoDetails(); // Refresh to show new status
+            }
+        })
+        .catch(error => {
+            console.error('Error updating status:', error);
+            showError('Error updating status');
+        });
+    }
+}
+
+function deleteVideo() {
+    if (!currentVideo) return;
+    
+    toastConfirm(`Are you sure you want to delete "${currentVideo.title}"? This action cannot be undone.`, () => {
+        fetch(`/api/videos/${currentVideo.id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.error) {
+                showError('Error: ' + result.error);
+            } else {
+                showSuccess('Video deleted successfully');
+                // Navigate back to artist page
+                window.location.href = `/artist/${currentVideo.artist_id}`;
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting video:', error);
+            showError('Error deleting video');
+        });
+    });
+}
+
+function formatDuration(seconds) {
+    if (!seconds) return 'Unknown';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+}
+
+function showError(message) {
+    const errorHtml = `
+        <div class="error-container">
+            <h2>Error</h2>
+            <p>${message}</p>
+            <button onclick="window.history.back()" class="btn btn-secondary">Go Back</button>
+        </div>
+    `;
+    document.querySelector('.video-detail-container').innerHTML = errorHtml;
+}
+
+function closeEditVideoModal() {
+    document.getElementById('editVideoModal').style.display = 'none';
+    document.getElementById('artistSuggestions').style.display = 'none';
+    resetIdentifyArtistButton();
+}
+
+function resetIdentifyArtistButton() {
+    const btn = document.getElementById('identifyArtistBtn');
+    if (btn) {
+        btn.innerHTML = '🔍 Identify Artist';
+        btn.disabled = false;
+        btn.classList.remove('loading');
+    }
+}
+
+function identifyArtist() {
+    const artistName = document.getElementById('videoArtist').value.trim();
+    if (!artistName) {
+        showWarning('Please enter an artist name first');
+        return;
+    }
+    
+    const btn = document.getElementById('identifyArtistBtn');
+    btn.innerHTML = '🔄 Searching...';
+    btn.disabled = true;
+    btn.classList.add('loading');
+    
+    // Search for existing artists in the database
+    fetch(`/api/videos/search-artists?q=${encodeURIComponent(artistName)}`)
+        .then(response => response.json())
+        .then(data => {
+            resetIdentifyArtistButton();
+            
+            if (data.artists && data.artists.length > 0) {
+                showArtistSuggestions(data.artists);
+            } else {
+                showSuccess('No matching artists found in the database');
+            }
+        })
+        .catch(error => {
+            console.error('Error searching for artists:', error);
+            resetIdentifyArtistButton();
+            showError('Error searching for artists');
+        });
+}
+
+function showArtistSuggestions(artists) {
+    const suggestionsDiv = document.getElementById('artistSuggestions');
+    
+    const suggestionsHtml = artists.map(artist => `
+        <div class="artist-suggestion" onclick="selectArtist('${artist.name.replace(/'/g, "\\'")}')">
+            <span class="artist-name">${artist.name}</span>
+            <span class="artist-info">${artist.video_count || 0} videos</span>
+        </div>
+    `).join('');
+    
+    suggestionsDiv.innerHTML = suggestionsHtml;
+    suggestionsDiv.style.display = 'block';
+}
+
+function selectArtist(artistName) {
+    document.getElementById('videoArtist').value = artistName;
+    document.getElementById('artistSuggestions').style.display = 'none';
+}
+
+function forceRefreshThumbnail() {
+    // Force refresh of the main video thumbnail to bypass browser cache
+    const thumbnailImg = document.getElementById('mainVideoThumbnail');
+    if (thumbnailImg && currentVideo && currentVideo.thumbnail_url) {
+        // Add cache-busting parameter to force reload
+        const newSrc = currentVideo.thumbnail_url + '?t=' + Date.now();
+        thumbnailImg.src = newSrc;
+    }
+}
+
+// Handle edit video form submission
+document.addEventListener('DOMContentLoaded', function() {
+    loadVideoDetails();
+    
+    // Add form submission handler
+    const editForm = document.getElementById('editVideoForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!currentVideoId) {
+                showWarning('No video selected for editing');
+                return;
+            }
+            
+            const formData = new FormData(this);
+            const updateData = {
+                title: formData.get('title'),
+                artist_name: formData.get('artist_name'),
+                year: formData.get('year') ? parseInt(formData.get('year')) : null,
+                status: formData.get('status'),
+                video_url: formData.get('video_url'),
+                thumbnail_url: formData.get('thumbnail_url'),
+                duration: formData.get('duration') ? parseInt(formData.get('duration')) : null,
+                imvdb_id: formData.get('imvdb_id') ? parseInt(formData.get('imvdb_id')) : null,
+                genres: formData.get('genres') ? formData.get('genres').split(',').map(g => g.trim()).filter(g => g) : [],
+                move_file: formData.get('move_file') === 'on'
+            };
+            
+            // Remove null values
+            Object.keys(updateData).forEach(key => {
+                if (updateData[key] === null || updateData[key] === '') {
+                    delete updateData[key];
+                }
+            });
+            
+            fetch(`/api/videos/${currentVideoId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    showError('Error updating video: ' + result.error);
+                } else {
+                    showSuccess('Video updated successfully');
+                    closeEditVideoModal();
+                    // Refresh the page data and then force thumbnail refresh
+                    loadVideoDetails().then(() => {
+                        forceRefreshThumbnail(); // Force thumbnail refresh to bypass cache after data reload
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error updating video:', error);
+                showError('Error updating video');
+            });
+        });
+    }
+});
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+    const editModal = document.getElementById('editVideoModal');
+    
+    if (event.target === editModal) {
+        closeEditVideoModal();
+    }
+}
+</script>
+{% endblock %}

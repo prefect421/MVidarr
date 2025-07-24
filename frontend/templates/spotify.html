@@ -1,0 +1,618 @@
+{% extends "base.html" %}
+
+{% block title %}Spotify Integration - MVidarr Enhanced{% endblock %}
+
+{% block content %}
+<div class="spotify-container">
+    <h1>🎵 Spotify Integration</h1>
+    <p class="page-description">Import artists and playlists from your Spotify account</p>
+    
+    <div class="spotify-sections">
+        <!-- Connection Status -->
+        <div class="settings-section">
+            <h2>Connection Status</h2>
+            <div id="spotify-status">
+                <div class="status-loading">
+                    <span>⏳ Checking Spotify connection status...</span>
+                </div>
+            </div>
+            <div class="integration-actions">
+                <button onclick="testConnection()" class="btn btn-info">Test Connection</button>
+                <button onclick="authorize()" class="btn btn-success">Authorize Spotify</button>
+                <button onclick="disconnect()" class="btn btn-danger">Disconnect</button>
+            </div>
+        </div>
+
+        <!-- Import Playlists -->
+        <div class="settings-section">
+            <h2>Import Playlists</h2>
+            <p>Import artists from your Spotify playlists to automatically discover music videos.</p>
+            <div class="form-group">
+                <label for="playlist-select">Select Playlists</label>
+                <select id="playlist-select" class="form-control" multiple size="6">
+                    <option disabled>Click "Load Playlists" to see your playlists</option>
+                </select>
+            </div>
+            <div class="integration-actions">
+                <button onclick="loadPlaylists()" class="btn btn-primary">Load Playlists</button>
+                <button onclick="importSelectedPlaylists()" class="btn btn-success" disabled>Import Selected</button>
+                <button onclick="importAllPlaylists()" class="btn btn-warning">Import All Playlists</button>
+            </div>
+        </div>
+
+        <!-- Import Artists -->
+        <div class="settings-section">
+            <h2>Import Artists</h2>
+            <p>Import artists from various Spotify sources.</p>
+            <div class="integration-actions">
+                <button onclick="importFollowedArtists()" class="btn btn-success">Import Followed Artists</button>
+                <button onclick="importTopArtists('short_term')" class="btn btn-info">Import Top Artists (4 weeks)</button>
+                <button onclick="importTopArtists('medium_term')" class="btn btn-info">Import Top Artists (6 months)</button>
+                <button onclick="importTopArtists('long_term')" class="btn btn-info">Import Top Artists (All time)</button>
+            </div>
+        </div>
+
+        <!-- Profile Information -->
+        <div class="settings-section">
+            <h2>Spotify Profile</h2>
+            <div id="profile-info">
+                <p class="text-muted">Connect to Spotify to see profile information</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Page initialization
+document.addEventListener('DOMContentLoaded', function() {
+    checkStatus();
+});
+
+// Check Spotify connection status
+async function checkStatus() {
+    try {
+        const response = await fetch('/api/spotify/status');
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('spotify-status');
+        const profileDiv = document.getElementById('profile-info');
+        
+        if (data.configured && data.authenticated) {
+            statusDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Connected!</strong> Spotify integration is active.
+                    ${data.profile ? `<br><small>Logged in as: ${data.profile.display_name}</small>` : ''}
+                </div>
+            `;
+            
+            if (data.profile) {
+                profileDiv.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        ${data.profile.images && data.profile.images[0] ? 
+                            `<img src="${data.profile.images[0].url}" class="rounded-circle me-3" width="64" height="64" alt="Profile">` : 
+                            '<div class="rounded-circle bg-secondary me-3" style="width: 64px; height: 64px;"></div>'
+                        }
+                        <div>
+                            <h6 class="mb-1">${data.profile.display_name || 'Unknown User'}</h6>
+                            <p class="text-muted mb-1">Followers: ${data.profile.followers ? data.profile.followers.total : 0}</p>
+                            <p class="text-muted mb-0">Country: ${data.profile.country || 'Unknown'}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        } else if (data.configured) {
+            statusDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Not Authorized</strong> Spotify is configured but not authorized.
+                    <br><small>Click "Authorize Spotify" to connect your account.</small>
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle"></i>
+                    <strong>Not Configured</strong> Spotify client credentials not set.
+                    <br><small>Please configure Spotify settings first.</small>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error checking Spotify status:', error);
+        document.getElementById('spotify-status').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle"></i>
+                <strong>Error</strong> Failed to check Spotify status.
+            </div>
+        `;
+    }
+}
+
+// Test connection
+async function testConnection() {
+    try {
+        showLoading('Testing Spotify connection...');
+        const response = await fetch('/api/spotify/test', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showSpotifySuccess('Spotify connection test successful!');
+        } else {
+            showSpotifyError('Spotify connection test failed: ' + data.message);
+        }
+    } catch (error) {
+        showSpotifyError('Failed to test Spotify connection: ' + error.message);
+    }
+}
+
+// Authorize Spotify
+async function authorize() {
+    try {
+        const response = await fetch('/api/spotify/authorize', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.authorization_url) {
+            window.open(data.authorization_url, 'spotify-auth', 'width=600,height=700');
+            showSpotifyInfo('Please complete authorization in the popup window, then refresh this page.');
+        } else {
+            showSpotifyError('Failed to get authorization URL: ' + data.error);
+        }
+    } catch (error) {
+        showSpotifyError('Failed to authorize Spotify: ' + error.message);
+    }
+}
+
+// Disconnect from Spotify
+async function disconnect() {
+    if (!confirm('Are you sure you want to disconnect from Spotify?')) return;
+    
+    try {
+        const response = await fetch('/api/spotify/disconnect', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            showSpotifySuccess('Disconnected from Spotify successfully');
+            checkStatus();
+        } else {
+            showSpotifyError('Failed to disconnect: ' + data.error);
+        }
+    } catch (error) {
+        showSpotifyError('Failed to disconnect from Spotify: ' + error.message);
+    }
+}
+
+// Load playlists
+async function loadPlaylists() {
+    try {
+        showLoading('Loading your Spotify playlists...');
+        const response = await fetch('/api/spotify/playlists');
+        const data = await response.json();
+        
+        const select = document.getElementById('playlist-select');
+        select.innerHTML = '';
+        
+        if (data.playlists && data.playlists.length > 0) {
+            data.playlists.forEach(playlist => {
+                const option = document.createElement('option');
+                option.value = playlist.id;
+                option.textContent = `${playlist.name} (${playlist.tracks_total} tracks)`;
+                select.appendChild(option);
+            });
+            
+            document.querySelector('button[onclick="importSelectedPlaylists()"]').disabled = false;
+            showSpotifySuccess(`Loaded ${data.playlists.length} playlists`);
+        } else {
+            select.innerHTML = '<option disabled>No playlists found</option>';
+            showSpotifyInfo('No playlists found in your Spotify account');
+        }
+    } catch (error) {
+        showSpotifyError('Failed to load playlists: ' + error.message);
+    }
+}
+
+// Import selected playlists
+async function importSelectedPlaylists() {
+    const select = document.getElementById('playlist-select');
+    const selectedIds = Array.from(select.selectedOptions).map(option => option.value);
+    
+    if (selectedIds.length === 0) {
+        showSpotifyWarning('Please select at least one playlist to import');
+        return;
+    }
+    
+    try {
+        showLoading(`Importing ${selectedIds.length} selected playlists...`);
+        
+        let totalImported = 0;
+        for (const playlistId of selectedIds) {
+            const response = await fetch(`/api/spotify/playlists/${playlistId}/import`, { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.success) {
+                totalImported += data.results.imported_artists || 0;
+            }
+        }
+        
+        showSpotifySuccess(`Successfully imported ${totalImported} artists from ${selectedIds.length} playlists`);
+    } catch (error) {
+        showSpotifyError('Failed to import selected playlists: ' + error.message);
+    }
+}
+
+// Import all playlists
+async function importAllPlaylists() {
+    if (!confirm('This will import artists from ALL your Spotify playlists. Continue?')) return;
+    
+    try {
+        showLoading('Importing all Spotify playlists...');
+        const response = await fetch('/api/spotify/import-playlists', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            showSpotifySuccess(`Successfully imported ${data.imported_count} artists from ${data.playlists_processed} playlists`);
+        } else {
+            showSpotifyError('Failed to import playlists: ' + data.error);
+        }
+    } catch (error) {
+        showSpotifyError('Failed to import all playlists: ' + error.message);
+    }
+}
+
+// Import followed artists
+async function importFollowedArtists() {
+    try {
+        showLoading('Importing your followed artists...');
+        const response = await fetch('/api/spotify/followed/sync', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            showSpotifySuccess(`Successfully imported ${data.results.imported_artists} followed artists`);
+        } else {
+            showSpotifyError('Failed to import followed artists: ' + data.error);
+        }
+    } catch (error) {
+        showSpotifyError('Failed to import followed artists: ' + error.message);
+    }
+}
+
+// Import top artists
+async function importTopArtists(timeRange) {
+    const timeRangeNames = {
+        'short_term': '4 weeks',
+        'medium_term': '6 months', 
+        'long_term': 'all time'
+    };
+    
+    try {
+        showLoading(`Importing your top artists (${timeRangeNames[timeRange]})...`);
+        const response = await fetch(`/api/spotify/top/artists?time_range=${timeRange}`);
+        const data = await response.json();
+        
+        if (data.artists && data.artists.length > 0) {
+            // Import each artist
+            let imported = 0;
+            for (const artist of data.artists) {
+                try {
+                    const importResponse = await fetch('/api/artists/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: artist.name,
+                            spotify_id: artist.id,
+                            source: 'spotify_top_artists'
+                        })
+                    });
+                    
+                    if (importResponse.ok) {
+                        imported++;
+                    }
+                } catch (e) {
+                    console.warn(`Failed to import artist ${artist.name}:`, e);
+                }
+            }
+            
+            showSpotifySuccess(`Successfully imported ${imported} top artists (${timeRangeNames[timeRange]})`);
+        } else {
+            showSpotifyInfo(`No top artists found for ${timeRangeNames[timeRange]}`);
+        }
+    } catch (error) {
+        showSpotifyError(`Failed to import top artists: ${error.message}`);
+    }
+}
+
+// Utility functions - now that conflicts are resolved, use global functions directly
+function showSpotifySuccess(message) {
+    console.log('SUCCESS: ' + message);
+    if (typeof showSuccess === 'function') {
+        showSuccess(message);
+    }
+}
+
+function showSpotifyError(message) {
+    console.error('ERROR: ' + message);
+    if (typeof showError === 'function') {
+        showError(message);
+    }
+}
+
+function showSpotifyWarning(message) {
+    console.warn('WARNING: ' + message);
+    if (typeof showWarning === 'function') {
+        showWarning(message);
+    }
+}
+
+function showSpotifyInfo(message) {
+    console.log('INFO: ' + message);
+    if (typeof showInfo === 'function') {
+        showInfo(message);
+    }
+}
+</script>
+
+<style>
+.spotify-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.spotify-container h1 {
+    color: #00d4ff;
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    text-align: center;
+}
+
+.page-description {
+    text-align: center;
+    color: #ccc;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+.spotify-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.settings-section {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.settings-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
+}
+
+.settings-section h2 {
+    color: #00d4ff;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+    border-bottom: 2px solid #00d4ff;
+    padding-bottom: 8px;
+}
+
+.settings-section p {
+    color: #ccc;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    color: #00d4ff;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    background: #333;
+    border: 2px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+
+.form-control option {
+    background: #333;
+    color: #fff;
+}
+
+.integration-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0099cc 0%, #007799 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: #fff;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+    color: #fff;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #117a8b 0%, #0c5460 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
+    color: #000;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #d39e00 0%, #b08800 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #bd2130 0%, #a01e2a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-success {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.alert-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: #ffc107;
+    color: #ffc107;
+}
+
+.alert-danger {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.alert i {
+    font-size: 1.2em;
+}
+
+.status-loading {
+    text-align: center;
+    padding: 20px;
+    color: #ccc;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.me-3 {
+    margin-right: 1rem;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+
+.mb-0 {
+    margin-bottom: 0;
+}
+
+.text-muted {
+    color: #999 !important;
+}
+
+.rounded-circle {
+    border-radius: 50%;
+}
+
+.bg-secondary {
+    background-color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .spotify-sections {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .integration-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        justify-content: center;
+    }
+    
+    .spotify-container {
+        padding: 15px;
+    }
+    
+    .settings-section {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}

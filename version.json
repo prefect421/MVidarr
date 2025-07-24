@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "build_date": "2025-07-21T00:00:00.000000",
+  "git_commit": "unknown",
+  "git_branch": "develop",
+  "release_name": "Initial Release",
+  "features": [
+    "Advanced Artist Management with multi-criteria search and bulk operations",
+    "Comprehensive Video Discovery with dual-source integration (IMVDb + YouTube)",
+    "Professional Thumbnail Management with multi-source search and cropping",
+    "Intelligent Organization with automatic folder creation and cleanup",
+    "Advanced Search System with real-time suggestions and filtering",
+    "Bulk Operations with multi-select editing and batch processing",
+    "Video Streaming with built-in player and transcoding",
+    "System Health monitoring with comprehensive diagnostics",
+    "Database-Driven Settings with complete configuration management",
+    "Download Management with queue visualization and progress tracking",
+    "Multi-User Authentication with role-based access control",
+    "Advanced Security with password policies and audit logging",
+    "Modern UI with left sidebar navigation and theme system",
+    "MvTV Continuous Player with cinematic mode",
+    "Two-Factor Authentication with TOTP support"
+  ]
+}

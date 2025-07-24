@@ -1,0 +1,311 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Test Application
+    runs-on: ubuntu-latest
+    
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: mvidarr_test
+          MYSQL_USER: mvidarr
+          MYSQL_PASSWORD: mvidarr
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg libmariadb-dev pkg-config
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov requests
+
+    - name: Wait for MariaDB
+      run: |
+        while ! mysqladmin ping -h"127.0.0.1" -P3306 -uroot -proot --silent; do
+          sleep 1
+        done
+
+    - name: Set up test environment
+      run: |
+        mkdir -p data/logs data/downloads data/thumbnails
+        export MVIDARR_DB_HOST=127.0.0.1
+        export MVIDARR_DB_PORT=3306
+        export MVIDARR_DB_NAME=mvidarr_test
+        export MVIDARR_DB_USER=mvidarr
+        export MVIDARR_DB_PASSWORD=mvidarr
+        export MVIDARR_SECRET_KEY=test-secret-key-for-ci
+
+    - name: Initialize database
+      run: |
+        export MVIDARR_DB_HOST=127.0.0.1
+        export MVIDARR_DB_PORT=3306
+        export MVIDARR_DB_NAME=mvidarr_test
+        export MVIDARR_DB_USER=mvidarr
+        export MVIDARR_DB_PASSWORD=mvidarr
+        python scripts/migrations/add_authentication_tables.py || true
+        python scripts/migrations/add_genre_columns.py || true
+
+    - name: Run unit tests
+      run: |
+        export MVIDARR_DB_HOST=127.0.0.1
+        export MVIDARR_DB_PORT=3306
+        export MVIDARR_DB_NAME=mvidarr_test
+        export MVIDARR_DB_USER=mvidarr
+        export MVIDARR_DB_PASSWORD=mvidarr
+        export MVIDARR_SECRET_KEY=test-secret-key-for-ci
+        pytest tests/unit/ -v --cov=src --cov-report=xml || echo "Unit tests not yet implemented"
+
+    - name: Start application for integration tests
+      run: |
+        export MVIDARR_DB_HOST=127.0.0.1
+        export MVIDARR_DB_PORT=3306
+        export MVIDARR_DB_NAME=mvidarr_test
+        export MVIDARR_DB_USER=mvidarr
+        export MVIDARR_DB_PASSWORD=mvidarr
+        export MVIDARR_SECRET_KEY=test-secret-key-for-ci
+        export FLASK_ENV=testing
+        python app.py &
+        sleep 15  # Wait for application to start
+
+    - name: Run comprehensive tests
+      run: |
+        export MVIDARR_DB_HOST=127.0.0.1
+        export MVIDARR_DB_PORT=3306
+        export MVIDARR_DB_NAME=mvidarr_test
+        export MVIDARR_DB_USER=mvidarr
+        export MVIDARR_DB_PASSWORD=mvidarr
+        export MVIDARR_SECRET_KEY=test-secret-key-for-ci
+        python scripts/testing/run_comprehensive_tests.py --url http://localhost:5000
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      if: github.event_name == 'push'
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort pylint safety bandit
+
+    - name: Run flake8
+      run: flake8 src/ --max-line-length=120 --exclude=__pycache__ --statistics
+
+    - name: Check code formatting with black
+      run: black --check src/
+
+    - name: Check import ordering with isort
+      run: isort --check-only src/
+
+    - name: Run pylint
+      run: pylint src/ --exit-zero
+
+    - name: Run safety check
+      run: safety check
+
+    - name: Run bandit security check
+      run: bandit -r src/ -x tests/
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, security-scan, lint]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.production
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Deploy to staging environment
+      run: |
+        echo "Deploying to staging environment..."
+        echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop"
+        # Add deployment script here
+        # This could include:
+        # - SSH to staging server
+        # - Pull latest image
+        # - Update docker-compose files
+        # - Restart services
+        # - Run health checks
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.event_name == 'release'
+    environment: production
+    
+    steps:
+    - name: Deploy to production environment
+      run: |
+        echo "Deploying to production environment..."
+        echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+        # Add production deployment script here
+        # This could include:
+        # - Blue-green deployment
+        # - Database migrations
+        # - Health checks
+        # - Rollback capability
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [test, security-scan, lint]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Simple changelog generation
+        echo "## Changes in this release" > CHANGELOG.md
+        git log --pretty=format:"- %s (%h)" --since="$(git describe --tags --abbrev=0)" >> CHANGELOG.md || echo "- Initial release" >> CHANGELOG.md
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        cat CHANGELOG.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Get next version
+      id: version
+      run: |
+        # Simple semantic versioning
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        echo "Latest tag: $LATEST_TAG"
+        # For simplicity, increment patch version
+        NEW_VERSION=$(echo $LATEST_TAG | awk -F. '{$NF++; print}' OFS=.)
+        echo "New version: $NEW_VERSION"
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        release_name: Release ${{ steps.version.outputs.version }}
+        body: ${{ steps.changelog.outputs.CHANGELOG }}
+        draft: false
+        prerelease: false

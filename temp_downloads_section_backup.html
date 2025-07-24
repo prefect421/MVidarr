@@ -1,0 +1,40 @@
+        <div id="downloadsTab" class="tab-content">
+            <div class="downloads-section">
+                <div class="section-header">
+                    <h2>📥 Downloads</h2>
+                    <div class="downloads-controls">
+                        <select id="sortDownloads" onchange="sortDownloads()">
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                            <option value="name-asc">Name A-Z</option>
+                            <option value="name-desc">Name Z-A</option>
+                            <option value="artist-asc">Artist A-Z</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="openDownloadFolder()">📂 Open Folder</button>
+                        <button class="btn btn-secondary" onclick="refreshDownloads()">🔄 Refresh</button>
+                    </div>
+                </div>
+                
+                <div class="downloads-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalDownloads">0</div>
+                        <div class="stat-label">Total Videos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalSize">0 GB</div>
+                        <div class="stat-label">Total Size</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="uniqueArtists">0</div>
+                        <div class="stat-label">Artists</div>
+                    </div>
+                </div>
+                
+                <div id="downloadsList" class="downloads-list">
+                    <div class="empty-state">
+                        <h3>No downloads yet</h3>
+                        <p>Downloaded videos will appear here after you start downloading from the Search tab.</p>
+                    </div>
+                </div>
+            </div>
+        </div>

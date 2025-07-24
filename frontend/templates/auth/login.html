@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MVidarr Enhanced</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            margin: 1rem;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo h1 {
+            color: #333;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .logo p {
+            color: #666;
+            margin: 0.5rem 0 0 0;
+            font-size: 0.9rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 1rem;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .oauth-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e1e5e9;
+        }
+        
+        .oauth-title {
+            text-align: center;
+            color: #666;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .oauth-button {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .oauth-button:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+        
+        .oauth-button.authentik {
+            border-color: #fd4b2d;
+            color: #fd4b2d;
+        }
+        
+        .oauth-button.authentik:hover {
+            background: #fd4b2d;
+            color: white;
+        }
+        
+        .oauth-button.google {
+            border-color: #4285f4;
+            color: #4285f4;
+        }
+        
+        .oauth-button.google:hover {
+            background: #4285f4;
+            color: white;
+        }
+        
+        .oauth-button.github {
+            border-color: #333;
+            color: #333;
+        }
+        
+        .oauth-button.github:hover {
+            background: #333;
+            color: white;
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #fcc;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 0.5rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🎵 MVidarr Enhanced</h1>
+            <p>Music Video Management System</p>
+        </div>
+        
+        {% if error %}
+        <div class="error-message">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <form id="loginForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            
+            <div class="form-group">
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="login-button" id="loginButton">
+                Sign In
+            </button>
+        </form>
+        
+        {% if oauth_providers %}
+        <div class="oauth-section">
+            <div class="oauth-title">Or sign in with</div>
+            
+            {% for provider, name in oauth_providers.items() %}
+            <a href="/auth/oauth/{{ provider }}/login" class="oauth-button {{ provider }}">
+                {% if provider == 'authentik' %}
+                    🔐 Sign in with Authentik
+                {% elif provider == 'google' %}
+                    🌐 Sign in with Google
+                {% elif provider == 'github' %}
+                    🐙 Sign in with GitHub
+                {% else %}
+                    🔑 Sign in with {{ name }}
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="loading" id="loading" style="display: none;">
+            Signing you in...
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const button = document.getElementById('loginButton');
+            const loading = document.getElementById('loading');
+            
+            button.disabled = true;
+            button.textContent = 'Signing In...';
+            loading.style.display = 'block';
+            
+            // Form will submit normally, this just provides user feedback
+        });
+        
+        // Handle OAuth login
+        document.querySelectorAll('.oauth-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const loading = document.getElementById('loading');
+                loading.style.display = 'block';
+                loading.textContent = 'Redirecting to authentication provider...';
+            });
+        });
+        
+        // Auto-focus username field
+        document.getElementById('username').focus();
+    </script>
+</body>
+</html>

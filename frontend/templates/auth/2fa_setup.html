@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Two-Factor Authentication - MVidarr Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .setup-container {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            color: #495057;
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        
+        .step {
+            display: none;
+            padding: 1rem 0;
+        }
+        
+        .step.active {
+            display: block;
+        }
+        
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .step-number {
+            background: #007bff;
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .qr-code-container {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .qr-code {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            display: inline-block;
+            background: white;
+        }
+        
+        .manual-entry {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: monospace;
+            word-break: break-all;
+            text-align: center;
+        }
+        
+        .backup-codes {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .backup-codes h4 {
+            color: #856404;
+            margin-bottom: 1rem;
+        }
+        
+        .codes-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .backup-code {
+            background: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-block {
+            width: 100%;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        
+        .alert {
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            border: 1px solid transparent;
+        }
+        
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .alert-error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+        }
+        
+        .warning-box {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #721c24;
+        }
+        
+        .info-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #0c5460;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .progress-step {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0.5rem;
+            font-weight: bold;
+            color: #6c757d;
+        }
+        
+        .progress-step.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .progress-step.completed {
+            background: #28a745;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .setup-container {
+                padding: 1rem;
+            }
+            
+            .codes-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="header">
+            <h1>🔐 Setup Two-Factor Authentication</h1>
+            <p>Secure your account with an additional layer of protection</p>
+        </div>
+        
+        <div class="progress-steps">
+            <div class="progress-step active" id="step1-indicator">1</div>
+            <div class="progress-step" id="step2-indicator">2</div>
+            <div class="progress-step" id="step3-indicator">3</div>
+        </div>
+        
+        <div id="alertContainer"></div>
+        
+        <!-- Step 1: Information -->
+        <div class="step active" id="step1">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-title">Install Authenticator App</div>
+            </div>
+            
+            <div class="info-box">
+                <h4>📱 Download an Authenticator App</h4>
+                <p>You'll need a TOTP authenticator app on your mobile device. We recommend:</p>
+                <ul style="margin: 1rem 0 0 2rem;">
+                    <li><strong>Google Authenticator</strong> (iOS/Android)</li>
+                    <li><strong>Microsoft Authenticator</strong> (iOS/Android)</li>
+                    <li><strong>Authy</strong> (iOS/Android/Desktop)</li>
+                    <li><strong>1Password</strong> (Premium)</li>
+                </ul>
+            </div>
+            
+            <div class="warning-box">
+                <h4>⚠️ Important Security Notice</h4>
+                <p>Two-factor authentication significantly increases your account security. Once enabled, you'll need both your password and a code from your authenticator app to log in.</p>
+            </div>
+            
+            <div class="button-group">
+                <a href="/profile/" class="btn btn-secondary">Cancel</a>
+                <button onclick="nextStep()" class="btn btn-primary">Continue</button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Setup -->
+        <div class="step" id="step2">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-title">Configure Your Authenticator</div>
+            </div>
+            
+            <div id="setupLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Generating your unique setup code...</p>
+            </div>
+            
+            <div id="setupContent" style="display: none;">
+                <div class="info-box">
+                    <h4>📷 Scan QR Code</h4>
+                    <p>Open your authenticator app and scan this QR code:</p>
+                </div>
+                
+                <div class="qr-code-container">
+                    <div class="qr-code">
+                        <img id="qrCodeImage" src="" alt="2FA QR Code" style="max-width: 200px;">
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <h4>📝 Manual Entry</h4>
+                    <p>Can't scan the QR code? Enter this key manually in your authenticator app:</p>
+                    <div class="manual-entry" id="manualKey"></div>
+                </div>
+                
+                <div class="backup-codes" id="backupCodesSection">
+                    <h4>🔑 Backup Recovery Codes</h4>
+                    <p>Save these backup codes in a secure location. You can use them to access your account if you lose your authenticator device:</p>
+                    <div class="codes-grid" id="backupCodes"></div>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="previousStep()" class="btn btn-secondary">Back</button>
+                <button onclick="nextStep()" class="btn btn-primary" id="step2ContinueBtn" disabled>Continue</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Verification -->
+        <div class="step" id="step3">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-title">Verify Setup</div>
+            </div>
+            
+            <div class="info-box">
+                <h4>🔢 Enter Verification Code</h4>
+                <p>Enter the 6-digit code from your authenticator app to complete setup:</p>
+            </div>
+            
+            <form id="verificationForm">
+                <div class="form-group">
+                    <label for="verificationCode">Verification Code:</label>
+                    <input type="text" id="verificationCode" name="verification_code" 
+                           maxlength="6" pattern="[0-9]{6}" placeholder="123456" 
+                           style="text-align: center; font-size: 1.5rem; letter-spacing: 0.2rem;">
+                </div>
+                
+                <button type="submit" class="btn btn-success btn-block">✅ Enable Two-Factor Authentication</button>
+            </form>
+            
+            <div class="button-group">
+                <button onclick="previousStep()" class="btn btn-secondary">Back</button>
+            </div>
+        </div>
+        
+        <!-- Success Step -->
+        <div class="step" id="stepSuccess" style="text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+            <h2 style="color: #28a745; margin-bottom: 1rem;">Two-Factor Authentication Enabled!</h2>
+            <p style="margin-bottom: 2rem;">Your account is now protected with two-factor authentication.</p>
+            
+            <div class="info-box">
+                <h4>🔐 Next Steps</h4>
+                <ul style="text-align: left; margin: 1rem 0 0 2rem;">
+                    <li>Keep your backup codes in a safe place</li>
+                    <li>Test logging in with 2FA to ensure it works</li>
+                    <li>Consider enabling 2FA on other important accounts</li>
+                </ul>
+            </div>
+            
+            <a href="/profile/" class="btn btn-primary btn-block">Return to Profile</a>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let setupData = null;
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-focus on verification code input when step 3 is shown
+            document.getElementById('verificationCode').addEventListener('input', function(e) {
+                // Remove non-digits
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+        });
+
+        function nextStep() {
+            if (currentStep === 1) {
+                // Show step 2 and initiate setup
+                currentStep = 2;
+                showStep(currentStep);
+                initiateSetup();
+            } else if (currentStep === 2) {
+                // Move to verification
+                currentStep = 3;
+                showStep(currentStep);
+                document.getElementById('verificationCode').focus();
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        function showStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            
+            // Show current step
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            // Update progress indicators
+            document.querySelectorAll('.progress-step').forEach((indicator, index) => {
+                indicator.classList.remove('active', 'completed');
+                if (index + 1 < step) {
+                    indicator.classList.add('completed');
+                } else if (index + 1 === step) {
+                    indicator.classList.add('active');
+                }
+            });
+        }
+
+        function initiateSetup() {
+            document.getElementById('setupLoading').style.display = 'block';
+            document.getElementById('setupContent').style.display = 'none';
+            
+            fetch('/2fa/api/setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    setupData = data.setup_data;
+                    displaySetupData(setupData);
+                    document.getElementById('setupLoading').style.display = 'none';
+                    document.getElementById('setupContent').style.display = 'block';
+                    document.getElementById('step2ContinueBtn').disabled = false;
+                } else {
+                    showAlert('Error: ' + (data.error || 'Setup failed'), 'error');
+                    previousStep();
+                }
+            })
+            .catch(error => {
+                console.error('Error initiating setup:', error);
+                showAlert('Error initiating 2FA setup: ' + error.message, 'error');
+                previousStep();
+            });
+        }
+
+        function displaySetupData(data) {
+            // Display QR code
+            document.getElementById('qrCodeImage').src = data.qr_code;
+            
+            // Display manual entry key
+            document.getElementById('manualKey').textContent = data.manual_entry_key;
+            
+            // Display backup codes
+            const backupCodesContainer = document.getElementById('backupCodes');
+            backupCodesContainer.innerHTML = '';
+            
+            data.backup_codes.forEach(code => {
+                const codeDiv = document.createElement('div');
+                codeDiv.className = 'backup-code';
+                codeDiv.textContent = code;
+                backupCodesContainer.appendChild(codeDiv);
+            });
+        }
+
+        // Handle verification form submission
+        document.getElementById('verificationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const code = document.getElementById('verificationCode').value.trim();
+            
+            if (code.length !== 6) {
+                showAlert('Please enter a 6-digit verification code', 'error');
+                return;
+            }
+            
+            fetch('/2fa/api/verify-setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: code
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success step
+                    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+                    document.getElementById('stepSuccess').classList.add('active');
+                    
+                    // Update progress indicators
+                    document.querySelectorAll('.progress-step').forEach(indicator => {
+                        indicator.classList.remove('active');
+                        indicator.classList.add('completed');
+                    });
+                } else {
+                    showAlert('Error: ' + (data.error || 'Verification failed'), 'error');
+                    document.getElementById('verificationCode').value = '';
+                    document.getElementById('verificationCode').focus();
+                }
+            })
+            .catch(error => {
+                console.error('Error verifying setup:', error);
+                showAlert('Error verifying 2FA setup: ' + error.message, 'error');
+            });
+        });
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            alertContainer.appendChild(alertDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

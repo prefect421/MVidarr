@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - MVidarr Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #495057;
+            font-size: 1.5rem;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 80px;
+            width: 250px;
+            height: calc(100vh - 80px);
+            background: white;
+            border-right: 1px solid #e9ecef;
+            padding: 1rem 0;
+        }
+        
+        .sidebar nav a {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: #495057;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .sidebar nav a:hover {
+            background: #f8f9fa;
+            border-left-color: #007bff;
+            color: #007bff;
+        }
+        
+        .sidebar nav a.active {
+            background: #f8f9fa;
+            border-left-color: #007bff;
+            color: #007bff;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h2 {
+            font-size: 1.25rem;
+            color: #495057;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.875rem;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .user-table th,
+        .user-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .user-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+        }
+        
+        .user-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .role-badge.admin { background: #dc3545; color: white; }
+        .role-badge.manager { background: #fd7e14; color: white; }
+        .role-badge.user { background: #007bff; color: white; }
+        .role-badge.readonly { background: #6c757d; color: white; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-badge.locked {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .search-bar {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .search-bar input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #007bff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-details h4 {
+            margin: 0;
+            color: #495057;
+        }
+        
+        .user-details p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .modal-header {
+            margin-bottom: 1rem;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #495057;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .user-table {
+                font-size: 0.875rem;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>👥 User Management - MVidarr Enhanced</h1>
+        <div>
+            <a href="/admin/" class="btn btn-secondary">🏠 Dashboard</a>
+        </div>
+    </div>
+    
+    <div class="sidebar">
+        <nav>
+            <a href="/admin/">📊 Dashboard</a>
+            <a href="/admin/users" class="active">👥 Users</a>
+            <a href="/admin/system">⚙️ System</a>
+            <a href="/admin/audit">📋 Audit Log</a>
+            <a href="/">🏠 Back to App</a>
+        </nav>
+    </div>
+    
+    <div class="main-content">
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="text" id="userSearch" placeholder="🔍 Search users by username, email, or role...">
+        </div>
+        
+        <!-- Users Table -->
+        <div class="card">
+            <div class="card-header">
+                <h2>All Users ({{ users|length }})</h2>
+                <a href="/admin/users/create" class="btn btn-success">➕ Create New User</a>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        {% for user in users %}
+                        <tr data-user-id="{{ user.id }}" data-search="{{ user.username|lower }} {{ user.email|lower }} {{ user.role.value|lower }}">
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-avatar">{{ user.username[0]|upper }}</div>
+                                    <div class="user-details">
+                                        <h4>{{ user.username }}</h4>
+                                        <p>{{ user.email }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="role-badge {{ user.role.value.lower() }}">{{ user.role.value }}</span>
+                            </td>
+                            <td>
+                                {% if user.is_locked() %}
+                                    <span class="status-badge locked">Locked</span>
+                                {% elif user.is_active %}
+                                    <span class="status-badge active">Active</span>
+                                {% else %}
+                                    <span class="status-badge inactive">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.last_login %}
+                                    {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                {% else %}
+                                    <span style="color: #6c757d;">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="actions">
+                                    <a href="/admin/users/{{ user.id }}" class="btn btn-primary btn-sm">👁️ View</a>
+                                    
+                                    {% if user.id != current_user.id %}
+                                        {% if user.is_active %}
+                                            <button class="btn btn-warning btn-sm" onclick="toggleUserStatus({{ user.id }}, false)">⏸️ Deactivate</button>
+                                        {% else %}
+                                            <button class="btn btn-success btn-sm" onclick="toggleUserStatus({{ user.id }}, true)">▶️ Activate</button>
+                                        {% endif %}
+                                        
+                                        {% if user.is_locked() %}
+                                            <button class="btn btn-warning btn-sm" onclick="unlockUser({{ user.id }})">🔓 Unlock</button>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="btn btn-sm" style="background: #e9ecef; color: #6c757d;">Current User</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Confirm Action</h3>
+            </div>
+            <p id="modalMessage">Are you sure you want to perform this action?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button id="confirmBtn" class="btn btn-danger" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let pendingAction = null;
+        
+        // Search functionality
+        document.getElementById('userSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#userTableBody tr');
+            
+            rows.forEach(row => {
+                const searchData = row.getAttribute('data-search');
+                if (searchData.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Toggle user status
+        function toggleUserStatus(userId, activate) {
+            const action = activate ? 'activate' : 'deactivate';
+            const user = document.querySelector(`tr[data-user-id="${userId}"] .user-details h4`).textContent;
+            
+            showConfirmModal(
+                `${activate ? 'Activate' : 'Deactivate'} User`,
+                `Are you sure you want to ${action} user "${user}"?`,
+                () => {
+                    fetch(`/admin/api/users/${userId}/toggle-active`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + (data.error || 'Failed to update user status'));
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error: ' + error.message);
+                    });
+                }
+            );
+        }
+        
+        // Unlock user
+        function unlockUser(userId) {
+            const user = document.querySelector(`tr[data-user-id="${userId}"] .user-details h4`).textContent;
+            
+            showConfirmModal(
+                'Unlock User Account',
+                `Are you sure you want to unlock user "${user}"?`,
+                () => {
+                    fetch(`/admin/api/users/${userId}/unlock`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + (data.error || 'Failed to unlock user'));
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error: ' + error.message);
+                    });
+                }
+            );
+        }
+        
+        // Modal functions
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('confirmModal').style.display = 'block';
+            pendingAction = onConfirm;
+        }
+        
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            pendingAction = null;
+        }
+        
+        function confirmAction() {
+            if (pendingAction) {
+                pendingAction();
+            }
+            closeModal();
+        }
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('confirmModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

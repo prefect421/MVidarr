@@ -1,0 +1,3392 @@
+{% extends "base.html" %}
+
+{% block title %}Artists - MVidarr Enhanced{% endblock %}
+
+{% block content %}
+<div class="artists-container">
+    
+    <div class="artists-actions">
+        <div class="advanced-search-panel">
+            <div class="search-header">
+                <div class="search-input-container">
+                    <input type="text" id="searchInput" placeholder="Search artists, keywords, or biography..." onkeyup="handleSearchInput(event)">
+                    <div class="search-suggestions" id="searchSuggestions"></div>
+                </div>
+                <button onclick="toggleAdvancedFilters()" class="btn btn-secondary" id="filtersToggle">
+                    <span>Filters</span> <span id="filterCount" class="filter-count"></span>
+                </button>
+            </div>
+            
+            <div class="advanced-filters" id="advancedFilters" style="display: none;">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="monitoredFilter">Status:</label>
+                        <select id="monitoredFilter" onchange="applyFilters()">
+                            <option value="">All Artists</option>
+                            <option value="true">Monitored Only</option>
+                            <option value="false">Not Monitored</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="autoDownloadFilter">Auto-download:</label>
+                        <select id="autoDownloadFilter" onchange="applyFilters()">
+                            <option value="">Any</option>
+                            <option value="true">Enabled</option>
+                            <option value="false">Disabled</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="thumbnailFilter">Thumbnails:</label>
+                        <select id="thumbnailFilter" onchange="applyFilters()">
+                            <option value="">Any</option>
+                            <option value="true">Has Thumbnail</option>
+                            <option value="false">No Thumbnail</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="imvdbFilter">IMVDb Data:</label>
+                        <select id="imvdbFilter" onchange="applyFilters()">
+                            <option value="">Any</option>
+                            <option value="true">Has IMVDb ID</option>
+                            <option value="false">No IMVDb ID</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="genreFilter">Genre:</label>
+                        <select id="genreFilter" onchange="applyFilters()">
+                            <option value="">All Genres</option>
+                            <!-- Genre options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="minVideos">Min Videos:</label>
+                        <input type="number" id="minVideos" min="0" placeholder="0" onchange="applyFilters()">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="maxVideos">Max Videos:</label>
+                        <input type="number" id="maxVideos" min="0" placeholder="∞" onchange="applyFilters()">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="dateFrom">Added After:</label>
+                        <input type="date" id="dateFrom" onchange="applyFilters()">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="dateTo">Added Before:</label>
+                        <input type="date" id="dateTo" onchange="applyFilters()">
+                    </div>
+                </div>
+                
+                <div class="filter-row">
+                    <div class="filter-group full-width">
+                        <label for="keywordsFilter">Keywords (comma-separated):</label>
+                        <input type="text" id="keywordsFilter" placeholder="Enter keywords..." onchange="applyFilters()">
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button onclick="clearAllFilters()" class="btn btn-secondary">Clear All</button>
+                    <button onclick="saveSearchPreset()" class="btn btn-secondary">Save Preset</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button onclick="showAddArtistModal()" class="btn btn-primary">Add Artist</button>
+            <button onclick="scanMissingThumbnails()" class="btn btn-info">Scan Missing Thumbnails</button>
+            <div class="selection-info">
+                <span id="selectedArtistsCount">0 artists selected</span>
+            </div>
+            <button onclick="refreshArtists()" class="btn btn-secondary">Refresh</button>
+        </div>
+    </div>
+    
+    <!-- Enhanced Bulk Actions Toolbar -->
+    <div class="bulk-actions-toolbar enhanced" id="bulkActionsToolbar" style="display: none;">
+        <div class="bulk-toolbar-header">
+            <div class="bulk-selection-info">
+                <span id="selectedCount">0 artists selected</span>
+                <div class="selection-actions">
+                    <button onclick="selectAll()" class="btn btn-small btn-secondary">📋 Select All</button>
+                    <button onclick="selectCurrentPage()" class="btn btn-small btn-secondary">📄 Select Page</button>
+                    <button onclick="deselectAll()" class="btn btn-small btn-secondary">❌ Clear All</button>
+                    <button onclick="invertSelection()" class="btn btn-small btn-info">🔄 Invert</button>
+                </div>
+            </div>
+            <div class="bulk-quick-filters">
+                <button onclick="selectByStatus('monitored')" class="btn btn-small btn-info">👁️ Monitored</button>
+                <button onclick="selectByStatus('auto_download')" class="btn btn-small btn-info">📥 Auto-DL</button>
+                <button onclick="selectByStatus('no_thumbnail')" class="btn btn-small btn-warning">🖼️ No Thumb</button>
+                <button onclick="selectByStatus('no_videos')" class="btn btn-small btn-warning">📹 No Videos</button>
+            </div>
+        </div>
+        
+        <div class="bulk-actions-main">
+            <div class="bulk-actions-tabs compact">
+                <button class="bulk-tab active" onclick="switchBulkTab('edit')" id="bulkEditTab">
+                    ✏️ Edit
+                </button>
+                <button class="bulk-tab" onclick="switchBulkTab('organize')" id="bulkOrganizeTab">
+                    📁 Organize
+                </button>
+                <button class="bulk-tab" onclick="switchBulkTab('metadata')" id="bulkMetadataTab">
+                    🏷️ Metadata
+                </button>
+                <button class="bulk-tab" onclick="switchBulkTab('danger')" id="bulkDangerTab">
+                    ⚠️ Actions
+                </button>
+            </div>
+            
+            <!-- Edit Tab -->
+            <div class="bulk-tab-content active" id="bulkEditContent">
+                <div class="bulk-operations-grid">
+                    <div class="bulk-operation">
+                        <label>
+                            <input type="checkbox" id="bulkMonitoredToggle">
+                            <span>Set Monitoring Status</span>
+                        </label>
+                        <select id="bulkMonitoredValue">
+                            <option value="true">Enable Monitoring</option>
+                            <option value="false">Disable Monitoring</option>
+                        </select>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <label>
+                            <input type="checkbox" id="bulkAutoDownloadToggle">
+                            <span>Set Auto-Download</span>
+                        </label>
+                        <select id="bulkAutoDownloadValue">
+                            <option value="true">Enable Auto-Download</option>
+                            <option value="false">Disable Auto-Download</option>
+                        </select>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <label>
+                            <input type="checkbox" id="bulkQualityToggle">
+                            <span>Set Quality Profile</span>
+                        </label>
+                        <select id="bulkQualityValue">
+                            <option value="any">Any Quality</option>
+                            <option value="hd_preferred">HD Preferred</option>
+                            <option value="hd_only">HD Only</option>
+                            <option value="4k_preferred">4K Preferred</option>
+                        </select>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <label>
+                            <input type="checkbox" id="bulkPriorityToggle">
+                            <span>Set Download Priority</span>
+                        </label>
+                        <select id="bulkPriorityValue">
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="bulk-action-buttons">
+                    <button onclick="executeBulkEdit()" class="btn btn-primary" id="bulkEditBtn">
+                        💾 Apply Changes
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Organize Tab -->
+            <div class="bulk-tab-content" id="bulkOrganizeContent">
+                <div class="bulk-operations-grid">
+                    <div class="bulk-operation">
+                        <button onclick="bulkFolderOrganize()" class="btn btn-info">
+                            📁 Organize Folders
+                        </button>
+                        <p class="operation-hint">Create organized folder structure</p>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <button onclick="bulkThumbnailScan()" class="btn btn-info">
+                            🖼️ Scan Thumbnails
+                        </button>
+                        <p class="operation-hint">Find and download missing thumbnails</p>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <button onclick="bulkVideoDiscovery()" class="btn btn-primary">
+                            🔍 Discover Videos
+                        </button>
+                        <p class="operation-hint">Search for new videos for all selected artists</p>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <button onclick="bulkRefreshMetadata()" class="btn btn-secondary">
+                            🔄 Refresh Metadata
+                        </button>
+                        <p class="operation-hint">Update metadata from IMVDb</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Metadata Tab -->
+            <div class="bulk-tab-content" id="bulkMetadataContent">
+                <div class="bulk-operations-grid">
+                    <div class="bulk-operation wide">
+                        <label>
+                            <input type="checkbox" id="bulkKeywordsToggle">
+                            <span>Add Keywords</span>
+                        </label>
+                        <input type="text" id="bulkKeywordsValue" placeholder="Enter keywords (comma-separated)">
+                    </div>
+                    
+                    <div class="bulk-operation wide">
+                        <label>
+                            <input type="checkbox" id="bulkGenresToggle">
+                            <span>Add Genres</span>
+                        </label>
+                        <input type="text" id="bulkGenresValue" placeholder="Enter genres (comma-separated)">
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <button onclick="bulkIMVDbLink()" class="btn btn-info">
+                            🔗 Link to IMVDb
+                        </button>
+                        <p class="operation-hint">Auto-link artists to IMVDb profiles</p>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <button onclick="bulkValidateMetadata()" class="btn btn-secondary">
+                            ✅ Validate Metadata
+                        </button>
+                        <p class="operation-hint">Check for missing or invalid data</p>
+                    </div>
+                </div>
+                
+                <div class="bulk-action-buttons">
+                    <button onclick="executeBulkMetadata()" class="btn btn-primary" id="bulkMetadataBtn">
+                        🏷️ Apply Metadata
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Danger Tab -->
+            <div class="bulk-tab-content" id="bulkDangerContent">
+                <div class="bulk-operations-grid">
+                    <div class="bulk-operation danger">
+                        <button onclick="showBulkDeleteModal()" class="btn btn-danger" id="bulkDeleteBtn" disabled>
+                            🗑️ Delete Artists
+                        </button>
+                        <p class="operation-warning">Permanently remove selected artists</p>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <button onclick="showMergeModal()" class="btn btn-warning" id="mergeBtn" disabled>
+                            🔀 Merge Artists
+                        </button>
+                        <p class="operation-hint">Combine duplicate artists (min 2 required)</p>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <button onclick="bulkArchive()" class="btn btn-secondary" id="bulkArchiveBtn" disabled>
+                            📦 Archive Artists
+                        </button>
+                        <p class="operation-hint">Archive artists (soft delete)</p>
+                    </div>
+                    
+                    <div class="bulk-operation">
+                        <button onclick="bulkExport()" class="btn btn-info" id="bulkExportBtn" disabled>
+                            💾 Export Data
+                        </button>
+                        <p class="operation-hint">Export selected artists' data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bulk-toolbar-footer">
+            <div class="bulk-progress" id="bulkProgress" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="bulkProgressFill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="bulkProgressText">Processing...</div>
+            </div>
+            <button onclick="deselectAll()" class="btn btn-secondary">❌ Clear Selection</button>
+        </div>
+    </div>
+    
+    <div class="search-results-info">
+        <div class="results-summary" id="resultsSummary">
+            <span id="resultsCount">Loading artists...</span>
+        </div>
+        <div class="sort-controls">
+            <select id="sortBy" onchange="applyFilters()">
+                <option value="name">Sort by Name</option>
+                <option value="created_at">Sort by Date Added</option>
+                <option value="updated_at">Sort by Last Updated</option>
+                <option value="video_count">Sort by Video Count</option>
+            </select>
+            <select id="sortOrder" onchange="applyFilters()">
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Pagination Controls Top -->
+    <div class="pagination-container top-pagination" id="topPagination" style="display: none;">
+        <div class="pagination-info">
+            <span id="artistCountInfo">Loading...</span>
+        </div>
+        <div class="pagination-controls">
+            <button class="btn btn-secondary pagination-btn" id="prevPageTop" onclick="previousPage()" disabled>
+                ← Previous
+            </button>
+            <div class="page-selector">
+                <span>Page </span>
+                <input type="number" id="pageInputTop" class="page-input" min="1" value="1" onchange="goToPage(this.value)">
+                <span> of <span id="totalPagesTop">1</span></span>
+            </div>
+            <button class="btn btn-secondary pagination-btn" id="nextPageTop" onclick="nextPage()" disabled>
+                Next →
+            </button>
+        </div>
+        <div class="page-size-selector">
+            <label for="pageSizeSelect">Artists per page:</label>
+            <select id="pageSizeSelect" onchange="changePageSize(this.value)">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="artists-grid" id="artists-grid">
+        <p>Loading artists...</p>
+    </div>
+    
+    <!-- Pagination Controls Bottom -->
+    <div class="pagination-container bottom-pagination" id="bottomPagination" style="display: none;">
+        <div class="pagination-info">
+            <span id="artistCountInfoBottom">Loading...</span>
+        </div>
+        <div class="pagination-controls">
+            <button class="btn btn-secondary pagination-btn" id="prevPageBottom" onclick="previousPage()" disabled>
+                ← Previous
+            </button>
+            <div class="page-selector">
+                <span>Page </span>
+                <input type="number" id="pageInputBottom" class="page-input" min="1" value="1" onchange="goToPage(this.value)">
+                <span> of <span id="totalPagesBottom">1</span></span>
+            </div>
+            <button class="btn btn-secondary pagination-btn" id="nextPageBottom" onclick="nextPage()" disabled>
+                Next →
+            </button>
+        </div>
+        <div class="page-size-selector">
+            <span>Artists per page: <span id="currentPageSize">50</span></span>
+        </div>
+    </div>
+</div>
+
+<!-- Add Artist Modal -->
+<div id="addArtistModal" class="modal">
+    <div class="modal-content large-modal">
+        <span class="close">&times;</span>
+        <h2>Add New Artist</h2>
+        
+        <!-- Search Section -->
+        <div class="add-artist-search-section">
+            <h3>Search IMVDb</h3>
+            <div class="search-container">
+                <input type="text" id="addArtistSearchInput" placeholder="Search for artists on IMVDb..." onkeyup="searchImvdbForAdd(event)">
+                <button onclick="searchImvdbForAdd()" class="btn btn-primary">Search</button>
+            </div>
+            <div id="addArtistSearchResults" class="search-results">
+                <p>Enter a search term to find artists from IMVDb</p>
+            </div>
+        </div>
+        
+        <!-- Manual Entry Section -->
+        <div class="add-artist-manual-section">
+            <h3>Or Add Manually</h3>
+            <form id="addArtistForm">
+                <div class="form-group">
+                    <label for="artistName">Artist Name:</label>
+                    <input type="text" id="artistName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="imvdbId">IMVDB ID (optional):</label>
+                    <input type="text" id="imvdbId" name="imvdb_id">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="autoDownload" name="auto_download">
+                        Auto-download new videos
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="monitored" name="monitored" checked>
+                        Monitor for new videos
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Artist</button>
+                    <button type="button" onclick="hideAddArtistModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- IMVDb Discovery Modal -->
+<div id="discoveryModal" class="modal">
+    <div class="modal-content large-modal">
+        <span class="close">&times;</span>
+        <h2>Discover Artists from IMVDb</h2>
+        <div class="discovery-search">
+            <input type="text" id="discoverySearchInput" placeholder="Search for artists on IMVDb...">
+            <button onclick="discoverArtists()" class="btn btn-primary">Search</button>
+        </div>
+        <div id="discoveryResults" class="discovery-results">
+            <p>Enter a search term to discover artists from IMVDb</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadArtists();
+    setupModal();
+    initializeSelection(); // Always enable multi-select
+    loadGenreOptions(); // Load genre filter options
+});
+
+let currentPage = 1;
+let totalPages = 1;
+let pageSize = 50;
+let totalArtists = 0;
+let searchTimeout = null;
+let suggestionsTimeout = null;
+let filtersVisible = false;
+let searchFilters = {};
+let activeFilters = 0;
+let isSelectionMode = false;
+let selectedArtists = new Set();
+
+function loadArtists(page = 1, perPage = null) {
+    if (perPage) pageSize = perPage;
+    
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('per_page', pageSize);
+    
+    // Add search term
+    const searchTerm = document.getElementById('searchInput').value.trim();
+    if (searchTerm) {
+        params.append('search', searchTerm);
+    }
+    
+    // Add all advanced filters
+    const filters = {
+        monitored: document.getElementById('monitoredFilter').value,
+        auto_download: document.getElementById('autoDownloadFilter').value,
+        has_thumbnail: document.getElementById('thumbnailFilter').value,
+        has_imvdb_id: document.getElementById('imvdbFilter').value,
+        genre: document.getElementById('genreFilter').value,
+        min_videos: document.getElementById('minVideos').value,
+        max_videos: document.getElementById('maxVideos').value,
+        date_from: document.getElementById('dateFrom').value,
+        date_to: document.getElementById('dateTo').value,
+        keywords: document.getElementById('keywordsFilter').value
+    };
+    
+    // Count active filters
+    activeFilters = 0;
+    for (const [key, value] of Object.entries(filters)) {
+        if (value && value.trim() !== '') {
+            params.append(key, value);
+            activeFilters++;
+        }
+    }
+    
+    // Update filter count display
+    updateFilterCount();
+    
+    // Add sorting
+    const sortBy = document.getElementById('sortBy').value;
+    const sortOrder = document.getElementById('sortOrder').value;
+    params.append('sort', sortBy);
+    params.append('order', sortOrder);
+    
+    // Use advanced search endpoint with fallback
+    fetch(`/api/artists/search/advanced?${params.toString()}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            const grid = document.getElementById('artists-grid');
+            
+            // Safely access pagination data with fallbacks
+            const pagination = data.pagination || {};
+            currentPage = pagination.page || 1;
+            totalPages = pagination.pages || 1;
+            totalArtists = pagination.total || data.total || 0;
+            
+            // Update results summary
+            updateResultsSummary(data);
+            
+            // Update enhanced pagination controls
+            updatePaginationControls();
+            
+            if (data.artists && data.artists.length > 0) {
+                const artistsHtml = data.artists.map(artist => `
+                    <div class="artist-card" data-artist-id="${artist.id}">
+                        <div class="artist-selection-overlay">
+                            <input type="checkbox" class="artist-checkbox" value="${artist.id}" onchange="toggleArtistSelection(${artist.id})">
+                        </div>
+                        <div class="artist-thumbnail">
+                            <img src="/api/artists/${artist.id}/thumbnail" 
+                                 alt="${artist.name}" onerror="handleThumbnailError(this)">
+                        </div>
+                        <div class="artist-info">
+                            <h3>${artist.name}</h3>
+                            <div class="artist-stats">
+                                <span class="stat">${artist.video_count} videos</span>
+                                <span class="stat ${artist.monitored ? 'monitored' : 'not-monitored'}">
+                                    ${artist.monitored ? 'Monitored' : 'Not Monitored'}
+                                </span>
+                                ${artist.auto_download ? '<span class="stat auto-download">Auto-DL</span>' : ''}
+                                ${artist.has_thumbnail ? '<span class="stat has-thumbnail">📷</span>' : ''}
+                                ${artist.has_imvdb_data ? '<span class="stat has-imvdb">🎵</span>' : ''}
+                                <span class="stat-actions">
+                                    <button onclick="viewArtist(${artist.id})" class="btn btn-small btn-icon" title="Edit Artist">
+                                        ✏️
+                                    </button>
+                                    <button onclick="deleteArtist(${artist.id})" class="btn btn-small btn-icon btn-danger" title="Delete Artist">
+                                        🗑️
+                                    </button>
+                                </span>
+                            </div>
+                            ${artist.last_discovery ? `<p class="last-discovery">Last scan: ${new Date(artist.last_discovery).toLocaleDateString()}</p>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                grid.innerHTML = `
+                    <div class="artists-list">
+                        ${artistsHtml}
+                    </div>
+                `;
+            } else {
+                grid.innerHTML = '<div class="no-results"><p>No artists found. Try adjusting your search or filters.</p></div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading artists from advanced search:', error);
+            
+            // Fallback to basic artists endpoint
+            console.log('Falling back to basic artists endpoint...');
+            
+            const basicParams = new URLSearchParams();
+            basicParams.append('page', page);
+            basicParams.append('per_page', pageSize);
+            
+            // Add basic search and sorting if provided
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (searchTerm) {
+                basicParams.append('search', searchTerm);
+            }
+            
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+            basicParams.append('sort', sortBy);
+            basicParams.append('order', sortOrder);
+            
+            fetch(`/api/artists/?${basicParams.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    const grid = document.getElementById('artists-grid');
+                    
+                    // Handle basic endpoint response format
+                    currentPage = data.page || 1;
+                    totalPages = data.pages || 1;
+                    totalArtists = data.total || 0;
+                    
+                    // Update results summary for basic format
+                    const summary = document.getElementById('resultsCount');
+                    summary.textContent = `Showing ${data.count || 0} of ${data.total || 0} artists`;
+                    
+                    // Update enhanced pagination controls
+                    updatePaginationControls();
+                    
+                    if (data.artists && data.artists.length > 0) {
+                        const artistsHtml = data.artists.map(artist => `
+                            <div class="artist-card" data-artist-id="${artist.id}">
+                                <div class="artist-selection-overlay">
+                                    <input type="checkbox" class="artist-checkbox" value="${artist.id}" onchange="toggleArtistSelection(${artist.id})">
+                                </div>
+                                <div class="artist-thumbnail">
+                                    <img src="/api/artists/${artist.id}/thumbnail" 
+                                         alt="${artist.name}" onerror="handleThumbnailError(this)">
+                                </div>
+                                <div class="artist-info">
+                                    <h3>${artist.name}</h3>
+                                    <div class="artist-stats">
+                                        <span class="stat">Videos: N/A</span>
+                                        <span class="stat ${artist.monitored ? 'monitored' : 'not-monitored'}">
+                                            ${artist.monitored ? 'Monitored' : 'Not Monitored'}
+                                        </span>
+                                        ${artist.auto_download ? '<span class="stat auto-download">Auto-DL</span>' : ''}
+                                        <span class="stat-actions">
+                                            <button onclick="viewArtist(${artist.id})" class="btn btn-small btn-icon" title="Edit Artist">
+                                                ✏️
+                                            </button>
+                                            <button onclick="deleteArtist(${artist.id})" class="btn btn-small btn-icon btn-danger" title="Delete Artist">
+                                                🗑️
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                        
+                        grid.innerHTML = `
+                            <div class="artists-list">
+                                ${artistsHtml}
+                            </div>
+                        `;
+                    } else {
+                        grid.innerHTML = '<div class="no-results"><p>No artists found.</p></div>';
+                    }
+                })
+                .catch(fallbackError => {
+                    console.error('Error loading artists from fallback endpoint:', fallbackError);
+                    document.getElementById('artists-grid').innerHTML = '<div class="error-message"><p>Error loading artists.</p></div>';
+                });
+        });
+}
+
+function createPaginationControls(data) {
+    if (data.pages <= 1) return '';
+    
+    let pagination = '<div class="pagination">';
+    
+    // Previous button
+    if (data.page > 1) {
+        pagination += `<button onclick="loadArtists(${data.page - 1})" class="btn btn-small">Previous</button>`;
+    }
+    
+    // Page numbers (show max 5 pages around current)
+    const startPage = Math.max(1, data.page - 2);
+    const endPage = Math.min(data.pages, data.page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const active = i === data.page ? 'active' : '';
+        pagination += `<button onclick="loadArtists(${i})" class="btn btn-small ${active}">${i}</button>`;
+    }
+    
+    // Next button
+    if (data.page < data.pages) {
+        pagination += `<button onclick="loadArtists(${data.page + 1})" class="btn btn-small">Next</button>`;
+    }
+    
+    pagination += '</div>';
+    return pagination;
+}
+
+// Enhanced Pagination Functions
+function updatePaginationControls() {
+    // Show pagination controls if we have artists
+    const showPagination = totalArtists > 0;
+    document.getElementById('topPagination').style.display = showPagination ? 'flex' : 'none';
+    document.getElementById('bottomPagination').style.display = showPagination ? 'flex' : 'none';
+    
+    if (!showPagination) return;
+    
+    // Update pagination info
+    const startIndex = ((currentPage - 1) * pageSize) + 1;
+    const endIndex = Math.min(currentPage * pageSize, totalArtists);
+    const infoText = `Showing ${startIndex}-${endIndex} of ${totalArtists} artists`;
+    
+    document.getElementById('artistCountInfo').textContent = infoText;
+    document.getElementById('artistCountInfoBottom').textContent = infoText;
+    
+    // Update page inputs
+    document.getElementById('pageInputTop').value = currentPage;
+    document.getElementById('pageInputBottom').value = currentPage;
+    document.getElementById('totalPagesTop').textContent = totalPages;
+    document.getElementById('totalPagesBottom').textContent = totalPages;
+    document.getElementById('currentPageSize').textContent = pageSize;
+    
+    // Update button states
+    const hasPrevious = currentPage > 1;
+    const hasNext = currentPage < totalPages;
+    
+    document.getElementById('prevPageTop').disabled = !hasPrevious;
+    document.getElementById('prevPageBottom').disabled = !hasPrevious;
+    document.getElementById('nextPageTop').disabled = !hasNext;
+    document.getElementById('nextPageBottom').disabled = !hasNext;
+    
+    // Update page size selector
+    document.getElementById('pageSizeSelect').value = pageSize;
+}
+
+function nextPage() {
+    if (currentPage < totalPages) {
+        loadArtists(currentPage + 1, pageSize);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function previousPage() {
+    if (currentPage > 1) {
+        loadArtists(currentPage - 1, pageSize);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function goToPage(page) {
+    const pageNum = parseInt(page);
+    if (pageNum >= 1 && pageNum <= totalPages && pageNum !== currentPage) {
+        loadArtists(pageNum, pageSize);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        // Reset invalid input
+        document.getElementById('pageInputTop').value = currentPage;
+        document.getElementById('pageInputBottom').value = currentPage;
+    }
+}
+
+function changePageSize(newSize) {
+    const size = parseInt(newSize);
+    if (size !== pageSize) {
+        pageSize = size;
+        // Reset to page 1 when changing page size
+        loadArtists(1, pageSize);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function setupModal() {
+    const addModal = document.getElementById('addArtistModal');
+    const addCloseBtn = addModal.querySelector('.close');
+    
+    const discoveryModal = document.getElementById('discoveryModal');
+    const discoveryCloseBtn = discoveryModal.querySelector('.close');
+    
+    addCloseBtn.onclick = hideAddArtistModal;
+    discoveryCloseBtn.onclick = hideDiscoveryModal;
+    
+    window.onclick = function(event) {
+        if (event.target === addModal) {
+            hideAddArtistModal();
+        }
+        if (event.target === discoveryModal) {
+            hideDiscoveryModal();
+        }
+    };
+    
+    document.getElementById('addArtistForm').onsubmit = function(e) {
+        e.preventDefault();
+        addArtist();
+    };
+    
+    // Handle Enter key in discovery search
+    document.getElementById('discoverySearchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            discoverArtists();
+        }
+    });
+}
+
+function showAddArtistModal() {
+    document.getElementById('addArtistModal').style.display = 'block';
+}
+
+function hideAddArtistModal() {
+    document.getElementById('addArtistModal').style.display = 'none';
+    document.getElementById('addArtistForm').reset();
+    document.getElementById('addArtistSearchInput').value = '';
+    document.getElementById('addArtistSearchResults').innerHTML = '<p>Enter a search term to find artists from IMVDb</p>';
+}
+
+function addArtist() {
+    const formData = new FormData(document.getElementById('addArtistForm'));
+    const data = {
+        name: formData.get('name'),
+        imvdb_id: formData.get('imvdb_id'),
+        auto_download: formData.get('auto_download') === 'on',
+        monitored: formData.get('monitored') === 'on'
+    };
+    
+    fetch('/api/artists/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            hideAddArtistModal();
+            loadArtists();
+        }
+    })
+    .catch(error => {
+        console.error('Error adding artist:', error);
+        showError('Error adding artist');
+    });
+}
+
+function searchArtists() {
+    // Debounce search to avoid too many requests
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        loadArtists(1); // Reset to page 1 when searching
+    }, 300);
+}
+
+function filterArtists() {
+    loadArtists(1); // Reset to page 1 when filtering
+}
+
+function sortArtists() {
+    loadArtists(1); // Reset to page 1 when sorting
+}
+
+function scanMissingThumbnails() {
+    toastConfirm('This will scan all artists missing thumbnails and attempt to find images from IMVDb and Wikipedia. This may take a while. Continue?', () => {
+        proceedScanMissingThumbnails();
+    });
+}
+
+function proceedScanMissingThumbnails() {
+    
+    const scanBtn = document.querySelector('button[onclick="scanMissingThumbnails()"]');
+    scanBtn.disabled = true;
+    scanBtn.textContent = 'Scanning...';
+    
+    fetch('/api/artists/scan-missing-thumbnails', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess(`Scan completed! Found thumbnails for ${data.updated_count} out of ${data.missing_count} artists without thumbnails.`);
+            // Refresh the artist list to show updated thumbnails
+            loadArtists(currentPage);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error scanning thumbnails:', error);
+        showError('Error scanning for thumbnails');
+    })
+    .finally(() => {
+        scanBtn.disabled = false;
+        scanBtn.textContent = 'Scan Missing Thumbnails';
+    });
+}
+
+
+function refreshArtists() {
+    loadArtists(currentPage);
+}
+
+// Advanced search functionality
+function handleSearchInput(event) {
+    // Clear previous timeout
+    clearTimeout(searchTimeout);
+    clearTimeout(suggestionsTimeout);
+    
+    const query = event.target.value.trim();
+    
+    // Hide suggestions if empty
+    if (query.length < 2) {
+        hideSuggestions();
+        // Still search to show all results
+        searchTimeout = setTimeout(() => {
+            loadArtists(1);
+        }, 300);
+        return;
+    }
+    
+    // Show suggestions after short delay
+    suggestionsTimeout = setTimeout(() => {
+        showSearchSuggestions(query);
+    }, 200);
+    
+    // Perform search after longer delay
+    searchTimeout = setTimeout(() => {
+        loadArtists(1);
+    }, 500);
+}
+
+function showSearchSuggestions(query) {
+    fetch(`/api/artists/search/suggestions?q=${encodeURIComponent(query)}&limit=5`)
+        .then(response => response.json())
+        .then(data => {
+            const suggestionsDiv = document.getElementById('searchSuggestions');
+            
+            if (data.suggestions && data.suggestions.length > 0) {
+                const suggestionsHtml = data.suggestions.map(suggestion => `
+                    <div class="suggestion-item" onclick="selectSuggestion('${suggestion.text.replace(/'/g, "\\'")}')">
+                        <span class="suggestion-text">${suggestion.text}</span>
+                        <span class="suggestion-type">${suggestion.type === 'artist_name' ? 'Artist' : 'Keyword'}</span>
+                    </div>
+                `).join('');
+                
+                suggestionsDiv.innerHTML = suggestionsHtml;
+                suggestionsDiv.style.display = 'block';
+            } else {
+                hideSuggestions();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching suggestions:', error);
+            hideSuggestions();
+        });
+}
+
+function selectSuggestion(text) {
+    document.getElementById('searchInput').value = text;
+    hideSuggestions();
+    loadArtists(1);
+}
+
+function hideSuggestions() {
+    const suggestionsDiv = document.getElementById('searchSuggestions');
+    suggestionsDiv.innerHTML = '';
+    suggestionsDiv.style.display = 'none';
+}
+
+function toggleAdvancedFilters() {
+    filtersVisible = !filtersVisible;
+    const filtersDiv = document.getElementById('advancedFilters');
+    const toggleBtn = document.getElementById('filtersToggle');
+    
+    if (filtersVisible) {
+        filtersDiv.style.display = 'block';
+        toggleBtn.classList.add('active');
+    } else {
+        filtersDiv.style.display = 'none';
+        toggleBtn.classList.remove('active');
+    }
+}
+
+function applyFilters() {
+    // Store sort preferences when user changes them
+    const sortBy = document.getElementById('sortBy').value;
+    const sortOrder = document.getElementById('sortOrder').value;
+    
+    try {
+        localStorage.setItem('artistSortBy', sortBy);
+        localStorage.setItem('artistSortOrder', sortOrder);
+    } catch (e) {
+        console.warn('Could not store sort preferences:', e);
+    }
+    
+    loadArtists(1);
+}
+
+function updateFilterCount() {
+    const filterCountSpan = document.getElementById('filterCount');
+    if (activeFilters > 0) {
+        filterCountSpan.textContent = activeFilters;
+        filterCountSpan.style.display = 'inline';
+    } else {
+        filterCountSpan.style.display = 'none';
+    }
+}
+
+function updateResultsSummary(data) {
+    const summary = document.getElementById('resultsCount');
+    const analytics = data.analytics;
+    
+    let summaryText = `Showing ${data.count} of ${analytics.total_artists} artists`;
+    
+    if (data.pagination.page > 1) {
+        const startItem = ((data.pagination.page - 1) * data.pagination.per_page) + 1;
+        const endItem = Math.min(startItem + data.count - 1, analytics.total_artists);
+        summaryText = `Showing ${startItem}-${endItem} of ${analytics.total_artists} artists`;
+    }
+    
+    if (Object.values(analytics.filters_applied).some(applied => applied)) {
+        summaryText += ' (filtered)';
+    }
+    
+    summary.textContent = summaryText;
+}
+
+function clearAllFilters() {
+    // Clear all filter inputs
+    document.getElementById('searchInput').value = '';
+    document.getElementById('monitoredFilter').value = '';
+    document.getElementById('autoDownloadFilter').value = '';
+    document.getElementById('thumbnailFilter').value = '';
+    document.getElementById('imvdbFilter').value = '';
+    document.getElementById('genreFilter').value = '';
+    document.getElementById('minVideos').value = '';
+    document.getElementById('maxVideos').value = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('keywordsFilter').value = '';
+    
+    // Reset sorting to default
+    document.getElementById('sortBy').value = 'name';
+    document.getElementById('sortOrder').value = 'asc';
+    
+    // Hide suggestions
+    hideSuggestions();
+    
+    // Reload with cleared filters
+    loadArtists(1);
+}
+
+function loadGenreOptions() {
+    // Load available genres from the API
+    fetch('/api/genres')
+        .then(response => response.json())
+        .then(data => {
+            const genreSelect = document.getElementById('genreFilter');
+            if (data.artist_genres && data.artist_genres.length > 0) {
+                // Clear existing options (except the first "All Genres" option)
+                genreSelect.innerHTML = '<option value="">All Genres</option>';
+                
+                // Add each genre as an option
+                data.artist_genres.forEach(genre => {
+                    const option = document.createElement('option');
+                    option.value = genre;
+                    option.textContent = genre;
+                    genreSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading genres:', error);
+        });
+}
+
+function saveSearchPreset() {
+    // For now, just show a placeholder alert
+    // This could be expanded to save presets in localStorage or backend
+    showInfo('Search preset functionality coming soon!');
+}
+
+function searchImvdbForAdd(event) {
+    // Handle Enter key press
+    if (event && event.key && event.key !== 'Enter') {
+        return;
+    }
+    
+    const searchTerm = document.getElementById('addArtistSearchInput').value.trim();
+    if (!searchTerm) {
+        return;
+    }
+    
+    const resultsDiv = document.getElementById('addArtistSearchResults');
+    resultsDiv.innerHTML = '<p>Searching database and IMVDb...</p>';
+    
+    // Enhanced search: First check existing database, then IMVDb
+    Promise.all([
+        // Search existing database
+        fetch(`/api/artists/search/advanced?search=${encodeURIComponent(searchTerm)}&limit=25`)
+            .then(response => response.json())
+            .catch(error => {
+                console.error('Error searching database:', error);
+                return { artists: [] };
+            }),
+        // Search IMVDb
+        fetch(`/api/artists/discover?q=${encodeURIComponent(searchTerm)}&limit=50`)
+            .then(response => response.json())
+            .catch(error => {
+                console.error('Error searching IMVDb:', error);
+                return { artists: [] };
+            })
+    ])
+    .then(([dbResults, imvdbResults]) => {
+        let resultsHtml = '';
+        
+        // Show existing database artists first
+        if (dbResults.artists && dbResults.artists.length > 0) {
+            resultsHtml += `
+                <div class="search-results-section">
+                    <div class="search-results-header existing">
+                        <h4>📍 Existing Artists (${dbResults.artists.length} found)</h4>
+                        <p>These artists are already in your database</p>
+                    </div>
+                    <div class="search-results-grid">
+                        ${dbResults.artists.map(artist => `
+                            <div class="search-result-card existing">
+                                <div class="search-result-thumbnail">
+                                    ${artist.thumbnail_url ? `<img src="${artist.thumbnail_url}" alt="${artist.name}" onerror="handleThumbnailError(this)">` : '<div class="no-image">No Image</div>'}
+                                </div>
+                                <div class="search-result-info">
+                                    <h5>${artist.name}</h5>
+                                    <p>${artist.video_count || 0} videos</p>
+                                    ${artist.imvdb_id ? '<p class="imvdb-linked">🔗 IMVDb Linked</p>' : '<p class="no-imvdb">⚠️ No IMVDb Link</p>'}
+                                </div>
+                                <div class="search-result-actions">
+                                    <button onclick="viewArtist(${artist.id})" class="btn btn-info btn-small">View Artist</button>
+                                    ${!artist.imvdb_id ? `<button onclick="linkToImvdb(${artist.id}, '${artist.name.replace(/'/g, '\\\'')}')" class="btn btn-secondary btn-small">Link to IMVDb</button>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Show IMVDb results that can be added
+        if (imvdbResults.artists && imvdbResults.artists.length > 0) {
+            // Filter out artists that already exist in database
+            const existingNames = dbResults.artists ? dbResults.artists.map(a => a.name.toLowerCase()) : [];
+            const newArtists = imvdbResults.artists.filter(artist => 
+                !existingNames.includes(artist.name.toLowerCase())
+            );
+            
+            if (newArtists.length > 0) {
+                resultsHtml += `
+                    <div class="search-results-section">
+                        <div class="search-results-header imvdb">
+                            <h4>🌐 Available from IMVDb (${newArtists.length} found)</h4>
+                            <p>These artists can be added to your database</p>
+                        </div>
+                        <div class="search-results-grid">
+                            ${newArtists.map(artist => `
+                                <div class="search-result-card imvdb">
+                                    <div class="search-result-thumbnail">
+                                        ${artist.image ? `<img src="${getImageUrl(artist.image)}" alt="${artist.name}" onerror="handleThumbnailError(this)">` : '<div class="no-image">No Image</div>'}
+                                    </div>
+                                    <div class="search-result-info">
+                                        <h5>${artist.name}</h5>
+                                        ${artist.video_count ? `<p>${artist.video_count} videos on IMVDb</p>` : ''}
+                                        ${artist.byline ? `<p class="byline">${artist.byline}</p>` : ''}
+                                    </div>
+                                    <div class="search-result-actions">
+                                        <button onclick="addArtistFromImvdb('${artist.imvdb_id}', '${artist.name.replace(/'/g, '\\\'')}')" class="btn btn-primary btn-small">Add This Artist</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (dbResults.artists && dbResults.artists.length > 0) {
+                resultsHtml += `
+                    <div class="search-results-section">
+                        <div class="search-results-header info">
+                            <h4>ℹ️ All matching artists already exist</h4>
+                            <p>No new artists found on IMVDb for "${searchTerm}"</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // If no results from either source
+        if (!resultsHtml) {
+            resultsHtml = `
+                <div class="search-results-section">
+                    <div class="search-results-header no-results">
+                        <h4>❌ No artists found</h4>
+                        <p>No results found for "${searchTerm}" in database or IMVDb</p>
+                        <p>Try a different search term or check spelling</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        resultsDiv.innerHTML = resultsHtml;
+    })
+    .catch(error => {
+        console.error('Error in enhanced search:', error);
+        resultsDiv.innerHTML = '<p>Error performing search. Please try again.</p>';
+    });
+}
+
+function linkToImvdb(artistId, artistName) {
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(`Link "${artistName}" to IMVDb? This will search for the artist and link their profile.`, () => {
+            proceedLinkToImvdb(artistId, artistName);
+        });
+    } else {
+        if (confirm(`Link "${artistName}" to IMVDb? This will search for the artist and link their profile.`)) {
+            proceedLinkToImvdb(artistId, artistName);
+        }
+    }
+}
+
+function proceedLinkToImvdb(artistId, artistName) {
+    // For now, just show that this feature would link the artist
+    if (typeof showInfo === 'function') {
+        showInfo(`IMVDb linking for "${artistName}" coming soon! This will automatically find and link their IMVDb profile.`);
+    } else {
+        alert(`IMVDb linking for "${artistName}" coming soon!`);
+    }
+    
+    // TODO: Implement actual IMVDb linking functionality
+    // This would involve:
+    // 1. Search IMVDb for the artist
+    // 2. Present matching options to user
+    // 3. Update artist record with IMVDb ID
+}
+
+function addArtistFromImvdb(imvdbId, artistName) {
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(`Add "${artistName}" from IMVDb?`, () => {
+            proceedAddArtistFromImvdb(imvdbId, artistName);
+        });
+    } else {
+        if (confirm(`Add "${artistName}" from IMVDb?`)) {
+            proceedAddArtistFromImvdb(imvdbId, artistName);
+        }
+    }
+}
+
+function proceedAddArtistFromImvdb(imvdbId, artistName) {
+    fetch('/api/artists/import-from-imvdb', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            imvdb_id: imvdbId,
+            monitored: true,
+            auto_download: false
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            if (typeof showError === 'function') {
+                showError('Error: ' + result.error);
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } else {
+            if (typeof showSuccess === 'function') {
+                showSuccess(`Artist "${result.name}" added successfully!`);
+            } else {
+                alert(`Artist "${result.name}" added successfully!`);
+            }
+            hideAddArtistModal();
+            loadArtists(currentPage); // Refresh the artists list
+        }
+    })
+    .catch(error => {
+        console.error('Error adding artist:', error);
+        if (typeof showError === 'function') {
+            showError('Error adding artist');
+        } else {
+            alert('Error adding artist');
+        }
+    });
+}
+
+function showDiscoveryModal() {
+    document.getElementById('discoveryModal').style.display = 'block';
+}
+
+function hideDiscoveryModal() {
+    document.getElementById('discoveryModal').style.display = 'none';
+    document.getElementById('discoverySearchInput').value = '';
+    document.getElementById('discoveryResults').innerHTML = '<p>Enter a search term to discover artists from IMVDb</p>';
+}
+
+function discoverArtists() {
+    const searchTerm = document.getElementById('discoverySearchInput').value.trim();
+    if (!searchTerm) {
+        showWarning('Please enter a search term');
+        return;
+    }
+    
+    const resultsDiv = document.getElementById('discoveryResults');
+    resultsDiv.innerHTML = '<p>Searching IMVDb...</p>';
+    
+    fetch(`/api/artists/discover?q=${encodeURIComponent(searchTerm)}&limit=50`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.artists && data.artists.length > 0) {
+                resultsDiv.innerHTML = `
+                    <div class="discovery-header">
+                        <h3>Found ${data.count} artists for "${data.search_term}"</h3>
+                    </div>
+                    <div class="discovery-grid">
+                        ${data.artists.map(artist => `
+                            <div class="discovery-card">
+                                <div class="discovery-thumbnail">
+                                    ${artist.image ? `<img src="${getImageUrl(artist.image)}" alt="${artist.name}" onerror="handleThumbnailError(this)">` : '<div class="no-image">No Image</div>'}
+                                </div>
+                                <div class="discovery-info">
+                                    <h4>${artist.name}</h4>
+                                    ${artist.biography ? `<p class="biography">${artist.biography.substring(0, 100)}...</p>` : ''}
+                                    ${artist.formed_year ? `<p>Formed: ${artist.formed_year}</p>` : ''}
+                                    ${artist.origin_country ? `<p>Origin: ${artist.origin_country}</p>` : ''}
+                                </div>
+                                <div class="discovery-actions">
+                                    <button onclick="importArtist('${artist.imvdb_id}', '${artist.name}')" class="btn btn-primary btn-small">Import Artist</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = `<p>No artists found for "${data.search_term}". Try a different search term.</p>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error discovering artists:', error);
+            resultsDiv.innerHTML = '<p>Error searching IMVDb. Please try again.</p>';
+        });
+}
+
+function getImageUrl(imageData) {
+    if (typeof imageData === 'string') {
+        return imageData;
+    } else if (typeof imageData === 'object') {
+        // Try different sizes: l (large), m (medium), s (small)
+        return imageData.l || imageData.m || imageData.s || '/static/placeholder-artist.png';
+    }
+    return '/static/placeholder-artist.png';
+}
+
+function importArtist(imvdbId, artistName) {
+    toastConfirm(`Import "${artistName}" from IMVDb?`, () => {
+        fetch('/api/artists/import-from-imvdb', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                imvdb_id: imvdbId,
+                monitored: true,
+                auto_download: false
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.error) {
+                showError('Error: ' + result.error);
+            } else {
+                showSuccess(`Artist "${result.name}" imported successfully!`);
+                hideDiscoveryModal();
+                loadArtists(currentPage); // Refresh the artists list
+            }
+        })
+        .catch(error => {
+            console.error('Error importing artist:', error);
+            showError('Error importing artist');
+        });
+    });
+}
+
+function viewArtist(id) {
+    // Navigate to artist detail page
+    window.location.href = `/artist/${id}`;
+}
+
+function deleteArtist(id) {
+    // Get artist name for confirmation
+    const artistCard = document.querySelector(`[data-artist-id="${id}"]`);
+    const artistName = artistCard ? artistCard.querySelector('h3').textContent : 'this artist';
+    
+    if (confirm(`Are you sure you want to delete "${artistName}"? This action cannot be undone and will also delete all associated videos.`)) {
+        // Show loading state
+        const deleteBtn = event.target.closest('button');
+        const originalContent = deleteBtn.innerHTML;
+        deleteBtn.innerHTML = '⏳';
+        deleteBtn.disabled = true;
+        
+        fetch(`/api/artists/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess(`Artist "${artistName}" deleted successfully`);
+                
+                // Remove the artist card from the grid with animation
+                artistCard.style.transition = 'all 0.3s ease';
+                artistCard.style.transform = 'scale(0)';
+                artistCard.style.opacity = '0';
+                
+                setTimeout(() => {
+                    artistCard.remove();
+                    // Update the results count
+                    updateResultsAfterDelete();
+                }, 300);
+            } else {
+                showError(data.error || 'Failed to delete artist');
+                // Restore button
+                deleteBtn.innerHTML = originalContent;
+                deleteBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting artist:', error);
+            showError('Error deleting artist');
+            // Restore button
+            deleteBtn.innerHTML = originalContent;
+            deleteBtn.disabled = false;
+        });
+    }
+}
+
+function updateResultsAfterDelete() {
+    // Update the results summary to reflect the deletion
+    const summaryElement = document.getElementById('resultsCount');
+    if (summaryElement) {
+        const currentText = summaryElement.textContent;
+        const match = currentText.match(/Showing (\d+) of (\d+)/);
+        if (match) {
+            const showing = parseInt(match[1]) - 1;
+            const total = parseInt(match[2]) - 1;
+            summaryElement.textContent = `Showing ${showing} of ${total} artists`;
+        }
+    }
+}
+
+function handleThumbnailError(img) {
+    // Try multiple fallback options
+    const fallbacks = [
+        '/static/placeholder-artist.png',
+        '/static/placeholder-video.png',
+        '/css/placeholder-artist.png'
+    ];
+    
+    // Get current src to avoid infinite loop
+    const currentSrc = img.src;
+    
+    // Find next fallback that hasn't been tried
+    for (let fallback of fallbacks) {
+        if (!currentSrc.includes(fallback)) {
+            img.src = fallback;
+            return;
+        }
+    }
+    
+    // If all fallbacks failed, create a colored div
+    img.style.display = 'none';
+    const placeholder = document.createElement('div');
+    placeholder.className = 'thumbnail-placeholder';
+    placeholder.textContent = 'No Image';
+    placeholder.style.cssText = `
+        width: 100%;
+        height: 100%;
+        background-color: #444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+        font-size: 0.8rem;
+        border-radius: 4px;
+    `;
+    img.parentNode.appendChild(placeholder);
+}
+
+// Artist selection functions - always enabled
+function initializeSelection() {
+    isSelectionMode = true; // Always enabled
+    selectedArtists.clear();
+    updateSelectionDisplay();
+}
+
+function toggleArtistSelection(artistId) {
+    const checkbox = document.querySelector(`input[value="${artistId}"]`);
+    const card = document.querySelector(`[data-artist-id="${artistId}"]`);
+    
+    if (checkbox && checkbox.checked) {
+        selectedArtists.add(artistId);
+        card.classList.add('selected');
+    } else {
+        selectedArtists.delete(artistId);
+        card.classList.remove('selected');
+    }
+    
+    updateSelectionDisplay();
+}
+
+function updateSelectionDisplay() {
+    const count = selectedArtists.size;
+    const countElement = document.getElementById('selectedArtistsCount');
+    const bulkCountElement = document.getElementById('selectedCount');
+    const toolbar = document.getElementById('bulkActionsToolbar');
+    
+    const countText = `${count} artist${count !== 1 ? 's' : ''} selected`;
+    
+    if (countElement) {
+        countElement.textContent = countText;
+    }
+    
+    if (bulkCountElement) {
+        bulkCountElement.textContent = countText;
+    }
+    
+    // Show/hide bulk actions toolbar based on selection
+    if (toolbar) {
+        if (count > 0) {
+            toolbar.style.display = 'flex';
+        } else {
+            toolbar.style.display = 'none';
+        }
+    }
+    
+    // Update button states for action buttons in Danger tab
+    const deleteBtn = document.getElementById('bulkDeleteBtn');
+    const mergeBtn = document.getElementById('mergeBtn');
+    const archiveBtn = document.getElementById('bulkArchiveBtn');
+    const exportBtn = document.getElementById('bulkExportBtn');
+    
+    if (deleteBtn) deleteBtn.disabled = count === 0;
+    if (mergeBtn) mergeBtn.disabled = count < 2;
+    if (archiveBtn) archiveBtn.disabled = count === 0;
+    if (exportBtn) exportBtn.disabled = count === 0;
+    
+    // Update button states for action buttons in Edit tab
+    const bulkEditBtn = document.getElementById('bulkEditBtn');
+    if (bulkEditBtn) bulkEditBtn.disabled = count === 0;
+    
+    // Update button states for action buttons in Metadata tab
+    const bulkMetadataBtn = document.getElementById('bulkMetadataBtn');
+    if (bulkMetadataBtn) bulkMetadataBtn.disabled = count === 0;
+    
+    // Update button states for action buttons in Organize tab (these are always enabled if artists are selected)
+    const organizeButtons = document.querySelectorAll('#bulkOrganizeContent button');
+    organizeButtons.forEach(button => {
+        button.disabled = count === 0;
+    });
+    
+    // Ensure tab buttons are always enabled when artists are selected
+    const tabButtons = document.querySelectorAll('.bulk-tab');
+    tabButtons.forEach(button => {
+        button.disabled = false;
+        button.style.pointerEvents = 'auto';
+        button.style.opacity = '1';
+    });
+}
+
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.artist-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        selectedArtists.add(parseInt(checkbox.value));
+        const card = document.querySelector(`[data-artist-id="${checkbox.value}"]`);
+        card.classList.add('selected');
+    });
+    updateSelectionDisplay();
+}
+
+function deselectAll() {
+    const checkboxes = document.querySelectorAll('.artist-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        const card = document.querySelector(`[data-artist-id="${checkbox.value}"]`);
+        card.classList.remove('selected');
+    });
+    selectedArtists.clear();
+    updateSelectionDisplay();
+}
+
+// Selection mode is always enabled - these functions are no longer needed
+
+function showBulkDeleteModal() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const count = selectedArtists.size;
+    const message = `Are you sure you want to delete ${count} selected artist${count > 1 ? 's' : ''}? This action cannot be undone.`;
+    
+    toastConfirm(message, () => {
+        bulkDeleteArtists();
+    });
+}
+
+function bulkDeleteArtists() {
+    const artistIds = Array.from(selectedArtists);
+    
+    // Show progress
+    const deleteBtn = document.getElementById('bulkDeleteBtn');
+    const originalText = deleteBtn.textContent;
+    deleteBtn.textContent = 'Deleting...';
+    deleteBtn.disabled = true;
+    
+    fetch('/api/artists/bulk-delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess(`Successfully deleted ${result.deleted_count} artist${result.deleted_count > 1 ? 's' : ''}`);
+            selectedArtists.clear();
+            updateSelectionDisplay();
+            loadArtists(currentPage);
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting artists:', error);
+        showError('Error deleting artists');
+    })
+    .finally(() => {
+        deleteBtn.textContent = originalText;
+        deleteBtn.disabled = false;
+    });
+}
+
+function showMergeModal() {
+    if (selectedArtists.size < 2) {
+        showWarning('Please select at least 2 artists to merge');
+        return;
+    }
+    
+    // Create and show merge modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'mergeModal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="hideMergeModal()">&times;</span>
+            <h2>Merge Artists</h2>
+            <div class="merge-content">
+                <p>Select which artist should be the primary (all others will be merged into this one):</p>
+                <div class="merge-artist-list" id="mergeArtistList">
+                    <p>Loading artists...</p>
+                </div>
+                <div class="merge-actions">
+                    <button onclick="performMerge()" class="btn btn-primary" id="performMergeBtn" disabled>Merge Artists</button>
+                    <button onclick="hideMergeModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+    
+    // Load artist details for selection
+    loadMergeArtists();
+}
+
+function loadMergeArtists() {
+    const artistIds = Array.from(selectedArtists);
+    const listDiv = document.getElementById('mergeArtistList');
+    
+    Promise.all(artistIds.map(id => 
+        fetch(`/api/artists/${id}`)
+            .then(response => {
+                if (!response.ok) {
+                    console.error(`Failed to fetch artist ${id}: ${response.status}`);
+                    return null;
+                }
+                return response.json();
+            })
+            .catch(error => {
+                console.error(`Error fetching artist ${id}:`, error);
+                return null;
+            })
+    ))
+    .then(artists => {
+        // Filter out failed requests (null values)
+        const validArtists = artists.filter(artist => artist !== null && artist.id && artist.name);
+        
+        if (validArtists.length === 0) {
+            listDiv.innerHTML = '<p>Error: Unable to load artist data</p>';
+            return;
+        }
+        
+        const artistsHtml = validArtists.map(artist => `
+            <div class="merge-artist-option">
+                <label>
+                    <input type="radio" name="primaryArtist" value="${artist.id}" onchange="selectPrimaryArtist(${artist.id})">
+                    <div class="merge-artist-info">
+                        <img src="/api/artists/${artist.id}/thumbnail" alt="${artist.name}" onerror="handleThumbnailError(this)">
+                        <div class="merge-artist-details">
+                            <h4>${artist.name}</h4>
+                            <p>${artist.video_count || 0} videos</p>
+                            ${artist.imvdb_id ? '<p>Has IMVDb data</p>' : ''}
+                        </div>
+                    </div>
+                </label>
+            </div>
+        `).join('');
+        
+        listDiv.innerHTML = artistsHtml;
+    })
+    .catch(error => {
+        console.error('Error loading merge artists:', error);
+        listDiv.innerHTML = '<p>Error loading artists</p>';
+    });
+}
+
+let selectedPrimaryArtist = null;
+
+function selectPrimaryArtist(artistId) {
+    selectedPrimaryArtist = artistId;
+    document.getElementById('performMergeBtn').disabled = false;
+}
+
+function performMerge() {
+    if (!selectedPrimaryArtist) {
+        showWarning('Please select a primary artist');
+        return;
+    }
+    
+    const secondaryArtists = Array.from(selectedArtists).filter(id => id !== selectedPrimaryArtist);
+    
+    if (secondaryArtists.length === 0) {
+        showWarning('No secondary artists to merge');
+        return;
+    }
+    
+    const mergeBtn = document.getElementById('performMergeBtn');
+    const originalText = mergeBtn.textContent;
+    mergeBtn.textContent = 'Merging...';
+    mergeBtn.disabled = true;
+    
+    fetch('/api/artists/merge', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            primary_artist_id: selectedPrimaryArtist,
+            secondary_artist_ids: secondaryArtists
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess(`Successfully merged ${result.merged_count} artist${result.merged_count > 1 ? 's' : ''} into ${result.primary_artist_name}`);
+            hideMergeModal();
+            selectedArtists.clear();
+            updateSelectionDisplay();
+            loadArtists(currentPage);
+        }
+    })
+    .catch(error => {
+        console.error('Error merging artists:', error);
+        showError('Error merging artists');
+    })
+    .finally(() => {
+        mergeBtn.textContent = originalText;
+        mergeBtn.disabled = false;
+    });
+}
+
+function hideMergeModal() {
+    const modal = document.getElementById('mergeModal');
+    if (modal) {
+        modal.remove();
+    }
+    selectedPrimaryArtist = null;
+}
+
+// Enhanced Bulk Operations Functions
+let currentBulkTab = 'edit';
+
+function switchBulkTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.bulk-tab').forEach(btn => {
+        btn.classList.remove('active');
+        // Ensure buttons stay enabled and clickable
+        btn.disabled = false;
+        btn.style.pointerEvents = 'auto';
+    });
+    document.getElementById(`bulk${tabName.charAt(0).toUpperCase() + tabName.slice(1)}Tab`).classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.bulk-tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(`bulk${tabName.charAt(0).toUpperCase() + tabName.slice(1)}Content`).classList.add('active');
+    
+    currentBulkTab = tabName;
+}
+
+function selectCurrentPage() {
+    const checkboxes = document.querySelectorAll('.artist-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        selectedArtists.add(parseInt(checkbox.value));
+        const card = document.querySelector(`[data-artist-id="${checkbox.value}"]`);
+        if (card) card.classList.add('selected');
+    });
+    updateSelectionDisplay();
+}
+
+function invertSelection() {
+    const checkboxes = document.querySelectorAll('.artist-checkbox');
+    checkboxes.forEach(checkbox => {
+        const artistId = parseInt(checkbox.value);
+        const card = document.querySelector(`[data-artist-id="${checkbox.value}"]`);
+        
+        if (checkbox.checked) {
+            checkbox.checked = false;
+            selectedArtists.delete(artistId);
+            if (card) card.classList.remove('selected');
+        } else {
+            checkbox.checked = true;
+            selectedArtists.add(artistId);
+            if (card) card.classList.add('selected');
+        }
+    });
+    updateSelectionDisplay();
+}
+
+function selectByStatus(status) {
+    const checkboxes = document.querySelectorAll('.artist-checkbox');
+    let count = 0;
+    
+    checkboxes.forEach(checkbox => {
+        const artistId = parseInt(checkbox.value);
+        const card = document.querySelector(`[data-artist-id="${artistId}"]`);
+        let shouldSelect = false;
+        
+        if (card) {
+            switch(status) {
+                case 'monitored':
+                    shouldSelect = card.querySelector('.stat.monitored') !== null;
+                    break;
+                case 'auto_download':
+                    shouldSelect = card.querySelector('.stat.auto-download') !== null;
+                    break;
+                case 'no_thumbnail':
+                    shouldSelect = card.querySelector('.stat.has-thumbnail') === null;
+                    break;
+                case 'no_videos':
+                    const videoStat = card.querySelector('.stat');
+                    shouldSelect = videoStat && videoStat.textContent.includes('0 videos');
+                    break;
+            }
+            
+            if (shouldSelect && !checkbox.checked) {
+                checkbox.checked = true;
+                selectedArtists.add(artistId);
+                card.classList.add('selected');
+                count++;
+            }
+        }
+    });
+    
+    if (count > 0) {
+        showInfo(`Selected ${count} artists by ${status} status`);
+        updateSelectionDisplay();
+    } else {
+        showInfo(`No artists found with ${status} status`);
+    }
+}
+
+// Bulk Edit Operations
+function executeBulkEdit() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const updates = {};
+    
+    // Check which operations are enabled
+    if (document.getElementById('bulkMonitoredToggle').checked) {
+        updates.monitored = document.getElementById('bulkMonitoredValue').value === 'true';
+    }
+    
+    if (document.getElementById('bulkAutoDownloadToggle').checked) {
+        updates.auto_download = document.getElementById('bulkAutoDownloadValue').value === 'true';
+    }
+    
+    if (document.getElementById('bulkQualityToggle').checked) {
+        updates.quality_profile = document.getElementById('bulkQualityValue').value;
+    }
+    
+    if (document.getElementById('bulkPriorityToggle').checked) {
+        updates.download_priority = document.getElementById('bulkPriorityValue').value;
+    }
+    
+    if (Object.keys(updates).length === 0) {
+        showWarning('No changes selected. Please enable at least one option.');
+        return;
+    }
+    
+    const artistIds = Array.from(selectedArtists);
+    const btn = document.getElementById('bulkEditBtn');
+    const originalText = btn.textContent;
+    
+    showBulkProgress(`Updating ${artistIds.length} artists...`, 0);
+    btn.textContent = 'Applying...';
+    btn.disabled = true;
+    
+    fetch('/api/artists/bulk-edit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds,
+            updates: updates
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        hideBulkProgress();
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess(`Successfully updated ${result.updated_count} artist${result.updated_count > 1 ? 's' : ''}`);
+            loadArtists(currentPage);
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error updating artists:', error);
+        showError('Error updating artists');
+    })
+    .finally(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    });
+}
+
+// Bulk Organize Operations
+function bulkFolderOrganize() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const artistIds = Array.from(selectedArtists);
+    showBulkProgress(`Organizing folders for ${artistIds.length} artists...`, 0);
+    
+    fetch('/api/artists/bulk-organize-folders', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        hideBulkProgress();
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess(`Successfully organized folders for ${result.organized_count} artist${result.organized_count > 1 ? 's' : ''}`);
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error organizing folders:', error);
+        showError('Error organizing folders');
+    });
+}
+
+function bulkThumbnailScan() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const artistIds = Array.from(selectedArtists);
+    showBulkProgress(`Scanning thumbnails for ${artistIds.length} artists...`, 0);
+    
+    fetch('/api/artists/bulk-thumbnail-scan', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        hideBulkProgress();
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess(`Found thumbnails for ${result.found_count} out of ${result.scanned_count} artists`);
+            loadArtists(currentPage);
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error scanning thumbnails:', error);
+        showError('Error scanning thumbnails');
+    });
+}
+
+function bulkVideoDiscovery() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const artistIds = Array.from(selectedArtists);
+    showBulkProgress(`Discovering videos for ${artistIds.length} artists...`, 0);
+    
+    fetch('/api/artists/bulk-video-discovery', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        hideBulkProgress();
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess(`Discovered ${result.total_videos} new videos for ${result.processed_count} artists`);
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error discovering videos:', error);
+        showError('Error discovering videos');
+    });
+}
+
+function bulkRefreshMetadata() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const artistIds = Array.from(selectedArtists);
+    showBulkProgress(`Refreshing metadata for ${artistIds.length} artists...`, 0);
+    
+    fetch('/api/artists/bulk-refresh-metadata', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        hideBulkProgress();
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess(`Refreshed metadata for ${result.updated_count} artist${result.updated_count > 1 ? 's' : ''}`);
+            loadArtists(currentPage);
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error refreshing metadata:', error);
+        showError('Error refreshing metadata');
+    });
+}
+
+// Bulk Metadata Operations
+function executeBulkMetadata() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const metadata = {};
+    
+    if (document.getElementById('bulkKeywordsToggle').checked) {
+        const keywords = document.getElementById('bulkKeywordsValue').value.trim();
+        if (keywords) {
+            metadata.keywords = keywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
+        }
+    }
+    
+    if (document.getElementById('bulkGenresToggle').checked) {
+        const genres = document.getElementById('bulkGenresValue').value.trim();
+        if (genres) {
+            metadata.genres = genres.split(',').map(g => g.trim()).filter(g => g.length > 0);
+        }
+    }
+    
+    if (Object.keys(metadata).length === 0) {
+        showWarning('No metadata changes selected. Please enable at least one option.');
+        return;
+    }
+    
+    const artistIds = Array.from(selectedArtists);
+    const btn = document.getElementById('bulkMetadataBtn');
+    const originalText = btn.textContent;
+    
+    showBulkProgress(`Updating metadata for ${artistIds.length} artists...`, 0);
+    btn.textContent = 'Applying...';
+    btn.disabled = true;
+    
+    fetch('/api/artists/bulk-metadata', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds,
+            metadata: metadata
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        hideBulkProgress();
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess(`Successfully updated metadata for ${result.updated_count} artist${result.updated_count > 1 ? 's' : ''}`);
+            loadArtists(currentPage);
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error updating metadata:', error);
+        showError('Error updating metadata');
+    })
+    .finally(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    });
+}
+
+function bulkIMVDbLink() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const artistIds = Array.from(selectedArtists);
+    showBulkProgress(`Linking ${artistIds.length} artists to IMVDb...`, 0);
+    
+    fetch('/api/artists/bulk-imvdb-link', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        hideBulkProgress();
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            showSuccess(`Successfully linked ${result.linked_count} artist${result.linked_count > 1 ? 's' : ''} to IMVDb`);
+            loadArtists(currentPage);
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error linking to IMVDb:', error);
+        showError('Error linking to IMVDb');
+    });
+}
+
+function bulkValidateMetadata() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const artistIds = Array.from(selectedArtists);
+    showBulkProgress(`Validating metadata for ${artistIds.length} artists...`, 0);
+    
+    fetch('/api/artists/bulk-validate-metadata', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        hideBulkProgress();
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            const issues = result.validation_issues || [];
+            if (issues.length > 0) {
+                showWarning(`Found ${issues.length} metadata issue${issues.length > 1 ? 's' : ''} across ${result.validated_count} artists`);
+            } else {
+                showSuccess(`All metadata validated successfully for ${result.validated_count} artist${result.validated_count > 1 ? 's' : ''}`);
+            }
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error validating metadata:', error);
+        showError('Error validating metadata');
+    });
+}
+
+// Bulk Danger Operations
+function bulkArchive() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const count = selectedArtists.size;
+    toastConfirm(`Archive ${count} selected artist${count > 1 ? 's' : ''}? They will be hidden but can be restored later.`, () => {
+        const artistIds = Array.from(selectedArtists);
+        showBulkProgress(`Archiving ${artistIds.length} artists...`, 0);
+        
+        fetch('/api/artists/bulk-archive', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                artist_ids: artistIds
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            hideBulkProgress();
+            if (result.error) {
+                showError('Error: ' + result.error);
+            } else {
+                showSuccess(`Successfully archived ${result.archived_count} artist${result.archived_count > 1 ? 's' : ''}`);
+                selectedArtists.clear();
+                loadArtists(currentPage);
+            }
+        })
+        .catch(error => {
+            hideBulkProgress();
+            console.error('Error archiving artists:', error);
+            showError('Error archiving artists');
+        });
+    });
+}
+
+function bulkExport() {
+    if (selectedArtists.size === 0) {
+        showWarning('No artists selected');
+        return;
+    }
+    
+    const artistIds = Array.from(selectedArtists);
+    showBulkProgress(`Exporting data for ${artistIds.length} artists...`, 0);
+    
+    fetch('/api/artists/bulk-export', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            artist_ids: artistIds,
+            format: 'json'
+        })
+    })
+    .then(response => {
+        hideBulkProgress();
+        if (response.ok) {
+            return response.blob();
+        } else {
+            throw new Error(`Export failed: ${response.status}`);
+        }
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mvidarr_artists_export_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showSuccess(`Successfully exported data for ${selectedArtists.size} artist${selectedArtists.size > 1 ? 's' : ''}`);
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error exporting artists:', error);
+        showError('Error exporting artist data');
+    });
+}
+
+// Progress Management
+function showBulkProgress(message, percentage) {
+    const progressDiv = document.getElementById('bulkProgress');
+    const progressFill = document.getElementById('bulkProgressFill');
+    const progressText = document.getElementById('bulkProgressText');
+    
+    progressText.textContent = message;
+    progressFill.style.width = `${percentage}%`;
+    progressDiv.style.display = 'block';
+}
+
+function updateBulkProgress(percentage, message) {
+    const progressFill = document.getElementById('bulkProgressFill');
+    const progressText = document.getElementById('bulkProgressText');
+    
+    if (progressFill) progressFill.style.width = `${percentage}%`;
+    if (progressText && message) progressText.textContent = message;
+}
+
+function hideBulkProgress() {
+    const progressDiv = document.getElementById('bulkProgress');
+    if (progressDiv) {
+        progressDiv.style.display = 'none';
+    }
+}
+
+// Enhanced Selection UI Updates
+</script>
+
+<style>
+.artists-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.artists-container h1 {
+    color: #00d4ff;
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    text-align: center;
+}
+
+.page-description {
+    text-align: center;
+    color: #ccc;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+.artists-actions {
+    margin-bottom: 30px;
+}
+
+.advanced-search-panel {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.advanced-search-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
+}
+
+.search-header {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-input-container {
+    flex: 1;
+    position: relative;
+}
+
+.search-input-container input {
+    width: 100%;
+    padding: 12px;
+    background: #333;
+    border: 2px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.search-input-container input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #333;
+    border: 1px solid #444;
+    border-radius: 8px;
+    margin-top: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #444;
+}
+
+.suggestion-item:hover {
+    background: #404040;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-text {
+    color: #fff;
+}
+
+.suggestion-type {
+    color: #00d4ff;
+    font-size: 12px;
+}
+
+.advanced-filters {
+    background: #2a2a2a;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 15px;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.filter-group label {
+    color: #00d4ff;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 8px;
+    background: #333;
+    border: 2px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0099cc 0%, #007799 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: #fff;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+    color: #fff;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #117a8b 0%, #0c5460 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
+    color: #000;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #d39e00 0%, #b08800 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #5a6268 0%, #484e53 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #bd2130 0%, #a01e2a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.filter-count {
+    background: #00d4ff;
+    color: #000;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 5px;
+    display: none;
+}
+
+.btn.active {
+    background: #00d4ff !important;
+    color: #000 !important;
+}
+
+.bulk-actions-toolbar {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.bulk-toolbar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.bulk-selection-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.selection-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.bulk-quick-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bulk-actions-main {
+    background: #2a2a2a;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+.bulk-actions-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 6px;
+    border-bottom: none;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}
+
+.bulk-actions-tabs.compact {
+    margin-bottom: 4px;
+}
+
+.bulk-tab {
+    padding: 6px 12px;
+    background: #333;
+    border: 1px solid #444;
+    color: #ccc;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    white-space: nowrap;
+    min-width: auto;
+    flex-shrink: 0;
+}
+
+.bulk-actions-tabs.compact .bulk-tab {
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 3px;
+    margin-right: 2px;
+}
+
+.bulk-tab.active {
+    background: #00d4ff;
+    color: #000;
+    border-color: #00d4ff;
+}
+
+.bulk-tab:hover {
+    background: #555;
+    color: #00d4ff;
+    border-color: #00d4ff;
+}
+
+.bulk-actions-tabs.compact .bulk-tab:hover {
+    background: #555;
+    color: #00d4ff;
+}
+
+.bulk-tab:hover {
+    color: #00d4ff;
+}
+
+.bulk-tab.active {
+    color: #00d4ff;
+    border-bottom-color: #00d4ff;
+}
+
+.bulk-tab-content {
+    display: none;
+}
+
+.bulk-tab-content.active {
+    display: block;
+}
+
+.bulk-operations-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: flex-start;
+}
+
+.bulk-operation {
+    background: #333;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 10px;
+    min-width: 180px;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bulk-operation.wide {
+    grid-column: span 2;
+}
+
+.bulk-operation.danger {
+    border-color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.bulk-operation label {
+    color: #00d4ff;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bulk-operation input,
+.bulk-operation select {
+    padding: 8px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.bulk-operation input:focus,
+.bulk-operation select:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.operation-hint {
+    color: #aaa;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.operation-warning {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.bulk-action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.bulk-toolbar-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.bulk-progress {
+    flex: 1;
+    background: #333;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #444;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00d4ff, #0099cc);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: #ccc;
+    font-size: 12px;
+}
+
+.search-results-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #2a2a2a;
+    border-radius: 8px;
+}
+
+.results-summary {
+    color: #ccc;
+}
+
+.sort-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.sort-controls select {
+    padding: 6px 10px;
+    background: #333;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+}
+
+.sort-controls select:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.artists-grid {
+    min-height: 400px;
+}
+
+.artists-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.artist-card {
+    background: #333;
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.artist-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
+}
+
+.artist-card.selected {
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.3);
+}
+
+.artist-selection-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+}
+
+.artist-selection-overlay input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #00d4ff;
+}
+
+.artist-thumbnail {
+    width: 100%;
+    height: 150px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #444;
+}
+
+.artist-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.artist-info h3 {
+    color: #00d4ff;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+.artist-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.stat {
+    background: #444;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: #ccc;
+}
+
+.stat.monitored {
+    background: #28a745;
+    color: #fff;
+}
+
+.stat.not-monitored {
+    background: #dc3545;
+    color: #fff;
+}
+
+.stat.auto-download {
+    background: #17a2b8;
+    color: #fff;
+}
+
+.stat.has-thumbnail {
+    background: #ffc107;
+    color: #000;
+}
+
+.stat.has-imvdb {
+    background: #00d4ff;
+    color: #000;
+}
+
+.last-discovery {
+    color: #aaa;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.artist-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.stat-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.artist-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btn-icon {
+    min-width: 28px;
+    height: 28px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+.btn-icon:hover {
+    transform: translateY(-1px);
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.pagination .btn.active {
+    background: #00d4ff !important;
+    color: #000 !important;
+}
+
+/* Enhanced Pagination Controls */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.pagination-info {
+    color: #ccc;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.pagination-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    min-width: auto;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ccc;
+    font-size: 14px;
+}
+
+.page-input {
+    width: 60px;
+    padding: 4px 8px;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #fff;
+    text-align: center;
+    font-size: 14px;
+}
+
+.page-input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.page-size-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ccc;
+    font-size: 14px;
+}
+
+.page-size-selector select {
+    padding: 4px 8px;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.page-size-selector select:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.bottom-pagination .page-size-selector {
+    color: #aaa;
+}
+
+/* Responsive pagination */
+@media (max-width: 768px) {
+    .pagination-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .pagination-controls {
+        order: 2;
+    }
+    
+    .pagination-info {
+        order: 1;
+    }
+    
+    .page-size-selector {
+        order: 3;
+    }
+}
+
+.no-results,
+.error-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: #888;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #444;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    color: #fff;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.large-modal {
+    max-width: 800px;
+}
+
+.modal-content h2 {
+    color: #00d4ff;
+    margin-bottom: 20px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close:hover {
+    color: #00d4ff;
+}
+
+.add-artist-search-section,
+.add-artist-manual-section {
+    margin-bottom: 30px;
+}
+
+.add-artist-search-section h3,
+.add-artist-manual-section h3 {
+    color: #00d4ff;
+    margin-bottom: 15px;
+}
+
+.search-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.search-container input {
+    flex: 1;
+    padding: 10px;
+    background: #333;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.search-results {
+    max-height: 300px;
+    overflow-y: auto;
+    background: #2a2a2a;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    color: #00d4ff;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    background: #333;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.thumbnail-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+    .artists-container {
+        padding: 15px;
+    }
+    
+    .search-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .bulk-toolbar-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .selection-actions,
+    .bulk-quick-filters {
+        flex-wrap: wrap;
+    }
+    
+    .bulk-operations-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .bulk-operation.wide {
+        grid-column: span 1;
+    }
+    
+    .bulk-toolbar-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .search-results-info {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .sort-controls {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .artists-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px auto;
+        padding: 15px;
+    }
+    
+    .search-container {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

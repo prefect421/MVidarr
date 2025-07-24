@@ -1,0 +1,54 @@
+[Unit]
+Description=MVidarr Enhanced - Professional Music Video Management System
+Documentation=file:///home/mike/mvidarr/README.md
+After=network-online.target mysql.service mariadb.service
+Wants=network-online.target
+RequiresMountsFor=/home/mike/mvidarr
+
+[Service]
+Type=simple
+User=mike
+Group=mike
+WorkingDirectory=/home/mike/mvidarr
+
+# Use app_launcher.py for better initialization
+ExecStart=/usr/bin/python3 /home/mike/mvidarr/app_launcher.py
+ExecStartPre=/usr/bin/mkdir -p /home/mike/mvidarr/data/logs /home/mike/mvidarr/data/downloads /home/mike/mvidarr/data/thumbnails /home/mike/mvidarr/data/cache /home/mike/mvidarr/data/backups
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Enhanced restart and failure handling
+Restart=always
+RestartSec=15
+StartLimitInterval=300
+StartLimitBurst=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+KillMode=mixed
+KillSignal=SIGTERM
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mvidarr
+
+# Environment variables
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONPATH=/home/mike/mvidarr
+Environment=FLASK_ENV=production
+Environment=PYTHONUNBUFFERED=1
+
+# Security settings (relaxed for home directory access)
+NoNewPrivileges=yes
+PrivateTmp=yes
+# Commented out for home directory access
+# ProtectSystem=strict
+# ProtectHome=yes
+# ReadWritePaths=/home/mike/mvidarr/data
+# ReadOnlyPaths=/home/mike/mvidarr
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target

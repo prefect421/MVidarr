@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MVidarr Enhanced{% endblock %}</title>
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="96x96" href="{{ url_for('static', filename='favicon-96x96.png') }}">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    
+    <!-- Android Chrome Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='android-chrome-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='android-chrome-512x512.png') }}">
+    
+    <!-- Microsoft Tile -->
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='mstile-150x150.png') }}">
+    <meta name="msapplication-TileColor" content="#1e3a8a">
+    <meta name="msapplication-config" content="{{ url_for('static', filename='browserconfig.xml') }}">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MVidarr Enhanced">
+    
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='main.css') }}" id="main-theme">
+    <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+    <!-- Test if Iconify works at all -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Testing Iconify...');
+            // Create a test element to verify Iconify is working
+            const testEl = document.createElement('iconify-icon');
+            testEl.setAttribute('icon', 'mdi:home');
+            testEl.style.display = 'none';
+            document.body.appendChild(testEl);
+            
+            setTimeout(() => {
+                if (testEl.shadowRoot || testEl.innerHTML) {
+                    console.log('✅ Iconify is working');
+                } else {
+                    console.log('❌ Iconify is not loading properly');
+                    // Fallback to text labels
+                    document.querySelectorAll('iconify-icon').forEach(icon => {
+                        const iconName = icon.getAttribute('icon').split(':')[1] || 'icon';
+                        icon.outerHTML = `<span class="${icon.className}">[${iconName}]</span>`;
+                    });
+                }
+            }, 2000);
+        });
+    </script>
+    <style>
+        
+        /* Genre Tag Styles */
+        .genre-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .genre-tag {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid #bbdefb;
+            transition: all 0.2s ease;
+        }
+        
+        .genre-tag:hover {
+            background-color: #bbdefb;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Apply Bauhaus styling to common elements */
+        /* Navigation Dropdown */
+        .nav-dropdown {
+            position: relative;
+        }
+        
+        .nav-dropdown-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .nav-dropdown-menu {
+            position: absolute;
+            top: calc(100% - 2px);  /* Small overlap to prevent gaps */
+            left: 0;
+            background-color: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            min-width: 180px;
+            z-index: 1000;
+            padding: 8px 0;
+            padding-top: 10px;  /* Add top padding to compensate for overlap */
+        }
+        
+        .nav-dropdown-menu li {
+            list-style: none;
+            margin: 0;
+        }
+        
+        .nav-dropdown-menu a {
+            display: block;
+            padding: 8px 16px;
+            color: #ccc;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-dropdown-menu a:hover {
+            background-color: #444;
+            color: #00d4ff;
+        }
+        
+        /* Improved hover behavior with transition delay */
+        .nav-dropdown {
+            transition: all 0.2s ease;
+        }
+        
+        .nav-dropdown-menu {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+            transition-delay: 0s;  /* No delay when showing */
+        }
+        
+        .nav-dropdown:hover .nav-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transition-delay: 0s;  /* No delay when showing */
+        }
+        
+        /* Add a small delay before hiding to prevent accidental closing */
+        .nav-dropdown:not(:hover) .nav-dropdown-menu {
+            transition-delay: 0.1s;  /* Small delay when hiding */
+        }
+        
+        /* Admin menu item styling */
+        #userManagementMenuItem {
+            border-top:  1px solid rgba(0, 0, 0, 0.1);
+            margin-top: 4px;
+            padding-top: 4px;
+        }
+        
+        #userManagementMenuItem a {
+            color: #ffc107 !important;
+            font-weight: bold;
+        }
+        
+        #userManagementMenuItem a:hover {
+            background-color: rgba(255, 193, 7, 0.1) !important;
+        }
+        
+        /* Theme Toggle Button - Match other sidebar items */
+        .theme-toggle-btn {
+            /* Remove all special styling to match other sidebar items */
+        }
+        
+        /* Light Theme */
+        body.light-theme {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        
+        body.light-theme .navbar {
+            background-color: #aaaabb;
+            border-bottom: 1px solid #9999aa;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .nav-logo a {
+            color: #333;
+        }
+        
+        body.light-theme .nav-menu li a {
+            color: #666;
+        }
+        
+        body.light-theme .nav-menu li a:hover {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+        
+        /* Iconify icon styling */
+        iconify-icon {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: inherit;
+        }
+        
+        .sidebar-icon {
+            width: 1.2rem;
+            height: 1.2rem;
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .tab-icon {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        /* Theme Slider Styles */
+        .theme-slider-container {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .theme-slider-container:hover {
+            background-color: var(--hover-color, rgba(255, 255, 255, 0.1));
+        }
+        
+        .theme-slider-container .sidebar-text {
+            flex: 1;
+            margin: 0;
+        }
+        
+        .theme-slider {
+            width: 48px;
+            height: 24px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .theme-slider.light-mode {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+        }
+        
+        .theme-slider-track {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 12px;
+        }
+        
+        .theme-slider-thumb {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .theme-slider.light-mode .theme-slider-thumb {
+            transform: translateX(20px);
+        }
+        
+        /* Compact theme slider in user menu */
+        .sidebar-user-menu .theme-slider.light-mode .theme-slider-thumb {
+            transform: translateX(18px);
+        }
+        
+        .theme-slider-thumb iconify-icon {
+            font-size: 12px;
+            color: #374151;
+        }
+        
+        /* Dark theme adjustments */
+		body .main-content {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin: 1rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+		
+        /* Light theme adjustments */  
+        body.light-theme .theme-slider-container:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Theme section positioning */
+        .sidebar-theme-section {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .sidebar-theme-section {
+            border-top-color:  rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Logout section styling */
+        .sidebar-logout-section {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-logout-item {
+            color: #ff6b6b !important;
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-logout-item:hover {
+            background-color: rgba(255, 107, 107, 0.1) !important;
+            color: #ff5252 !important;
+        }
+        
+        .sidebar-logout-item .sidebar-icon {
+            color: #ff6b6b;
+        }
+        
+        /* Light theme logout styling */
+        body.light-theme .sidebar-logout-section {
+            border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .sidebar-logout-item {
+            color: #d32f2f !important;
+        }
+        
+        body.light-theme .sidebar-logout-item:hover {
+            background-color: rgba(211, 47, 47, 0.1) !important;
+        }
+        
+        body.light-theme .sidebar-logout-item .sidebar-icon {
+            color: #d32f2f;
+        }
+        
+        /* Sidebar toggle icon styling */
+        .sidebar-toggle {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-direction: row !important;
+            gap: 0 !important;
+        }
+        
+        .sidebar-toggle iconify-icon {
+            font-size: 18px;
+            color: inherit;
+        }
+        
+        /* Theme toggle button inherits light theme sidebar item styling */
+        
+        body.light-theme .main-content {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            margin: 1rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        body.light-theme .footer {
+            background-color: #667eea;
+            color: #fff;
+        }
+        
+        /* Light theme cards and components */
+        body.light-theme .artists-actions,
+        body.light-theme .videos-actions {
+            background: white;
+            border: 1px solid #e1e5e9;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        
+        body.light-theme .advanced-search-panel {
+            background: white;
+            border: 1px solid #e1e5e9;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .advanced-search-panel:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        
+        body.light-theme .search-results-info {
+            background: white;
+            border: 1px solid #e1e5e9;
+            color: #333;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .pagination-container {
+            background: white;
+            border: 1px solid #e1e5e9;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .pagination-info {
+            color: #333;
+        }
+        
+        body.light-theme .artist-selection-overlay input[type="checkbox"] {
+            accent-color: #667eea;
+        }
+        
+        body.light-theme .artist-card,
+        body.light-theme .video-card {
+            background: white;
+            border: 1px solid #e1e5e9;
+            color: #333;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .artist-card:hover,
+        body.light-theme .video-card:hover {
+            background: #f0f0ff;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        body.light-theme .artist-card h3,
+        body.light-theme .video-card h3 {
+            color: #667eea;
+        }
+        
+        body.light-theme .filter-group input,
+        body.light-theme .filter-group select {
+            background: #fff;
+            border: 2px solid #e1e5e9;
+            color: #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: border-color 0.3s;
+        }
+        
+        body.light-theme .filter-group input:focus,
+        body.light-theme .filter-group select:focus {
+            border-color: #667eea;
+            box-shadow: none;
+            outline: none;
+        }
+        
+        body.light-theme .filter-group label {
+            color: #333;
+        }
+        
+        body.light-theme .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+        
+        body.light-theme .btn-primary:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        body.light-theme .btn-secondary {
+            background: white;
+            border: 2px solid #e1e5e9;
+            color: #333;
+            border-radius: 8px;
+        }
+        
+        body.light-theme .btn-secondary:hover {
+            background: #f0f0ff;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.15);
+        }
+        
+        body.light-theme .genre-tag {
+            background-color: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+        
+        body.light-theme .genre-tag:hover {
+            background-color: rgba(102, 126, 234, 0.2);
+            color: #5a67d8;
+        }
+        
+        /* User info section styling - compact and interactive */
+        .sidebar-user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.1rem;
+            margin-bottom: 0.1rem;
+        }
+        
+        .sidebar-user-info:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .sidebar-user-info:hover .sidebar-username {
+            text-decoration: underline;
+        }
+        
+        .sidebar-user-avatar {
+            flex-shrink: 0;
+        }
+        
+        .sidebar-user-details {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .sidebar-username {
+            display: block;
+            font-weight: 600;
+            font-size: 0.875rem;
+            line-height: 1.2;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sidebar-user-role {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            line-height: 1;
+        }
+        
+        /* Light theme user info styling */
+        body.light-theme .sidebar-user-info:hover {
+            background-color: rgba(0, 0, 0, 0.05) !important;
+        }
+        
+        /* Light theme user element colors */
+        body.light-theme .sidebar-user-avatar iconify-icon {
+            color: white;
+        }
+        
+        body.light-theme .sidebar-username {
+            color: #333;
+        }
+        
+        body.light-theme .sidebar-user-role {
+            color: #666;
+        }
+        
+        /* Light theme sidebar */
+        body.light-theme .sidebar {
+            background: #ddddff;
+            border-right: 1px solid #e1e5e9;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .sidebar-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .sidebar-logo a {
+            color: #667eea;
+        }
+        
+        body.light-theme .sidebar-item {
+            color: #333;
+        }
+        
+        body.light-theme .sidebar-item:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+        
+        body.light-theme .sidebar-item.active {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        body.light-theme .sidebar-text {
+            color: inherit;
+        }
+        
+        body.light-theme .sidebar-icon {
+            color: inherit;
+        }
+        
+        /* Light theme form elements */
+        body.light-theme input,
+        body.light-theme select,
+        body.light-theme textarea {
+            background: white;
+            border: 2px solid #e1e5e9;
+            color: #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: border-color 0.3s;
+        }
+        
+        body.light-theme input:focus,
+        body.light-theme select:focus,
+        body.light-theme textarea:focus {
+            border-color: #667eea;
+            box-shadow: none;
+            outline: none;
+        }
+        
+        /* Compact user menu styling */
+        .sidebar-user-menu {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .sidebar-user-menu li {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .sidebar-user-menu .sidebar-user-item {
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.1rem;
+            transition: background-color 0.2s ease;
+            font-size: 0.875rem;
+        }
+        
+        /* Light theme user menu */
+        body.light-theme .sidebar-user-menu .sidebar-user-item {
+            color: #333;
+        }
+        
+        body.light-theme .sidebar-user-menu .sidebar-user-item:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Left Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <a href="{{ url_for('frontend.index') }}">
+                    <img width="24" src="{{ url_for('frontend.static_files', filename='MVidarr.png') }}">
+                    <span class="sidebar-logo-text">MVidarr</span>
+                </a>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <iconify-icon icon="tabler:menu-deep"></iconify-icon>
+            </button>
+        </div>
+        
+        <div class="sidebar-content">
+            <ul class="sidebar-menu">
+               <li><a href="{{ url_for('frontend.index') }}" class="sidebar-item">
+                    <iconify-icon icon="tabler:dashboard" class="sidebar-icon"></iconify-icon>
+                    <span class="sidebar-text">Dashboard</span>
+                </a></li> 
+				<li><a href="{{ url_for('frontend.artists') }}" class="sidebar-item">
+                    <iconify-icon icon="tabler:users" class="sidebar-icon"></iconify-icon>
+                    <span class="sidebar-text">Artists</span>
+                </a></li>
+                <li><a href="{{ url_for('frontend.videos') }}" class="sidebar-item">
+                    <iconify-icon icon="tabler:video" class="sidebar-icon"></iconify-icon>
+                    <span class="sidebar-text">Videos</span>
+                </a></li>
+                <li><a href="{{ url_for('frontend.mvtv') }}" class="sidebar-item">
+                    <iconify-icon icon="tabler:device-tv" class="sidebar-icon"></iconify-icon>
+                    <span class="sidebar-text">MvTV</span>
+                </a></li>
+                 <li><a href="{{ url_for('frontend.settings') }}" class="sidebar-item">
+                    <iconify-icon icon="tabler:settings" class="sidebar-icon"></iconify-icon>
+                    <span class="sidebar-text">Settings</span>
+                </a></li>
+                {% if current_user %}
+                    <!-- Profile management removed in simplified authentication system -->
+                    <!-- User credentials can be updated in Settings > General -->
+                {% endif %}
+            </ul>
+            
+            <!-- Theme Toggle - Always visible at bottom of sidebar -->
+            <div class="sidebar-bottom-section" style="margin-top: auto; border-top: 1px solid #444; padding-top: 1rem;">
+                <div class="theme-slider-container sidebar-item" onclick="toggleDayNightMode()" style="cursor: pointer; padding: 0.75rem;">
+                    <iconify-icon icon="tabler:palette" class="sidebar-icon"></iconify-icon>
+                    <span class="sidebar-text" style="font-size: 0.875rem;">Theme</span>
+                    <div class="theme-slider" id="themeSlider" style="width: 40px; height: 20px; margin-left: auto;">
+                        <div class="theme-slider-track">
+                            <div class="theme-slider-thumb" style="width: 16px; height: 16px; top: 2px; left: 2px;">
+                                <iconify-icon icon="tabler:moon" id="themeSliderIcon" style="font-size: 10px;"></iconify-icon>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- First logout button removed - using the one in user menu instead -->
+            
+            <!-- Theme slider moved to user menu -->
+            
+            <!-- User Menu (shown when authenticated) -->
+            <div class="sidebar-user" id="userMenu" style="display: none;">
+                <div class="sidebar-user-info" onclick="goToUserCredentials(); return false;" style="cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background-color 0.2s ease;">
+                    <div class="sidebar-user-avatar">
+                        <iconify-icon icon="tabler:user-circle" style="font-size: 1.2rem;"></iconify-icon>
+                    </div>
+                    <div class="sidebar-user-details">
+                        <span class="sidebar-username" id="username">User</span>
+                        <span class="sidebar-user-role">Authenticated User</span>
+                    </div>
+                </div>
+                <ul class="sidebar-user-menu">
+                    <!-- Profile and Change Password removed - click username to go to User Credentials in Settings -->
+                    <li id="userManagementMenuItem" style="display: none;"><a href="/admin/users" class="sidebar-user-item">
+                        <iconify-icon icon="tabler:users-group" class="sidebar-icon"></iconify-icon>
+                        <span class="sidebar-text">User Management</span>
+                    </a></li>
+                    <!-- Theme toggle moved to main sidebar menu -->
+                    <li><a href="#" onclick="logout(); return false;" class="sidebar-user-item logout">
+                        <iconify-icon icon="tabler:logout" class="sidebar-icon"></iconify-icon>
+                        <span class="sidebar-text">Logout</span>
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main content area -->
+    <div class="app-layout">
+        <main class="main-content" id="mainContent">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+
+    <script src="{{ url_for('frontend.static_files', filename='toast.js') }}"></script>
+    <script src="{{ url_for('frontend.static_files', filename='main.js') }}"></script>
+    <script>
+        
+        
+        
+        // Function to apply theme.park themes
+        function applyThemeParkTheme(theme) {
+            // Remove existing theme stylesheets
+            const existingThemeLink = document.getElementById('theme-stylesheet');
+            if (existingThemeLink) {
+                existingThemeLink.remove();
+            }
+            
+            // Remove theme classes
+            const body = document.body;
+            body.classList.remove('bauhaus-theme');
+            body.className = body.className.replace(/\btheme-\w+/g, '');
+            
+            // Load theme.park CSS file
+            const link = document.createElement('link');
+            link.id = 'theme-stylesheet';
+            link.rel = 'stylesheet';
+            link.href = `/css/themepark/${theme}.css`;
+            document.head.appendChild(link);
+            
+            // Add theme class to body
+            body.classList.add(`theme-${theme}`);
+            
+            // Keep main theme enabled for layout structure, only disable bauhaus
+            const mainTheme = document.getElementById('main-theme');
+            const bauhausTheme = document.getElementById('bauhaus-theme');
+            if (mainTheme) mainTheme.disabled = false; // Keep main.css enabled
+            if (bauhausTheme) bauhausTheme.disabled = true;
+        }
+        
+        // Day/Night Mode Toggle
+        function toggleDayNightMode() {
+            const body = document.body;
+            const toggleSlider = document.getElementById('themeSlider');
+            const toggleIcon = document.getElementById('themeSliderIcon');
+            
+            if (body.classList.contains('light-theme')) {
+                // Switch to dark theme (default)
+                body.classList.remove('light-theme');
+                body.classList.remove('bauhaus-theme');
+                body.className = body.className.replace(/\btheme-\w+/g, '');
+                
+                // Remove theme.park stylesheet
+                const existingThemeLink = document.getElementById('theme-stylesheet');
+                if (existingThemeLink) {
+                    existingThemeLink.remove();
+                }
+                
+                // Enable default theme
+                const mainTheme = document.getElementById('main-theme');
+                const bauhausTheme = document.getElementById('bauhaus-theme');
+                if (mainTheme) mainTheme.disabled = false;
+                if (bauhausTheme) bauhausTheme.disabled = true;
+                
+                // Update slider to dark mode
+                if (toggleSlider) toggleSlider.classList.remove('light-mode');
+                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
+                localStorage.setItem('mvidarr-daynight-mode', 'dark');
+            } else {
+                // Switch to light theme
+                body.classList.remove('bauhaus-theme');
+                body.className = body.className.replace(/\btheme-\w+/g, '');
+                body.classList.add('light-theme');
+                
+                // Remove theme.park stylesheet
+                const existingThemeLink = document.getElementById('theme-stylesheet');
+                if (existingThemeLink) {
+                    existingThemeLink.remove();
+                }
+                
+                // Enable main theme for light mode
+                const mainTheme = document.getElementById('main-theme');
+                const bauhausTheme = document.getElementById('bauhaus-theme');
+                if (mainTheme) mainTheme.disabled = false;
+                if (bauhausTheme) bauhausTheme.disabled = true;
+                
+                // Update slider to light mode
+                if (toggleSlider) toggleSlider.classList.add('light-mode');
+                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
+                localStorage.setItem('mvidarr-daynight-mode', 'light');
+            }
+        }
+        // Light/Dark Mode Toggle Functions
+        function toggleDayNight() {
+            const body = document.body;
+            const toggleSlider = document.getElementById('themeSlider');
+            const toggleIcon = document.getElementById('themeSliderIcon');
+            
+            if (body.classList.contains('light-theme')) {
+                // Switch to dark mode (default)
+                body.classList.remove('light-theme');
+                
+                // Update slider to dark mode
+                if (toggleSlider) toggleSlider.classList.remove('light-mode');
+                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
+                localStorage.setItem('mvidarr-daynight-mode', 'dark');
+            } else {
+                // Switch to light mode
+                body.classList.add('light-theme');
+                
+                // Update slider to light mode
+                if (toggleSlider) toggleSlider.classList.add('light-mode');
+                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
+                localStorage.setItem('mvidarr-daynight-mode', 'light');
+            }
+        }
+
+        // Load saved day/night mode on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
+            const toggleBtn = document.getElementById('themeSlider');
+            const toggleIcon = document.getElementById('themeSliderIcon');
+            
+            // Apply saved day/night mode
+            if (savedDayNightMode === 'light') {
+                document.body.classList.add('light-theme');
+                if (toggleBtn) toggleBtn.classList.add('light-mode');
+                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
+            } else {
+                if (toggleBtn) toggleBtn.classList.remove('light-mode');
+                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
+            }
+        });
+        
+        // User Authentication and Menu Management
+        function checkUserAuthentication() {
+            fetch('/auth/check')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.authenticated && data.user) {
+                        // Show user menu
+                        const userMenu = document.getElementById('userMenu');
+                        const username = document.getElementById('username');
+                        
+                        if (userMenu && username) {
+                            userMenu.style.display = 'block';
+                            username.textContent = data.user.username;
+                        }
+                        
+                        // Show user management menu item for admins
+                        if (data.user.can_admin) {
+                            const userMgmtItem = document.getElementById('userManagementMenuItem');
+                            const userMgmtSidebarItem = document.getElementById('userManagementSidebarItem');
+                            if (userMgmtItem) {
+                                userMgmtItem.style.display = 'block';
+                            }
+                            if (userMgmtSidebarItem) {
+                                userMgmtSidebarItem.style.display = 'block';
+                            }
+                        }
+                    } else {
+                        // Hide user menu and all admin items if not authenticated
+                        const userMenu = document.getElementById('userMenu');
+                        const userMgmtSidebarItem = document.getElementById('userManagementSidebarItem');
+                        const userMgmtMenuItem = document.getElementById('userManagementMenuItem');
+                        
+                        if (userMenu) {
+                            userMenu.style.display = 'none';
+                        }
+                        if (userMgmtSidebarItem) {
+                            userMgmtSidebarItem.style.display = 'none';
+                        }
+                        if (userMgmtMenuItem) {
+                            userMgmtMenuItem.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking authentication:', error);
+                    // Hide user menu and all admin items on error
+                    const userMenu = document.getElementById('userMenu');
+                    const userMgmtSidebarItem = document.getElementById('userManagementSidebarItem');
+                    const userMgmtMenuItem = document.getElementById('userManagementMenuItem');
+                    
+                    if (userMenu) {
+                        userMenu.style.display = 'none';
+                    }
+                    if (userMgmtSidebarItem) {
+                        userMgmtSidebarItem.style.display = 'none';
+                    }
+                    if (userMgmtMenuItem) {
+                        userMgmtMenuItem.style.display = 'none';
+                    }
+                });
+        }
+        
+        
+        function goToUserCredentials() {
+            // Navigate to settings page and show user credentials section
+            window.location.href = '{{ url_for("frontend.settings") }}';
+            
+            // After navigation, scroll to user credentials section
+            setTimeout(() => {
+                const userCredentialsSection = document.getElementById('userCredentialsSection');
+                if (userCredentialsSection) {
+                    // Make sure the section is visible first
+                    if (userCredentialsSection.style.display === 'none') {
+                        userCredentialsSection.style.display = 'block';
+                    }
+                    // Then scroll to it
+                    userCredentialsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 500);
+        }
+        
+        // showChangePassword() function removed - users can change credentials by clicking username
+        
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                fetch('/auth/logout', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Hide user menu
+                            const userMenu = document.getElementById('userMenu');
+                            if (userMenu) {
+                                userMenu.style.display = 'none';
+                            }
+                            // Redirect to login page
+                            window.location.href = '/simple-login';
+                        } else {
+                            alert('Logout failed');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during logout:', error);
+                        alert('Logout failed');
+                    });
+            }
+        }
+        
+        // Check authentication status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hide admin items by default until authentication is confirmed
+            const userMgmtSidebarItem = document.getElementById('userManagementSidebarItem');
+            const userMgmtMenuItem = document.getElementById('userManagementMenuItem');
+            const userMenu = document.getElementById('userMenu');
+            
+            if (userMgmtSidebarItem) {
+                userMgmtSidebarItem.style.display = 'none';
+            }
+            if (userMgmtMenuItem) {
+                userMgmtMenuItem.style.display = 'none';
+            }
+            if (userMenu) {
+                userMenu.style.display = 'none';
+            }
+            
+            // Check authentication status after a short delay to ensure page is ready
+            setTimeout(checkUserAuthentication, 100);
+            
+            // Initialize sidebar functionality
+            initializeSidebar();
+        });
+        
+        // Sidebar functionality
+        function initializeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const mainContent = document.getElementById('mainContent');
+            
+            if (!sidebar || !sidebarToggle || !sidebarOverlay) {
+                console.warn('Sidebar elements not found');
+                return;
+            }
+            
+            // Toggle sidebar collapse/expand
+            sidebarToggle.addEventListener('click', function() {
+                toggleSidebar();
+            });
+            
+            // Close sidebar when clicking overlay (mobile)
+            sidebarOverlay.addEventListener('click', function() {
+                closeSidebar();
+            });
+            
+            // Handle responsive behavior
+            handleResponsiveSidebar();
+            window.addEventListener('resize', handleResponsiveSidebar);
+            
+            // Set active navigation item
+            setActiveNavItem();
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (window.innerWidth <= 768) {
+                // Mobile: Toggle visibility
+                if (sidebar.classList.contains('mobile-hidden')) {
+                    sidebar.classList.remove('mobile-hidden');
+                    sidebarOverlay.classList.add('active');
+                } else {
+                    sidebar.classList.add('mobile-hidden');
+                    sidebarOverlay.classList.remove('active');
+                }
+            } else {
+                // Desktop: Toggle collapse
+                sidebar.classList.toggle('collapsed');
+                // Save state
+                localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+            }
+        }
+        
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('mobile-hidden');
+                sidebarOverlay.classList.remove('active');
+            }
+        }
+        
+        function handleResponsiveSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (window.innerWidth <= 768) {
+                // Mobile: Hide sidebar by default
+                sidebar.classList.add('mobile-hidden');
+                sidebar.classList.remove('collapsed');
+                sidebarOverlay.classList.remove('active');
+            } else {
+                // Desktop: Show sidebar, restore collapsed state
+                sidebar.classList.remove('mobile-hidden');
+                sidebarOverlay.classList.remove('active');
+                
+                // Restore collapsed state from localStorage
+                const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+                if (isCollapsed) {
+                    sidebar.classList.add('collapsed');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                }
+            }
+        }
+        
+        function setActiveNavItem() {
+            const currentPath = window.location.pathname;
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            
+            sidebarItems.forEach(item => {
+                item.classList.remove('active');
+                
+                const href = item.getAttribute('href');
+                if (href && href !== '#') {
+                    // Check if current path matches this menu item
+                    if (currentPath === href || 
+                        (currentPath === '/' && href.includes('index')) ||
+                        (currentPath.includes('/artists') && href.includes('artists')) ||
+                        (currentPath.includes('/videos') && href.includes('videos')) ||
+                        (currentPath.includes('/mvtv') && href.includes('mvtv')) ||
+                        (currentPath.includes('/settings') && href.includes('settings'))) {
+                        item.classList.add('active');
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
