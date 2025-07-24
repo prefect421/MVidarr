@@ -256,7 +256,8 @@ class AuthService:
                         )
 
                     # Verify 2FA token
-                    from src.services.two_factor_service import TwoFactorService
+                    from src.services.two_factor_service import \
+                        TwoFactorService
 
                     totp_valid, totp_message = TwoFactorService.verify_two_factor_login(
                         user.id, two_factor_token

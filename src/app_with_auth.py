@@ -15,15 +15,13 @@ sys.path.insert(0, str(project_root))
 
 from src.api.admin_interface import register_admin_interface
 from src.api.profile import register_profile_routes
-
 # Import existing API blueprints
 from src.api.routes import register_routes
 from src.api.two_factor import register_two_factor_routes
-
 # Import authentication system
-from src.auth_integration import init_authentication, register_auth_health_endpoint
+from src.auth_integration import (init_authentication,
+                                  register_auth_health_endpoint)
 from src.config.config import Config
-
 # Import core services
 from src.database.connection import init_db
 from src.utils.logger import get_logger, setup_logging

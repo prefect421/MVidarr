@@ -12,13 +12,11 @@ from src.api.health import health_bp
 from src.api.lastfm import lastfm_bp
 from src.api.lidarr import lidarr_bp
 from src.api.metube import metube_bp
-
 # OpenAPI documentation
 from src.api.openapi import openapi_bp
 from src.api.optimization import optimization_bp
 from src.api.plex import plex_bp
 from src.api.settings import settings_bp
-
 # External integration blueprints
 from src.api.spotify import spotify_bp
 from src.api.two_factor import two_factor_bp
@@ -28,7 +26,6 @@ from src.api.video_indexing import video_indexing_bp
 from src.api.video_organization import video_org_bp
 from src.api.videos import videos_bp
 from src.api.vlc_streaming import vlc_bp
-
 # Webhook system
 from src.api.webhooks import webhooks_bp
 from src.api.youtube_playlists import youtube_playlists_bp

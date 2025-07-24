@@ -4,15 +4,11 @@ Applies authentication and authorization decorators to existing API endpoints.
 """
 
 from src.database.models import UserRole
-from src.utils.auth_decorators import (
-    admin_required,
-    check_content_permissions,
-    log_user_action,
-    login_required,
-    manager_required,
-    role_required,
-    user_required,
-)
+from src.utils.auth_decorators import (admin_required,
+                                       check_content_permissions,
+                                       log_user_action, login_required,
+                                       manager_required, role_required,
+                                       user_required)
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.api.protection")

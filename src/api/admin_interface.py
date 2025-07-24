@@ -9,7 +9,8 @@ import subprocess
 import threading
 import time
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import (Blueprint, flash, jsonify, redirect, render_template,
+                   request, url_for)
 
 from src.auth_integration import get_auth_status, get_protection_status
 from src.database.models import User, UserRole

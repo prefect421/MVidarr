@@ -9,7 +9,8 @@ from flask import session as flask_session
 from src.database.models import User, UserRole
 from src.services.audit_service import AuditEventType, AuditService
 from src.services.auth_service import AuthService
-from src.utils.auth_decorators import admin_required, login_required, role_required
+from src.utils.auth_decorators import (admin_required, login_required,
+                                       role_required)
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.users.api")

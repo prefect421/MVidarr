@@ -213,7 +213,8 @@ class VideoOrganizationService:
             if auto_index:
                 from pathlib import Path
 
-                from src.services.video_indexing_service import video_indexing_service
+                from src.services.video_indexing_service import \
+                    video_indexing_service
 
                 logger.info(f"Auto-indexing organized video: {artist_name} - {title}")
 
