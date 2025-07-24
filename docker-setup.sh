@@ -226,11 +226,16 @@ USE mvidarr;
 EOF
 fi
 
-# Build Docker images if not skipping
+# Pull or build Docker images
 if [[ "$SKIP_BUILD" == "false" ]]; then
-    print_status "Building Docker images..."
-    
-    if [[ "$DEPLOY_TYPE" == "development" ]]; then
+    if [[ "$DEPLOY_TYPE" == "production" ]]; then
+        print_status "Pulling pre-built production image from GitHub Container Registry..."
+        docker pull ghcr.io/prefect421/mvidarr:latest || {
+            print_warning "Failed to pull pre-built image, building locally..."
+            docker-compose -f "$COMPOSE_FILE" build --no-cache
+        }
+    else
+        print_status "Building development Docker images..."
         # Create development Dockerfile if it doesn't exist
         if [[ ! -f "Dockerfile.development" ]]; then
             print_status "Creating development Dockerfile..."
@@ -239,12 +244,11 @@ if [[ "$SKIP_BUILD" == "false" ]]; then
             sed -i 's/FLASK_ENV=production/FLASK_ENV=development/' Dockerfile.development
             sed -i 's/DEBUG=false/DEBUG=true/' Dockerfile.development
         fi
+        docker-compose -f "$COMPOSE_FILE" build --no-cache
     fi
-    
-    docker-compose -f "$COMPOSE_FILE" build --no-cache
-    print_success "Docker images built successfully"
+    print_success "Docker images ready"
 else
-    print_status "Skipping Docker image build"
+    print_status "Skipping Docker image build/pull"
 fi
 
 # Start containers
