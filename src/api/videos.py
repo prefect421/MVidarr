@@ -4,7 +4,7 @@ Videos API endpoints
 
 from flask import Blueprint, jsonify, request, send_file, Response
 from src.database.connection import get_db
-from src.database.models import Video, Artist, VideoStatus
+from src.database.models import Video, Artist, VideoStatus, Download
 from src.services.imvdb_service import imvdb_service
 from src.utils.logger import get_logger
 from sqlalchemy import func
