@@ -50,7 +50,7 @@ cd mvidarr
 docker-compose up -d
 
 # 3. Access application
-open http://localhost:5000
+open http://localhost:5001
 ```
 
 #### Option 2: Production Setup
@@ -67,7 +67,7 @@ sudo chown -R 1001:1001 /your/storage/
 docker-compose --env-file docker-config.yml -f docker-compose.production.yml up -d
 
 # 4. Access
-open http://localhost:5000
+open http://localhost:5001
 ```
 
 ### 📊 Container Details
@@ -76,7 +76,7 @@ open http://localhost:5000
 - **Base**: Python 3.12-slim
 - **Size**: 1.35GB
 - **User**: mvidarr (UID: 1001)
-- **Port**: 5000
+- **Port**: 5000 (mapped to host 5001)
 - **Health Check**: `/api/health` endpoint
 - **Features**: FFmpeg, yt-dlp, image processing, database connectivity
 
@@ -111,6 +111,22 @@ IMVDB_API_KEY=your_imvdb_key
 YOUTUBE_API_KEY=your_youtube_key
 ```
 
+### 🌐 Remote Access
+
+The Docker containers are configured for remote access:
+
+```bash
+# Application is accessible on all interfaces
+http://YOUR_SERVER_IP:5001
+
+# MariaDB is also accessible remotely (port 3307)
+mysql -h YOUR_SERVER_IP -P 3307 -u mvidarr -p
+
+# Configure firewall if needed
+sudo ufw allow 5001/tcp comment "MVidarr Web Interface"
+sudo ufw allow 3307/tcp comment "MVidarr MariaDB"
+```
+
 ### 🏥 Health Status
 
 After deployment, verify health:
@@ -119,7 +135,7 @@ After deployment, verify health:
 docker-compose -f docker-compose.production.yml ps
 
 # Test application health
-curl http://localhost:5000/api/health
+curl http://localhost:5001/api/health
 
 # View logs
 docker-compose -f docker-compose.production.yml logs -f mvidarr

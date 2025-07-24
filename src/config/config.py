@@ -22,9 +22,17 @@ class Config:
         if env_file.exists():
             load_dotenv(env_file)
         else:
-            # Create default .env if it doesn't exist
-            cls.create_default_env()
-            load_dotenv(env_file)
+            # In Docker environments, skip .env file creation if env vars are already set
+            if os.environ.get('DB_HOST') or os.environ.get('SECRET_KEY'):
+                # Environment variables are already set (likely from Docker), skip .env creation
+                return
+            # Create default .env if it doesn't exist and we're not in Docker
+            try:
+                cls.create_default_env()
+                load_dotenv(env_file)
+            except PermissionError:
+                # Skip .env file creation if we don't have write permissions (Docker environment)
+                pass
 
     @classmethod
     def create_default_env(cls):

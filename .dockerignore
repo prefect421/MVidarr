@@ -88,6 +88,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+pdf_env/
+screenshot_env/
+*_env/
 
 # Spyder project settings
 .spyderproject
@@ -129,6 +132,9 @@ logs/
 *.db
 *.sqlite
 *.sqlite3
+database/
+.stversions/
+.stfolder/
 
 # Docker
 Dockerfile*
@@ -144,6 +150,7 @@ docker-compose*.yml
 docs/
 README.md
 *.md
+DOCKER-*.md
 
 # Testing
 tests/
@@ -163,6 +170,12 @@ node_modules/
 *.tar.gz
 *.zip
 *.rar
+youtube_videos_to_fix.json
+index_enhanced.html
+login.html
+settings_page.html
+temp_downloads_section_backup.html
+favicon.ico
 
 # Large media files
 *.mp4

@@ -12,7 +12,7 @@ services:
     image: ghcr.io/prefect421/mvidarr:dev
     container_name: mvidarr-dev
     ports:
-      - "${MVIDARR_PORT:-5000}:5000"
+      - "0.0.0.0:${MVIDARR_PORT:-5001}:5000"
     environment:
       - FLASK_ENV=development
       - DEBUG=true
@@ -93,7 +93,7 @@ services:
       - PMA_PASSWORD=${MYSQL_ROOT_PASSWORD:-dev_root_password}
       - UPLOAD_LIMIT=512M
     ports:
-      - "${PHPMYADMIN_PORT:-8080}:80"
+      - "0.0.0.0:${PHPMYADMIN_PORT:-8080}:80"
     depends_on:
       mariadb-dev:
         condition: service_healthy
