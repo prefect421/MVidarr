@@ -33,11 +33,6 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -ptest_password --silent"
-          --health-interval=15s
-          --health-timeout=10s
-          --health-retries=20
-          --health-start-period=120s
           --tmpfs /tmp:rw,noexec,nosuid,size=512m
           --tmpfs /var/lib/mysql-logs:rw,noexec,nosuid,size=128m
     

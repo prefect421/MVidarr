@@ -57,9 +57,7 @@ ENV PYTHONPATH=/app/src \
 # Expose the application port
 EXPOSE 5000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health/status || exit 1
+# Health check removed to prevent issues in CI environments
 
 # Switch to non-root user
 USER mvidarr

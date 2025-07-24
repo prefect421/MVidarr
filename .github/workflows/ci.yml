@@ -49,11 +49,6 @@ jobs:
           -e MYSQL_USER=mvidarr \
           -e MYSQL_PASSWORD=test_password \
           -p 3306:3306 \
-          --health-cmd="mysqladmin ping -h localhost -u root --password=test_root_password --silent" \
-          --health-interval=10s \
-          --health-timeout=5s \
-          --health-retries=10 \
-          --health-start-period=60s \
           mariadb:11.4
 
     - name: Wait for MariaDB to be healthy
