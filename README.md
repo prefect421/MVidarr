@@ -14,11 +14,8 @@
 - **💚 System Health Monitoring** - Comprehensive diagnostics
 - **⚙️ Database-Driven Settings** - Complete configuration management
 - **📥 Download Management** - Queue visualization and progress tracking
-- **👥 Multi-User Authentication** - Role-based access control
-- **🔒 Advanced Security** - Password policies and audit logging
 - **🎨 Modern UI** - Left sidebar navigation with theme system
 - **📺 MvTV Continuous Player** - Cinematic mode for uninterrupted viewing
-- **🔐 Two-Factor Authentication** - TOTP support for enhanced security
 
 ## 🚀 Quick Start
 
