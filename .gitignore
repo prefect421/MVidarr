@@ -175,3 +175,7 @@ pdf_env/
 screenshot_env/
 # Trigger Docker build
 # Restart CI/CD with all fixes
+
+# Allow test files in the tests/ directory
+!tests/
+!tests/*.py
