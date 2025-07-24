@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     pkg-config \
     default-libmysqlclient-dev \
+    mariadb-client \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
@@ -69,10 +70,22 @@ set -e
 
 # Wait for database to be ready
 echo "Waiting for MariaDB to be ready..."
-while ! curl -f http://mariadb:3306/ 2>/dev/null; do
-    echo "MariaDB is unavailable - sleeping"
+timeout=60
+count=0
+while [ $count -lt $timeout ]; do
+    if mysqladmin ping -h"${DB_HOST:-mariadb}" -P"${DB_PORT:-3306}" -u"${DB_USER:-mvidarr}" -p"${DB_PASSWORD:-secure_password}" --silent 2>/dev/null; then
+        echo "MariaDB is ready!"
+        break
+    fi
+    echo "MariaDB is unavailable - sleeping ($count/$timeout)"
     sleep 2
+    count=$((count + 1))
 done
+
+if [ $count -eq $timeout ]; then
+    echo "MariaDB failed to start within timeout - exiting"
+    exit 1
+fi
 
 echo "MariaDB is ready - starting application"
 
