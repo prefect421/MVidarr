@@ -1,6 +1,6 @@
-# MVidarr Docker Container Guide
+# MVidarr Docker Multi-Container Guide
 
-This guide covers building, deploying, and using the MVidarr Docker container from GitHub Container Registry.
+This guide covers the multi-container Docker deployment of MVidarr with separated MariaDB database, using pre-built images from GitHub Container Registry.
 
 ## 📦 Pre-built Images
 
@@ -10,7 +10,14 @@ MVidarr provides pre-built Docker images hosted on GitHub Container Registry:
 - **Development**: `ghcr.io/prefect421/mvidarr:dev`
 - **Tagged versions**: `ghcr.io/prefect421/mvidarr:v0.9`
 
-## 🚀 Quick Start with Pre-built Images
+## 🚀 Quick Start with Multi-Container Setup
+
+### Architecture Overview
+
+MVidarr uses a **multi-container architecture**:
+- **MVidarr Application Container**: Main web application
+- **MariaDB Database Container**: Dedicated database server
+- **Shared Docker Network**: Secure container communication
 
 ### Using Docker Compose (Recommended)
 
@@ -20,31 +27,58 @@ git clone https://github.com/prefect421/mvidarr.git
 cd mvidarr
 ```
 
-2. **Run the setup script:**
+2. **Configure environment:**
 ```bash
-# Production deployment
-./docker-setup.sh
+# Copy the production template
+cp .env.production.template .env
 
-# Development deployment
-./docker-setup.sh -t development
+# Edit configuration (set passwords, API keys, paths)
+nano .env
 ```
 
-### Manual Docker Run
+3. **Deploy the multi-container stack:**
+```bash
+# Production deployment
+docker-compose -f docker-compose.production.yml up -d
+
+# Check container status
+docker-compose -f docker-compose.production.yml ps
+```
+
+### Manual Multi-Container Setup
+
+**⚠️ Note**: Manual setup requires creating network and database container first.
 
 ```bash
-# Pull the image
-docker pull ghcr.io/prefect421/mvidarr:latest
+# Create Docker network
+docker network create mvidarr-network
 
-# Run with basic setup
+# Start MariaDB container
+docker run -d \
+  --name mvidarr-mariadb \
+  --network mvidarr-network \
+  -e MYSQL_ROOT_PASSWORD=your_root_password \
+  -e MYSQL_DATABASE=mvidarr \
+  -e MYSQL_USER=mvidarr \
+  -e MYSQL_PASSWORD=your_db_password \
+  -v ./database/mariadb:/var/lib/mysql \
+  mariadb:11.4
+
+# Wait for database to be ready (30-60 seconds)
+docker logs -f mvidarr-mariadb
+
+# Start MVidarr application
 docker run -d \
   --name mvidarr \
+  --network mvidarr-network \
   -p 5000:5000 \
   -v ./data/musicvideos:/app/data/musicvideos \
   -v ./data/downloads:/app/data/downloads \
   -v ./data/thumbnails:/app/data/thumbnails \
-  -v ./data/database:/app/data/database \
-  -e DB_HOST=localhost \
-  -e DB_NAME=mvidarr \
+  -v ./data/logs:/app/data/logs \
+  -e DB_HOST=mvidarr-mariadb \
+  -e DB_PASSWORD=your_db_password \
+  -e SECRET_KEY=your_secret_key \
   ghcr.io/prefect421/mvidarr:latest
 ```
 
@@ -101,29 +135,39 @@ docker push ghcr.io/prefect421/mvidarr:v0.9
 
 ### Volume Mounts
 
-| Container Path | Description |
-|----------------|-------------|
-| `/app/data/downloads` | Temporary download files |
-| `/app/data/musicvideos` | Final music video collection |
-| `/app/data/thumbnails` | Video thumbnails |
-| `/app/data/database` | SQLite database files |
-| `/app/data/logs` | Application logs |
-| `/app/data/cache` | Cache files |
-| `/app/config` | Configuration files |
+#### MVidarr Application Container
+| Container Path | Description | Host Path Example |
+|----------------|-------------|-------------------|
+| `/app/data/downloads` | Temporary download files | `./downloads` |
+| `/app/data/musicvideos` | Final music video collection | `./musicvideos` |
+| `/app/data/thumbnails` | Video thumbnails | `./thumbnails` |
+| `/app/data/logs` | Application logs | `./logs` |
+| `/app/data/cache` | Cache files | `./cache` |
+| `/app/config` | Configuration files | `./config` |
 
-## 📋 Docker Compose Files
+#### MariaDB Database Container
+| Container Path | Description | Host Path Example |
+|----------------|-------------|-------------------|
+| `/var/lib/mysql` | MariaDB data directory | `./database/mariadb` |
+| `/docker-entrypoint-initdb.d/` | Initialization scripts | `./docker/mariadb/` |
+
+## 📋 Multi-Container Docker Compose Architecture
 
 ### Production (`docker-compose.production.yml`)
-- Uses pre-built image from registry
-- Includes MariaDB database
-- Production-ready configuration
-- Health checks enabled
+**Multi-container production setup:**
+- **MVidarr Container**: Pre-built image from GitHub Container Registry
+- **MariaDB Container**: Dedicated database server (MariaDB 11.4)
+- **Docker Network**: Isolated `mvidarr-network` for secure communication
+- **Health Checks**: Both containers have comprehensive health monitoring
+- **Dependency Management**: MVidarr waits for MariaDB to be healthy
+- **Persistent Storage**: Separated data volumes for app and database
 
 ### Development (`docker-compose.dev.yml`)
-- Builds image locally
-- Includes hot reload
-- Debug mode enabled
-- PHPMyAdmin included
+**Multi-container development setup:**
+- **MVidarr Container**: Built locally with hot reload
+- **MariaDB Container**: Development database with debug settings
+- **PHPMyAdmin Container**: Database administration interface
+- **Debug Mode**: Enhanced logging and development features
 
 ## 🔄 Automated Builds
 
@@ -143,53 +187,97 @@ The repository includes GitHub Actions workflow (`.github/workflows/docker-build
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+### Multi-Container Troubleshooting
 
-1. **Permission denied errors:**
+1. **MariaDB Connection Timeouts:**
 ```bash
-# Fix file permissions
-sudo chown -R 1000:1000 ./data/
+# Check MariaDB container health
+docker-compose -f docker-compose.production.yml logs mariadb
+
+# Verify database is accepting connections
+docker exec mvidarr-mariadb mysqladmin ping -h localhost -u root -p
+
+# Restart database container
+docker-compose -f docker-compose.production.yml restart mariadb
 ```
 
-2. **Database connection errors:**
+2. **Container Communication Issues:**
 ```bash
-# Check database container
-docker-compose logs mariadb
+# Check network connectivity
+docker network inspect mvidarr-network
 
-# Restart database
-docker-compose restart mariadb
+# Test connection from app to database
+docker exec mvidarr ping mvidarr-mariadb
+
+# Verify environment variables
+docker exec mvidarr env | grep DB_
 ```
 
-3. **Build failures:**
+3. **Permission denied errors:**
 ```bash
-# Clean build cache
-docker builder prune
-
-# Build without cache
-docker build --no-cache -f Dockerfile.production -t mvidarr:local .
+# Fix file permissions for all data directories
+sudo chown -R 1000:1000 ./downloads ./musicvideos ./thumbnails ./logs ./cache
+sudo chown -R 999:999 ./database/mariadb  # MariaDB user
 ```
 
-### Logs and Debugging
+4. **Database initialization issues:**
+```bash
+# Remove database volume and reinitialize
+docker-compose -f docker-compose.production.yml down -v
+docker volume prune
+docker-compose -f docker-compose.production.yml up -d
+```
+
+### Multi-Container Logs and Debugging
 
 ```bash
-# View application logs
-docker-compose logs -f mvidarr
+# View all container logs
+docker-compose -f docker-compose.production.yml logs -f
 
-# Enter container for debugging
+# View specific container logs
+docker-compose -f docker-compose.production.yml logs -f mvidarr
+docker-compose -f docker-compose.production.yml logs -f mariadb
+
+# Enter containers for debugging
 docker exec -it mvidarr bash
+docker exec -it mvidarr-mariadb bash
 
-# Check container health
-docker-compose ps
+# Check all container health and status
+docker-compose -f docker-compose.production.yml ps
+
+# Monitor resource usage
+docker stats mvidarr mvidarr-mariadb
 ```
 
-## 📝 Best Practices
+## 📝 Multi-Container Best Practices
 
-1. **Use specific tags** instead of `latest` in production
-2. **Mount data volumes** to persistent storage
-3. **Set strong passwords** for database and secret keys
-4. **Regular backups** of data volumes
-5. **Monitor container health** and resource usage
-6. **Use secrets management** for API keys
+### Security
+1. **Use specific image tags** instead of `latest` in production
+2. **Set strong passwords** for MariaDB root and user accounts
+3. **Use Docker secrets** for sensitive information in production
+4. **Isolate containers** with dedicated networks
+5. **Run containers as non-root** users (already configured)
+
+### Data Management
+6. **Separate data volumes** for application and database
+7. **Regular database backups**:
+   ```bash
+   docker exec mvidarr-mariadb mysqldump -u root -p mvidarr > backup.sql
+   ```
+8. **Persistent storage** for all data directories
+9. **Monitor disk usage** for database growth
+
+### Performance & Monitoring  
+10. **Monitor container health** and resource usage
+11. **Set appropriate memory limits** for containers
+12. **Use multi-stage builds** to minimize image size
+13. **Implement log rotation** to prevent disk filling
+
+### Deployment
+14. **Use environment files** (.env) for configuration
+15. **Test database connectivity** before deploying application
+16. **Implement health checks** for both containers
+17. **Use restart policies** for automatic recovery
 
 ## 🔗 Related Documentation
 
