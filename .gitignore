@@ -173,3 +173,4 @@ node_modules.nosync
 .idea/*.pdf
 pdf_env/
 screenshot_env/
+# Trigger Docker build
