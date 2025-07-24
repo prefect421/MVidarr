@@ -49,11 +49,11 @@ jobs:
           -e MYSQL_USER=mvidarr \
           -e MYSQL_PASSWORD=test_password \
           -p 3306:3306 \
-          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password" \
+          --health-cmd="mysqladmin ping -h localhost -u root --password=test_root_password --silent" \
           --health-interval=10s \
           --health-timeout=5s \
-          --health-retries=5 \
-          --health-start-period=30s \
+          --health-retries=10 \
+          --health-start-period=60s \
           mariadb:11.4
 
     - name: Wait for MariaDB to be healthy
@@ -89,10 +89,10 @@ jobs:
 
     - name: Wait for MVidarr application to be ready
       run: |
-        timeout=120
+        timeout=180
         count=0
         while [ $count -lt $timeout ]; do
-          if curl -f http://localhost:5000/api/health >/dev/null 2>&1; then
+          if curl -f http://localhost:5000/api/health/status >/dev/null 2>&1; then
             echo "MVidarr application is ready!"
             break
           fi
