@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# MVidarr Enhanced Docker Setup Script
+# MVidarr Docker Setup Script
 # Automated Docker deployment setup for production and development
 
 set -e
@@ -36,7 +36,7 @@ print_error() {
 
 # Function to show usage
 show_usage() {
-    echo "MVidarr Enhanced Docker Setup Script"
+    echo "MVidarr Docker Setup Script"
     echo ""
     echo "Usage: $0 [OPTIONS]"
     echo ""
@@ -87,7 +87,7 @@ if [[ "$DEPLOY_TYPE" != "production" && "$DEPLOY_TYPE" != "development" ]]; then
     exit 1
 fi
 
-print_status "Starting MVidarr Enhanced Docker setup for $DEPLOY_TYPE environment"
+print_status "Starting MVidarr Docker setup for $DEPLOY_TYPE environment"
 
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
@@ -187,10 +187,10 @@ fi
 if [[ ! -f "docker/mariadb/init.sql" ]]; then
     print_status "Creating MariaDB initialization script..."
     cat > docker/mariadb/init.sql << 'EOF'
--- MVidarr Enhanced Database Initialization Script
+-- MVidarr Database Initialization Script
 
 -- Create database if not exists
-CREATE DATABASE IF NOT EXISTS mvidarr_enhanced 
+CREATE DATABASE IF NOT EXISTS mvidarr 
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Create development database if needed
@@ -198,14 +198,14 @@ CREATE DATABASE IF NOT EXISTS mvidarr_dev
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Grant privileges
-GRANT ALL PRIVILEGES ON mvidarr_enhanced.* TO 'mvidarr'@'%';
+GRANT ALL PRIVILEGES ON mvidarr.* TO 'mvidarr'@'%';
 GRANT ALL PRIVILEGES ON mvidarr_dev.* TO 'mvidarr'@'%';
 
 -- Flush privileges
 FLUSH PRIVILEGES;
 
 -- Create indexes for performance
-USE mvidarr_enhanced;
+USE mvidarr;
 
 -- These tables will be created by the application, but we can pre-optimize
 
@@ -280,7 +280,7 @@ print_status "Initializing database..."
 if [[ "$DEPLOY_TYPE" == "development" ]]; then
     CONTAINER_NAME="${CONTAINER_PREFIX}-dev"
 else
-    CONTAINER_NAME="${CONTAINER_PREFIX}-enhanced"
+    CONTAINER_NAME="${CONTAINER_PREFIX}"
 fi
 
 # Run database initialization inside container
@@ -294,11 +294,11 @@ docker-compose -f "$COMPOSE_FILE" ps
 
 print_status "Application URLs:"
 if [[ "$DEPLOY_TYPE" == "development" ]]; then
-    echo "  - MVidarr Enhanced: http://localhost:5000"
+    echo "  - MVidarr: http://localhost:5000"
     echo "  - PHPMyAdmin: http://localhost:8080"
     echo "  - MariaDB: localhost:3307"
 else
-    echo "  - MVidarr Enhanced: http://localhost:5000"
+    echo "  - MVidarr: http://localhost:5000"
     echo "  - MariaDB: localhost:3306"
 fi
 
@@ -308,4 +308,4 @@ echo "  - Stop services: docker-compose -f $COMPOSE_FILE down"
 echo "  - Restart services: docker-compose -f $COMPOSE_FILE restart"
 echo "  - Enter container: docker exec -it $CONTAINER_NAME bash"
 
-print_success "MVidarr Enhanced is now running in $DEPLOY_TYPE mode!"
+print_success "MVidarr is now running in $DEPLOY_TYPE mode!"

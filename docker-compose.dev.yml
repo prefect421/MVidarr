@@ -9,7 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile.development
       target: development
-    image: mvidarr-enhanced:dev
+    image: mvidarr:dev
     container_name: mvidarr-dev
     ports:
       - "${MVIDARR_PORT:-5000}:5000"
