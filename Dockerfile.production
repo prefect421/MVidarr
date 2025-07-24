@@ -70,20 +70,25 @@ set -e
 
 # Wait for database to be ready
 echo "Waiting for MariaDB to be ready..."
-timeout=60
+timeout=120
 count=0
 while [ $count -lt $timeout ]; do
-    if mysqladmin ping -h"${DB_HOST:-mariadb}" -P"${DB_PORT:-3306}" -u"${DB_USER:-mvidarr}" -p"${DB_PASSWORD:-secure_password}" --silent 2>/dev/null; then
+    if mysqladmin ping -h"${DB_HOST:-mariadb}" -P"${DB_PORT:-3306}" -u"${DB_USER:-mvidarr}" -p"${DB_PASSWORD}" --silent 2>/dev/null; then
         echo "MariaDB is ready!"
         break
     fi
     echo "MariaDB is unavailable - sleeping ($count/$timeout)"
-    sleep 2
+    sleep 3
     count=$((count + 1))
 done
 
 if [ $count -eq $timeout ]; then
-    echo "MariaDB failed to start within timeout - exiting"
+    echo "MariaDB failed to start within timeout"
+    echo "Checking MariaDB connection details:"
+    echo "Host: ${DB_HOST:-mariadb}"
+    echo "Port: ${DB_PORT:-3306}"
+    echo "User: ${DB_USER:-mvidarr}"
+    echo "Database: ${DB_NAME:-mvidarr}"
     exit 1
 fi
 
