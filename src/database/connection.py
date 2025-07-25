@@ -182,6 +182,7 @@ def init_db(app):
     # Create database tables if they don't exist
     try:
         from src.database.init_db import initialize_database
+
         logger.info("Creating database tables...")
         if not initialize_database():
             logger.error("Failed to initialize database tables")
