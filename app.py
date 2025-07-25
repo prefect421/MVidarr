@@ -3,147 +3,176 @@
 MVidarr - Main Application Entry Point
 """
 
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from flask import Flask
+
+from src.api.routes import register_routes
 from src.config.config import Config
 from src.database.connection import init_db
-from src.utils.logger import setup_logging
-from src.api.routes import register_routes
-from src.security_config import SecurityManager, ProductionSecurityConfig, validate_environment_security
 from src.middleware.dynamic_auth_middleware import dynamic_auth_middleware
+from src.security_config import (
+    ProductionSecurityConfig,
+    SecurityManager,
+    validate_environment_security,
+)
+from src.utils.logger import setup_logging
+
 
 def create_app():
     """Create and configure the Flask application"""
     # Define template and static directories
-    template_dir = Path(__file__).parent / 'frontend' / 'templates'
-    static_dir = Path(__file__).parent / 'frontend' / 'static'
-    
-    app = Flask(__name__, 
-                template_folder=str(template_dir),
-                static_folder=str(static_dir))
-    
+    template_dir = Path(__file__).parent / "frontend" / "templates"
+    static_dir = Path(__file__).parent / "frontend" / "static"
+
+    app = Flask(
+        __name__, template_folder=str(template_dir), static_folder=str(static_dir)
+    )
+
     # Load configuration
     config = Config()
     app.config.from_object(config)
-    
+
     # Ensure secret key is set for sessions - must be bytes or very secure string
     import os
     import secrets
-    
+
     # Use environment variable or generate a consistent secret key
-    secret_key = os.environ.get('MVIDARR_SECRET_KEY')
+    secret_key = os.environ.get("MVIDARR_SECRET_KEY")
     if not secret_key:
         # Use a fixed secret key for development (consistent across restarts)
-        secret_key = 'mvidarr-dev-session-key-fixed-for-persistence-c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f'
-        
-    app.config['SECRET_KEY'] = secret_key
-    
-    # Session configuration for authentication  
-    app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SECURE'] = False  # CRITICAL: Must be False for HTTP development
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-    app.config['SESSION_COOKIE_NAME'] = 'mvidarr_session'
-    app.config['SESSION_COOKIE_PATH'] = '/'
-    app.config['SESSION_COOKIE_DOMAIN'] = None  # Allow any domain for development
-    
+        secret_key = "mvidarr-dev-session-key-fixed-for-persistence-c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+
+    app.config["SECRET_KEY"] = secret_key
+
+    # Session configuration for authentication
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config[
+        "SESSION_COOKIE_SECURE"
+    ] = False  # CRITICAL: Must be False for HTTP development
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_COOKIE_NAME"] = "mvidarr_session"
+    app.config["SESSION_COOKIE_PATH"] = "/"
+    app.config["SESSION_COOKIE_DOMAIN"] = None  # Allow any domain for development
+
     # Force disable secure cookies for development
-    app.config['SESSION_COOKIE_SECURE'] = False
-    
+    app.config["SESSION_COOKIE_SECURE"] = False
+
     # Additional session configuration for better persistence
-    app.config['SESSION_PERMANENT'] = True
-    app.config['SESSION_USE_SIGNER'] = True
-    
+    app.config["SESSION_PERMANENT"] = True
+    app.config["SESSION_USE_SIGNER"] = True
+
     # Set permanent session lifetime (24 hours)
     from datetime import timedelta
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
-    
+
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)
+
     # Setup logging
     setup_logging(app)
-    
+
     # Initialize security configurations
     security_manager = SecurityManager(app)
-    
+
     # Validate environment security
     if not validate_environment_security():
         app.logger.warning("Security validation found issues - please review and fix")
-    
+
     # Apply production security settings if in production
-    if os.getenv('FLASK_ENV') == 'production':
+    if os.getenv("FLASK_ENV") == "production":
         ProductionSecurityConfig.apply_production_settings(app)
         app.logger.info("Production security settings applied")
     else:
         app.logger.info("Development mode detected")
-    
+
     # CRITICAL: Always override SESSION_COOKIE_SECURE for development regardless of other settings
     # This must come AFTER ProductionSecurityConfig to ensure it takes precedence
-    if os.getenv('FLASK_ENV') != 'production':
-        app.config['SESSION_COOKIE_SECURE'] = False
-        app.logger.info("Development mode: SESSION_COOKIE_SECURE forcibly disabled for HTTP access")
-    
+    if os.getenv("FLASK_ENV") != "production":
+        app.config["SESSION_COOKIE_SECURE"] = False
+        app.logger.info(
+            "Development mode: SESSION_COOKIE_SECURE forcibly disabled for HTTP access"
+        )
+    else:
+        # Even in production, allow HTTP access if SSL is not explicitly required
+        # This handles cases where production apps run locally over HTTP
+        try:
+            from src.services.settings_service import SettingsService
+
+            if not SettingsService.get_bool("ssl_required", False):
+                app.config["SESSION_COOKIE_SECURE"] = False
+                app.logger.info(
+                    "Production mode: SESSION_COOKIE_SECURE disabled (SSL not required)"
+                )
+        except Exception as e:
+            app.logger.warning(f"Could not check SSL requirement setting: {e}")
+            app.config["SESSION_COOKIE_SECURE"] = False
+            app.logger.info(
+                "Production mode: SESSION_COOKIE_SECURE disabled (fallback for HTTP)"
+            )
+
     # Initialize database
     init_db(app)
-    
+
     # Load database settings now that database is available
     config.load_from_database()
-    
+
     # Register API routes
     register_routes(app)
-    
+
     # Initialize dynamic authentication middleware
     dynamic_auth_middleware.init_app(app)
-    
+
     # Initialize and start scheduler service
     try:
         from src.services.scheduler_service import scheduler_service
         from src.services.settings_service import SettingsService
-        
+
         # Ensure settings cache is loaded before checking scheduler setting
         # Reset the cache loaded flag in case it failed during config.load_from_database()
         SettingsService._cache_loaded = False
         SettingsService.load_cache()
-        
+
         # Ensure default authentication credentials exist
         try:
             from src.services.simple_auth_service import SimpleAuthService
+
             SimpleAuthService.ensure_default_credentials()
         except Exception as e:
             app.logger.error(f"Failed to ensure default credentials: {e}")
-        
-        if SettingsService.get_bool('auto_download_schedule_enabled', False):
-            app.logger.info("Auto-download scheduling is enabled, starting scheduler...")
+
+        if SettingsService.get_bool("auto_download_schedule_enabled", False):
+            app.logger.info(
+                "Auto-download scheduling is enabled, starting scheduler..."
+            )
             scheduler_service.start()
         else:
             app.logger.info("Auto-download scheduling is disabled")
     except Exception as e:
         app.logger.error(f"Failed to initialize scheduler: {e}")
-    
+
     return app
+
 
 def main():
     """Main entry point"""
     app = create_app()
-    
+
     # Get port from settings (default 5000)
-    port = app.config.get('PORT', 5000)
-    
+    port = app.config.get("PORT", 5000)
+
     app.logger.info(f"Starting MVidarr on port {port}")
-    
+
     try:
-        app.run(
-            host='0.0.0.0',
-            port=port,
-            debug=app.config.get('DEBUG', False)
-        )
+        app.run(host="0.0.0.0", port=port, debug=app.config.get("DEBUG", False))
     except Exception as e:
         app.logger.error(f"Failed to start application: {e}")
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

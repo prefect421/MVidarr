@@ -197,10 +197,26 @@ class ProductionSecurityConfig:
         app.config["SERVER_NAME"] = None
 
         # Secure cookie settings for production
+        # Only set SESSION_COOKIE_SECURE=True if SSL_REQUIRED is explicitly enabled
+        # This allows production deployments over HTTP for development/local use
+        try:
+            from src.services.settings_service import SettingsService
+
+            ssl_required = SettingsService.get_bool("ssl_required", False)
+            secure_cookies = ssl_required
+        except Exception:
+            # Fallback: check if we're likely running over HTTPS
+            # If no SSL setting available, assume HTTP for safety
+            secure_cookies = False
+
         app.config.update(
-            SESSION_COOKIE_SECURE=True,
+            SESSION_COOKIE_SECURE=secure_cookies,
             SESSION_COOKIE_DOMAIN=None,  # Set to your domain in production
             WTF_CSRF_TIME_LIMIT=None,  # No CSRF token timeout
+        )
+
+        logger.info(
+            f"Production cookies secure setting: {secure_cookies} (SSL required: {ssl_required if 'ssl_required' in locals() else 'unknown'})"
         )
 
         # Database security for production
