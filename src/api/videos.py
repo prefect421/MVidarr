@@ -934,15 +934,38 @@ def refresh_thumbnails():
                     # Get the artist name for proper thumbnail naming
                     artist_name = video.artist.name if video.artist else "Unknown"
 
+                    # Check if thumbnail file already exists before trying to download
+                    from pathlib import Path
+
+                    from src.services.settings_service import SettingsService
+
+                    thumbnails_dir = SettingsService.get(
+                        "thumbnails_path", "data/thumbnails"
+                    )
+                    expected_filename = thumbnail_service.generate_filename(
+                        video.thumbnail_url
+                    )
+                    expected_path = (
+                        Path(thumbnails_dir) / artist_name / expected_filename
+                    )
+
+                    file_already_exists = expected_path.exists()
+
                     thumbnail_path = thumbnail_service.download_video_thumbnail(
                         artist_name, video.title, video.thumbnail_url
                     )
                     if thumbnail_path:
                         video.thumbnail_path = thumbnail_path
-                        downloaded_count += 1
-                        logger.info(
-                            f"Downloaded thumbnail for video: {video.title} by {artist_name}"
-                        )
+                        if file_already_exists:
+                            skipped_count += 1
+                            logger.debug(
+                                f"Skipped existing thumbnail for video: {video.title} by {artist_name}"
+                            )
+                        else:
+                            downloaded_count += 1
+                            logger.info(
+                                f"Downloaded thumbnail for video: {video.title} by {artist_name}"
+                            )
                     else:
                         failed_count += 1
                         logger.warning(
@@ -955,7 +978,7 @@ def refresh_thumbnails():
                         f"Failed to download thumbnail for video {video.title}: {e}"
                     )
 
-            # Also count IMVDb URLs that we're skipping
+            # Also count IMVDb URLs that we're intentionally not processing
             imvdb_videos = (
                 session.query(Video)
                 .filter(
@@ -966,17 +989,40 @@ def refresh_thumbnails():
                 .count()
             )
 
-            skipped_count = imvdb_videos
+            # Add IMVDb URLs to skipped count (separate from file-already-exists skips)
+            imvdb_skipped_count = imvdb_videos
 
             session.commit()
+
+            total_skipped = skipped_count + imvdb_skipped_count
+
+            # Create detailed message
+            message_parts = []
+            if downloaded_count > 0:
+                message_parts.append(f"Downloaded {downloaded_count} thumbnails")
+            if skipped_count > 0:
+                message_parts.append(f"skipped {skipped_count} existing files")
+            if imvdb_skipped_count > 0:
+                message_parts.append(
+                    f"skipped {imvdb_skipped_count} IMVDb URLs (likely expired)"
+                )
+            if failed_count > 0:
+                message_parts.append(f"failed {failed_count}")
+
+            if not message_parts:
+                message = "No thumbnails needed processing"
+            else:
+                message = ", ".join(message_parts).capitalize()
 
             return (
                 jsonify(
                     {
-                        "message": f"Downloaded {downloaded_count} thumbnails, skipped {skipped_count} IMVDb URLs (likely expired), failed {failed_count}",
-                        "processed": len(videos) + skipped_count,
+                        "message": message,
+                        "processed": len(videos) + imvdb_skipped_count,
                         "downloaded": downloaded_count,
-                        "skipped": skipped_count,
+                        "skipped": total_skipped,
+                        "skipped_existing": skipped_count,
+                        "skipped_imvdb": imvdb_skipped_count,
                         "failed": failed_count,
                     }
                 ),
@@ -1181,7 +1227,7 @@ def search_video_thumbnails(video_id):
             results = []
 
             # Search YouTube thumbnails if video has YouTube URL
-            if "youtube" in sources and video.url and "youtube.com" in video.url:
+            if "youtube" in sources and video.url:
                 try:
                     # Extract video ID from YouTube URL
                     import re
@@ -1190,11 +1236,18 @@ def search_video_thumbnails(video_id):
                     patterns = [
                         r"(?:youtube\.com/watch\?v=|youtu\.be/)([^&\n?#]+)",
                         r"youtube\.com/embed/([^&\n?#]+)",
+                        r"(?:youtube\.com/v/|youtube\.com/watch\?.*&v=)([^&\n?#]+)",
                     ]
+
+                    logger.debug(
+                        f"Searching for YouTube thumbnails in URL: {video.url}"
+                    )
+
                     for pattern in patterns:
                         match = re.search(pattern, video.url)
                         if match:
                             youtube_id = match.group(1)
+                            logger.debug(f"Extracted YouTube ID: {youtube_id}")
                             break
 
                     if youtube_id:
@@ -1220,6 +1273,13 @@ def search_video_thumbnails(video_id):
                             },
                         ]
                         results.extend(yt_thumbnails)
+                        logger.info(
+                            f"Added {len(yt_thumbnails)} YouTube thumbnail options for video {video_id}"
+                        )
+                    else:
+                        logger.warning(
+                            f"Could not extract YouTube ID from URL: {video.url}"
+                        )
                 except Exception as e:
                     logger.warning(
                         f"Failed to get YouTube thumbnails for video {video_id}: {e}"
@@ -1263,13 +1323,33 @@ def search_video_thumbnails(video_id):
                         f"Failed to get IMVDb thumbnails for video {video_id}: {e}"
                     )
 
-            logger.info(f"Found {len(results)} thumbnail options for video {video_id}")
+            logger.info(
+                f"Found {len(results)} thumbnail options for video {video_id} (query: '{search_query}', sources: {sources})"
+            )
+
+            # Add debugging info for empty results
+            if not results:
+                debug_info = {
+                    "video_url": video.url,
+                    "imvdb_id": video.imvdb_id,
+                    "sources_requested": sources,
+                    "has_youtube_url": bool(
+                        video.url
+                        and ("youtube.com" in video.url or "youtu.be" in video.url)
+                    ),
+                    "has_imvdb_id": bool(video.imvdb_id),
+                }
+                logger.warning(
+                    f"No thumbnail results found for video {video_id}. Debug info: {debug_info}"
+                )
+
             return (
                 jsonify(
                     {
                         "results": results,
                         "query": search_query,
                         "sources_searched": sources,
+                        "total_results": len(results),
                     }
                 ),
                 200,

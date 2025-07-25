@@ -150,22 +150,6 @@
             transition-delay: 0.1s;  /* Small delay when hiding */
         }
         
-        /* Admin menu item styling */
-        #userManagementMenuItem {
-            border-top:  1px solid rgba(0, 0, 0, 0.1);
-            margin-top: 4px;
-            padding-top: 4px;
-        }
-        
-        #userManagementMenuItem a {
-            color: #ffc107 !important;
-            font-weight: bold;
-        }
-        
-        #userManagementMenuItem a:hover {
-            background-color: rgba(255, 193, 7, 0.1) !important;
-        }
-        
         /* Theme Toggle Button - Match other sidebar items */
         .theme-toggle-btn {
             /* Remove all special styling to match other sidebar items */
@@ -723,10 +707,6 @@
                 </div>
                 <ul class="sidebar-user-menu">
                     <!-- Profile and Change Password removed - click username to go to User Credentials in Settings -->
-                    <li id="userManagementMenuItem" style="display: none;"><a href="/admin/users" class="sidebar-user-item">
-                        <iconify-icon icon="tabler:users-group" class="sidebar-icon"></iconify-icon>
-                        <span class="sidebar-text">User Management</span>
-                    </a></li>
                     <!-- Theme toggle moved to main sidebar menu -->
                     <li><a href="#" onclick="logout(); return false;" class="sidebar-user-item logout">
                         <iconify-icon icon="tabler:logout" class="sidebar-icon"></iconify-icon>
@@ -893,22 +873,11 @@
                             username.textContent = data.user.username;
                         }
                         
-                        // Show user management menu item for admins
-                        if (data.user.can_admin) {
-                            const userMgmtItem = document.getElementById('userManagementMenuItem');
-                            const userMgmtSidebarItem = document.getElementById('userManagementSidebarItem');
-                            if (userMgmtItem) {
-                                userMgmtItem.style.display = 'block';
-                            }
-                            if (userMgmtSidebarItem) {
-                                userMgmtSidebarItem.style.display = 'block';
-                            }
-                        }
+                        // User management menu item removed
                     } else {
-                        // Hide user menu and all admin items if not authenticated
+                        // Hide user menu if not authenticated
                         const userMenu = document.getElementById('userMenu');
                         const userMgmtSidebarItem = document.getElementById('userManagementSidebarItem');
-                        const userMgmtMenuItem = document.getElementById('userManagementMenuItem');
                         
                         if (userMenu) {
                             userMenu.style.display = 'none';
@@ -916,26 +885,19 @@
                         if (userMgmtSidebarItem) {
                             userMgmtSidebarItem.style.display = 'none';
                         }
-                        if (userMgmtMenuItem) {
-                            userMgmtMenuItem.style.display = 'none';
-                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error checking authentication:', error);
-                    // Hide user menu and all admin items on error
+                    // Hide user menu on error
                     const userMenu = document.getElementById('userMenu');
                     const userMgmtSidebarItem = document.getElementById('userManagementSidebarItem');
-                    const userMgmtMenuItem = document.getElementById('userManagementMenuItem');
                     
                     if (userMenu) {
                         userMenu.style.display = 'none';
                     }
                     if (userMgmtSidebarItem) {
                         userMgmtSidebarItem.style.display = 'none';
-                    }
-                    if (userMgmtMenuItem) {
-                        userMgmtMenuItem.style.display = 'none';
                     }
                 });
         }
@@ -989,14 +951,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Hide admin items by default until authentication is confirmed
             const userMgmtSidebarItem = document.getElementById('userManagementSidebarItem');
-            const userMgmtMenuItem = document.getElementById('userManagementMenuItem');
             const userMenu = document.getElementById('userMenu');
             
             if (userMgmtSidebarItem) {
                 userMgmtSidebarItem.style.display = 'none';
-            }
-            if (userMgmtMenuItem) {
-                userMgmtMenuItem.style.display = 'none';
             }
             if (userMenu) {
                 userMenu.style.display = 'none';

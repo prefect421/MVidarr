@@ -37,6 +37,7 @@ def init_default_settings():
         ("app_port", "5000", "Application port"),
         ("app_host", "0.0.0.0", "Application host"),
         ("downloads_path", "data/downloads", "Downloads directory path"),
+        ("music_videos_path", "data/musicvideos", "Music videos directory path"),
         ("thumbnails_path", "data/thumbnails", "Thumbnails directory path"),
         ("metube_host", "localhost", "MeTube host"),
         ("metube_port", "8081", "MeTube port"),
