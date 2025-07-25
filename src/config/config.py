@@ -23,7 +23,7 @@ class Config:
             load_dotenv(env_file)
         else:
             # In Docker environments, skip .env file creation if env vars are already set
-            if os.environ.get('DB_HOST') or os.environ.get('SECRET_KEY'):
+            if os.environ.get("DB_HOST") or os.environ.get("SECRET_KEY"):
                 # Environment variables are already set (likely from Docker), skip .env creation
                 return
             # Create default .env if it doesn't exist and we're not in Docker
