@@ -74,21 +74,36 @@ class SimpleAuthService:
             stored_username = SettingsService.get("simple_auth_username")
             stored_password_hash = SettingsService.get("simple_auth_password")
 
+            # Debug logging to understand what's stored
+            logger.info(
+                f"DEBUG: stored_username='{stored_username}', stored_password_hash='{stored_password_hash}'"
+            )
+            logger.info(
+                f"DEBUG: provided username='{username}', provided password length={len(password) if password else 0}"
+            )
+
             if not stored_username or not stored_password_hash:
+                logger.warning("No credentials configured in database")
                 return False, "No credentials configured"
 
             # Check username
             if username != stored_username:
-                logger.warning(f"Failed login attempt with username: {username}")
+                logger.warning(
+                    f"Username mismatch: provided '{username}' != stored '{stored_username}'"
+                )
                 return False, "Invalid username or password"
 
             # Check password using SHA-256 to match init_db.py format
             import hashlib
 
             password_hash = hashlib.sha256(password.encode()).hexdigest()
+            logger.info(f"DEBUG: provided password hash='{password_hash}'")
 
             if password_hash != stored_password_hash:
-                logger.warning(f"Failed login attempt for user: {username}")
+                logger.warning(f"Password hash mismatch for user: {username}")
+                logger.info(
+                    f"DEBUG: provided hash='{password_hash}', stored hash='{stored_password_hash}'"
+                )
                 return False, "Invalid username or password"
 
             logger.info(f"User authenticated: {username}")
