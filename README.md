@@ -16,105 +16,93 @@
 - **📥 Download Management** - Queue visualization and progress tracking
 - **🎨 Modern UI** - Left sidebar navigation with theme system
 - **📺 MvTV Continuous Player** - Cinematic mode for uninterrupted viewing
+- **🎭 Genre Management** - Automatic genre tagging and filtering
+- **🔐 User Authentication** - Role-based access control with security features
+- **🌙 Dark/Light Themes** - Multiple theme options with automatic switching
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Docker Deployment (Recommended)
 
-- **Python 3.8+** with pip
-- **MariaDB 10.5+** (recommended) or SQLite (for development)
-- **FFmpeg** (for video processing)
-
-### Installation
-
-#### Option 1: Automated Installation (Recommended)
-
-**Linux/macOS:**
+**Quick Start:**
 ```bash
-chmod +x scripts/install.sh
-./scripts/install.sh
-```
-
-**Windows:**
-```cmd
-scripts\install.bat
-```
-
-#### Option 2: Manual Installation
-
-1. **Clone the repository:**
-```bash
-git clone https://github.com/yourusername/mvidarr.git
+git clone https://github.com/prefect421/mvidarr.git
 cd mvidarr
+docker-compose up -d
 ```
 
-2. **Install dependencies:**
+**Access the application:**
+- Open your browser to `http://localhost:5001`
+- Default login: `admin` / `admin` (change immediately)
+
+### Manual Installation
+
+**Prerequisites:**
+- Python 3.8+
+- MariaDB 11.4+ (recommended)
+- FFmpeg (for video processing)
+
+**Installation:**
 ```bash
+# Clone and setup
+git clone https://github.com/prefect421/mvidarr.git
+cd mvidarr
 pip install -r requirements.txt
-```
 
-3. **Initialize the database:**
-```bash
-python scripts/setup_database.sh
-```
-
-4. **Start the application:**
-```bash
+# Start application
 python app.py
 ```
 
-5. **Access MVidarr:**
-   - Open your browser to `http://localhost:5000`
-   - Create your admin account on first run
-
-### Docker Deployment
-
-For production deployments, see our [Docker Quick Start Guide](DOCKER-QUICKSTART.md).
+**Access:** `http://localhost:5000`
 
 ## 📚 Documentation
 
-- **[Installation Guide](INSTALLATION_GUIDE.md)** - Comprehensive setup instructions
-- **[Quick Start](QUICKSTART.md)** - Get running in 5 minutes
-- **[Docker Guide](DOCKER-QUICKSTART.md)** - Container deployment
-- **[User Guide](docs/USER-GUIDE.md)** - Feature documentation
-- **[API Documentation](docs/api/)** - REST API reference
+- **[User Guide](docs/USER-GUIDE.md)** - Feature documentation and tutorials
+- **[Installation Guide](docs/INSTALLATION-GUIDE.md)** - Comprehensive setup instructions
+- **[Security Implementation](docs/SECURITY_IMPLEMENTATION.md)** - Security features and configuration
+- **[Final Project Status](docs/FINAL_PROJECT_STATUS.md)** - Complete feature status and changelog
+- **[Authentication Features](docs/AUTHENTICATION_FEATURE_LOG.md)** - User management and security features
 
 ## 🏗️ Architecture
 
 MVidarr is built with:
 
-- **Backend**: Flask (Python 3.8+)
-- **Database**: MariaDB/MySQL or SQLite
-- **Frontend**: Modern HTML5/CSS3/JavaScript
-- **Media Processing**: FFmpeg, yt-dlp
-- **Authentication**: JWT with optional 2FA
-- **Security**: bcrypt, CSRF protection, rate limiting
+- **Backend**: Flask (Python 3.8+) with modular service architecture
+- **Database**: MariaDB 11.4+ with automatic table initialization
+- **Frontend**: Modern HTML5/CSS3/JavaScript with responsive design
+- **Media Processing**: FFmpeg, yt-dlp for video downloading and processing
+- **Authentication**: Secure user management with role-based access control
+- **Security**: bcrypt password hashing, session management, audit logging
+- **Containerization**: Docker Compose with multi-container setup
 
 ## 🔧 Configuration
 
 Configuration is managed through:
 - Database settings (preferred for production)
 - Environment variables
-- Configuration files in `src/config/`
+- Docker Compose environment files
 
 Key environment variables:
 ```bash
-MVIDARR_SECRET_KEY=your-secret-key
-DATABASE_URL=mysql://user:pass@host/db
-YOUTUBE_API_KEY=your-youtube-api-key
+DB_HOST=mariadb
+DB_PASSWORD=secure_password
+SECRET_KEY=your-secret-key
+IMVDB_API_KEY=your-imvdb-key
+YOUTUBE_API_KEY=your-youtube-key
 ```
 
 ## 🛡️ Security
 
-MVidarr includes enterprise-grade security features:
+MVidarr includes comprehensive security features:
 
-- **Multi-user authentication** with role-based access
-- **Two-factor authentication** (TOTP)
-- **Password policies** and strength requirements
-- **Session management** with secure cookies
-- **Audit logging** for all user actions
-- **Rate limiting** and CSRF protection
-- **SQL injection prevention** with parameterized queries
+- **Multi-user authentication** with role-based access (Admin, Manager, User, ReadOnly)
+- **Secure password hashing** with bcrypt
+- **Session management** with secure tokens and expiration
+- **Account lockout** protection against brute force attacks
+- **Password reset** functionality with secure tokens
+- **Audit logging** for user actions and system events
+- **SQL injection prevention** with parameterized queries and ORM
+- **Docker security** with non-root containers and isolated networking
 
 ## 🎯 Use Cases
 
@@ -156,4 +144,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**MVidarr v0.9** - Built with ❤️ for music video enthusiasts
+**MVidarr v2.0** - Built with ❤️ for music video enthusiasts
