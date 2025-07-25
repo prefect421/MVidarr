@@ -3625,7 +3625,7 @@ function showImvdbMatchModal(matches) {
                 <button class="close-btn" onclick="closeImvdbMatchModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p>Select the correct match for <strong>${currentArtistData.name}</strong> (${matches.length} results found):</p>
+                <p>Select the correct match for <strong>${currentArtistData?.name || 'Unknown Artist'}</strong> (${matches.length} results found):</p>
                 <div class="imvdb-matches-table-container">
                     <table class="imvdb-matches-table">
                         <thead>

@@ -166,7 +166,7 @@ class IMVDbService:
 
             # Filter videos to only include those actually by the artist
             filtered_videos = []
-            artist_lower = artist.lower()
+            artist_lower = str(artist).lower()
 
             for video in all_videos:
                 # Check multiple possible artist field names
@@ -303,7 +303,7 @@ class IMVDbService:
         # Filter videos to only include those actually by the artist
         # This is the same robust filtering logic from search_artist_videos
         filtered_videos = []
-        artist_lower = artist_name.lower()
+        artist_lower = str(artist_name).lower()
 
         for video in all_videos:
             # Check multiple possible artist field names
@@ -534,11 +534,11 @@ class IMVDbService:
         def calculate_match_score(video: Dict) -> float:
             score = 0.0
 
-            video_artist = video.get("artist", {}).get("name", "").lower()
-            video_title = video.get("song_title", "").lower()
+            video_artist = str(video.get("artist", {}).get("name", "")).lower()
+            video_title = str(video.get("song_title", "")).lower()
 
-            artist_lower = artist.lower()
-            title_lower = title.lower()
+            artist_lower = str(artist).lower()
+            title_lower = str(title).lower()
 
             # Artist name match (most important)
             if artist_lower in video_artist or video_artist in artist_lower:
