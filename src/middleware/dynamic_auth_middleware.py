@@ -231,9 +231,7 @@ class DynamicAuthMiddleware:
                 return None
 
             # Check if authentication is required
-            # TEMPORARY FIX: Disable authentication to resolve login loop
-            # require_auth = SettingsService.get_bool('require_authentication', False)
-            require_auth = False  # Temporarily disabled for UI testing
+            require_auth = SettingsService.get_bool("require_authentication", False)
 
             if not require_auth:
                 # Authentication not required, allow access

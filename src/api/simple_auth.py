@@ -11,7 +11,7 @@ from src.utils.logger import get_logger
 logger = get_logger("mvidarr.simple_auth.api")
 
 # Create simple authentication blueprint
-simple_auth_bp = Blueprint("simple_auth", __name__, url_prefix="/auth")
+simple_auth_bp = Blueprint("simple_auth", __name__, url_prefix="/simple-auth")
 
 
 @simple_auth_bp.route("/login", methods=["GET"])

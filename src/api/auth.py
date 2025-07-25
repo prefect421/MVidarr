@@ -386,6 +386,47 @@ def check_auth():
         return jsonify({"authenticated": False, "error": "Check failed"}), 500
 
 
+@auth_bp.route("/credentials", methods=["GET"])
+def get_credentials():
+    """Get current stored username for simple auth (password not returned)"""
+    try:
+        from src.services.simple_auth_service import SimpleAuthService
+
+        username, has_credentials = SimpleAuthService.get_credentials()
+        return jsonify({"username": username, "has_credentials": has_credentials})
+    except Exception as e:
+        logger.error(f"Get credentials error: {e}")
+        return jsonify({"error": "Failed to get credentials"}), 500
+
+
+@auth_bp.route("/credentials", methods=["POST"])
+def update_credentials():
+    """Update username and password for simple auth"""
+    try:
+        from src.services.simple_auth_service import SimpleAuthService
+
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        username = data.get("username", "").strip()
+        password = data.get("password", "")
+
+        if not username or not password:
+            return jsonify({"error": "Username and password are required"}), 400
+
+        success, message = SimpleAuthService.set_credentials(username, password)
+
+        if success:
+            return jsonify({"success": True, "message": message})
+        else:
+            return jsonify({"error": message}), 400
+
+    except Exception as e:
+        logger.error(f"Update credentials error: {e}")
+        return jsonify({"error": "Failed to update credentials"}), 500
+
+
 # Register the blueprint with the app
 def register_auth_routes(app):
     """Register authentication routes with Flask app"""
