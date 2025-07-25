@@ -63,7 +63,9 @@ class SecurityManager:
         )
 
         # Don't override PERMANENT_SESSION_LIFETIME - let app.py handle it
-        logger.info(f"Session lifetime from app config: {app.config.get('PERMANENT_SESSION_LIFETIME', 'not set')}")
+        logger.info(
+            f"Session lifetime from app config: {app.config.get('PERMANENT_SESSION_LIFETIME', 'not set')}"
+        )
 
         if is_development:
             logger.warning(

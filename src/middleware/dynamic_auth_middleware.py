@@ -89,14 +89,25 @@ class DynamicAuthMiddleware:
                     logger.info(f"Session contents after login: {dict(session)}")
                     logger.info(f"Session permanent flag: {session.permanent}")
                     logger.info(f"Session modified flag: {session.modified}")
-                    
+
                     # Debug session configuration
                     from flask import current_app
-                    logger.info(f"App SECRET_KEY length: {len(current_app.config.get('SECRET_KEY', ''))}")
-                    logger.info(f"App SESSION_COOKIE_NAME: {current_app.config.get('SESSION_COOKIE_NAME')}")
-                    logger.info(f"App SESSION_COOKIE_SECURE: {current_app.config.get('SESSION_COOKIE_SECURE')}")
-                    logger.info(f"App SESSION_COOKIE_HTTPONLY: {current_app.config.get('SESSION_COOKIE_HTTPONLY')}")
-                    logger.info(f"App PERMANENT_SESSION_LIFETIME: {current_app.config.get('PERMANENT_SESSION_LIFETIME')}")
+
+                    logger.info(
+                        f"App SECRET_KEY length: {len(current_app.config.get('SECRET_KEY', ''))}"
+                    )
+                    logger.info(
+                        f"App SESSION_COOKIE_NAME: {current_app.config.get('SESSION_COOKIE_NAME')}"
+                    )
+                    logger.info(
+                        f"App SESSION_COOKIE_SECURE: {current_app.config.get('SESSION_COOKIE_SECURE')}"
+                    )
+                    logger.info(
+                        f"App SESSION_COOKIE_HTTPONLY: {current_app.config.get('SESSION_COOKIE_HTTPONLY')}"
+                    )
+                    logger.info(
+                        f"App PERMANENT_SESSION_LIFETIME: {current_app.config.get('PERMANENT_SESSION_LIFETIME')}"
+                    )
 
                     if request.is_json:
                         return jsonify({"success": True, "message": "Login successful"})
