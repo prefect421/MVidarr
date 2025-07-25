@@ -109,6 +109,67 @@ def init_default_settings():
         return False
 
 
+def ensure_default_credentials():
+    """Ensure default authentication credentials exist in settings"""
+    import hashlib
+
+    from src.database.connection import get_db
+
+    try:
+        with get_db() as session:
+            # Check if simple auth credentials exist
+            username_setting = (
+                session.query(Setting).filter_by(key="simple_auth_username").first()
+            )
+            password_setting = (
+                session.query(Setting).filter_by(key="simple_auth_password").first()
+            )
+
+            credentials_missing = not username_setting or not password_setting
+
+            if credentials_missing:
+                logger.info(
+                    "Default authentication credentials missing, creating them..."
+                )
+
+                # Default credentials
+                default_username = "admin"
+                default_password = "mvidarr"
+                password_hash = hashlib.sha256(default_password.encode()).hexdigest()
+
+                # Only create missing settings, don't update existing ones
+                if not username_setting:
+                    username_setting = Setting(
+                        key="simple_auth_username",
+                        value=default_username,
+                        description="Default authentication username",
+                    )
+                    session.add(username_setting)
+                    logger.info("Created default username setting")
+
+                if not password_setting:
+                    password_setting = Setting(
+                        key="simple_auth_password",
+                        value=password_hash,
+                        description="Default authentication password hash (SHA-256)",
+                    )
+                    session.add(password_setting)
+                    logger.info("Created default password setting")
+
+                session.commit()
+                logger.info(
+                    f"Default credentials created - Username: {default_username}, Password: {default_password}"
+                )
+            else:
+                logger.info("Default authentication credentials already exist")
+
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to ensure default credentials: {e}")
+        return False
+
+
 def create_admin_user():
     """Create default admin user"""
     from src.database.connection import get_db
@@ -208,6 +269,11 @@ def initialize_database():
     # Initialize default settings
     if not init_default_settings():
         logger.error("Failed to initialize default settings")
+        return False
+
+    # Ensure default authentication credentials exist
+    if not ensure_default_credentials():
+        logger.error("Failed to ensure default credentials")
         return False
 
     # Create admin user

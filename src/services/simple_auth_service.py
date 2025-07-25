@@ -225,3 +225,40 @@ class SimpleAuthService:
         except Exception as e:
             logger.error(f"Error initializing default credentials: {e}")
             return False, "", "", "Failed to initialize credentials"
+
+    @staticmethod
+    def ensure_default_credentials() -> bool:
+        """
+        Ensure default credentials exist in database if missing.
+        Does not overwrite existing credentials.
+
+        Returns:
+            True if credentials exist or were created successfully
+        """
+        try:
+            username, has_credentials = SimpleAuthService.get_credentials()
+
+            if has_credentials:
+                logger.debug("Authentication credentials already exist")
+                return True
+
+            logger.info("No authentication credentials found, creating defaults...")
+
+            # Create default credentials using the existing method
+            (
+                created,
+                username,
+                password,
+                message,
+            ) = SimpleAuthService.initialize_default_credentials()
+
+            if created:
+                logger.info(f"Default credentials created: {username}")
+                return True
+            else:
+                logger.error(f"Failed to create default credentials: {message}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error ensuring default credentials: {e}")
+            return False

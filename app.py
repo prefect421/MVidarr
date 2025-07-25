@@ -109,6 +109,13 @@ def create_app():
         SettingsService._cache_loaded = False
         SettingsService.load_cache()
         
+        # Ensure default authentication credentials exist
+        try:
+            from src.services.simple_auth_service import SimpleAuthService
+            SimpleAuthService.ensure_default_credentials()
+        except Exception as e:
+            app.logger.error(f"Failed to ensure default credentials: {e}")
+        
         if SettingsService.get_bool('auto_download_schedule_enabled', False):
             app.logger.info("Auto-download scheduling is enabled, starting scheduler...")
             scheduler_service.start()
