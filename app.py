@@ -37,11 +37,11 @@ def create_app():
     import os
     import secrets
     
-    # Use environment variable or generate a strong secret key
+    # Use environment variable or generate a consistent secret key
     secret_key = os.environ.get('MVIDARR_SECRET_KEY')
     if not secret_key:
-        # Use a more robust secret key for development
-        secret_key = 'mvidarr-dev-session-key-' + secrets.token_hex(32)
+        # Use a fixed secret key for development (consistent across restarts)
+        secret_key = 'mvidarr-dev-session-key-fixed-for-persistence-c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f'
         
     app.config['SECRET_KEY'] = secret_key
     
