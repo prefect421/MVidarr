@@ -67,8 +67,12 @@ class DynamicAuthMiddleware:
                 username = data.get("username", "").strip()
                 password = data.get("password", "")
 
-                # Simple check for admin credentials (can be enhanced)
-                if username == "admin" and password == "MVidarr@dmin123":
+                # Use SimpleAuthService for authentication
+                from src.services.simple_auth_service import SimpleAuthService
+
+                success, message = SimpleAuthService.authenticate(username, password)
+
+                if success:
                     # Clear any existing session data
                     session.clear()
 
@@ -93,14 +97,14 @@ class DynamicAuthMiddleware:
                         logger.debug(f"Redirecting authenticated user to: {next_url}")
                         return redirect(next_url)
                 else:
-                    logger.warning(f"Failed login attempt for user: {username}")
+                    logger.warning(
+                        f"Failed login attempt for user: {username} - {message}"
+                    )
 
                     if request.is_json:
-                        return jsonify({"error": "Invalid credentials"}), 401
+                        return jsonify({"error": message}), 401
                     else:
-                        return redirect(
-                            url_for("simple_login_page", error="Invalid credentials")
-                        )
+                        return redirect(url_for("simple_login_page", error=message))
 
             except Exception as e:
                 logger.error(f"Login error: {e}")
@@ -190,8 +194,11 @@ class DynamicAuthMiddleware:
                         400,
                     )
 
-                # Verify current password (for now, hardcoded admin check)
-                if username == "admin" and current_password != "MVidarr@dmin123":
+                # Verify current password using SimpleAuthService
+                from src.services.simple_auth_service import SimpleAuthService
+
+                success, _ = SimpleAuthService.authenticate(username, current_password)
+                if not success:
                     return jsonify({"error": "Current password is incorrect"}), 400
 
                 # Validate new password

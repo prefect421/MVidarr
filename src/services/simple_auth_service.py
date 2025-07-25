@@ -5,7 +5,6 @@ Replaces complex multi-user system with simple username/password authentication
 
 from typing import Optional, Tuple
 
-import bcrypt
 from flask import session as flask_session
 
 from src.services.settings_service import SettingsService
@@ -39,12 +38,14 @@ class SimpleAuthService:
             if len(password) < 6:
                 return False, "Password must be at least 6 characters long"
 
-            # Hash password
-            password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+            # Hash password using SHA-256 to match init_db.py format
+            import hashlib
 
-            # Store in settings
-            SettingsService.set("auth_username", username)
-            SettingsService.set("auth_password_hash", password_hash.decode("utf-8"))
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+            # Store in settings using same keys as init_db.py
+            SettingsService.set("simple_auth_username", username)
+            SettingsService.set("simple_auth_password", password_hash)
 
             logger.info(f"Credentials updated for user: {username}")
             return True, "Credentials updated successfully"
@@ -69,9 +70,9 @@ class SimpleAuthService:
             if not username or not password:
                 return False, "Username and password are required"
 
-            # Get stored credentials
-            stored_username = SettingsService.get("auth_username")
-            stored_password_hash = SettingsService.get("auth_password_hash")
+            # Get stored credentials using same keys as init_db.py
+            stored_username = SettingsService.get("simple_auth_username")
+            stored_password_hash = SettingsService.get("simple_auth_password")
 
             if not stored_username or not stored_password_hash:
                 return False, "No credentials configured"
@@ -81,10 +82,12 @@ class SimpleAuthService:
                 logger.warning(f"Failed login attempt with username: {username}")
                 return False, "Invalid username or password"
 
-            # Check password
-            if not bcrypt.checkpw(
-                password.encode("utf-8"), stored_password_hash.encode("utf-8")
-            ):
+            # Check password using SHA-256 to match init_db.py format
+            import hashlib
+
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+            if password_hash != stored_password_hash:
                 logger.warning(f"Failed login attempt for user: {username}")
                 return False, "Invalid username or password"
 
@@ -163,8 +166,8 @@ class SimpleAuthService:
         Returns:
             Tuple of (username, has_credentials)
         """
-        username = SettingsService.get("auth_username")
-        password_hash = SettingsService.get("auth_password_hash")
+        username = SettingsService.get("simple_auth_username")
+        password_hash = SettingsService.get("simple_auth_password")
         has_credentials = bool(username and password_hash)
         return username, has_credentials
 
@@ -177,14 +180,15 @@ class SimpleAuthService:
             True if password is still default, False otherwise
         """
         try:
-            stored_password_hash = SettingsService.get("auth_password_hash")
+            stored_password_hash = SettingsService.get("simple_auth_password")
             if not stored_password_hash:
                 return True  # No password set, assume default
 
-            # Test if default password matches stored hash
-            return bcrypt.checkpw(
-                "mvidarr".encode("utf-8"), stored_password_hash.encode("utf-8")
-            )
+            # Test if default password matches stored hash using SHA-256
+            import hashlib
+
+            default_hash = hashlib.sha256("mvidarr".encode()).hexdigest()
+            return default_hash == stored_password_hash
 
         except Exception:
             return True  # Assume default on error
