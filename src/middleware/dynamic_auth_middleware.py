@@ -298,6 +298,8 @@ class DynamicAuthMiddleware:
             "/auth/check",  # Authentication status check
             "/auth/test-session",  # Session testing endpoint
             "/simple-login",  # Our dynamic login page
+            "/api/health",  # Health check endpoint - must be accessible for Docker health checks
+            "/health",  # Health endpoints - should be accessible for monitoring
             "/static/",
             "/css/",
             "/js/",
