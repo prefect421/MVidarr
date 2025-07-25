@@ -427,6 +427,32 @@ def update_credentials():
         return jsonify({"error": "Failed to update credentials"}), 500
 
 
+@auth_bp.route("/credentials/reset", methods=["POST"])
+def reset_credentials():
+    """Reset authentication credentials to defaults (admin/mvidarr)"""
+    try:
+        from src.database.init_db import ensure_default_credentials
+
+        # Force reset to defaults
+        success = ensure_default_credentials(force_reset=True)
+
+        if success:
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Credentials reset to defaults",
+                    "username": "admin",
+                    "password": "mvidarr",
+                }
+            )
+        else:
+            return jsonify({"error": "Failed to reset credentials"}), 500
+
+    except Exception as e:
+        logger.error(f"Reset credentials error: {e}")
+        return jsonify({"error": "Failed to reset credentials"}), 500
+
+
 # Register the blueprint with the app
 def register_auth_routes(app):
     """Register authentication routes with Flask app"""

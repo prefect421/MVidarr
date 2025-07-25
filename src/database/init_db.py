@@ -109,7 +109,7 @@ def init_default_settings():
         return False
 
 
-def ensure_default_credentials():
+def ensure_default_credentials(force_reset=False):
     """Ensure default authentication credentials exist in settings"""
     import hashlib
 
@@ -127,17 +127,22 @@ def ensure_default_credentials():
 
             credentials_missing = not username_setting or not password_setting
 
-            if credentials_missing:
-                logger.info(
-                    "Default authentication credentials missing, creating them..."
-                )
+            if credentials_missing or force_reset:
+                if force_reset:
+                    logger.info(
+                        "Force resetting authentication credentials to defaults..."
+                    )
+                else:
+                    logger.info(
+                        "Default authentication credentials missing, creating them..."
+                    )
 
                 # Default credentials
                 default_username = "admin"
                 default_password = "mvidarr"
                 password_hash = hashlib.sha256(default_password.encode()).hexdigest()
 
-                # Only create missing settings, don't update existing ones
+                # Create or update username setting
                 if not username_setting:
                     username_setting = Setting(
                         key="simple_auth_username",
@@ -146,7 +151,11 @@ def ensure_default_credentials():
                     )
                     session.add(username_setting)
                     logger.info("Created default username setting")
+                else:
+                    username_setting.value = default_username
+                    logger.info("Updated username setting")
 
+                # Create or update password setting
                 if not password_setting:
                     password_setting = Setting(
                         key="simple_auth_password",
@@ -155,10 +164,13 @@ def ensure_default_credentials():
                     )
                     session.add(password_setting)
                     logger.info("Created default password setting")
+                else:
+                    password_setting.value = password_hash
+                    logger.info("Updated password setting")
 
                 session.commit()
                 logger.info(
-                    f"Default credentials created - Username: {default_username}, Password: {default_password}"
+                    f"Default credentials {'reset' if force_reset else 'created'} - Username: {default_username}, Password: {default_password}"
                 )
             else:
                 logger.info("Default authentication credentials already exist")
