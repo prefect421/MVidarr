@@ -111,9 +111,8 @@ def init_default_settings():
 
 def create_admin_user():
     """Create default admin user"""
-    import hashlib
-
     from src.database.connection import get_db
+    from src.database.models import UserRole
 
     try:
         with get_db() as session:
@@ -122,12 +121,11 @@ def create_admin_user():
 
             if existing_users == 0:
                 # Create default admin user
-                password_hash = hashlib.sha256("admin".encode()).hexdigest()
                 admin_user = User(
                     username="admin",
-                    password_hash=password_hash,
                     email="admin@localhost",
-                    is_admin=True,
+                    password="admin",
+                    role=UserRole.ADMIN,
                 )
                 session.add(admin_user)
                 session.commit()
