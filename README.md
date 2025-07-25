@@ -144,4 +144,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**MVidarr v2.0** - Built with ❤️ for music video enthusiasts
+**MVidarr v0.9.1** - Built with ❤️ for music video enthusiasts
