@@ -179,6 +179,18 @@ def init_db(app):
     # Store in app context for cleanup
     app.db_manager = db_manager
 
+    # Create database tables if they don't exist
+    try:
+        from src.database.init_db import initialize_database
+        logger.info("Creating database tables...")
+        if not initialize_database():
+            logger.error("Failed to initialize database tables")
+            raise RuntimeError("Database table initialization failed")
+        logger.info("Database tables initialized successfully")
+    except Exception as e:
+        logger.error(f"Database table initialization failed: {e}")
+        raise RuntimeError(f"Database table initialization failed: {e}")
+
     # Register cleanup on app teardown
     @app.teardown_appcontext
     def cleanup_db(error):

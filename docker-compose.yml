@@ -24,7 +24,7 @@ services:
       - DB_HOST=mariadb
       - DB_PORT=3306
       - DB_USER=${DB_USER:-mvidarr}
-      - DB_PASSWORD=${DB_PASSWORD:-secure_password}
+      - DB_PASSWORD=secure_password
       - DB_NAME=${DB_NAME:-mvidarr}
       - SECRET_KEY=${SECRET_KEY:-mvidarr-dev-key-change-in-production}
       - MVIDARR_SECRET_KEY=${SECRET_KEY:-mvidarr-dev-key-change-in-production}
@@ -60,7 +60,7 @@ services:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_password}
       - MYSQL_DATABASE=${DB_NAME:-mvidarr}
       - MYSQL_USER=${DB_USER:-mvidarr}
-      - MYSQL_PASSWORD=${DB_PASSWORD:-secure_password}
+      - MYSQL_PASSWORD=secure_password
       - MYSQL_CHARSET=utf8mb4
       - MYSQL_COLLATION=utf8mb4_unicode_ci
       - TZ=${TZ:-UTC}
