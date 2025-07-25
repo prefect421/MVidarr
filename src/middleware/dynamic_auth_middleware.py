@@ -133,7 +133,7 @@ class DynamicAuthMiddleware:
                 else:
                     return redirect(url_for("simple_login_page", error="Login failed"))
 
-        @app.route("/auth/logout", methods=["POST", "GET"])
+        @app.route("/auth/dynamic-logout", methods=["POST", "GET"])
         def logout():
             """Handle logout"""
             username = session.get("username", "unknown")

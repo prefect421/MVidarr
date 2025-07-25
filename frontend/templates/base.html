@@ -925,9 +925,21 @@
         
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
-                fetch('/auth/logout', { method: 'POST' })
-                    .then(response => response.json())
+                fetch('/auth/dynamic-logout', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => {
+                        console.log('Logout response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('Logout response data:', data);
                         if (data.success) {
                             // Hide user menu
                             const userMenu = document.getElementById('userMenu');
@@ -937,12 +949,13 @@
                             // Redirect to login page
                             window.location.href = '/simple-login';
                         } else {
-                            alert('Logout failed');
+                            console.error('Logout failed - response indicates failure:', data);
+                            alert('Logout failed: ' + (data.error || data.message || 'Unknown error'));
                         }
                     })
                     .catch(error => {
                         console.error('Error during logout:', error);
-                        alert('Logout failed');
+                        alert('Logout failed: ' + error.message);
                     });
             }
         }
