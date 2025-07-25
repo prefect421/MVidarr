@@ -142,6 +142,11 @@ def ensure_default_credentials(force_reset=False):
                 default_password = "mvidarr"
                 password_hash = hashlib.sha256(default_password.encode()).hexdigest()
 
+                logger.info(
+                    f"INIT: Creating default credentials - username='{default_username}', password='{default_password}'"
+                )
+                logger.info(f"INIT: Generated password hash='{password_hash}'")
+
                 # Create or update username setting
                 if not username_setting:
                     username_setting = Setting(
