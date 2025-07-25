@@ -1,28 +1,27 @@
 'Area: API':
-  - src/Lidarr.Api.V1/**/*
+  - src/api/**/*
 
-'Area: Db-migration':
-  - src/NzbDrone.Core/Datastore/Migration/*
+'Area: Database':
+  - src/database/**/*
 
-'Area: Download Clients':
-  - src/NzbDrone.Core/Download/Clients/**/*
+'Area: Services':
+  - src/services/**/*
 
-'Area: Import Lists':
-  - src/NzbDrone.Core/ImportLists/**/*
+'Area: Configuration':
+  - src/config/**/*
 
-'Area: Indexer':
-  - src/NzbDrone.Core/Indexers/**/*
-
-'Area: Notifications':
-  - src/NzbDrone.Core/Notifications/**/*
-
-'Area: Organizer':
-  - src/NzbDrone.Core/Organizer/**/*
-
-'Area: Parser':
-  - src/NzbDrone.Core/Parser/**/*
+'Area: Utils':
+  - src/utils/**/*
 
 'Area: UI':
-  - frontend/**/*
-  - package.json
-  - yarn.lock
+  - static/**/*
+  - templates/**/*
+
+'Area: Docker':
+  - docker-compose*.yml
+  - Dockerfile*
+
+'Area: Documentation':
+  - docs/**/*
+  - README.md
+  - '*.md'
