@@ -55,13 +55,15 @@ class SecurityManager:
         # Check if we're in development mode (accessing via HTTP)
         is_development = os.getenv("FLASK_ENV") != "production"
 
-        # Don't set SESSION_COOKIE_SECURE here - let app.py handle it
-        # This prevents conflicts with the main app configuration
+        # Don't override session settings that are already configured in app.py
+        # Only set security-specific settings that aren't conflicting
         app.config.update(
             SESSION_COOKIE_HTTPONLY=True,  # Prevent JavaScript access
             SESSION_COOKIE_SAMESITE="Lax",  # CSRF protection
-            PERMANENT_SESSION_LIFETIME=3600 * 8,  # 8 hours
         )
+
+        # Don't override PERMANENT_SESSION_LIFETIME - let app.py handle it
+        logger.info(f"Session lifetime from app config: {app.config.get('PERMANENT_SESSION_LIFETIME', 'not set')}")
 
         if is_development:
             logger.warning(
