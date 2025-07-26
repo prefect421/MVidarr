@@ -1964,12 +1964,62 @@ def refresh_video_metadata(video_id):
             logger.info(f"Searching for new match: {artist_name} - {video_title}")
             imvdb_data = imvdb_service.find_best_video_match(artist_name, video_title)
 
+        # If IMVDb search failed, try YouTube as fallback
+        youtube_metadata = None
         if not imvdb_data:
+            try:
+                logger.info(
+                    f"IMVDb search failed, trying YouTube: {artist_name} - {video_title}"
+                )
+                from src.services.youtube_service import youtube_service
+
+                search_query = f"{artist_name} {video_title}"
+                youtube_results = youtube_service.search_videos(
+                    search_query, max_results=1
+                )
+
+                if (
+                    youtube_results
+                    and "items" in youtube_results
+                    and youtube_results["items"]
+                ):
+                    video_item = youtube_results["items"][0]
+                    video_id_yt = video_item["id"]["videoId"]
+
+                    # Get detailed video information
+                    video_details = youtube_service.get_video_details(video_id_yt)
+                    if (
+                        video_details
+                        and "items" in video_details
+                        and video_details["items"]
+                    ):
+                        yt_video = video_details["items"][0]
+
+                        # Extract metadata from YouTube
+                        snippet = yt_video.get("snippet", {})
+                        youtube_metadata = {
+                            "source": "youtube",
+                            "youtube_id": video_id_yt,
+                            "title": snippet.get("title", video_title),
+                            "description": snippet.get("description", ""),
+                            "published_at": snippet.get("publishedAt"),
+                            "thumbnail_url": snippet.get("thumbnails", {})
+                            .get("high", {})
+                            .get("url"),
+                            "channel_title": snippet.get("channelTitle"),
+                            "tags": snippet.get("tags", []),
+                        }
+                        logger.info(f"Found YouTube metadata for: {video_title}")
+
+            except Exception as e:
+                logger.warning(f"YouTube metadata search failed: {e}")
+
+        if not imvdb_data and not youtube_metadata:
             return (
                 jsonify(
                     {
                         "success": False,
-                        "message": "No matching video found on IMVDb",
+                        "message": "No matching video found on IMVDb or YouTube",
                         "searched_for": f"{artist_name} - {video_title}",
                     }
                 ),
@@ -1977,7 +2027,13 @@ def refresh_video_metadata(video_id):
             )
 
         # Extract and update metadata
-        metadata = imvdb_service.extract_metadata(imvdb_data)
+        if imvdb_data:
+            metadata = imvdb_service.extract_metadata(imvdb_data)
+            metadata_source = "IMVDb"
+        else:
+            # Use YouTube metadata
+            metadata = youtube_metadata
+            metadata_source = "YouTube"
 
         # Now update the video in a fresh session
         with get_db() as session:
@@ -1989,19 +2045,45 @@ def refresh_video_metadata(video_id):
                     404,
                 )
 
-            # Update video with new metadata
-            video.imvdb_id = metadata.get("imvdb_id")
-            if metadata.get("year"):
-                video.year = metadata["year"]
-            if metadata.get("thumbnail_url"):
-                video.thumbnail_url = metadata["thumbnail_url"]
-            if metadata.get("directors"):
-                video.directors = metadata["directors"]
-            if metadata.get("producers"):
-                video.producers = metadata["producers"]
+            # Update video with new metadata based on source
+            if metadata_source == "IMVDb":
+                video.imvdb_id = metadata.get("imvdb_id")
+                if metadata.get("year"):
+                    video.year = metadata["year"]
+                if metadata.get("thumbnail_url"):
+                    video.thumbnail_url = metadata["thumbnail_url"]
+                if metadata.get("directors"):
+                    video.directors = metadata["directors"]
+                if metadata.get("producers"):
+                    video.producers = metadata["producers"]
 
-            # Store full IMVDb metadata
-            video.imvdb_metadata = metadata.get("raw_metadata", {})
+                # Store full IMVDb metadata
+                video.imvdb_metadata = metadata.get("raw_metadata", {})
+            else:
+                # YouTube metadata
+                if metadata.get("youtube_id"):
+                    video.youtube_id = metadata["youtube_id"]
+                    # Update URL if we don't have one
+                    if not video.url:
+                        video.url = (
+                            f"https://www.youtube.com/watch?v={metadata['youtube_id']}"
+                        )
+                if metadata.get("thumbnail_url"):
+                    video.thumbnail_url = metadata["thumbnail_url"]
+                if metadata.get("published_at"):
+                    # Extract year from published date
+                    try:
+                        from datetime import datetime
+
+                        published_date = datetime.fromisoformat(
+                            metadata["published_at"].replace("Z", "+00:00")
+                        )
+                        video.year = published_date.year
+                    except:
+                        pass
+
+                # Store YouTube metadata in custom field or use existing metadata field
+                video.youtube_metadata = metadata
 
             session.commit()
 
@@ -2026,15 +2108,20 @@ def refresh_video_metadata(video_id):
                 "producers": video.producers,
                 "created_at": video.created_at.isoformat(),
                 "metadata_refreshed": True,
+                "metadata_source": metadata_source,
+                "youtube_id": video.youtube_id
+                if hasattr(video, "youtube_id")
+                else None,
             }
 
             return (
                 jsonify(
                     {
                         "success": True,
-                        "message": "Metadata refreshed successfully",
+                        "message": f"Metadata refreshed successfully from {metadata_source}",
                         "video": updated_video,
-                        "imvdb_match": metadata,
+                        "metadata_match": metadata,
+                        "source": metadata_source,
                     }
                 ),
                 200,
@@ -2297,8 +2384,61 @@ def refresh_all_metadata():
                             artist_name, video_title
                         )
 
+                    # Try YouTube as fallback if IMVDb failed
+                    youtube_metadata = None
+                    if not imvdb_data:
+                        try:
+                            logger.debug(
+                                f"Trying YouTube fallback for: {video_title} by {artist_name}"
+                            )
+                            from src.services.youtube_service import youtube_service
+
+                            search_query = f"{artist_name} {video_title}"
+                            youtube_results = youtube_service.search_videos(
+                                search_query, max_results=1
+                            )
+
+                            if (
+                                youtube_results
+                                and "items" in youtube_results
+                                and youtube_results["items"]
+                            ):
+                                video_item = youtube_results["items"][0]
+                                video_id_yt = video_item["id"]["videoId"]
+
+                                # Get detailed video information
+                                video_details = youtube_service.get_video_details(
+                                    video_id_yt
+                                )
+                                if (
+                                    video_details
+                                    and "items" in video_details
+                                    and video_details["items"]
+                                ):
+                                    yt_video = video_details["items"][0]
+
+                                    # Extract metadata from YouTube
+                                    snippet = yt_video.get("snippet", {})
+                                    youtube_metadata = {
+                                        "source": "youtube",
+                                        "youtube_id": video_id_yt,
+                                        "title": snippet.get("title", video_title),
+                                        "description": snippet.get("description", ""),
+                                        "published_at": snippet.get("publishedAt"),
+                                        "thumbnail_url": snippet.get("thumbnails", {})
+                                        .get("high", {})
+                                        .get("url"),
+                                        "channel_title": snippet.get("channelTitle"),
+                                        "tags": snippet.get("tags", []),
+                                    }
+
+                        except Exception as yt_e:
+                            logger.debug(
+                                f"YouTube search failed for {video_title}: {yt_e}"
+                            )
+
                     if imvdb_data:
-                        # Extract and update metadata
+                        # Extract and update metadata from IMVDb
                         metadata = imvdb_service.extract_metadata(imvdb_data)
 
                         # Update video with new metadata
@@ -2316,10 +2456,40 @@ def refresh_all_metadata():
                         video.imvdb_metadata = metadata.get("raw_metadata", {})
 
                         updated += 1
-                        logger.info(f"Updated metadata for: {video_title}")
+                        logger.info(f"Updated metadata for: {video_title} (IMVDb)")
+
+                    elif youtube_metadata:
+                        # Update with YouTube metadata
+                        if youtube_metadata.get("youtube_id"):
+                            video.youtube_id = youtube_metadata["youtube_id"]
+                            # Update URL if we don't have one
+                            if not video.url:
+                                video.url = f"https://www.youtube.com/watch?v={youtube_metadata['youtube_id']}"
+                        if youtube_metadata.get("thumbnail_url"):
+                            video.thumbnail_url = youtube_metadata["thumbnail_url"]
+                        if youtube_metadata.get("published_at"):
+                            # Extract year from published date
+                            try:
+                                from datetime import datetime
+
+                                published_date = datetime.fromisoformat(
+                                    youtube_metadata["published_at"].replace(
+                                        "Z", "+00:00"
+                                    )
+                                )
+                                video.year = published_date.year
+                            except:
+                                pass
+
+                        # Store YouTube metadata
+                        video.youtube_metadata = youtube_metadata
+
+                        updated += 1
+                        logger.info(f"Updated metadata for: {video_title} (YouTube)")
+
                     else:
                         logger.debug(
-                            f"No IMVDb match found for: {video_title} by {artist_name}"
+                            f"No metadata found for: {video_title} by {artist_name}"
                         )
 
                     # Commit changes periodically to avoid long transactions
