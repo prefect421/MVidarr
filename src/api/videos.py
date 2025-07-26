@@ -1992,16 +1992,17 @@ def fix_title_artist_swap():
             error_details = []
 
             for video in problematic_videos:
+                # Capture video data while session is active
+                video_id = video.id
+                current_artist_name = video.artist.name if video.artist else None
+                current_title = video.title
+
                 try:
                     processed += 1
 
-                    # Get current values
-                    current_artist_name = video.artist.name if video.artist else None
-                    current_title = video.title
-
                     # Skip if we don't have an artist name to swap
                     if not current_artist_name:
-                        logger.warning(f"Video {video.id} has no artist name to swap")
+                        logger.warning(f"Video {video_id} has no artist name to swap")
                         continue
 
                     # Skip if the artist name looks like an actual artist (common artists)
@@ -2013,7 +2014,7 @@ def fix_title_artist_swap():
                     ]
                     if current_artist_name in common_artists:
                         logger.debug(
-                            f"Skipping video {video.id} - artist name '{current_artist_name}' looks like actual artist"
+                            f"Skipping video {video_id} - artist name '{current_artist_name}' looks like actual artist"
                         )
                         continue
 
@@ -2031,7 +2032,7 @@ def fix_title_artist_swap():
                             new_title = parts[1].strip()
 
                     change_record = {
-                        "video_id": video.id,
+                        "video_id": video_id,
                         "old_artist": current_artist_name,
                         "old_title": current_title,
                         "new_artist": new_artist_name,
@@ -2057,7 +2058,7 @@ def fix_title_artist_swap():
 
                         # Log the change
                         logger.info(
-                            f"Fixed video {video.id}: '{current_artist_name}' -> '{new_artist_name}' | '{current_title}' -> '{new_title}'"
+                            f"Fixed video {video_id}: '{current_artist_name}' -> '{new_artist_name}' | '{current_title}' -> '{new_title}'"
                         )
 
                         # Commit periodically to avoid long transactions
@@ -2070,8 +2071,8 @@ def fix_title_artist_swap():
                 except Exception as e:
                     errors += 1
                     error_msg = str(e)
-                    logger.error(f"Error processing video {video.id}: {error_msg}")
-                    error_details.append({"video_id": video.id, "error": error_msg})
+                    logger.error(f"Error processing video {video_id}: {error_msg}")
+                    error_details.append({"video_id": video_id, "error": error_msg})
 
             # Final commit if not dry run
             if not dry_run:

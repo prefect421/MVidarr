@@ -3311,11 +3311,11 @@ def cleanup_artists_with_zero_videos():
             deleted_count = 0
 
             for artist in artists_with_zero_videos:
-                try:
-                    # Store values we need before deletion
-                    artist_name = artist.name
-                    thumbnail_path = artist.thumbnail_path
+                # Store values we need before operations (capture outside try block)
+                artist_name = artist.name
+                thumbnail_path = artist.thumbnail_path
 
+                try:
                     # Remove thumbnail files if they exist
                     if thumbnail_path and os.path.exists(thumbnail_path):
                         os.remove(thumbnail_path)
@@ -3327,9 +3327,7 @@ def cleanup_artists_with_zero_videos():
                     logger.info(f"Deleted artist with 0 videos: {artist_name}")
 
                 except Exception as e:
-                    logger.error(
-                        f"Failed to delete artist {getattr(artist, 'name', 'Unknown')}: {e}"
-                    )
+                    logger.error(f"Failed to delete artist {artist_name}: {e}")
                     continue
 
             session.commit()
