@@ -2122,6 +2122,11 @@ def refresh_all_metadata():
         )  # Refresh even if IMVDb ID exists
         limit = data.get("limit", None)  # Limit number of videos to process
 
+        processed = 0
+        updated = 0
+        errors = 0
+        error_details = []
+
         with get_db() as session:
             query = session.query(Video).join(Video.artist)
 
@@ -2150,25 +2155,24 @@ def refresh_all_metadata():
 
             logger.info(f"Starting metadata refresh for {len(videos)} videos")
 
-            processed = 0
-            updated = 0
-            errors = 0
-            error_details = []
-
             for video in videos:
+                # Capture video data while session is active
+                video_id = video.id
+                video_title = video.title
+                artist_name = video.artist.name if video.artist else None
+                imvdb_id = video.imvdb_id
+
                 try:
                     processed += 1
-                    artist_name = video.artist.name if video.artist else None
-                    video_title = video.title
 
                     if not artist_name:
                         logger.warning(
-                            f"Skipping video {video.id}: No artist associated"
+                            f"Skipping video {video_id}: No artist associated"
                         )
                         errors += 1
                         error_details.append(
                             {
-                                "video_id": video.id,
+                                "video_id": video_id,
                                 "title": video_title,
                                 "error": "No artist associated",
                             }
@@ -2183,8 +2187,8 @@ def refresh_all_metadata():
                     imvdb_data = None
 
                     # If forcing refresh and we have an IMVDb ID, try to get detailed info
-                    if force_refresh and video.imvdb_id:
-                        imvdb_data = imvdb_service.get_video_by_id(video.imvdb_id)
+                    if force_refresh and imvdb_id:
+                        imvdb_data = imvdb_service.get_video_by_id(imvdb_id)
 
                     # If no IMVDb data yet, try searching
                     if not imvdb_data:
@@ -2224,9 +2228,9 @@ def refresh_all_metadata():
                 except Exception as e:
                     errors += 1
                     error_msg = str(e)
-                    logger.error(f"Error processing video {video.id}: {error_msg}")
+                    logger.error(f"Error processing video {video_id}: {error_msg}")
                     error_details.append(
-                        {"video_id": video.id, "title": video.title, "error": error_msg}
+                        {"video_id": video_id, "title": video_title, "error": error_msg}
                     )
 
             # Final commit
