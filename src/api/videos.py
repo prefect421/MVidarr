@@ -1217,8 +1217,11 @@ def search_video_thumbnails(video_id):
             if not video:
                 return jsonify({"error": "Video not found"}), 404
 
+            # Capture video attributes while session is active
             artist_name = video.artist.name if video.artist else "Unknown"
             video_title = video.title
+            video_url = video.url
+            video_imvdb_id = video.imvdb_id
 
             # Use video info for search if no custom query provided
             if not search_query:
@@ -1232,7 +1235,7 @@ def search_video_thumbnails(video_id):
                     youtube_id = None
 
                     # First try to extract from existing URL if available
-                    if video.url:
+                    if video_url:
                         import re
 
                         patterns = [
@@ -1242,11 +1245,11 @@ def search_video_thumbnails(video_id):
                         ]
 
                         logger.debug(
-                            f"Searching for YouTube thumbnails in URL: {video.url}"
+                            f"Searching for YouTube thumbnails in URL: {video_url}"
                         )
 
                         for pattern in patterns:
-                            match = re.search(pattern, video.url)
+                            match = re.search(pattern, video_url)
                             if match:
                                 youtube_id = match.group(1)
                                 logger.debug(f"Extracted YouTube ID: {youtube_id}")
@@ -1312,9 +1315,9 @@ def search_video_thumbnails(video_id):
                     video_details = None
 
                     # First try to get by existing IMVDb ID
-                    if video.imvdb_id:
-                        video_details = imvdb_service.get_video_by_id(video.imvdb_id)
-                        logger.debug(f"Retrieved IMVDb data using ID: {video.imvdb_id}")
+                    if video_imvdb_id:
+                        video_details = imvdb_service.get_video_by_id(video_imvdb_id)
+                        logger.debug(f"Retrieved IMVDb data using ID: {video_imvdb_id}")
 
                     # If no ID or no details found, try searching
                     if not video_details:
@@ -1427,33 +1430,33 @@ def search_video_thumbnails(video_id):
                 f"Found {len(results)} thumbnail options for video {video_id} (query: '{search_query}', sources: {sources})"
             )
 
-            # Add debugging info for empty results
-            if not results:
-                debug_info = {
-                    "video_url": video.url,
-                    "imvdb_id": video.imvdb_id,
-                    "sources_requested": sources,
-                    "has_youtube_url": bool(
-                        video.url
-                        and ("youtube.com" in video.url or "youtu.be" in video.url)
-                    ),
-                    "has_imvdb_id": bool(video.imvdb_id),
-                }
-                logger.warning(
-                    f"No thumbnail results found for video {video_id}. Debug info: {debug_info}"
-                )
-
-            return (
-                jsonify(
-                    {
-                        "results": results,
-                        "query": search_query,
-                        "sources_searched": sources,
-                        "total_results": len(results),
-                    }
+        # Add debugging info for empty results
+        if not results:
+            debug_info = {
+                "video_url": video_url,
+                "imvdb_id": video_imvdb_id,
+                "sources_requested": sources,
+                "has_youtube_url": bool(
+                    video_url
+                    and ("youtube.com" in video_url or "youtu.be" in video_url)
                 ),
-                200,
+                "has_imvdb_id": bool(video_imvdb_id),
+            }
+            logger.warning(
+                f"No thumbnail results found for video {video_id}. Debug info: {debug_info}"
             )
+
+        return (
+            jsonify(
+                {
+                    "results": results,
+                    "query": search_query,
+                    "sources_searched": sources,
+                    "total_results": len(results),
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         logger.error(f"Failed to search thumbnails for video {video_id}: {e}")
