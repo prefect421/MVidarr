@@ -30,7 +30,26 @@ def get_artists():
     """Get all tracked artists with search and filtering"""
     try:
         with get_db() as session:
-            query = session.query(Artist)
+            # Build query with video count subquery
+            video_count_subquery = (
+                session.query(
+                    Video.artist_id, func.count(Video.id).label("video_count")
+                )
+                .group_by(Video.artist_id)
+                .subquery()
+            )
+
+            query = (
+                session.query(Artist)
+                .outerjoin(
+                    video_count_subquery, Artist.id == video_count_subquery.c.artist_id
+                )
+                .add_columns(
+                    func.coalesce(video_count_subquery.c.video_count, 0).label(
+                        "video_count"
+                    )
+                )
+            )
 
             # Search functionality
             search_term = request.args.get("search", "").strip()
@@ -70,10 +89,13 @@ def get_artists():
             per_page = int(request.args.get("per_page", 50))
 
             total_count = query.count()
-            artists = query.offset((page - 1) * per_page).limit(per_page).all()
+            results = query.offset((page - 1) * per_page).limit(per_page).all()
 
             artists_list = []
-            for artist in artists:
+            for result in results:
+                artist = result[0]  # Artist object
+                video_count = result[1]  # video_count from subquery
+
                 artists_list.append(
                     {
                         "id": artist.id,
@@ -84,6 +106,11 @@ def get_artists():
                         "keywords": artist.keywords,
                         "monitored": artist.monitored,
                         "created_at": artist.created_at.isoformat(),
+                        "video_count": video_count,
+                        "has_thumbnail": bool(
+                            artist.thumbnail_url or artist.thumbnail_path
+                        ),
+                        "has_imvdb_data": bool(artist.imvdb_id),
                     }
                 )
 
@@ -3201,6 +3228,52 @@ def update_artist_metadata_from_imvdb(artist_id):
 
     except Exception as e:
         logger.error(f"Failed to update artist metadata from IMVDb: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@artists_bp.route("/bulk-edit", methods=["POST"])
+def bulk_edit_artists():
+    """Update multiple artists with bulk changes"""
+    try:
+        data = request.get_json()
+        if not data or "artist_ids" not in data or "updates" not in data:
+            return jsonify({"error": "artist_ids and updates required"}), 400
+
+        artist_ids = data["artist_ids"]
+        updates = data["updates"]
+
+        if not isinstance(artist_ids, list) or not artist_ids:
+            return jsonify({"error": "artist_ids must be a non-empty list"}), 400
+
+        updated_count = 0
+
+        with get_db() as session:
+            # Get artists to update
+            artists = session.query(Artist).filter(Artist.id.in_(artist_ids)).all()
+
+            for artist in artists:
+                # Update monitoring status
+                if "monitored" in updates:
+                    artist.monitored = updates["monitored"]
+
+                # Update auto-download
+                if "auto_download" in updates:
+                    artist.auto_download = updates["auto_download"]
+
+                # Update keywords
+                if "keywords" in updates:
+                    artist.keywords = updates["keywords"]
+
+                updated_count += 1
+
+            session.commit()
+
+            logger.info(f"Bulk updated {updated_count} artists")
+
+            return jsonify({"updated_count": updated_count, "error": None}), 200
+
+    except Exception as e:
+        logger.error(f"Failed to bulk update artists: {e}")
         return jsonify({"error": str(e)}), 500
 
 

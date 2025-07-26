@@ -524,7 +524,7 @@ function loadArtists(page = 1) {
                         <div class="artist-info">
                             <h3>${artist.name}</h3>
                             <div class="artist-stats">
-                                <span class="stat">Videos: Loading...</span>
+                                <span class="stat">Videos: ${artist.video_count || 0}</span>
                                 <span class="stat ${artist.monitored ? 'monitored' : 'not-monitored'}">
                                     ${artist.monitored ? 'Monitored' : 'Not Monitored'}
                                 </span>

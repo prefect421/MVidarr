@@ -913,14 +913,18 @@ def refresh_thumbnails():
 
         with get_db() as session:
             # Find videos with thumbnail_url but no thumbnail_path (include artist relationship)
-            # Only process YouTube URLs to avoid session issues with IMVDb refresh
+            # Process YouTube and Google Images URLs, exclude IMVDb URLs that likely expire
             videos = (
                 session.query(Video)
                 .join(Artist)
                 .filter(
                     Video.thumbnail_url.isnot(None),
                     Video.thumbnail_path.is_(None),
-                    Video.thumbnail_url.like("%youtube%"),  # Only YouTube URLs
+                    or_(
+                        Video.thumbnail_url.like("%youtube%"),
+                        Video.thumbnail_url.like("%googleusercontent%"),
+                        Video.thumbnail_url.like("%google.com%"),
+                    ),
                 )
                 .all()
             )

@@ -1982,6 +1982,204 @@ function handleVideoCardClick(event, videoId) {
     if (isInBulkSelectionMode() || event.ctrlKey || event.metaKey) {
         event.preventDefault();
         toggleVideoSelection(videoId);
+    } else {
+        // Double-click to edit video
+        if (event.detail === 2) {
+            editVideo(videoId);
+        }
+    }
+}
+
+function editVideo(videoId) {
+    // Set current video for thumbnail manager
+    window.currentEditVideoId = videoId;
+    
+    // Load video details for editing
+    fetch(`/api/videos/${videoId}`)
+        .then(response => response.json())
+        .then(video => {
+            showVideoEditModal(video);
+        })
+        .catch(error => {
+            console.error('Error loading video:', error);
+            showError('Failed to load video details');
+        });
+}
+
+function showVideoEditModal(video) {
+    const modalHtml = `
+        <div id="videoEditModal" class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+            <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>Edit Video: ${video.title}</h2>
+                    <button onclick="closeVideoEditModal()" style="float: right; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Title:</label>
+                        <input type="text" id="editVideoTitle" value="${video.title}" style="width: 100%; padding: 8px; margin: 5px 0;">
+                    </div>
+                    <div class="form-group">
+                        <label>Year:</label>
+                        <input type="number" id="editVideoYear" value="${video.year || ''}" style="width: 100%; padding: 8px; margin: 5px 0;">
+                    </div>
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select id="editVideoStatus" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <option value="pending" ${video.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="available" ${video.status === 'available' ? 'selected' : ''}>Available</option>
+                            <option value="downloaded" ${video.status === 'downloaded' ? 'selected' : ''}>Downloaded</option>
+                            <option value="archived" ${video.status === 'archived' ? 'selected' : ''}>Archived</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button onclick="openVideoThumbnailManager()" class="btn btn-primary">Manage Thumbnails</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="saveVideoChanges()" class="btn btn-primary">Save Changes</button>
+                    <button onclick="closeVideoEditModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeVideoEditModal() {
+    const modal = document.getElementById('videoEditModal');
+    if (modal) {
+        modal.remove();
+    }
+    window.currentEditVideoId = null;
+}
+
+function saveVideoChanges() {
+    const videoId = window.currentEditVideoId;
+    if (!videoId) return;
+    
+    const updates = {
+        title: document.getElementById('editVideoTitle').value,
+        year: parseInt(document.getElementById('editVideoYear').value) || null,
+        status: document.getElementById('editVideoStatus').value
+    };
+    
+    fetch(`/api/videos/${videoId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updates)
+    })
+    .then(response => response.json())
+    .then(data => {
+        showSuccess('Video updated successfully');
+        closeVideoEditModal();
+        loadVideos(); // Refresh the videos list
+    })
+    .catch(error => {
+        console.error('Error updating video:', error);
+        showError('Failed to update video');
+    });
+}
+
+function openVideoThumbnailManager() {
+    if (!window.currentEditVideoId) {
+        showError('No video selected for thumbnail management');
+        return;
+    }
+    
+    // Launch thumbnail search for the current video
+    searchVideoThumbnails(window.currentEditVideoId);
+}
+
+function searchVideoThumbnails(videoId) {
+    showSuccess('Searching for thumbnails...');
+    
+    fetch(`/api/videos/${videoId}/thumbnail/search`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showError(`Thumbnail search failed: ${data.error}`);
+            return;
+        }
+        
+        if (!data.thumbnails || data.thumbnails.length === 0) {
+            showError('No thumbnails found for this video');
+            return;
+        }
+        
+        showThumbnailSelectionModal(data.thumbnails, videoId);
+    })
+    .catch(error => {
+        console.error('Error searching thumbnails:', error);
+        showError('Failed to search for thumbnails');
+    });
+}
+
+function showThumbnailSelectionModal(thumbnails, videoId) {
+    const modalHtml = `
+        <div id="thumbnailSelectionModal" class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 10000;">
+            <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>Select Thumbnail</h2>
+                    <button onclick="closeThumbnailSelectionModal()" style="float: right; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="thumbnail-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+                        ${thumbnails.map((thumb, index) => `
+                            <div class="thumbnail-option" style="border: 2px solid #ddd; border-radius: 8px; padding: 10px; cursor: pointer; text-align: center;" onclick="selectThumbnail('${thumb.url}', ${videoId}, ${index})">
+                                <img src="${thumb.url}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'">
+                                <div style="margin-top: 8px; font-size: 12px;">
+                                    <div><strong>Source:</strong> ${thumb.source}</div>
+                                    <div><strong>Quality:</strong> ${thumb.quality}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeThumbnailSelectionModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function selectThumbnail(thumbnailUrl, videoId, index) {
+    fetch(`/api/videos/${videoId}/thumbnail`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            thumbnail_url: thumbnailUrl
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showSuccess('Thumbnail updated successfully');
+        closeThumbnailSelectionModal();
+        loadVideos(); // Refresh the videos list
+    })
+    .catch(error => {
+        console.error('Error updating thumbnail:', error);
+        showError('Failed to update thumbnail');
+    });
+}
+
+function closeThumbnailSelectionModal() {
+    const modal = document.getElementById('thumbnailSelectionModal');
+    if (modal) {
+        modal.remove();
     }
 }
 
@@ -3609,8 +3807,8 @@ function searchImvdbMatches() {
 }
 
 function showImvdbMatchModal(matches) {
-    // Remove any existing modal first
-    const existingModal = document.querySelector('.modal-overlay');
+    // Remove any existing IMVDb modal first
+    const existingModal = document.getElementById('imvdbSearchModal');
     if (existingModal) {
         existingModal.remove();
     }
@@ -3618,23 +3816,29 @@ function showImvdbMatchModal(matches) {
     console.log(`Creating modal with ${matches.length} matches`);
     
     const modal = document.createElement('div');
-    modal.className = 'modal-overlay imvdb-search-modal';
+    modal.className = 'imvdb-search-modal-overlay';
     modal.id = 'imvdbSearchModal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    modal.style.display = 'flex !important';
-    modal.style.justifyContent = 'center';
-    modal.style.alignItems = 'center';
-    modal.style.zIndex = '99999';
-    modal.style.overflowY = 'auto';
-    modal.style.padding = '20px';
-    modal.style.boxSizing = 'border-box';
-    modal.style.visibility = 'visible';
-    modal.style.opacity = '1';
+    
+    // Set all styles explicitly to ensure visibility
+    modal.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: rgba(0, 0, 0, 0.8) !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        z-index: 99999 !important;
+        overflow-y: auto !important;
+        padding: 20px !important;
+        box-sizing: border-box !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin: 0 !important;
+        border: none !important;
+    `;
     
     modal.innerHTML = `
         <div class="modal-content imvdb-match-modal" style="background: white; border-radius: 8px; padding: 20px; max-width: 90vw; max-height: 90vh; overflow: auto; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
@@ -3729,9 +3933,24 @@ function showImvdbMatchModal(matches) {
     console.log('Modal computed style:', window.getComputedStyle(modal));
     console.log('Modal zIndex:', modal.style.zIndex);
     console.log('Body children count:', document.body.children.length);
+    console.log('Modal display style:', modal.style.display);
+    console.log('Modal position style:', modal.style.position);
     
-    // Force reflow to ensure modal is displayed
+    // Force reflow and double-check visibility
     modal.offsetHeight;
+    
+    // Additional check after a brief delay
+    setTimeout(() => {
+        const modalCheck = document.getElementById('imvdbSearchModal');
+        if (modalCheck) {
+            console.log('Modal still exists after timeout');
+            console.log('Modal offsetWidth:', modalCheck.offsetWidth);
+            console.log('Modal offsetHeight:', modalCheck.offsetHeight);
+            console.log('Modal rect:', modalCheck.getBoundingClientRect());
+        } else {
+            console.log('Modal not found after timeout');
+        }
+    }, 100);
 }
 
 function closeImvdbMatchModal() {
