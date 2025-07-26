@@ -2321,43 +2321,92 @@ def fix_title_artist_swap():
 def refresh_all_metadata():
     """Refresh metadata from IMVDb for all videos"""
     try:
-        from src.services.imvdb_service import imvdb_service
-        from src.services.settings_service import settings
+        logger.info("Starting refresh-all-metadata endpoint")
 
-        # Force reload settings cache to ensure we have the latest API key
-        settings.reload_cache()
-        # IMVDb service will get the API key from settings automatically
+        try:
+            from src.services.imvdb_service import imvdb_service
 
-        # Get request parameters
-        data = request.get_json() or {}
-        force_refresh = data.get(
-            "force_refresh", False
-        )  # Refresh even if IMVDb ID exists
-        limit = data.get("limit", None)  # Limit number of videos to process
-        video_ids = data.get("video_ids", None)  # Specific video IDs to process
+            logger.info("Successfully imported imvdb_service")
+        except Exception as e:
+            logger.error(f"Failed to import imvdb_service: {e}")
+            return jsonify({"error": f"Import error: imvdb_service - {str(e)}"}), 500
 
-        processed = 0
-        updated = 0
-        errors = 0
-        error_details = []
+        try:
+            from src.services.settings_service import settings
 
-        with get_db() as session:
-            query = session.query(Video).join(Video.artist)
+            logger.info("Successfully imported settings")
+        except Exception as e:
+            logger.error(f"Failed to import settings: {e}")
+            return jsonify({"error": f"Import error: settings - {str(e)}"}), 500
 
-            # Filter by specific video IDs if provided
-            if video_ids:
-                query = query.filter(Video.id.in_(video_ids))
+        try:
+            # Force reload settings cache to ensure we have the latest API key
+            settings.reload_cache()
+            logger.info("Settings cache reloaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to reload settings cache: {e}")
+            return jsonify({"error": f"Settings reload error: {str(e)}"}), 500
 
-            # If not forcing refresh, only process videos without IMVDb metadata
-            if not force_refresh:
-                query = query.filter(Video.imvdb_id.is_(None))
+        try:
+            # Get request parameters
+            data = request.get_json() or {}
+            force_refresh = data.get("force_refresh", False)
+            limit = data.get("limit", None)
+            video_ids = data.get("video_ids", None)
+            logger.info(
+                f"Request params: force_refresh={force_refresh}, limit={limit}, video_ids={video_ids}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to parse request parameters: {e}")
+            return jsonify({"error": f"Request parsing error: {str(e)}"}), 500
 
-            if limit:
-                query = query.limit(limit)
+        try:
+            processed = 0
+            updated = 0
+            errors = 0
+            error_details = []
+            logger.info("Initializing counters and connecting to database")
 
-            videos = query.all()
+            # First, get list of videos to process
+            videos_to_process = []
+            with get_db() as session:
+                try:
+                    logger.info("Building database query")
+                    query = session.query(Video).join(Video.artist)
 
-            if not videos:
+                    # Filter by specific video IDs if provided
+                    if video_ids:
+                        query = query.filter(Video.id.in_(video_ids))
+                        logger.info(f"Filtering by video IDs: {len(video_ids)} videos")
+
+                    # If not forcing refresh, only process videos without IMVDb metadata
+                    if not force_refresh:
+                        query = query.filter(Video.imvdb_id.is_(None))
+                        logger.info("Filtering to videos without IMVDb metadata")
+
+                    if limit:
+                        query = query.limit(limit)
+                        logger.info(f"Limiting to {limit} videos")
+
+                    logger.info("Executing database query")
+                    videos = query.all()
+                    logger.info(f"Found {len(videos)} videos to process")
+                    
+                    # Extract video data while session is active
+                    for video in videos:
+                        videos_to_process.append({
+                            'id': video.id,
+                            'title': video.title,
+                            'artist_name': video.artist.name if video.artist else None,
+                            'imvdb_id': video.imvdb_id,
+                            'url': video.url
+                        })
+                        
+                except Exception as e:
+                    logger.error(f"Database query failed: {e}")
+                    return jsonify({"error": f"Database query error: {str(e)}"}), 500
+
+            if not videos_to_process:
                 return (
                     jsonify(
                         {
@@ -2371,14 +2420,14 @@ def refresh_all_metadata():
                     200,
                 )
 
-            logger.info(f"Starting metadata refresh for {len(videos)} videos")
+            logger.info(f"Starting metadata refresh for {len(videos_to_process)} videos")
 
-            for video in videos:
-                # Capture video data while session is active
-                video_id = video.id
-                video_title = video.title
-                artist_name = video.artist.name if video.artist else None
-                imvdb_id = video.imvdb_id
+            for video_data in videos_to_process:
+                # Use extracted video data
+                video_id = video_data['id']
+                video_title = video_data['title']
+                artist_name = video_data['artist_name']
+                imvdb_id = video_data['imvdb_id']
 
                 try:
                     processed += 1
@@ -2398,7 +2447,7 @@ def refresh_all_metadata():
                         continue
 
                     logger.info(
-                        f"Processing {processed}/{len(videos)}: {video_title} by {artist_name}"
+                        f"Processing {processed}/{len(videos_to_process)}: {video_title} by {artist_name}"
                     )
 
                     # Try to find match on IMVDb
@@ -2464,64 +2513,69 @@ def refresh_all_metadata():
                                 f"YouTube search failed for {video_title}: {yt_e}"
                             )
 
-                    if imvdb_data:
-                        # Extract and update metadata from IMVDb
-                        metadata = imvdb_service.extract_metadata(imvdb_data)
+                    if imvdb_data or youtube_metadata:
+                        # Update video in database
+                        with get_db() as update_session:
+                            video = update_session.query(Video).filter(Video.id == video_id).first()
+                            if video:
+                                if imvdb_data:
+                                    # Extract and update metadata from IMVDb
+                                    metadata = imvdb_service.extract_metadata(imvdb_data)
 
-                        # Update video with new metadata
-                        video.imvdb_id = metadata.get("imvdb_id")
-                        if metadata.get("year"):
-                            video.year = metadata["year"]
-                        if metadata.get("thumbnail_url"):
-                            video.thumbnail_url = metadata["thumbnail_url"]
-                        if metadata.get("directors"):
-                            video.directors = metadata["directors"]
-                        if metadata.get("producers"):
-                            video.producers = metadata["producers"]
+                                    # Update video with new metadata
+                                    video.imvdb_id = metadata.get("imvdb_id")
+                                    if metadata.get("year"):
+                                        video.year = metadata["year"]
+                                    if metadata.get("thumbnail_url"):
+                                        video.thumbnail_url = metadata["thumbnail_url"]
+                                    if metadata.get("directors"):
+                                        video.directors = metadata["directors"]
+                                    if metadata.get("producers"):
+                                        video.producers = metadata["producers"]
 
-                        # Store full IMVDb metadata
-                        video.imvdb_metadata = metadata.get("raw_metadata", {})
+                                    # Store full IMVDb metadata
+                                    video.imvdb_metadata = metadata.get("raw_metadata", {})
 
-                        updated += 1
-                        logger.info(f"Updated metadata for: {video_title} (IMVDb)")
+                                    updated += 1
+                                    logger.info(f"Updated metadata for: {video_title} (IMVDb)")
 
-                    elif youtube_metadata:
-                        # Update with YouTube metadata
-                        if youtube_metadata.get("youtube_id"):
-                            video.youtube_id = youtube_metadata["youtube_id"]
-                            # Update URL if we don't have one
-                            if not video.url:
-                                video.url = f"https://www.youtube.com/watch?v={youtube_metadata['youtube_id']}"
-                        if youtube_metadata.get("thumbnail_url"):
-                            video.thumbnail_url = youtube_metadata["thumbnail_url"]
-                        if youtube_metadata.get("published_at"):
-                            # Extract year from published date
-                            try:
-                                from datetime import datetime
+                                elif youtube_metadata:
+                                    # Update with YouTube metadata
+                                    if youtube_metadata.get("youtube_id"):
+                                        video.youtube_id = youtube_metadata["youtube_id"]
+                                        # Update URL if we don't have one
+                                        if not video.url:
+                                            video.url = f"https://www.youtube.com/watch?v={youtube_metadata['youtube_id']}"
+                                    if youtube_metadata.get("thumbnail_url"):
+                                        video.thumbnail_url = youtube_metadata["thumbnail_url"]
+                                    if youtube_metadata.get("published_at"):
+                                        # Extract year from published date
+                                        try:
+                                            from datetime import datetime
 
-                                published_date = datetime.fromisoformat(
-                                    youtube_metadata["published_at"].replace(
-                                        "Z", "+00:00"
-                                    )
-                                )
-                                video.year = published_date.year
-                            except:
-                                pass
+                                            published_date = datetime.fromisoformat(
+                                                youtube_metadata["published_at"].replace(
+                                                    "Z", "+00:00"
+                                                )
+                                            )
+                                            video.year = published_date.year
+                                        except:
+                                            pass
 
-                        # Store YouTube metadata
-                        video.youtube_metadata = youtube_metadata
+                                    # Store YouTube metadata
+                                    video.youtube_metadata = youtube_metadata
 
-                        updated += 1
-                        logger.info(f"Updated metadata for: {video_title} (YouTube)")
+                                    updated += 1
+                                    logger.info(f"Updated metadata for: {video_title} (YouTube)")
+
+                                update_session.commit()
+                            else:
+                                logger.warning(f"Video {video_id} not found for update")
 
                     else:
                         logger.debug(
                             f"No metadata found for: {video_title} by {artist_name}"
                         )
-
-                    # Commit changes periodically to avoid long transactions
-                    if processed % 10 == 0:
-                        session.commit()
 
                 except Exception as e:
                     errors += 1
@@ -2530,9 +2584,6 @@ def refresh_all_metadata():
                     error_details.append(
                         {"video_id": video_id, "title": video_title, "error": error_msg}
                     )
-
-            # Final commit
-            session.commit()
 
             logger.info(
                 f"Metadata refresh completed: {processed} processed, {updated} updated, {errors} errors"
@@ -2553,6 +2604,9 @@ def refresh_all_metadata():
                 ),
                 200,
             )
+        except Exception as e:
+            logger.error(f"Database operation failed during metadata refresh: {e}")
+            return jsonify({"error": f"Database operation error: {str(e)}"}), 500
 
     except Exception as e:
         import traceback
