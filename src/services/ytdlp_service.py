@@ -76,7 +76,32 @@ class YtDlpService:
 
             # Create output path: music_videos_path/Artist/
             output_dir = os.path.join(music_videos_path, clean_artist)
-            os.makedirs(output_dir, exist_ok=True)
+            
+            # Debug logging for permission issues
+            logger.info(f"Attempting to create directory: {output_dir}")
+            logger.info(f"Current working directory: {os.getcwd()}")
+            logger.info(f"Music videos path exists: {os.path.exists(music_videos_path)}")
+            logger.info(f"Music videos path writable: {os.access(music_videos_path, os.W_OK)}")
+            
+            try:
+                os.makedirs(output_dir, exist_ok=True, mode=0o755)
+                logger.info(f"Successfully created directory: {output_dir}")
+            except PermissionError as e:
+                logger.error(f"Permission denied creating {output_dir}: {e}")
+                logger.error(f"Parent directory permissions: {oct(os.stat(music_videos_path).st_mode)}")
+                logger.error(f"Parent directory owner: {os.stat(music_videos_path).st_uid}:{os.stat(music_videos_path).st_gid}")
+                
+                # Try alternative approach: create without specifying mode
+                try:
+                    logger.info("Attempting fallback directory creation without mode specification")
+                    os.makedirs(output_dir, exist_ok=True)
+                    logger.info(f"Fallback successful for directory: {output_dir}")
+                except Exception as fallback_e:
+                    logger.error(f"Fallback also failed: {fallback_e}")
+                    raise e  # Raise the original permission error
+            except Exception as e:
+                logger.error(f"Unexpected error creating {output_dir}: {e}")
+                raise
 
             # Create download entry
             download_id = self._get_next_id()

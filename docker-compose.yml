@@ -9,11 +9,17 @@ services:
           sleep 3;
         done;
         echo 'MariaDB is ready, starting application...';
+        echo 'Setting up user permissions...';
+        PUID=\$${PUID:-1000};
+        PGID=\$${PGID:-1000};
+        usermod -u \$$PUID mvidarr;
+        groupmod -g \$$PGID mvidarr;
         echo 'Creating required directories...';
         mkdir -p /app/data/database /app/data/thumbnails/artists /app/data/cache /app/data/downloads /app/data/logs /app/data/musicvideos /app/data/music_videos;
-        chown -R mvidarr:mvidarr /app/data;
+        chown -R \$$PUID:\$$PGID /app/data;
         touch /app/data/database/.initialized || true;
         echo 'Starting MVidarr application...';
+        umask \$${UMASK_SET:-022};
         cd /app && su mvidarr -c 'python3 app.py';
       "
     container_name: mvidarr
@@ -33,6 +39,9 @@ services:
       - DEBUG=${DEBUG:-false}
       - PYTHONUNBUFFERED=1
       - TZ=${TZ:-UTC}
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - UMASK_SET=${UMASK_SET:-022}
     volumes:
       - ${DOWNLOADS_PATH:-./downloads}:/app/data/downloads
       - ${MUSIC_VIDEOS_PATH:-./music_videos}:/app/data/musicvideos

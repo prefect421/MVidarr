@@ -1829,7 +1829,7 @@ def refresh_video_metadata(video_id):
 
         # Force reload settings cache to ensure we have the latest API key
         settings.reload_cache()
-        imvdb_service.api_key = settings.get("imvdb_api_key", "")
+        # IMVDb service will get the API key from settings automatically
 
         # First, get video data and close session to avoid binding issues
         with get_db() as session:
@@ -1941,8 +1941,11 @@ def refresh_video_metadata(video_id):
             )
 
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"Failed to refresh metadata for video {video_id}: {e}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Full traceback: {error_details}")
+        return jsonify({"error": str(e), "details": error_details}), 500
 
 
 @videos_bp.route("/fix-title-artist-swap", methods=["POST"])
@@ -2109,7 +2112,7 @@ def refresh_all_metadata():
 
         # Force reload settings cache to ensure we have the latest API key
         settings.reload_cache()
-        imvdb_service.api_key = settings.get("imvdb_api_key", "")
+        # IMVDb service will get the API key from settings automatically
 
         # Get request parameters
         data = request.get_json() or {}
@@ -2249,8 +2252,11 @@ def refresh_all_metadata():
             )
 
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"Failed to refresh all metadata: {e}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Full traceback: {error_details}")
+        return jsonify({"error": str(e), "details": error_details}), 500
 
 
 @videos_bp.route("/<int:video_id>", methods=["PUT"])
