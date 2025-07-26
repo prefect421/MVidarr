@@ -1209,7 +1209,7 @@ def search_video_thumbnails(video_id):
     try:
         data = request.get_json()
         search_query = data.get("search_query", "")
-        sources = data.get("sources", ["youtube", "imvdb"])
+        sources = data.get("sources", ["youtube", "imvdb", "google"])
 
         with get_db() as session:
             video = session.query(Video).filter(Video.id == video_id).first()
@@ -1226,29 +1226,50 @@ def search_video_thumbnails(video_id):
 
             results = []
 
-            # Search YouTube thumbnails if video has YouTube URL
-            if "youtube" in sources and video.url:
+            # Search YouTube thumbnails
+            if "youtube" in sources:
                 try:
-                    # Extract video ID from YouTube URL
-                    import re
-
                     youtube_id = None
-                    patterns = [
-                        r"(?:youtube\.com/watch\?v=|youtu\.be/)([^&\n?#]+)",
-                        r"youtube\.com/embed/([^&\n?#]+)",
-                        r"(?:youtube\.com/v/|youtube\.com/watch\?.*&v=)([^&\n?#]+)",
-                    ]
 
-                    logger.debug(
-                        f"Searching for YouTube thumbnails in URL: {video.url}"
-                    )
+                    # First try to extract from existing URL if available
+                    if video.url:
+                        import re
 
-                    for pattern in patterns:
-                        match = re.search(pattern, video.url)
-                        if match:
-                            youtube_id = match.group(1)
-                            logger.debug(f"Extracted YouTube ID: {youtube_id}")
-                            break
+                        patterns = [
+                            r"(?:youtube\.com/watch\?v=|youtu\.be/)([^&\n?#]+)",
+                            r"youtube\.com/embed/([^&\n?#]+)",
+                            r"(?:youtube\.com/v/|youtube\.com/watch\?.*&v=)([^&\n?#]+)",
+                        ]
+
+                        logger.debug(
+                            f"Searching for YouTube thumbnails in URL: {video.url}"
+                        )
+
+                        for pattern in patterns:
+                            match = re.search(pattern, video.url)
+                            if match:
+                                youtube_id = match.group(1)
+                                logger.debug(f"Extracted YouTube ID: {youtube_id}")
+                                break
+
+                    # If no URL or couldn't extract ID, try searching YouTube
+                    if not youtube_id:
+                        logger.info(
+                            f"No YouTube URL found, searching for: {search_query}"
+                        )
+                        try:
+                            from src.services.youtube_service import youtube_service
+
+                            search_results = youtube_service.search_videos(
+                                search_query, max_results=1
+                            )
+                            if search_results:
+                                youtube_id = search_results[0].get("video_id")
+                                logger.info(
+                                    f"Found YouTube video via search: {youtube_id}"
+                                )
+                        except Exception as search_e:
+                            logger.debug(f"YouTube search failed: {search_e}")
 
                     if youtube_id:
                         # YouTube provides multiple thumbnail qualities
@@ -1277,21 +1298,37 @@ def search_video_thumbnails(video_id):
                             f"Added {len(yt_thumbnails)} YouTube thumbnail options for video {video_id}"
                         )
                     else:
-                        logger.warning(
-                            f"Could not extract YouTube ID from URL: {video.url}"
-                        )
+                        logger.info(f"No YouTube thumbnails found for: {search_query}")
                 except Exception as e:
                     logger.warning(
                         f"Failed to get YouTube thumbnails for video {video_id}: {e}"
                     )
 
-            # Search IMVDb if video has IMVDb ID
-            if "imvdb" in sources and video.imvdb_id:
+            # Search IMVDb
+            if "imvdb" in sources:
                 try:
                     from src.services.imvdb_service import imvdb_service
 
-                    # Get video details from IMVDb which includes thumbnail information
-                    video_details = imvdb_service.get_video_by_id(video.imvdb_id)
+                    video_details = None
+
+                    # First try to get by existing IMVDb ID
+                    if video.imvdb_id:
+                        video_details = imvdb_service.get_video_by_id(video.imvdb_id)
+                        logger.debug(f"Retrieved IMVDb data using ID: {video.imvdb_id}")
+
+                    # If no ID or no details found, try searching
+                    if not video_details:
+                        logger.info(f"No IMVDb ID found, searching for: {search_query}")
+                        try:
+                            search_result = imvdb_service.find_best_video_match(
+                                artist_name, video_title
+                            )
+                            if search_result:
+                                video_details = search_result
+                                logger.info(f"Found IMVDb video via search")
+                        except Exception as search_e:
+                            logger.debug(f"IMVDb search failed: {search_e}")
+
                     if video_details:
                         # Extract thumbnail metadata using existing extract_metadata method
                         metadata = imvdb_service.extract_metadata(video_details)
@@ -1303,7 +1340,7 @@ def search_video_thumbnails(video_id):
                                     "url": thumbnail_url,
                                     "source": "imvdb",
                                     "quality": "original",
-                                    "title": f"{video.title} - IMVDb Original",
+                                    "title": f"{video_title} - IMVDb Original",
                                 }
                             ]
                             results.extend(imvdb_thumbnails)
@@ -1315,12 +1352,75 @@ def search_video_thumbnails(video_id):
                                 f"No thumbnail URL found in IMVDb data for video {video_id}"
                             )
                     else:
-                        logger.debug(
-                            f"No IMVDb video details found for ID {video.imvdb_id}"
-                        )
+                        logger.info(f"No IMVDb thumbnails found for: {search_query}")
                 except Exception as e:
                     logger.warning(
                         f"Failed to get IMVDb thumbnails for video {video_id}: {e}"
+                    )
+
+            # Search Google Images
+            if "google" in sources:
+                try:
+                    logger.info(f"Searching Google Images for: {search_query}")
+
+                    # Use requests to search Google Images
+                    from urllib.parse import quote
+
+                    import requests
+
+                    # Format query for image search
+                    image_query = f"{search_query} music video thumbnail"
+                    encoded_query = quote(image_query)
+
+                    # Google Images search URL
+                    search_url = f"https://www.google.com/search?q={encoded_query}&tbm=isch&safe=off"
+
+                    headers = {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                    }
+
+                    response = requests.get(search_url, headers=headers, timeout=10)
+                    if response.status_code == 200:
+                        # Simple regex to extract image URLs from the page
+                        import re
+
+                        # Look for image URLs in the page content
+                        image_pattern = r'"(https?://[^"]*\.(?:jpg|jpeg|png|webp))"'
+                        matches = re.findall(image_pattern, response.text)
+
+                        # Filter and clean up the results
+                        google_thumbnails = []
+                        seen_urls = set()
+
+                        for match in matches[:6]:  # Limit to first 6 results
+                            if match not in seen_urls and "encrypted" not in match:
+                                seen_urls.add(match)
+                                google_thumbnails.append(
+                                    {
+                                        "url": match,
+                                        "source": "google",
+                                        "quality": "varies",
+                                        "title": f"{video_title} - Google Images",
+                                    }
+                                )
+
+                        if google_thumbnails:
+                            results.extend(google_thumbnails)
+                            logger.info(
+                                f"Added {len(google_thumbnails)} Google Images results for video {video_id}"
+                            )
+                        else:
+                            logger.info(
+                                f"No Google Images results found for: {search_query}"
+                            )
+                    else:
+                        logger.warning(
+                            f"Google Images search failed with status: {response.status_code}"
+                        )
+
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to search Google Images for video {video_id}: {e}"
                     )
 
             logger.info(
