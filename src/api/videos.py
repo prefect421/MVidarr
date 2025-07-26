@@ -917,6 +917,7 @@ def refresh_thumbnails():
 
         with get_db() as session:
             # Build base query for videos with thumbnail_url but no thumbnail_path
+            # Include more URL types for broader thumbnail processing
             query = (
                 session.query(Video)
                 .join(Artist)
@@ -927,6 +928,13 @@ def refresh_thumbnails():
                         Video.thumbnail_url.like("%youtube%"),
                         Video.thumbnail_url.like("%googleusercontent%"),
                         Video.thumbnail_url.like("%google.com%"),
+                        Video.thumbnail_url.like("%ytimg%"),
+                        Video.thumbnail_url.like("%i.ytimg%"),
+                        # Also include direct image URLs
+                        Video.thumbnail_url.like("%.jpg%"),
+                        Video.thumbnail_url.like("%.jpeg%"),
+                        Video.thumbnail_url.like("%.png%"),
+                        Video.thumbnail_url.like("%.webp%"),
                     ),
                 )
             )
@@ -1022,7 +1030,23 @@ def refresh_thumbnails():
                 message_parts.append(f"failed {failed_count}")
 
             if not message_parts:
-                message = "No thumbnails needed processing"
+                # Check if there are any videos with thumbnail_url at all
+                total_videos_with_urls = (
+                    session.query(Video).filter(Video.thumbnail_url.isnot(None)).count()
+                )
+
+                if total_videos_with_urls == 0:
+                    message = "No videos found with thumbnail URLs"
+                else:
+                    already_downloaded = (
+                        session.query(Video)
+                        .filter(
+                            Video.thumbnail_url.isnot(None),
+                            Video.thumbnail_path.isnot(None),
+                        )
+                        .count()
+                    )
+                    message = f"No new thumbnails to download. Found {total_videos_with_urls} videos with thumbnail URLs, {already_downloaded} already have local thumbnails"
             else:
                 message = ", ".join(message_parts).capitalize()
 
