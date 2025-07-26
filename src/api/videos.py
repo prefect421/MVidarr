@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from flask import Blueprint, Response, jsonify, request, send_file
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 
 from src.database.connection import get_db
