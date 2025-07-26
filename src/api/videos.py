@@ -553,19 +553,28 @@ def get_video(video_id):
 def download_video(video_id):
     """Queue video for download"""
     try:
+        logger.info(f"Starting download for video {video_id}")
+
         with get_db() as session:
             video = session.query(Video).filter(Video.id == video_id).first()
 
             if not video:
+                logger.warning(f"Video {video_id} not found")
                 return jsonify({"error": "Video not found"}), 404
+
+            logger.info(f"Found video: {video.title}")
 
             # Store video data for URL resolution
             artist_name = video.artist.name if video.artist else "Unknown Artist"
+            logger.info(f"Artist: {artist_name}")
 
             # Resolve video URL using helper function
+            logger.info("Attempting to resolve video URL")
             video_url = resolve_video_url(video, session)
+            logger.info(f"Resolved URL: {video_url}")
 
             if not video_url:
+                logger.warning(f"No URL found for video {video_id}")
                 return (
                     jsonify(
                         {
@@ -576,9 +585,13 @@ def download_video(video_id):
                 )
 
             # Import ytdlp service
+            logger.info("Importing ytdlp service")
             from src.services.ytdlp_service import ytdlp_service
 
             # Check if video is already downloaded
+            logger.info(
+                f"Checking if video is already downloaded - status: {video.status}, local_path: '{video.local_path}'"
+            )
             status_value = (
                 video.status.value if hasattr(video.status, "value") else video.status
             )
@@ -588,21 +601,34 @@ def download_video(video_id):
                 and video.local_path.strip()  # Ensure path is not empty or whitespace
                 and os.path.exists(video.local_path)
             ):
+                logger.info("Video is already downloaded")
                 return (
                     jsonify({"success": False, "error": "Video is already downloaded"}),
                     400,
                 )
 
             # Add download to yt-dlp queue
-            result = ytdlp_service.add_music_video_download(
-                artist=artist_name,
-                title=video.title,
-                url=video_url,
-                quality="best",
-                video_id=video_id,
+            logger.info(
+                f"Calling ytdlp_service.add_music_video_download with artist='{artist_name}', title='{video.title}', url='{video_url}'"
             )
+            try:
+                result = ytdlp_service.add_music_video_download(
+                    artist=artist_name,
+                    title=video.title,
+                    url=video_url,
+                    quality="best",
+                    video_id=video_id,
+                )
+                logger.info(f"ytdlp_service result: {result}")
+            except Exception as ytdlp_error:
+                logger.error(f"ytdlp_service error: {ytdlp_error}")
+                return (
+                    jsonify({"error": f"Download service error: {str(ytdlp_error)}"}),
+                    500,
+                )
 
             if result and result.get("success"):
+                logger.info("Download queued successfully, updating video status")
                 # Update video status to indicate download started
                 # Re-query the video object to ensure it's bound to the current session
                 video = session.query(Video).filter(Video.id == video_id).first()
@@ -629,10 +655,15 @@ def download_video(video_id):
                     if result
                     else "MeTube service unavailable"
                 )
+                logger.error(f"Download failed: {error_msg}")
                 return jsonify({"success": False, "error": error_msg}), 500
 
     except Exception as e:
+        import traceback
+
+        error_details = traceback.format_exc()
         logger.error(f"Failed to download video {video_id}: {e}")
+        logger.error(f"Full traceback: {error_details}")
         return jsonify({"error": str(e)}), 500
 
 
