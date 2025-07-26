@@ -292,7 +292,10 @@ function toastConfirm(message, onConfirm, onCancel = null, options = {}) {
 
     // Event handlers
     const cleanup = () => {
-        document.body.removeChild(overlay);
+        if (overlay && overlay.parentNode === document.body) {
+            document.body.removeChild(overlay);
+        }
+        document.removeEventListener('keydown', handleEscape);
     };
 
     cancelBtn.addEventListener('click', () => {
@@ -317,7 +320,6 @@ function toastConfirm(message, onConfirm, onCancel = null, options = {}) {
         if (e.key === 'Escape') {
             cleanup();
             if (onCancel) onCancel();
-            document.removeEventListener('keydown', handleEscape);
         }
     };
     document.addEventListener('keydown', handleEscape);

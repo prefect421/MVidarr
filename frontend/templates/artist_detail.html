@@ -3673,8 +3673,6 @@ function showImvdbMatchModal(matches) {
         </div>
     `;
     
-    document.body.appendChild(modal);
-    
     // Ensure modal stays within viewport bounds
     const modalContent = modal.querySelector('.imvdb-match-modal');
     modalContent.style.maxHeight = '85vh';
@@ -3704,6 +3702,9 @@ function showImvdbMatchModal(matches) {
             closeImvdbMatchModal();
         }
     });
+    
+    // Add modal to DOM
+    document.body.appendChild(modal);
 }
 
 function closeImvdbMatchModal() {
