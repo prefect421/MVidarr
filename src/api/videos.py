@@ -1942,6 +1942,7 @@ def refresh_video_metadata(video_id):
 
     except Exception as e:
         import traceback
+
         error_details = traceback.format_exc()
         logger.error(f"Failed to refresh metadata for video {video_id}: {e}")
         logger.error(f"Full traceback: {error_details}")
@@ -2253,6 +2254,7 @@ def refresh_all_metadata():
 
     except Exception as e:
         import traceback
+
         error_details = traceback.format_exc()
         logger.error(f"Failed to refresh all metadata: {e}")
         logger.error(f"Full traceback: {error_details}")
