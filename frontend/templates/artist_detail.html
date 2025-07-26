@@ -3947,6 +3947,20 @@ function showImvdbMatchModal(matches) {
             console.log('Modal offsetWidth:', modalCheck.offsetWidth);
             console.log('Modal offsetHeight:', modalCheck.offsetHeight);
             console.log('Modal rect:', modalCheck.getBoundingClientRect());
+            console.log('Modal visibility:', window.getComputedStyle(modalCheck).visibility);
+            console.log('Modal display:', window.getComputedStyle(modalCheck).display);
+            console.log('Modal opacity:', window.getComputedStyle(modalCheck).opacity);
+            console.log('Modal z-index:', window.getComputedStyle(modalCheck).zIndex);
+            
+            // Try to force visibility
+            modalCheck.style.visibility = 'visible';
+            modalCheck.style.display = 'flex';
+            modalCheck.style.opacity = '1';
+            modalCheck.style.zIndex = '999999';
+            
+            // Add a bright background for testing
+            modalCheck.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+            console.log('Applied visibility fixes');
         } else {
             console.log('Modal not found after timeout');
         }

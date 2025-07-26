@@ -911,10 +911,13 @@ def refresh_thumbnails():
     try:
         from src.services.thumbnail_service import thumbnail_service
 
+        # Get request parameters
+        data = request.get_json() or {}
+        video_ids = data.get("video_ids", None)
+
         with get_db() as session:
-            # Find videos with thumbnail_url but no thumbnail_path (include artist relationship)
-            # Process YouTube and Google Images URLs, exclude IMVDb URLs that likely expire
-            videos = (
+            # Build base query for videos with thumbnail_url but no thumbnail_path
+            query = (
                 session.query(Video)
                 .join(Artist)
                 .filter(
@@ -926,8 +929,13 @@ def refresh_thumbnails():
                         Video.thumbnail_url.like("%google.com%"),
                     ),
                 )
-                .all()
             )
+
+            # Filter by specific video IDs if provided
+            if video_ids:
+                query = query.filter(Video.id.in_(video_ids))
+
+            videos = query.all()
 
             downloaded_count = 0
             skipped_count = 0
@@ -2290,10 +2298,10 @@ def refresh_all_metadata():
     """Refresh metadata from IMVDb for all videos"""
     try:
         from src.services.imvdb_service import imvdb_service
-        from src.services.settings_service import settings
+        from src.services.settings_service import SettingsService
 
         # Force reload settings cache to ensure we have the latest API key
-        settings.reload_cache()
+        SettingsService.reload_cache()
         # IMVDb service will get the API key from settings automatically
 
         # Get request parameters
@@ -2302,6 +2310,7 @@ def refresh_all_metadata():
             "force_refresh", False
         )  # Refresh even if IMVDb ID exists
         limit = data.get("limit", None)  # Limit number of videos to process
+        video_ids = data.get("video_ids", None)  # Specific video IDs to process
 
         processed = 0
         updated = 0
@@ -2310,6 +2319,10 @@ def refresh_all_metadata():
 
         with get_db() as session:
             query = session.query(Video).join(Video.artist)
+
+            # Filter by specific video IDs if provided
+            if video_ids:
+                query = query.filter(Video.id.in_(video_ids))
 
             # If not forcing refresh, only process videos without IMVDb metadata
             if not force_refresh:

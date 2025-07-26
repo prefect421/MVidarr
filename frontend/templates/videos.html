@@ -652,7 +652,6 @@ body.light-theme .search-field select:focus {
         <button onclick="toggleSearchPanel()" class="btn btn-secondary">Search</button>
         <button onclick="refreshThumbnails()" class="btn btn-secondary">Refresh Thumbnails</button>
         <button onclick="refreshAllMetadata()" class="btn btn-secondary">Refresh All Metadata</button>
-        <button onclick="refreshAllMetadataForce()" class="btn btn-warning">Force Refresh All Metadata</button>
         
         <div class="bulk-actions" style="margin-left: 20px; display: inline-block;">
             <label>
@@ -1605,9 +1604,21 @@ function exportVideoSearchResults() {
 }
 
 function refreshThumbnails() {
-    toastConfirm('Download thumbnails for videos that are missing them?', () => {
+    const selectedVideoIds = getSelectedVideoIds();
+    const isSelectedVideos = selectedVideoIds.length > 0;
+    const message = isSelectedVideos 
+        ? `Download thumbnails for ${selectedVideoIds.length} selected videos that are missing them?`
+        : 'Download thumbnails for all videos that are missing them?';
+        
+    toastConfirm(message, () => {
+        const requestBody = isSelectedVideos ? { video_ids: selectedVideoIds } : {};
+        
         fetch('/api/videos/refresh-thumbnails', {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
         })
         .then(response => response.json())
         .then(result => {
@@ -2144,21 +2155,33 @@ function refreshVideoMetadata(id) {
 }
 
 function refreshAllMetadata() {
-    toastConfirm('Refresh metadata from IMVDb for all videos that don\'t have IMVDb data? This may take several minutes.', () => {
+    const selectedVideoIds = getSelectedVideoIds();
+    const isSelectedVideos = selectedVideoIds.length > 0;
+    const message = isSelectedVideos 
+        ? `Refresh metadata from IMVDb for ${selectedVideoIds.length} selected videos that don't have IMVDb data? This may take several minutes.`
+        : 'Refresh metadata from IMVDb for all videos that don\'t have IMVDb data? This may take several minutes.';
+        
+    toastConfirm(message, () => {
         const button = event.target;
         const originalText = button.textContent;
         button.textContent = 'Refreshing...';
         button.disabled = true;
+        
+        const requestBody = {
+            force_refresh: false,
+            limit: isSelectedVideos ? selectedVideoIds.length : 100  // Process selected videos or first 100
+        };
+        
+        if (isSelectedVideos) {
+            requestBody.video_ids = selectedVideoIds;
+        }
         
         fetch('/api/videos/refresh-all-metadata', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                force_refresh: false,
-                limit: 100  // Process first 100 videos to avoid timeouts
-            })
+            body: JSON.stringify(requestBody)
         })
         .then(response => response.json())
         .then(result => {
@@ -2182,44 +2205,6 @@ function refreshAllMetadata() {
     });
 }
 
-function refreshAllMetadataForce() {
-    toastConfirm('Force refresh metadata from IMVDb for ALL videos? This will re-fetch data even for videos that already have IMVDb metadata. This may take a very long time.', () => {
-        const button = event.target;
-        const originalText = button.textContent;
-        button.textContent = 'Force Refreshing...';
-        button.disabled = true;
-        
-        fetch('/api/videos/refresh-all-metadata', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                force_refresh: true,
-                limit: 50  // Smaller limit for force refresh
-            })
-        })
-        .then(response => response.json())
-        .then(result => {
-            button.textContent = originalText;
-            button.disabled = false;
-            
-            if (result.error) {
-                showError('Error: ' + result.error);
-            } else {
-                const message = `Force metadata refresh completed!\n\nProcessed: ${result.processed}\nUpdated: ${result.updated}\nErrors: ${result.errors}`;
-                showSuccess(message);
-                loadVideos(); // Refresh the video list
-            }
-        })
-        .catch(error => {
-            console.error('Error force refreshing all metadata:', error);
-            showError('Error refreshing metadata');
-            button.textContent = originalText;
-            button.disabled = false;
-        });
-    });
-}
 
 function deleteVideo(id) {
     toastConfirm('Are you sure you want to delete this video? This action cannot be undone.', () => {
@@ -2708,6 +2693,7 @@ function deleteSelectedVideos() {
                             <div class="checkbox-group">
                                 <label><input type="checkbox" id="searchYoutube" checked> YouTube</label>
                                 <label><input type="checkbox" id="searchImvdb" checked> IMVDb</label>
+                                <label><input type="checkbox" id="searchGoogle" checked> Google Images</label>
                             </div>
                         </div>
                         <div class="form-actions">
@@ -3062,23 +3048,27 @@ function searchVideoThumbnails() {
     
     const youtubeCheckbox = document.getElementById('searchYoutube');
     const imvdbCheckbox = document.getElementById('searchImvdb');
+    const googleCheckbox = document.getElementById('searchGoogle');
     
     console.log('YouTube checkbox element:', youtubeCheckbox);
     console.log('IMVDb checkbox element:', imvdbCheckbox);
+    console.log('Google checkbox element:', googleCheckbox);
     
-    if (!youtubeCheckbox || !imvdbCheckbox) {
+    if (!youtubeCheckbox || !imvdbCheckbox || !googleCheckbox) {
         showError('Search checkboxes not found');
         return;
     }
     
     const includeYoutube = youtubeCheckbox.checked;
     const includeImvdb = imvdbCheckbox.checked;
+    const includeGoogle = googleCheckbox.checked;
     
-    console.log('YouTube checked:', includeYoutube, 'IMVDb checked:', includeImvdb);
+    console.log('YouTube checked:', includeYoutube, 'IMVDb checked:', includeImvdb, 'Google checked:', includeGoogle);
     
     const sources = [];
     if (includeYoutube) sources.push('youtube');
     if (includeImvdb) sources.push('imvdb');
+    if (includeGoogle) sources.push('google');
     
     if (sources.length === 0) {
         showError('Please select at least one search source');
