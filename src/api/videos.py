@@ -200,6 +200,7 @@ def _trigger_video_download(video_id):
             if (
                 status_value == "DOWNLOADED"
                 and video.local_path
+                and video.local_path.strip()  # Ensure path is not empty or whitespace
                 and os.path.exists(video.local_path)
             ):
                 return {"success": False, "error": "Video is already downloaded"}
@@ -584,6 +585,7 @@ def download_video(video_id):
             if (
                 status_value == "DOWNLOADED"
                 and video.local_path
+                and video.local_path.strip()  # Ensure path is not empty or whitespace
                 and os.path.exists(video.local_path)
             ):
                 return (
