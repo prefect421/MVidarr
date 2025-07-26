@@ -241,6 +241,7 @@
                             <div class="checkbox-group">
                                 <label><input type="checkbox" id="searchYoutube" checked> YouTube</label>
                                 <label><input type="checkbox" id="searchImvdb" checked> IMVDb</label>
+                                <label><input type="checkbox" id="searchGoogle" checked> Google</label>
                             </div>
                         </div>
                         <div class="form-actions">
@@ -488,21 +489,25 @@ function searchVideoThumbnails() {
     
     const youtubeCheckbox = document.getElementById('searchYoutube');
     const imvdbCheckbox = document.getElementById('searchImvdb');
+    const googleCheckbox = document.getElementById('searchGoogle');
     
     console.log('YouTube checkbox element:', youtubeCheckbox);
     console.log('IMVDb checkbox element:', imvdbCheckbox);
+    console.log('Google checkbox element:', googleCheckbox);
     
-    if (!youtubeCheckbox || !imvdbCheckbox) {
+    if (!youtubeCheckbox || !imvdbCheckbox || !googleCheckbox) {
         showError('Search checkboxes not found');
         return;
     }
     
     const includeYoutube = youtubeCheckbox.checked;
     const includeImvdb = imvdbCheckbox.checked;
+    const includeGoogle = googleCheckbox.checked;
     
     const sources = [];
     if (includeYoutube) sources.push('youtube');
     if (includeImvdb) sources.push('imvdb');
+    if (includeGoogle) sources.push('google');
     
     console.log('Sources array:', sources);
     

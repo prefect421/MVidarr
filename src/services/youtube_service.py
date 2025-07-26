@@ -196,3 +196,9 @@ class YouTubeService:
                 "success": False,
                 "message": f"YouTube API: Connection test failed - {str(e)}",
             }
+
+
+# Convenience instance
+from .settings_service import settings
+
+youtube_service = YouTubeService(settings)

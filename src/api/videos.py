@@ -1229,82 +1229,76 @@ def search_video_thumbnails(video_id):
 
             results = []
 
-            # Search YouTube thumbnails
-            if "youtube" in sources:
+            # 1. First check video URL for thumbnails (highest priority)
+            youtube_id = None
+
+            # Try to extract YouTube ID from existing URL if available
+            if video_url:
+                import re
+
+                patterns = [
+                    r"(?:youtube\.com/watch\?v=|youtu\.be/)([^&\n?#]+)",
+                    r"youtube\.com/embed/([^&\n?#]+)",
+                    r"(?:youtube\.com/v/|youtube\.com/watch\?.*&v=)([^&\n?#]+)",
+                ]
+
+                logger.debug(f"Checking video URL for YouTube ID: {video_url}")
+                for pattern in patterns:
+                    match = re.search(pattern, video_url)
+                    if match:
+                        youtube_id = match.group(1)
+                        logger.info(
+                            f"Extracted YouTube ID from video URL: {youtube_id}"
+                        )
+                        break
+
+            # 2. Search YouTube by artist - song title if no URL or ID found
+            if not youtube_id and "youtube" in sources:
                 try:
-                    youtube_id = None
+                    logger.info(f"Searching YouTube for: {search_query}")
+                    from src.services.youtube_service import youtube_service
 
-                    # First try to extract from existing URL if available
-                    if video_url:
-                        import re
+                    search_results = youtube_service.search_videos(
+                        search_query, max_results=1
+                    )
+                    if search_results["success"] and search_results["results"]:
+                        # Get video ID from YouTube API response format
+                        first_result = search_results["results"][0]
+                        youtube_id = first_result["id"]["videoId"]
+                        logger.info(f"Found YouTube video via search: {youtube_id}")
+                except Exception as e:
+                    logger.warning(f"YouTube search failed for '{search_query}': {e}")
 
-                        patterns = [
-                            r"(?:youtube\.com/watch\?v=|youtu\.be/)([^&\n?#]+)",
-                            r"youtube\.com/embed/([^&\n?#]+)",
-                            r"(?:youtube\.com/v/|youtube\.com/watch\?.*&v=)([^&\n?#]+)",
-                        ]
-
-                        logger.debug(
-                            f"Searching for YouTube thumbnails in URL: {video_url}"
-                        )
-
-                        for pattern in patterns:
-                            match = re.search(pattern, video_url)
-                            if match:
-                                youtube_id = match.group(1)
-                                logger.debug(f"Extracted YouTube ID: {youtube_id}")
-                                break
-
-                    # If no URL or couldn't extract ID, try searching YouTube
-                    if not youtube_id:
-                        logger.info(
-                            f"No YouTube URL found, searching for: {search_query}"
-                        )
-                        try:
-                            from src.services.youtube_service import youtube_service
-
-                            search_results = youtube_service.search_videos(
-                                search_query, max_results=1
-                            )
-                            if search_results:
-                                youtube_id = search_results[0].get("video_id")
-                                logger.info(
-                                    f"Found YouTube video via search: {youtube_id}"
-                                )
-                        except Exception as search_e:
-                            logger.debug(f"YouTube search failed: {search_e}")
-
-                    if youtube_id:
-                        # YouTube provides multiple thumbnail qualities
-                        yt_thumbnails = [
-                            {
-                                "url": f"https://img.youtube.com/vi/{youtube_id}/maxresdefault.jpg",
-                                "source": "youtube",
-                                "quality": "maxres",
-                                "title": f"{video_title} - Max Resolution",
-                            },
-                            {
-                                "url": f"https://img.youtube.com/vi/{youtube_id}/hqdefault.jpg",
-                                "source": "youtube",
-                                "quality": "hq",
-                                "title": f"{video_title} - High Quality",
-                            },
-                            {
-                                "url": f"https://img.youtube.com/vi/{youtube_id}/mqdefault.jpg",
-                                "source": "youtube",
-                                "quality": "mq",
-                                "title": f"{video_title} - Medium Quality",
-                            },
-                        ]
-                        results.extend(yt_thumbnails)
-                        logger.info(
-                            f"Added {len(yt_thumbnails)} YouTube thumbnail options for video {video_id}"
-                        )
-                    else:
-                        logger.info(f"No YouTube thumbnails found for: {search_query}")
+            # Add YouTube thumbnails if we have an ID (from URL or search)
+            if youtube_id and "youtube" in sources:
+                try:
+                    yt_thumbnails = [
+                        {
+                            "url": f"https://img.youtube.com/vi/{youtube_id}/maxresdefault.jpg",
+                            "source": "youtube",
+                            "quality": "maxres",
+                            "title": f"{video_title} - Max Resolution",
+                        },
+                        {
+                            "url": f"https://img.youtube.com/vi/{youtube_id}/hqdefault.jpg",
+                            "source": "youtube",
+                            "quality": "hq",
+                            "title": f"{video_title} - High Quality",
+                        },
+                        {
+                            "url": f"https://img.youtube.com/vi/{youtube_id}/mqdefault.jpg",
+                            "source": "youtube",
+                            "quality": "mq",
+                            "title": f"{video_title} - Medium Quality",
+                        },
+                    ]
+                    results.extend(yt_thumbnails)
+                    logger.info(
+                        f"Added {len(yt_thumbnails)} YouTube thumbnail options for video {video_id}"
+                    )
                 except Exception as e:
                     logger.warning(
-                        f"Failed to get YouTube thumbnails for video {video_id}: {e}"
+                        f"Failed to create YouTube thumbnails for video {video_id}: {e}"
                     )
 
             # Search IMVDb
@@ -1981,22 +1975,14 @@ def refresh_video_metadata(video_id):
                     search_query, max_results=1
                 )
 
-                if (
-                    youtube_results
-                    and "items" in youtube_results
-                    and youtube_results["items"]
-                ):
-                    video_item = youtube_results["items"][0]
+                if youtube_results["success"] and youtube_results["results"]:
+                    video_item = youtube_results["results"][0]
                     video_id_yt = video_item["id"]["videoId"]
 
                     # Get detailed video information
                     video_details = youtube_service.get_video_details(video_id_yt)
-                    if (
-                        video_details
-                        and "items" in video_details
-                        and video_details["items"]
-                    ):
-                        yt_video = video_details["items"][0]
+                    if video_details["success"] and video_details.get("video"):
+                        yt_video = video_details["video"]
 
                         # Extract metadata from YouTube
                         snippet = yt_video.get("snippet", {})
@@ -2402,23 +2388,20 @@ def refresh_all_metadata():
                             )
 
                             if (
-                                youtube_results
-                                and "items" in youtube_results
-                                and youtube_results["items"]
+                                youtube_results["success"]
+                                and youtube_results["results"]
                             ):
-                                video_item = youtube_results["items"][0]
+                                video_item = youtube_results["results"][0]
                                 video_id_yt = video_item["id"]["videoId"]
 
                                 # Get detailed video information
                                 video_details = youtube_service.get_video_details(
                                     video_id_yt
                                 )
-                                if (
-                                    video_details
-                                    and "items" in video_details
-                                    and video_details["items"]
+                                if video_details["success"] and video_details.get(
+                                    "video"
                                 ):
-                                    yt_video = video_details["items"][0]
+                                    yt_video = video_details["video"]
 
                                     # Extract metadata from YouTube
                                     snippet = yt_video.get("snippet", {})
