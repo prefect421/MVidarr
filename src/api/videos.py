@@ -2298,10 +2298,10 @@ def refresh_all_metadata():
     """Refresh metadata from IMVDb for all videos"""
     try:
         from src.services.imvdb_service import imvdb_service
-        from src.services.settings_service import SettingsService
+        from src.services.settings_service import settings
 
         # Force reload settings cache to ensure we have the latest API key
-        SettingsService.reload_cache()
+        settings.reload_cache()
         # IMVDb service will get the API key from settings automatically
 
         # Get request parameters
