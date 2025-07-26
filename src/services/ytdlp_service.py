@@ -70,6 +70,19 @@ class YtDlpService:
             # Get music videos path from settings
             music_videos_path = settings.get("music_videos_path", "data/musicvideos")
 
+            # Ensure base music videos directory exists first
+            try:
+                os.makedirs(music_videos_path, exist_ok=True, mode=0o755)
+                logger.info(f"Ensured base directory exists: {music_videos_path}")
+            except Exception as base_e:
+                logger.error(
+                    f"Failed to create base directory {music_videos_path}: {base_e}"
+                )
+                return {
+                    "success": False,
+                    "error": f"Cannot create base directory: {str(base_e)}",
+                }
+
             # Sanitize artist name for folder
             clean_artist = FilenameCleanup.sanitize_folder_name(artist)
             clean_title = FilenameCleanup.sanitize_folder_name(title)
@@ -92,12 +105,13 @@ class YtDlpService:
                 logger.info(f"Successfully created directory: {output_dir}")
             except PermissionError as e:
                 logger.error(f"Permission denied creating {output_dir}: {e}")
-                logger.error(
-                    f"Parent directory permissions: {oct(os.stat(music_videos_path).st_mode)}"
-                )
-                logger.error(
-                    f"Parent directory owner: {os.stat(music_videos_path).st_uid}:{os.stat(music_videos_path).st_gid}"
-                )
+                if os.path.exists(music_videos_path):
+                    logger.error(
+                        f"Parent directory permissions: {oct(os.stat(music_videos_path).st_mode)}"
+                    )
+                    logger.error(
+                        f"Parent directory owner: {os.stat(music_videos_path).st_uid}:{os.stat(music_videos_path).st_gid}"
+                    )
 
                 # Try alternative approach: create without specifying mode
                 try:
@@ -108,10 +122,16 @@ class YtDlpService:
                     logger.info(f"Fallback successful for directory: {output_dir}")
                 except Exception as fallback_e:
                     logger.error(f"Fallback also failed: {fallback_e}")
-                    raise e  # Raise the original permission error
+                    return {
+                        "success": False,
+                        "error": f"Cannot create artist directory: {str(e)}",
+                    }
             except Exception as e:
                 logger.error(f"Unexpected error creating {output_dir}: {e}")
-                raise
+                return {
+                    "success": False,
+                    "error": f"Directory creation failed: {str(e)}",
+                }
 
             # Create download entry
             download_id = self._get_next_id()

@@ -2183,7 +2183,12 @@ function refreshAllMetadata() {
             },
             body: JSON.stringify(requestBody)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(result => {
             button.textContent = originalText;
             button.disabled = false;
@@ -2198,7 +2203,7 @@ function refreshAllMetadata() {
         })
         .catch(error => {
             console.error('Error refreshing all metadata:', error);
-            showError('Error refreshing metadata');
+            showError(`Error refreshing metadata: ${error.message}`);
             button.textContent = originalText;
             button.disabled = false;
         });

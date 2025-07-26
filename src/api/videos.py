@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from flask import Blueprint, Response, jsonify, request, send_file
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.exc import IntegrityError
 
 from src.database.connection import get_db
@@ -949,26 +949,35 @@ def refresh_thumbnails():
         video_ids = data.get("video_ids", None)
 
         with get_db() as session:
-            # Build base query for videos with thumbnail_url but no thumbnail_path
-            # Include more URL types for broader thumbnail processing
+            # Build base query for videos without thumbnails or with thumbnail_url but no thumbnail_path
             query = (
                 session.query(Video)
                 .join(Artist)
                 .filter(
-                    Video.thumbnail_url.isnot(None),
-                    Video.thumbnail_path.is_(None),
                     or_(
-                        Video.thumbnail_url.like("%youtube%"),
-                        Video.thumbnail_url.like("%googleusercontent%"),
-                        Video.thumbnail_url.like("%google.com%"),
-                        Video.thumbnail_url.like("%ytimg%"),
-                        Video.thumbnail_url.like("%i.ytimg%"),
-                        # Also include direct image URLs
-                        Video.thumbnail_url.like("%.jpg%"),
-                        Video.thumbnail_url.like("%.jpeg%"),
-                        Video.thumbnail_url.like("%.png%"),
-                        Video.thumbnail_url.like("%.webp%"),
-                    ),
+                        # Videos with no thumbnail at all
+                        and_(
+                            Video.thumbnail_url.is_(None),
+                            Video.thumbnail_path.is_(None),
+                        ),
+                        # Videos with thumbnail_url but no thumbnail_path
+                        and_(
+                            Video.thumbnail_url.isnot(None),
+                            Video.thumbnail_path.is_(None),
+                            or_(
+                                Video.thumbnail_url.like("%youtube%"),
+                                Video.thumbnail_url.like("%googleusercontent%"),
+                                Video.thumbnail_url.like("%google.com%"),
+                                Video.thumbnail_url.like("%ytimg%"),
+                                Video.thumbnail_url.like("%i.ytimg%"),
+                                # Also include direct image URLs
+                                Video.thumbnail_url.like("%.jpg%"),
+                                Video.thumbnail_url.like("%.jpeg%"),
+                                Video.thumbnail_url.like("%.png%"),
+                                Video.thumbnail_url.like("%.webp%"),
+                            ),
+                        ),
+                    )
                 )
             )
 
@@ -986,6 +995,70 @@ def refresh_thumbnails():
                 try:
                     # Get the artist name for proper thumbnail naming
                     artist_name = video.artist.name if video.artist else "Unknown"
+
+                    # If video has no thumbnail_url, try to find one using search
+                    if not video.thumbnail_url:
+                        logger.info(
+                            f"Searching for thumbnail for: {video.title} by {artist_name}"
+                        )
+                        # Try to find thumbnail URL using YouTube search or other sources
+                        try:
+                            from src.services.youtube_service import youtube_service
+
+                            search_query = f"{artist_name} {video.title}"
+                            search_results = youtube_service.search_videos(
+                                search_query, max_results=1
+                            )
+
+                            if search_results.get("success") and search_results.get(
+                                "results"
+                            ):
+                                video_result = search_results["results"][0]
+                                if (
+                                    "snippet" in video_result
+                                    and "thumbnails" in video_result["snippet"]
+                                ):
+                                    # Get the highest quality thumbnail available
+                                    thumbnails = video_result["snippet"]["thumbnails"]
+                                    thumbnail_url = None
+                                    for quality in [
+                                        "maxres",
+                                        "high",
+                                        "medium",
+                                        "default",
+                                    ]:
+                                        if quality in thumbnails:
+                                            thumbnail_url = thumbnails[quality]["url"]
+                                            break
+
+                                    if thumbnail_url:
+                                        video.thumbnail_url = thumbnail_url
+                                        session.commit()
+                                        logger.info(
+                                            f"Found thumbnail URL: {thumbnail_url}"
+                                        )
+                                    else:
+                                        logger.warning(
+                                            f"No thumbnail found for: {video.title}"
+                                        )
+                                        skipped_count += 1
+                                        continue
+                                else:
+                                    logger.warning(
+                                        f"No thumbnail data in search result for: {video.title}"
+                                    )
+                                    skipped_count += 1
+                                    continue
+                            else:
+                                logger.warning(f"No search results for: {video.title}")
+                                skipped_count += 1
+                                continue
+                        except Exception as search_error:
+                            logger.error(
+                                f"Error searching for thumbnail for {video.title}: {search_error}"
+                            )
+                            skipped_count += 1
+                            continue
 
                     # Check if thumbnail file already exists before trying to download
                     from pathlib import Path
@@ -1031,19 +1104,110 @@ def refresh_thumbnails():
                         f"Failed to download thumbnail for video {video.title}: {e}"
                     )
 
-            # Also count IMVDb URLs that we're intentionally not processing
-            imvdb_videos = (
+            # Handle IMVDb URLs that might be expired - try to download them or find alternatives
+            imvdb_videos_query = (
                 session.query(Video)
+                .join(Artist)
                 .filter(
                     Video.thumbnail_url.isnot(None),
                     Video.thumbnail_path.is_(None),
                     Video.thumbnail_url.like("%imvdb%"),
                 )
-                .count()
             )
 
-            # Add IMVDb URLs to skipped count (separate from file-already-exists skips)
-            imvdb_skipped_count = imvdb_videos
+            # Filter by specific video IDs if provided
+            if video_ids:
+                imvdb_videos_query = imvdb_videos_query.filter(Video.id.in_(video_ids))
+
+            imvdb_videos = imvdb_videos_query.all()
+            imvdb_skipped_count = 0
+            imvdb_fixed_count = 0
+
+            # Try to download or fix IMVDb thumbnails
+            for video in imvdb_videos:
+                try:
+                    artist_name = video.artist.name if video.artist else "Unknown"
+
+                    # First try to download the IMVDb thumbnail as-is
+                    thumbnail_path = thumbnail_service.download_video_thumbnail(
+                        artist_name, video.title, video.thumbnail_url
+                    )
+
+                    if thumbnail_path:
+                        video.thumbnail_path = thumbnail_path
+                        downloaded_count += 1
+                        imvdb_fixed_count += 1
+                        logger.info(f"Downloaded IMVDb thumbnail for: {video.title}")
+                    else:
+                        # IMVDb URL is expired, try to find a new thumbnail
+                        logger.info(
+                            f"IMVDb thumbnail expired for {video.title}, searching for replacement"
+                        )
+                        try:
+                            from src.services.youtube_service import youtube_service
+
+                            search_query = f"{artist_name} {video.title}"
+                            search_results = youtube_service.search_videos(
+                                search_query, max_results=1
+                            )
+
+                            if search_results.get("success") and search_results.get(
+                                "results"
+                            ):
+                                video_result = search_results["results"][0]
+                                if (
+                                    "snippet" in video_result
+                                    and "thumbnails" in video_result["snippet"]
+                                ):
+                                    thumbnails = video_result["snippet"]["thumbnails"]
+                                    new_thumbnail_url = None
+                                    for quality in [
+                                        "maxres",
+                                        "high",
+                                        "medium",
+                                        "default",
+                                    ]:
+                                        if quality in thumbnails:
+                                            new_thumbnail_url = thumbnails[quality][
+                                                "url"
+                                            ]
+                                            break
+
+                                    if new_thumbnail_url:
+                                        # Update with new thumbnail URL and download
+                                        video.thumbnail_url = new_thumbnail_url
+                                        thumbnail_path = (
+                                            thumbnail_service.download_video_thumbnail(
+                                                artist_name,
+                                                video.title,
+                                                new_thumbnail_url,
+                                            )
+                                        )
+                                        if thumbnail_path:
+                                            video.thumbnail_path = thumbnail_path
+                                            downloaded_count += 1
+                                            imvdb_fixed_count += 1
+                                            logger.info(
+                                                f"Replaced expired IMVDb thumbnail for: {video.title}"
+                                            )
+                                        else:
+                                            imvdb_skipped_count += 1
+                                    else:
+                                        imvdb_skipped_count += 1
+                                else:
+                                    imvdb_skipped_count += 1
+                            else:
+                                imvdb_skipped_count += 1
+                        except Exception as search_error:
+                            logger.error(
+                                f"Error searching for replacement thumbnail for {video.title}: {search_error}"
+                            )
+                            imvdb_skipped_count += 1
+                except Exception as e:
+                    logger.error(
+                        f"Error processing IMVDb thumbnail for {video.title}: {e}"
+                    )
+                    imvdb_skipped_count += 1
 
             session.commit()
 
@@ -1053,11 +1217,15 @@ def refresh_thumbnails():
             message_parts = []
             if downloaded_count > 0:
                 message_parts.append(f"Downloaded {downloaded_count} thumbnails")
+            if imvdb_fixed_count > 0:
+                message_parts.append(
+                    f"fixed {imvdb_fixed_count} expired IMVDb thumbnails"
+                )
             if skipped_count > 0:
                 message_parts.append(f"skipped {skipped_count} existing files")
             if imvdb_skipped_count > 0:
                 message_parts.append(
-                    f"skipped {imvdb_skipped_count} IMVDb URLs (likely expired)"
+                    f"skipped {imvdb_skipped_count} IMVDb URLs (could not fix)"
                 )
             if failed_count > 0:
                 message_parts.append(f"failed {failed_count}")
