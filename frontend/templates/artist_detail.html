@@ -3815,122 +3815,63 @@ function showImvdbMatchModal(matches) {
     
     console.log(`Creating modal with ${matches.length} matches`);
     
+    // Create a simple, guaranteed-visible modal using alert-style approach
     const modal = document.createElement('div');
-    modal.className = 'imvdb-search-modal-overlay';
     modal.id = 'imvdbSearchModal';
     
-    // Set styles step by step to ensure they apply
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    modal.style.display = 'block';  // Start with block instead of flex
-    modal.style.zIndex = '99999';
-    modal.style.visibility = 'visible';
-    modal.style.opacity = '1';
+    // Use simple, direct styling that's guaranteed to work
+    modal.setAttribute('style', `
+        position: fixed !important;
+        top: 50px !important;
+        left: 50px !important;
+        right: 50px !important;
+        bottom: 50px !important;
+        background: white !important;
+        border: 3px solid #333 !important;
+        border-radius: 10px !important;
+        z-index: 999999 !important;
+        padding: 20px !important;
+        overflow: auto !important;
+        box-shadow: 0 0 50px rgba(0,0,0,0.8) !important;
+        display: block !important;
+    `);
     
+    // Create simple HTML content
     modal.innerHTML = `
-        <div class="modal-content imvdb-match-modal" style="background: white; border-radius: 8px; padding: 20px; max-width: 90vw; max-height: 90vh; overflow: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-            <div class="modal-header">
-                <h2>🎵 Select IMVDb Match</h2>
-                <button class="close-btn" onclick="closeImvdbMatchModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>Select the correct match for <strong>${currentArtistData?.name || 'this artist'}</strong> (${matches.length} results found):</p>
-                <div class="imvdb-matches-table-container">
-                    <table class="imvdb-matches-table">
-                        <thead>
-                            <tr>
-                                <th>Match</th>
-                                <th>Artist Name</th>
-                                <th>Origin</th>
-                                <th>Genres</th>
-                                <th>Founded</th>
-                                <th>Bio</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${matches.map(match => `
-                                <tr class="imvdb-match-row ${match.confidence}" data-imvdb-id="${match.id}" style="cursor: pointer;">
-                                    <td class="match-confidence">
-                                        <div class="confidence-badge ${match.confidence}">${match.confidence}</div>
-                                    </td>
-                                    <td class="match-name">
-                                        <strong>${match.name || (match.slug ? match.slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Artist')}</strong>
-                                        ${match.disambiguation ? `<div class="disambiguation">${match.disambiguation}</div>` : ''}
-                                        ${match.slug ? `<div class="slug-info">IMVDb: ${match.slug}</div>` : ''}
-                                    </td>
-                                    <td class="match-origin">
-                                        ${match.origin ? `📍 ${match.origin}` : '<span class="no-data">Not specified</span>'}
-                                    </td>
-                                    <td class="match-genres">
-                                        ${match.genres && Array.isArray(match.genres) && match.genres.length > 0 ? `🎵 ${match.genres.join(', ')}` : '<span class="no-data">No genres listed</span>'}
-                                    </td>
-                                    <td class="match-birth-date">
-                                        ${match.birth_date ? `📅 ${match.birth_date}` : '<span class="no-data">Unknown</span>'}
-                                    </td>
-                                    <td class="match-bio">
-                                        ${match.bio ? `${match.bio.substring(0, 120)}${match.bio.length > 120 ? '...' : ''}` : '<span class="no-data">No bio available</span>'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+        <div style="margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+            <h2 style="margin: 0; color: #333;">🎵 Select IMVDb Match</h2>
+            <button onclick="closeImvdbMatchModal()" style="position: absolute; top: 15px; right: 20px; background: #f44; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px;">&times;</button>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <p><strong>Select the correct match for "${currentArtistData?.name || 'this artist'}" (${matches.length} results found):</strong></p>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+            ${matches.map(match => `
+                <div onclick="selectImvdbMatch(${match.id})" style="padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: #f9f9f9; margin: 2px; border-radius: 3px;" onmouseover="this.style.background='#e6f3ff'" onmouseout="this.style.background='#f9f9f9'">
+                    <div style="font-weight: bold; font-size: 16px; color: #333; margin-bottom: 5px;">
+                        ${match.name || 'Unknown Artist'}
+                        <span style="background: ${match.confidence === 'high' ? '#4CAF50' : '#FF9800'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 10px;">
+                            ${match.confidence}
+                        </span>
+                    </div>
+                    <div style="font-size: 14px; color: #666;">
+                        ${match.origin ? `📍 ${match.origin}` : ''} 
+                        ${match.genres && match.genres.length ? `🎵 ${match.genres.join(', ')}` : ''}
+                        ${match.birth_date ? `📅 ${match.birth_date}` : ''}
+                    </div>
+                    ${match.bio ? `<div style="font-size: 12px; color: #888; margin-top: 5px;">${match.bio.substring(0, 100)}...</div>` : ''}
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeImvdbMatchModal()">Cancel</button>
-            </div>
+            `).join('')}
+        </div>
+        <div style="margin-top: 20px; text-align: right;">
+            <button onclick="closeImvdbMatchModal()" style="background: #666; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Cancel</button>
         </div>
     `;
-    
-    // Ensure modal stays within viewport bounds
-    const modalContent = modal.querySelector('.imvdb-match-modal');
-    modalContent.style.maxHeight = '85vh';
-    modalContent.style.maxWidth = '90vw';
-    modalContent.style.overflow = 'hidden';
-    modalContent.style.display = 'flex';
-    modalContent.style.flexDirection = 'column';
-    
-    // Make modal body scrollable if needed
-    const modalBody = modalContent.querySelector('.modal-body');
-    if (modalBody) {
-        modalBody.style.overflowY = 'auto';
-        modalBody.style.maxHeight = 'calc(85vh - 120px)'; // Account for header and footer
-    }
-    
-    // Add click event listeners to each match row
-    modal.querySelectorAll('.imvdb-match-row').forEach(row => {
-        row.addEventListener('click', function() {
-            const imvdbId = this.getAttribute('data-imvdb-id');
-            selectImvdbMatch(imvdbId);
-        });
-    });
-    
-    // Close modal when clicking outside
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closeImvdbMatchModal();
-        }
-    });
     
     // Add modal to DOM
     document.body.appendChild(modal);
     
-    // Debug: Verify modal was added and is visible
-    console.log('Modal added to DOM. Modal element:', modal);
-    console.log('Modal computed style:', window.getComputedStyle(modal));
-    console.log('Modal zIndex:', modal.style.zIndex);
-    console.log('Body children count:', document.body.children.length);
-    console.log('Modal display style:', modal.style.display);
-    console.log('Modal position style:', modal.style.position);
-    
-    // Force reflow to ensure proper display
-    modal.offsetHeight;
-    
-    console.log('IMVDb modal created and displayed');
+    console.log('Simple IMVDb modal created and displayed');
 }
 
 function closeImvdbMatchModal() {
