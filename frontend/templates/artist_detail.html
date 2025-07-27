@@ -3819,52 +3819,53 @@ function showImvdbMatchModal(matches) {
     const modal = document.createElement('div');
     modal.id = 'imvdbSearchModal';
     
-    // Use simple, direct styling that's guaranteed to work
+    // Use theme-aware styling that adapts to light/dark modes
     modal.setAttribute('style', `
         position: fixed !important;
         top: 50px !important;
         left: 50px !important;
         right: 50px !important;
         bottom: 50px !important;
-        background: white !important;
-        border: 3px solid #333 !important;
+        background: var(--modalBackgroundColor) !important;
+        border: 3px solid var(--borderColor) !important;
         border-radius: 10px !important;
         z-index: 999999 !important;
         padding: 20px !important;
         overflow: auto !important;
-        box-shadow: 0 0 50px rgba(0,0,0,0.8) !important;
+        box-shadow: 0 0 50px var(--modalBackdropBackgroundColor) !important;
         display: block !important;
+        color: var(--textColor) !important;
     `);
     
-    // Create simple HTML content
+    // Create theme-aware HTML content
     modal.innerHTML = `
-        <div style="margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-            <h2 style="margin: 0; color: #333;">🎵 Select IMVDb Match</h2>
-            <button onclick="closeImvdbMatchModal()" style="position: absolute; top: 15px; right: 20px; background: #f44; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px;">&times;</button>
+        <div style="margin-bottom: 20px; border-bottom: 2px solid var(--borderColor); padding-bottom: 10px;">
+            <h2 style="margin: 0; color: var(--textColor);">🎵 Select IMVDb Match</h2>
+            <button onclick="closeImvdbMatchModal()" style="position: absolute; top: 15px; right: 20px; background: var(--dangerBackgroundColor); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px;" onmouseover="this.style.background='var(--dangerHoverBackgroundColor)'" onmouseout="this.style.background='var(--dangerBackgroundColor)'">&times;</button>
         </div>
         <div style="margin-bottom: 20px;">
-            <p><strong>Select the correct match for "${currentArtistData?.name || 'this artist'}" (${matches.length} results found):</strong></p>
+            <p style="color: var(--textColor);"><strong>Select the correct match for "${currentArtistData?.name || 'this artist'}" (${matches.length} results found):</strong></p>
         </div>
-        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+        <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--borderColor); border-radius: 5px; background: var(--cardBackgroundColor);">
             ${matches.map(match => `
-                <div onclick="selectImvdbMatch(${match.id})" style="padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: #f9f9f9; margin: 2px; border-radius: 3px;" onmouseover="this.style.background='#e6f3ff'" onmouseout="this.style.background='#f9f9f9'">
-                    <div style="font-weight: bold; font-size: 16px; color: #333; margin-bottom: 5px;">
+                <div onclick="selectImvdbMatch(${match.id})" style="padding: 15px; border-bottom: 1px solid var(--borderColor); cursor: pointer; background: var(--cardAlternateBackgroundColor); margin: 2px; border-radius: 3px; color: var(--textColor);" onmouseover="this.style.background='var(--tableRowHoverBackgroundColor)'" onmouseout="this.style.background='var(--cardAlternateBackgroundColor)'">
+                    <div style="font-weight: bold; font-size: 16px; color: var(--defaultColor); margin-bottom: 5px;">
                         ${match.name || 'Unknown Artist'}
-                        <span style="background: ${match.confidence === 'high' ? '#4CAF50' : '#FF9800'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 10px;">
+                        <span style="background: ${match.confidence === 'high' ? 'var(--successBackgroundColor)' : 'var(--warningBackgroundColor)'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 10px;">
                             ${match.confidence}
                         </span>
                     </div>
-                    <div style="font-size: 14px; color: #666;">
+                    <div style="font-size: 14px; color: var(--helpTextColor);">
                         ${match.origin ? `📍 ${match.origin}` : ''} 
                         ${match.genres && match.genres.length ? `🎵 ${match.genres.join(', ')}` : ''}
                         ${match.birth_date ? `📅 ${match.birth_date}` : ''}
                     </div>
-                    ${match.bio ? `<div style="font-size: 12px; color: #888; margin-top: 5px;">${match.bio.substring(0, 100)}...</div>` : ''}
+                    ${match.bio ? `<div style="font-size: 12px; color: var(--disabledColor); margin-top: 5px;">${match.bio.substring(0, 100)}...</div>` : ''}
                 </div>
             `).join('')}
         </div>
         <div style="margin-top: 20px; text-align: right;">
-            <button onclick="closeImvdbMatchModal()" style="background: #666; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Cancel</button>
+            <button onclick="closeImvdbMatchModal()" style="background: var(--defaultBackgroundColor); color: var(--defaultButtonTextColor); border: 1px solid var(--defaultBorderColor); padding: 10px 20px; border-radius: 5px; cursor: pointer;" onmouseover="this.style.background='var(--defaultHoverBackgroundColor)'" onmouseout="this.style.background='var(--defaultBackgroundColor)'">Cancel</button>
         </div>
     `;
     

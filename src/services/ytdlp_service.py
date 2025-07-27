@@ -51,6 +51,7 @@ class YtDlpService:
         quality: str = "best",
         video_id: int = None,
         download_subtitles: bool = False,
+        artist_folder_path: str = None,
     ) -> Dict:
         """
         Add a music video download using yt-dlp CLI directly
@@ -62,6 +63,7 @@ class YtDlpService:
             quality: Video quality preference
             video_id: Optional video ID for database tracking
             download_subtitles: Whether to download closed captions/subtitles
+            artist_folder_path: Optional custom folder path for the artist (overrides artist name)
 
         Returns:
             Dictionary with download submission result
@@ -83,12 +85,20 @@ class YtDlpService:
                     "error": f"Cannot create base directory: {str(base_e)}",
                 }
 
-            # Sanitize artist name for folder
-            clean_artist = FilenameCleanup.sanitize_folder_name(artist)
+            # Determine folder name: use artist_folder_path if provided, otherwise sanitized artist name
+            if artist_folder_path and artist_folder_path.strip():
+                folder_name = FilenameCleanup.sanitize_folder_name(
+                    artist_folder_path.strip()
+                )
+                logger.info(f"Using custom folder path: {folder_name}")
+            else:
+                folder_name = FilenameCleanup.sanitize_folder_name(artist)
+                logger.info(f"Using auto-generated folder name: {folder_name}")
+
             clean_title = FilenameCleanup.sanitize_folder_name(title)
 
-            # Create output path: music_videos_path/Artist/
-            output_dir = os.path.join(music_videos_path, clean_artist)
+            # Create output path: music_videos_path/folder_name/
+            output_dir = os.path.join(music_videos_path, folder_name)
 
             # Debug logging for permission issues
             logger.info(f"Attempting to create directory: {output_dir}")
@@ -138,6 +148,7 @@ class YtDlpService:
             download_entry = {
                 "id": download_id,
                 "artist": artist,
+                "artist_folder_path": artist_folder_path,
                 "title": title,
                 "url": url,
                 "quality": quality,
@@ -186,10 +197,10 @@ class YtDlpService:
             download_entry["status"] = "downloading"
             download_entry["started_at"] = datetime.utcnow().isoformat()
 
-            # Build yt-dlp command
+            # Build yt-dlp command - use just the song name as requested
             output_template = os.path.join(
                 download_entry["output_dir"],
-                f"{download_entry['artist']} - {FilenameCleanup.sanitize_folder_name(download_entry['title'])}.%(ext)s",
+                f"{FilenameCleanup.sanitize_folder_name(download_entry['title'])}.%(ext)s",
             )
 
             # Try different cookie sources for age-restricted videos
@@ -465,6 +476,7 @@ class YtDlpService:
                     quality=entry["quality"],
                     video_id=entry.get("video_id"),
                     download_subtitles=entry.get("download_subtitles", False),
+                    artist_folder_path=entry.get("artist_folder_path"),
                 )
 
         return {"success": False, "error": "Download not found or not retryable"}

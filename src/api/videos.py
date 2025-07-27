@@ -940,7 +940,7 @@ def get_video_thumbnail(video_id):
 
 @videos_bp.route("/refresh-thumbnails", methods=["POST"])
 def refresh_thumbnails():
-    """Download thumbnails for videos that have thumbnail_url but no thumbnail_path"""
+    """Find and download thumbnails for videos that don't have any"""
     try:
         from src.services.thumbnail_service import thumbnail_service
 
@@ -960,22 +960,10 @@ def refresh_thumbnails():
                             Video.thumbnail_url.is_(None),
                             Video.thumbnail_path.is_(None),
                         ),
-                        # Videos with thumbnail_url but no thumbnail_path
+                        # Videos with thumbnail_url but no thumbnail_path (all URLs, not just specific patterns)
                         and_(
                             Video.thumbnail_url.isnot(None),
                             Video.thumbnail_path.is_(None),
-                            or_(
-                                Video.thumbnail_url.like("%youtube%"),
-                                Video.thumbnail_url.like("%googleusercontent%"),
-                                Video.thumbnail_url.like("%google.com%"),
-                                Video.thumbnail_url.like("%ytimg%"),
-                                Video.thumbnail_url.like("%i.ytimg%"),
-                                # Also include direct image URLs
-                                Video.thumbnail_url.like("%.jpg%"),
-                                Video.thumbnail_url.like("%.jpeg%"),
-                                Video.thumbnail_url.like("%.png%"),
-                                Video.thumbnail_url.like("%.webp%"),
-                            ),
                         ),
                     )
                 )
