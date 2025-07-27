@@ -72,6 +72,10 @@ class YtDlpService:
             # Get music videos path from settings
             music_videos_path = settings.get("music_videos_path", "data/musicvideos")
 
+            # If setting exists but is empty, use default
+            if not music_videos_path or music_videos_path.strip() == "":
+                music_videos_path = "data/musicvideos"
+
             # Ensure base music videos directory exists first
             try:
                 os.makedirs(music_videos_path, exist_ok=True, mode=0o755)

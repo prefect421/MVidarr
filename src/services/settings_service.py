@@ -62,6 +62,12 @@ class SettingsService:
         return value
 
     @classmethod
+    def get_setting(cls, category: str, key: str, default: Any = None) -> str:
+        """Get setting value by category and key (for compatibility)"""
+        full_key = f"{category}.{key}"
+        return cls.get(full_key, default)
+
+    @classmethod
     def get_int(cls, key: str, default: int = 0) -> int:
         """Get setting as integer"""
         value = cls.get(key, str(default))

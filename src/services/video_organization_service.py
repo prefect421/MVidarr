@@ -31,6 +31,11 @@ class VideoOrganizationService:
     def get_music_videos_path(self) -> Path:
         """Get the music videos directory path"""
         music_videos_path = settings.get("music_videos_path", "data/musicvideos")
+
+        # If setting exists but is empty, use default
+        if not music_videos_path or music_videos_path.strip() == "":
+            music_videos_path = "data/musicvideos"
+
         return Path(music_videos_path)
 
     def ensure_directories_exist(self):
