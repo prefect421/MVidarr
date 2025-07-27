@@ -21,7 +21,13 @@ class YouTubeService:
 
     def get_api_key(self) -> Optional[str]:
         """Get YouTube API key from settings"""
-        return self.settings_service.get_setting("youtube", "api_key")
+        try:
+            # Ensure settings cache is loaded
+            self.settings_service.load_cache()
+            return self.settings_service.get_setting("youtube", "api_key")
+        except Exception as e:
+            logger.warning(f"Failed to get YouTube API key: {e}")
+            return None
 
     def search_videos(self, query: str, max_results: int = 25) -> Dict[str, Any]:
         """Search for videos using YouTube API"""
