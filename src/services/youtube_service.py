@@ -24,7 +24,7 @@ class YouTubeService:
         try:
             # Ensure settings cache is loaded
             self.settings_service.load_cache()
-            return self.settings_service.get_setting("youtube", "api_key")
+            return self.settings_service.get("youtube_api_key")
         except Exception as e:
             logger.warning(f"Failed to get YouTube API key: {e}")
             return None
