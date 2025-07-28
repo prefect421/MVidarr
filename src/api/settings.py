@@ -455,11 +455,12 @@ def get_database_config():
     """Get current database configuration (read-only)"""
     try:
         import os
+
         from src.config.config import Config
-        
+
         # Load environment variables to get current database config
         Config.load_env()
-        
+
         db_config = {
             "db_host": os.environ.get("DB_HOST", "localhost"),
             "db_port": os.environ.get("DB_PORT", "3306"),
@@ -471,9 +472,9 @@ def get_database_config():
             "db_pool_recycle": os.environ.get("DB_POOL_RECYCLE", "3600"),
             "db_pool_timeout": os.environ.get("DB_POOL_TIMEOUT", "30"),
         }
-        
+
         return jsonify({"database_config": db_config}), 200
-        
+
     except Exception as e:
         logger.error(f"Failed to get database config: {e}")
         return jsonify({"error": str(e)}), 500

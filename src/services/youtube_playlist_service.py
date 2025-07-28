@@ -473,8 +473,9 @@ class YouTubePlaylistService:
 
         # Generate default folder path
         from src.utils.filename_cleanup import FilenameCleanup
+
         folder_path = FilenameCleanup.sanitize_folder_name(channel_title)
-        
+
         # Create new artist
         new_artist = Artist(
             name=channel_title,

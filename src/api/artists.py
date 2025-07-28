@@ -453,8 +453,9 @@ def add_artist():
             folder_path = data.get("folder_path")
             if not folder_path:
                 from src.utils.filename_cleanup import FilenameCleanup
+
                 folder_path = FilenameCleanup.sanitize_folder_name(data["name"])
-            
+
             artist = Artist(
                 name=data["name"],
                 imvdb_id=imvdb_id,
@@ -632,8 +633,9 @@ def import_artist_from_imvdb():
 
             # Generate default folder path
             from src.utils.filename_cleanup import FilenameCleanup
+
             folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
-            
+
             # Create new artist
             artist = Artist(
                 name=artist_name,
@@ -869,8 +871,9 @@ def bulk_import_artists():
 
                     # Generate default folder path
                     from src.utils.filename_cleanup import FilenameCleanup
+
                     folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
-                    
+
                     # Create new artist with enhanced metadata
                     artist = Artist(
                         name=artist_name,
