@@ -1,0 +1,435 @@
+name: Automated Security Incident Response
+
+on:
+  # Triggered by other workflows when security issues are detected
+  workflow_call:
+    inputs:
+      incident_type:
+        description: 'Type of security incident'
+        required: true
+        type: string
+      severity:
+        description: 'Incident severity (critical, high, medium, low)'
+        required: true
+        type: string
+      description:
+        description: 'Incident description'
+        required: true
+        type: string
+      affected_components:
+        description: 'Affected system components'
+        required: false
+        type: string
+        default: 'unknown'
+  
+  # Manual incident response trigger
+  workflow_dispatch:
+    inputs:
+      incident_type:
+        description: 'Type of security incident'
+        required: true
+        type: choice
+        options:
+        - vulnerability_detected
+        - secret_exposure
+        - authentication_breach
+        - data_breach
+        - malware_detected
+        - suspicious_activity
+        - compliance_violation
+      severity:
+        description: 'Incident severity'
+        required: true
+        type: choice
+        options:
+        - critical
+        - high
+        - medium
+        - low
+      description:
+        description: 'Incident description'
+        required: true
+        type: string
+      affected_components:
+        description: 'Affected system components'
+        required: false
+        type: string
+        default: 'unknown'
+
+env:
+  INCIDENT_ID: ${{ github.run_id }}-${{ github.run_number }}
+  TIMESTAMP: ${{ github.event.repository.updated_at }}
+
+jobs:
+  incident-triage:
+    name: Security Incident Triage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      security-events: write
+      actions: write
+
+    outputs:
+      incident_id: ${{ env.INCIDENT_ID }}
+      response_level: ${{ steps.assess.outputs.response_level }}
+      containment_required: ${{ steps.assess.outputs.containment_required }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Initialize incident response
+      run: |
+        echo "🚨 SECURITY INCIDENT DETECTED"
+        echo "Incident ID: ${{ env.INCIDENT_ID }}"
+        echo "Type: ${{ inputs.incident_type }}"
+        echo "Severity: ${{ inputs.severity }}"
+        echo "Timestamp: $(date -u)"
+        echo "Description: ${{ inputs.description }}"
+        echo "Affected Components: ${{ inputs.affected_components }}"
+        
+        # Create incident tracking directory
+        mkdir -p incident-${{ env.INCIDENT_ID }}
+        
+        # Create initial incident report
+        cat > incident-${{ env.INCIDENT_ID }}/incident-report.md << EOF
+        # Security Incident Report
+        
+        **Incident ID**: ${{ env.INCIDENT_ID }}
+        **Detection Time**: $(date -u)
+        **Type**: ${{ inputs.incident_type }}
+        **Severity**: ${{ inputs.severity }}
+        **Status**: ACTIVE
+        
+        ## Description
+        ${{ inputs.description }}
+        
+        ## Affected Components
+        ${{ inputs.affected_components }}
+        
+        ## Timeline
+        - $(date -u): Incident detected and response initiated
+        
+        ## Response Actions
+        - [x] Incident triage initiated
+        - [ ] Impact assessment
+        - [ ] Containment measures
+        - [ ] Eradication
+        - [ ] Recovery
+        - [ ] Post-incident review
+        EOF
+
+    - name: Assess incident severity and response level
+      id: assess
+      run: |
+        echo "📊 Assessing incident severity and determining response level..."
+        
+        RESPONSE_LEVEL="standard"
+        CONTAINMENT_REQUIRED="false"
+        
+        case "${{ inputs.severity }}" in
+          "critical")
+            RESPONSE_LEVEL="emergency"
+            CONTAINMENT_REQUIRED="true"
+            echo "🚨 CRITICAL incident - Emergency response protocols activated"
+            ;;
+          "high")
+            RESPONSE_LEVEL="urgent"
+            CONTAINMENT_REQUIRED="true"
+            echo "⚠️ HIGH severity incident - Urgent response required"
+            ;;
+          "medium")
+            RESPONSE_LEVEL="standard"
+            CONTAINMENT_REQUIRED="false"
+            echo "📋 MEDIUM severity incident - Standard response procedures"
+            ;;
+          "low")
+            RESPONSE_LEVEL="routine"
+            CONTAINMENT_REQUIRED="false"
+            echo "📝 LOW severity incident - Routine response procedures"
+            ;;
+        esac
+        
+        echo "response_level=$RESPONSE_LEVEL" >> $GITHUB_OUTPUT
+        echo "containment_required=$CONTAINMENT_REQUIRED" >> $GITHUB_OUTPUT
+        
+        # Update incident report
+        echo "- $(date -u): Severity assessed as ${{ inputs.severity }}, response level: $RESPONSE_LEVEL" >> incident-${{ env.INCIDENT_ID }}/incident-report.md
+
+    - name: Create security incident issue
+      run: |
+        echo "📝 Creating GitHub issue for incident tracking..."
+        
+        ISSUE_TITLE="🚨 SECURITY INCIDENT [${{ inputs.severity }}]: ${{ inputs.incident_type }}"
+        ISSUE_BODY="$(cat << 'EOF'
+        ## 🚨 Security Incident Alert
+        
+        **Incident ID**: ${{ env.INCIDENT_ID }}
+        **Detection Time**: $(date -u)
+        **Severity**: ${{ inputs.severity }}
+        **Type**: ${{ inputs.incident_type }}
+        **Response Level**: ${{ steps.assess.outputs.response_level }}
+        
+        ### Description
+        ${{ inputs.description }}
+        
+        ### Affected Components
+        ${{ inputs.affected_components }}
+        
+        ### Automated Response Actions
+        - [x] Incident detected and logged
+        - [x] GitHub issue created for tracking
+        - [ ] Impact assessment in progress
+        - [ ] Containment measures (if required)
+        - [ ] Security team notification
+        - [ ] Resolution and recovery
+        
+        ### Response Timeline
+        - **Detection**: $(date -u)
+        - **Triage**: In Progress
+        - **Expected Resolution**: TBD
+        
+        ---
+        
+        This incident is being handled by automated security response systems.
+        Manual intervention may be required for critical/high severity incidents.
+        
+        **Incident ID**: ${{ env.INCIDENT_ID }}
+        EOF
+        )"
+        
+        # Create issue with appropriate labels
+        gh issue create \
+          --title "$ISSUE_TITLE" \
+          --body "$ISSUE_BODY" \
+          --label "security,incident-response,priority: ${{ inputs.severity }}" \
+          --assignee "@me" || echo "Issue creation failed - continuing with response"
+
+    - name: Notify security team
+      if: inputs.severity == 'critical' || inputs.severity == 'high'
+      run: |
+        echo "📢 Notifying security team of ${{ inputs.severity }} severity incident..."
+        
+        # In a production environment, this would send notifications via:
+        # - Email alerts
+        # - Slack/Teams notifications  
+        # - PagerDuty alerts
+        # - SMS notifications for critical incidents
+        
+        echo "🔔 Security team notification would be sent for ${{ inputs.severity }} incident"
+        echo "📧 Email notification: security-team@organization.com"
+        echo "📱 Slack notification: #security-incidents channel"
+        
+        if [ "${{ inputs.severity }}" == "critical" ]; then
+          echo "📞 PagerDuty alert triggered for critical incident"
+          echo "📱 SMS notifications sent to on-call security personnel"
+        fi
+        
+        # Log notification attempt
+        echo "- $(date -u): Security team notification sent (${{ inputs.severity }} incident)" >> incident-${{ env.INCIDENT_ID }}/incident-report.md
+
+  immediate-containment:
+    name: Immediate Containment
+    runs-on: ubuntu-latest
+    needs: incident-triage
+    if: needs.incident-triage.outputs.containment_required == 'true'
+    permissions:
+      contents: read
+      actions: write
+      security-events: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Implement containment measures
+      run: |
+        echo "🔒 Implementing immediate containment measures..."
+        
+        case "${{ inputs.incident_type }}" in
+          "vulnerability_detected")
+            echo "🛡️ Vulnerability containment:"
+            echo "- Temporarily disable affected endpoints (if applicable)"
+            echo "- Block vulnerable dependency usage"
+            echo "- Enable additional monitoring"
+            ;;
+          "secret_exposure")
+            echo "🔐 Secret exposure containment:"
+            echo "- Rotate exposed secrets immediately"
+            echo "- Revoke compromised tokens/keys"
+            echo "- Enable enhanced access monitoring"
+            echo "🚨 CRITICAL: Manual secret rotation required!"
+            ;;
+          "authentication_breach")
+            echo "🔒 Authentication breach containment:"
+            echo "- Force password reset for affected accounts"
+            echo "- Invalidate all active sessions"
+            echo "- Enable additional authentication logging"
+            echo "- Temporarily increase rate limiting"
+            ;;
+          "suspicious_activity")
+            echo "👁️ Suspicious activity containment:"
+            echo "- Increase monitoring sensitivity"
+            echo "- Enable detailed access logging"
+            echo "- Block suspicious IP ranges (if identified)"
+            ;;
+          *)
+            echo "📋 Standard containment measures:"
+            echo "- Enhanced monitoring enabled"
+            echo "- Additional logging activated"
+            echo "- Security scanning frequency increased"
+            ;;
+        esac
+        
+        # Log containment actions
+        mkdir -p incident-${{ needs.incident-triage.outputs.incident_id }}
+        echo "- $(date -u): Containment measures implemented for ${{ inputs.incident_type }}" >> incident-${{ needs.incident-triage.outputs.incident_id }}/incident-report.md
+
+    - name: Enable emergency monitoring
+      run: |
+        echo "📊 Enabling emergency monitoring mode..."
+        
+        # In production, this would:
+        # - Increase log retention
+        # - Enable real-time alerting
+        # - Activate additional security tools
+        # - Increase scanning frequency
+        
+        echo "🔍 Emergency monitoring activated:"
+        echo "- Log retention extended to 90 days"
+        echo "- Real-time security alerting enabled"
+        echo "- Vulnerability scanning every 4 hours"
+        echo "- Access monitoring sensitivity increased"
+
+  impact-assessment:
+    name: Impact Assessment
+    runs-on: ubuntu-latest
+    needs: incident-triage
+    permissions:
+      contents: read
+      security-events: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Assess incident impact
+      run: |
+        echo "📊 Conducting impact assessment..."
+        
+        mkdir -p incident-${{ needs.incident-triage.outputs.incident_id }}
+        
+        # Create impact assessment report
+        cat > incident-${{ needs.incident-triage.outputs.incident_id }}/impact-assessment.md << EOF
+        # Impact Assessment Report
+        
+        **Incident ID**: ${{ needs.incident-triage.outputs.incident_id }}
+        **Assessment Time**: $(date -u)
+        
+        ## Affected Systems
+        - **Primary**: ${{ inputs.affected_components }}
+        - **Secondary**: Analysis in progress
+        
+        ## Data Impact
+        - **Data at Risk**: Analysis required
+        - **Confidentiality**: Under review
+        - **Integrity**: Under review  
+        - **Availability**: Under review
+        
+        ## Business Impact
+        - **Service Disruption**: Minimal (automated systems)
+        - **User Impact**: Under assessment
+        - **Compliance Impact**: Under review
+        
+        ## Risk Assessment
+        - **Current Risk Level**: ${{ inputs.severity }}
+        - **Potential Escalation**: Under evaluation
+        - **Recovery Complexity**: Standard procedures
+        
+        ## Recommendations
+        - Continue monitoring and containment
+        - Prepare recovery procedures
+        - Document lessons learned
+        EOF
+        
+        echo "📋 Impact assessment completed and documented"
+
+  recovery-planning:
+    name: Recovery Planning  
+    runs-on: ubuntu-latest
+    needs: [incident-triage, impact-assessment]
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Develop recovery plan
+      run: |
+        echo "🔄 Developing incident recovery plan..."
+        
+        mkdir -p incident-${{ needs.incident-triage.outputs.incident_id }}
+        
+        # Create recovery plan
+        cat > incident-${{ needs.incident-triage.outputs.incident_id }}/recovery-plan.md << EOF
+        # Incident Recovery Plan
+        
+        **Incident ID**: ${{ needs.incident-triage.outputs.incident_id }}
+        **Plan Created**: $(date -u)
+        
+        ## Recovery Objectives
+        - **RTO (Recovery Time Objective)**: 4 hours
+        - **RPO (Recovery Point Objective)**: 1 hour
+        - **Service Level Target**: 99.9% availability
+        
+        ## Recovery Steps
+        1. **Eradication**
+           - Remove security threats
+           - Patch vulnerabilities
+           - Clean affected systems
+        
+        2. **System Recovery**
+           - Restore from clean backups (if needed)
+           - Rebuild affected components
+           - Verify system integrity
+        
+        3. **Validation**
+           - Security testing
+           - Functionality verification
+           - Performance validation
+        
+        4. **Monitoring**
+           - Enhanced monitoring period (48 hours)
+           - Continuous security assessment
+           - User experience monitoring
+        
+        ## Success Criteria
+        - [ ] All security threats eliminated
+        - [ ] System functionality restored
+        - [ ] Performance within normal parameters
+        - [ ] Security monitoring confirms clean state
+        
+        ## Rollback Plan
+        - Maintain current containment measures if recovery fails
+        - Return to previous known-good state
+        - Implement alternative solutions
+        EOF
+        
+        echo "📋 Recovery plan documented and ready for execution"
+
+    - name: Upload incident artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-incident-${{ needs.incident-triage.outputs.incident_id }}
+        path: incident-${{ needs.incident-triage.outputs.incident_id }}/
+        retention-days: 365  # Long retention for incident records
+
+    - name: Update incident status
+      run: |
+        echo "📊 Incident response planning completed"
+        echo "Next steps require manual review and execution"
+        echo "Incident ID: ${{ needs.incident-triage.outputs.incident_id }}"

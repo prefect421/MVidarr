@@ -1,0 +1,339 @@
+name: Security Policy Enforcement
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+  push:
+    branches: [ main, dev ]
+  schedule:
+    # Run policy enforcement check daily at 5 AM UTC
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+env:
+  POLICY_VERSION: "1.0"
+  ENFORCEMENT_LEVEL: "strict"
+
+jobs:
+  security-policy-check:
+    name: Security Policy Enforcement
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      security-events: write
+      actions: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Initialize policy enforcement
+      run: |
+        echo "🛡️ Initializing Security Policy Enforcement"
+        echo "Policy Version: ${{ env.POLICY_VERSION }}"
+        echo "Enforcement Level: ${{ env.ENFORCEMENT_LEVEL }}"
+        echo "Assessment Time: $(date -u)"
+        
+        mkdir -p policy-enforcement-results
+
+    - name: Policy 1 - Code Security Standards
+      run: |
+        echo "📋 Checking Policy 1: Code Security Standards..."
+        
+        POLICY_VIOLATIONS=0
+        echo "## Policy 1: Code Security Standards" > policy-enforcement-results/policy-violations.md
+        echo "**Assessment**: $(date -u)" >> policy-enforcement-results/policy-violations.md
+        echo "" >> policy-enforcement-results/policy-violations.md
+        
+        # Check for hardcoded secrets
+        if grep -r "password.*=.*['\"]" src/ --include="*.py" | grep -v "password_field\|password_hash" > hardcoded-secrets.txt; then
+          if [ -s hardcoded-secrets.txt ]; then
+            POLICY_VIOLATIONS=$((POLICY_VIOLATIONS + 1))
+            echo "❌ **VIOLATION**: Hardcoded secrets detected" >> policy-enforcement-results/policy-violations.md
+            echo "Files:" >> policy-enforcement-results/policy-violations.md
+            cat hardcoded-secrets.txt | head -3 | sed 's/^/- /' >> policy-enforcement-results/policy-violations.md
+          fi
+        fi
+        
+        # Check for SQL injection risks
+        if grep -r "execute.*%" src/ --include="*.py" | grep -v "logger\|format" > sql-injection-risk.txt; then
+          if [ -s sql-injection-risk.txt ]; then
+            POLICY_VIOLATIONS=$((POLICY_VIOLATIONS + 1))
+            echo "❌ **VIOLATION**: Potential SQL injection patterns detected" >> policy-enforcement-results/policy-violations.md
+          fi
+        fi
+        
+        # Check for insecure random number generation
+        if grep -r "random\." src/ --include="*.py" | grep -v "secrets\." > insecure-random.txt; then
+          if [ -s insecure-random.txt ]; then
+            POLICY_VIOLATIONS=$((POLICY_VIOLATIONS + 1))
+            echo "⚠️ **WARNING**: Use secrets module for cryptographic randomness" >> policy-enforcement-results/policy-violations.md
+          fi
+        fi
+        
+        if [ $POLICY_VIOLATIONS -eq 0 ]; then
+          echo "✅ **COMPLIANT**: Code security standards met" >> policy-enforcement-results/policy-violations.md
+        fi
+        
+        echo "POLICY_1_VIOLATIONS=$POLICY_VIOLATIONS" >> $GITHUB_ENV
+
+    - name: Policy 2 - Dependency Security
+      run: |
+        echo "📋 Checking Policy 2: Dependency Security..."
+        
+        echo "" >> policy-enforcement-results/policy-violations.md
+        echo "## Policy 2: Dependency Security" >> policy-enforcement-results/policy-violations.md
+        
+        DEPENDENCY_VIOLATIONS=0
+        
+        # Check for unpinned dependencies
+        if grep -v "==" requirements.txt | grep -v "^#" | grep -v "^$" > unpinned-deps.txt; then
+          if [ -s unpinned-deps.txt ]; then
+            DEPENDENCY_VIOLATIONS=$((DEPENDENCY_VIOLATIONS + 1))
+            echo "❌ **VIOLATION**: Unpinned dependencies detected" >> policy-enforcement-results/policy-violations.md
+            cat unpinned-deps.txt | head -5 | sed 's/^/- /' >> policy-enforcement-results/policy-violations.md
+          fi
+        fi
+        
+        # Check for known vulnerable dependencies (simplified check)
+        CRITICAL_PACKAGES=("django<3.2" "requests<2.20" "flask<1.1" "jinja2<2.11")
+        for package in "${CRITICAL_PACKAGES[@]}"; do
+          if grep -q "^${package%%<*}==" requirements.txt; then
+            VERSION=$(grep "^${package%%<*}==" requirements.txt | cut -d'=' -f3)
+            echo "ℹ️ Found ${package%%<*} version $VERSION" >> policy-enforcement-results/policy-violations.md
+          fi
+        done
+        
+        if [ $DEPENDENCY_VIOLATIONS -eq 0 ]; then
+          echo "✅ **COMPLIANT**: Dependency security standards met" >> policy-enforcement-results/policy-violations.md
+        fi
+        
+        echo "POLICY_2_VIOLATIONS=$DEPENDENCY_VIOLATIONS" >> $GITHUB_ENV
+
+    - name: Policy 3 - Container Security
+      run: |
+        echo "📋 Checking Policy 3: Container Security..."
+        
+        echo "" >> policy-enforcement-results/policy-violations.md
+        echo "## Policy 3: Container Security" >> policy-enforcement-results/policy-violations.md
+        
+        CONTAINER_VIOLATIONS=0
+        
+        if [ -f "Dockerfile.production" ]; then
+          # Check for root user
+          if grep -q "USER root\|^USER 0" Dockerfile.production; then
+            CONTAINER_VIOLATIONS=$((CONTAINER_VIOLATIONS + 1))
+            echo "❌ **VIOLATION**: Container running as root user" >> policy-enforcement-results/policy-violations.md
+          fi
+          
+          # Check for latest tags
+          if grep -q "FROM.*:latest" Dockerfile.production; then
+            CONTAINER_VIOLATIONS=$((CONTAINER_VIOLATIONS + 1))
+            echo "⚠️ **WARNING**: Using :latest tags in Dockerfile" >> policy-enforcement-results/policy-violations.md
+          fi
+          
+          # Check for security best practices
+          if ! grep -q "USER \|RUN adduser\|RUN useradd" Dockerfile.production; then
+            CONTAINER_VIOLATIONS=$((CONTAINER_VIOLATIONS + 1))
+            echo "⚠️ **WARNING**: No non-root user specified in Dockerfile" >> policy-enforcement-results/policy-violations.md
+          fi
+        else
+          echo "ℹ️ No Dockerfile.production found - container security not applicable" >> policy-enforcement-results/policy-violations.md
+        fi
+        
+        if [ $CONTAINER_VIOLATIONS -eq 0 ]; then
+          echo "✅ **COMPLIANT**: Container security standards met" >> policy-enforcement-results/policy-violations.md
+        fi
+        
+        echo "POLICY_3_VIOLATIONS=$CONTAINER_VIOLATIONS" >> $GITHUB_ENV
+
+    - name: Policy 4 - CI/CD Security
+      run: |
+        echo "📋 Checking Policy 4: CI/CD Security..."
+        
+        echo "" >> policy-enforcement-results/policy-violations.md
+        echo "## Policy 4: CI/CD Security" >> policy-enforcement-results/policy-violations.md
+        
+        CICD_VIOLATIONS=0
+        
+        # Check for security workflows
+        if [ ! -f ".github/workflows/security-scan.yml" ]; then
+          CICD_VIOLATIONS=$((CICD_VIOLATIONS + 1))
+          echo "❌ **VIOLATION**: Security scanning workflow missing" >> policy-enforcement-results/policy-violations.md
+        fi
+        
+        # Check for secret scanning
+        if [ ! -f ".github/workflows/secret-scan.yml" ]; then
+          CICD_VIOLATIONS=$((CICD_VIOLATIONS + 1))
+          echo "❌ **VIOLATION**: Secret scanning workflow missing" >> policy-enforcement-results/policy-violations.md
+        fi
+        
+        # Check for proper workflow permissions
+        WORKFLOW_FILES=(.github/workflows/*.yml)
+        INSECURE_WORKFLOWS=0
+        
+        for workflow in "${WORKFLOW_FILES[@]}"; do
+          if [ -f "$workflow" ] && grep -q "permissions:" "$workflow"; then
+            if grep -q "write-all\|contents: write" "$workflow" && ! grep -q "security-events: write" "$workflow"; then
+              INSECURE_WORKFLOWS=$((INSECURE_WORKFLOWS + 1))
+            fi
+          fi
+        done
+        
+        if [ $INSECURE_WORKFLOWS -gt 0 ]; then
+          CICD_VIOLATIONS=$((CICD_VIOLATIONS + 1))
+          echo "⚠️ **WARNING**: $INSECURE_WORKFLOWS workflows with broad permissions" >> policy-enforcement-results/policy-violations.md
+        fi
+        
+        if [ $CICD_VIOLATIONS -eq 0 ]; then
+          echo "✅ **COMPLIANT**: CI/CD security standards met" >> policy-enforcement-results/policy-violations.md
+        fi
+        
+        echo "POLICY_4_VIOLATIONS=$CICD_VIOLATIONS" >> $GITHUB_ENV
+
+    - name: Policy 5 - Documentation and Compliance
+      run: |
+        echo "📋 Checking Policy 5: Documentation and Compliance..."
+        
+        echo "" >> policy-enforcement-results/policy-violations.md
+        echo "## Policy 5: Documentation and Compliance" >> policy-enforcement-results/policy-violations.md
+        
+        DOC_VIOLATIONS=0
+        
+        # Check for security documentation
+        REQUIRED_DOCS=("SECURITY_AUDIT.md" "CLAUDE.md")
+        for doc in "${REQUIRED_DOCS[@]}"; do
+          if [ ! -f "$doc" ]; then
+            DOC_VIOLATIONS=$((DOC_VIOLATIONS + 1))
+            echo "❌ **VIOLATION**: Required documentation missing: $doc" >> policy-enforcement-results/policy-violations.md
+          fi
+        done
+        
+        # Check for README security section
+        if [ -f "README.md" ]; then
+          if ! grep -i "security\|vulnerability" README.md > /dev/null; then
+            DOC_VIOLATIONS=$((DOC_VIOLATIONS + 1))
+            echo "⚠️ **WARNING**: README missing security information" >> policy-enforcement-results/policy-violations.md
+          fi
+        fi
+        
+        if [ $DOC_VIOLATIONS -eq 0 ]; then
+          echo "✅ **COMPLIANT**: Documentation and compliance standards met" >> policy-enforcement-results/policy-violations.md
+        fi
+        
+        echo "POLICY_5_VIOLATIONS=$DOC_VIOLATIONS" >> $GITHUB_ENV
+
+    - name: Generate policy enforcement summary
+      run: |
+        echo "📊 Generating policy enforcement summary..."
+        
+        TOTAL_VIOLATIONS=$((POLICY_1_VIOLATIONS + POLICY_2_VIOLATIONS + POLICY_3_VIOLATIONS + POLICY_4_VIOLATIONS + POLICY_5_VIOLATIONS))
+        
+        cat >> policy-enforcement-results/policy-violations.md << EOF
+        
+        ## Policy Enforcement Summary
+        
+        **Total Policy Violations**: $TOTAL_VIOLATIONS
+        **Assessment Date**: $(date -u)
+        **Enforcement Level**: ${{ env.ENFORCEMENT_LEVEL }}
+        
+        ### Violation Breakdown:
+        - **Code Security**: $POLICY_1_VIOLATIONS violations
+        - **Dependency Security**: $POLICY_2_VIOLATIONS violations  
+        - **Container Security**: $POLICY_3_VIOLATIONS violations
+        - **CI/CD Security**: $POLICY_4_VIOLATIONS violations
+        - **Documentation**: $POLICY_5_VIOLATIONS violations
+        
+        ### Enforcement Actions:
+        EOF
+        
+        if [ $TOTAL_VIOLATIONS -eq 0 ]; then
+          echo "✅ **ALL POLICIES COMPLIANT** - No enforcement actions required" >> policy-enforcement-results/policy-violations.md
+          echo "ENFORCEMENT_ACTION=none" >> $GITHUB_ENV
+        elif [ $TOTAL_VIOLATIONS -le 3 ]; then
+          echo "⚠️ **MINOR VIOLATIONS** - Warnings issued, monitoring increased" >> policy-enforcement-results/policy-violations.md
+          echo "ENFORCEMENT_ACTION=warning" >> $GITHUB_ENV
+        else
+          echo "❌ **MAJOR VIOLATIONS** - Immediate remediation required" >> policy-enforcement-results/policy-violations.md
+          echo "ENFORCEMENT_ACTION=block" >> $GITHUB_ENV
+        fi
+        
+        echo "TOTAL_VIOLATIONS=$TOTAL_VIOLATIONS" >> $GITHUB_ENV
+
+    - name: Comment on pull request (if applicable)
+      if: github.event_name == 'pull_request'
+      run: |
+        if [ "$ENFORCEMENT_ACTION" != "none" ]; then
+          COMMENT_BODY="$(cat << 'EOF'
+        ## 🛡️ Security Policy Enforcement Report
+        
+        **Policy Version**: ${{ env.POLICY_VERSION }}
+        **Total Violations**: $TOTAL_VIOLATIONS
+        **Enforcement Action**: $ENFORCEMENT_ACTION
+        
+        ### Summary:
+        - **Code Security**: $POLICY_1_VIOLATIONS violations
+        - **Dependency Security**: $POLICY_2_VIOLATIONS violations  
+        - **Container Security**: $POLICY_3_VIOLATIONS violations
+        - **CI/CD Security**: $POLICY_4_VIOLATIONS violations
+        - **Documentation**: $POLICY_5_VIOLATIONS violations
+        
+        EOF)"
+        
+          if [ "$ENFORCEMENT_ACTION" = "block" ]; then
+            COMMENT_BODY="$COMMENT_BODY
+        
+        ❌ **BLOCKING**: This PR has major security policy violations that must be resolved before merging.
+        
+        Please review the detailed policy report in the workflow artifacts and address all violations."
+          elif [ "$ENFORCEMENT_ACTION" = "warning" ]; then
+            COMMENT_BODY="$COMMENT_BODY
+        
+        ⚠️ **WARNING**: This PR has minor security policy violations. Please review and address when possible."
+          fi
+          
+          gh pr comment ${{ github.event.pull_request.number }} --body "$COMMENT_BODY" || echo "Failed to comment on PR"
+        fi
+
+    - name: Fail workflow if blocking violations
+      if: env.ENFORCEMENT_ACTION == 'block' && env.ENFORCEMENT_LEVEL == 'strict'
+      run: |
+        echo "❌ POLICY ENFORCEMENT: Blocking violations detected"
+        echo "Total violations: $TOTAL_VIOLATIONS"
+        echo "This workflow will fail to prevent merge until violations are resolved"
+        exit 1
+
+    - name: Upload policy enforcement artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: policy-enforcement-${{ github.run_id }}
+        path: |
+          policy-enforcement-results/
+          hardcoded-secrets.txt
+          sql-injection-risk.txt
+          insecure-random.txt
+          unpinned-deps.txt
+        retention-days: 90
+        if-no-files-found: warn
+
+    - name: Update job summary
+      if: always()
+      run: |
+        echo "## 🛡️ Security Policy Enforcement Summary" >> $GITHUB_STEP_SUMMARY
+        if [ -f "policy-enforcement-results/policy-violations.md" ]; then
+          cat policy-enforcement-results/policy-violations.md >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Enforcement Level**: ${{ env.ENFORCEMENT_LEVEL }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Policy Version**: ${{ env.POLICY_VERSION }}" >> $GITHUB_STEP_SUMMARY
+
+    - name: Cleanup temporary files
+      if: always()
+      run: |
+        rm -f hardcoded-secrets.txt
+        rm -f sql-injection-risk.txt
+        rm -f insecure-random.txt
+        rm -f unpinned-deps.txt

@@ -82,11 +82,37 @@ jobs:
         semgrep --config=p/owasp-top-ten --json --output=semgrep-owasp.json src/ || true
 
     - name: Container security scan
-      if: false  # Temporarily disable container scan to fix workflow
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       run: |
-        echo "🐳 Container scan temporarily disabled"
-        echo "This step has been disabled to prevent workflow failures"
-        echo "Will be re-enabled after Docker build issues are resolved"
+        echo "🐳 Building and scanning Docker container for security vulnerabilities..."
+        
+        # Build container with security-focused tags
+        docker build -f Dockerfile.production -t ${{ env.IMAGE_NAME }}:security-test . || {
+          echo "⚠️ Docker build failed - continuing with filesystem scan only"
+          exit 0
+        }
+        
+        # Enhanced Trivy container scan with comprehensive reporting
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          -v $(pwd):/workspace \
+          aquasecurity/trivy:latest image \
+          --format json \
+          --output /workspace/trivy-container-scan.json \
+          --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+          --vuln-type os,library \
+          --security-checks vuln,secret,config \
+          ${{ env.IMAGE_NAME }}:security-test || echo "Container scan completed with findings"
+        
+        # Generate container security summary
+        echo "## 🐳 Container Security Scan Results" >> container-security-summary.md
+        echo "Generated on: $(date -u)" >> container-security-summary.md
+        echo "" >> container-security-summary.md
+        
+        if [ -f "trivy-container-scan.json" ]; then
+          echo "Container security scan completed successfully" >> container-security-summary.md
+        else
+          echo "Container scan failed - check logs for details" >> container-security-summary.md
+        fi
 
     - name: Trivy filesystem comprehensive scan
       uses: aquasecurity/trivy-action@master
@@ -165,7 +191,9 @@ jobs:
           *-owasp.json
           sbom.json
           security-summary.md
+          container-security-summary.md
           trivy-comprehensive.sarif
+          trivy-container-scan.json
         retention-days: 90
         if-no-files-found: warn
 

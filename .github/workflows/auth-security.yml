@@ -1,0 +1,300 @@
+name: Authentication & Authorization Security
+
+on:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'src/auth_integration.py'
+      - 'src/middleware/auth_middleware.py'
+      - 'src/services/oauth_service.py'
+      - 'src/**/*auth*.py'
+      - 'src/**/*security*.py'
+  pull_request:
+    branches: [ main, dev ]
+    paths:
+      - 'src/auth_integration.py'
+      - 'src/middleware/auth_middleware.py'
+      - 'src/services/oauth_service.py'
+      - 'src/**/*auth*.py'
+      - 'src/**/*security*.py'
+  schedule:
+    # Run auth security audit weekly on Sundays at 4 AM UTC
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+
+jobs:
+  auth-security-audit:
+    name: Authentication Security Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install security analysis tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit semgrep safety
+        
+        # Install additional auth-specific security tools
+        pip install jwt
+        pip install cryptography
+
+    - name: Authentication code security scan
+      run: |
+        echo "🔐 Running authentication-specific security analysis..."
+        
+        # Run Bandit with auth-specific rules
+        bandit -r src/ -f json -o bandit-auth-scan.json \
+          -i B105,B106,B107,B108,B110,B112,B301,B302,B303,B304,B305,B306,B307,B308,B309,B310,B311,B312,B313,B314,B315,B316,B317,B318,B319,B320,B321,B322,B323,B324,B325,B601,B602,B603,B604,B605,B606,B607,B608,B609,B610,B611 \
+          --confidence-level=medium || true
+        
+        # Generate auth security summary
+        echo "## 🔐 Authentication Security Audit Results" > auth-security-summary.md
+        echo "Audit completed on: $(date -u)" >> auth-security-summary.md
+        echo "" >> auth-security-summary.md
+        
+        if [ -f "bandit-auth-scan.json" ]; then
+          AUTH_ISSUES=$(jq '.results | length' bandit-auth-scan.json 2>/dev/null || echo "0")
+          echo "**Authentication security issues found**: $AUTH_ISSUES" >> auth-security-summary.md
+          
+          if [ "$AUTH_ISSUES" -gt 0 ]; then
+            echo "" >> auth-security-summary.md
+            echo "### Issues by Severity:" >> auth-security-summary.md
+            
+            HIGH_ISSUES=$(jq '[.results[] | select(.issue_severity=="HIGH")] | length' bandit-auth-scan.json 2>/dev/null || echo "0")
+            MEDIUM_ISSUES=$(jq '[.results[] | select(.issue_severity=="MEDIUM")] | length' bandit-auth-scan.json 2>/dev/null || echo "0")
+            LOW_ISSUES=$(jq '[.results[] | select(.issue_severity=="LOW")] | length' bandit-auth-scan.json 2>/dev/null || echo "0")
+            
+            echo "- **HIGH**: $HIGH_ISSUES" >> auth-security-summary.md
+            echo "- **MEDIUM**: $MEDIUM_ISSUES" >> auth-security-summary.md
+            echo "- **LOW**: $LOW_ISSUES" >> auth-security-summary.md
+          fi
+        else
+          echo "✅ No authentication security issues detected" >> auth-security-summary.md
+        fi
+
+    - name: JWT security analysis
+      run: |
+        echo "🔑 Analyzing JWT implementation security..."
+        
+        echo "" >> auth-security-summary.md
+        echo "### JWT Security Analysis:" >> auth-security-summary.md
+        
+        # Check for JWT-related security issues
+        JWT_ISSUES=0
+        
+        # Check for hardcoded JWT secrets
+        if grep -r "jwt.*secret\|secret.*jwt" src/ --include="*.py" | grep -v "SECRET_KEY" | head -5 > jwt-hardcoded-secrets.txt; then
+          if [ -s jwt-hardcoded-secrets.txt ]; then
+            JWT_ISSUES=$((JWT_ISSUES + 1))
+            echo "⚠️ **WARNING**: Potential hardcoded JWT secrets found" >> auth-security-summary.md
+            echo "Files to review:" >> auth-security-summary.md
+            cat jwt-hardcoded-secrets.txt | sed 's/^/- /' >> auth-security-summary.md
+          fi
+        fi
+        
+        # Check for weak JWT algorithms
+        if grep -r "HS256\|none\|RS256" src/ --include="*.py" | grep -i "algorithm" > jwt-algorithms.txt; then
+          if [ -s jwt-algorithms.txt ]; then
+            echo "" >> auth-security-summary.md
+            echo "📋 **JWT Algorithms in use**:" >> auth-security-summary.md
+            cat jwt-algorithms.txt | sed 's/^/- /' >> auth-security-summary.md
+            
+            # Check for 'none' algorithm (critical security issue)
+            if grep -i "none" jwt-algorithms.txt; then
+              JWT_ISSUES=$((JWT_ISSUES + 10))  # Critical issue
+              echo "🚨 **CRITICAL**: 'none' algorithm detected in JWT implementation!" >> auth-security-summary.md
+            fi
+          fi
+        fi
+        
+        # Check JWT token expiration handling
+        if ! grep -r "exp\|expir" src/ --include="*.py" | grep -i "jwt\|token" > jwt-expiration.txt; then
+          JWT_ISSUES=$((JWT_ISSUES + 1))
+          echo "⚠️ **WARNING**: No JWT expiration handling found" >> auth-security-summary.md
+        elif [ -s jwt-expiration.txt ]; then
+          echo "" >> auth-security-summary.md
+          echo "✅ JWT expiration handling found" >> auth-security-summary.md
+        fi
+        
+        if [ $JWT_ISSUES -eq 0 ]; then
+          echo "✅ JWT implementation security: PASS" >> auth-security-summary.md
+        fi
+
+    - name: Password security analysis
+      run: |
+        echo "🔒 Analyzing password security implementation..."
+        
+        echo "" >> auth-security-summary.md
+        echo "### Password Security Analysis:" >> auth-security-summary.md
+        
+        PASSWORD_ISSUES=0
+        
+        # Check for proper password hashing
+        if grep -r "bcrypt\|scrypt\|argon2\|pbkdf2" src/ --include="*.py" > password-hashing.txt; then
+          if [ -s password-hashing.txt ]; then
+            echo "✅ Secure password hashing found:" >> auth-security-summary.md
+            cat password-hashing.txt | sed 's/^/- /' >> auth-security-summary.md
+          fi
+        else
+          PASSWORD_ISSUES=$((PASSWORD_ISSUES + 5))
+          echo "🚨 **CRITICAL**: No secure password hashing implementation found!" >> auth-security-summary.md
+        fi
+        
+        # Check for insecure password patterns
+        if grep -r "md5\|sha1\|sha256" src/ --include="*.py" | grep -i "password" > insecure-password-hash.txt; then
+          if [ -s insecure-password-hash.txt ]; then
+            PASSWORD_ISSUES=$((PASSWORD_ISSUES + 3))
+            echo "⚠️ **WARNING**: Potentially insecure password hashing detected:" >> auth-security-summary.md
+            cat insecure-password-hash.txt | sed 's/^/- /' >> auth-security-summary.md
+          fi
+        fi
+        
+        # Check for hardcoded passwords
+        if grep -r "password.*=.*['\"]" src/ --include="*.py" | grep -v "password_field\|password_hash\|password_check" > hardcoded-passwords.txt; then
+          if [ -s hardcoded-passwords.txt ]; then
+            PASSWORD_ISSUES=$((PASSWORD_ISSUES + 10))
+            echo "🚨 **CRITICAL**: Potential hardcoded passwords found:" >> auth-security-summary.md
+            cat hardcoded-passwords.txt | sed 's/^/- /' >> auth-security-summary.md
+          fi
+        fi
+        
+        if [ $PASSWORD_ISSUES -eq 0 ]; then
+          echo "✅ Password security implementation: PASS" >> auth-security-summary.md
+        fi
+
+    - name: Session security analysis
+      run: |
+        echo "🍪 Analyzing session security implementation..."
+        
+        echo "" >> auth-security-summary.md
+        echo "### Session Security Analysis:" >> auth-security-summary.md
+        
+        SESSION_ISSUES=0
+        
+        # Check for secure session configuration
+        if grep -r "SESSION_COOKIE_SECURE\|SESSION_COOKIE_HTTPONLY\|SESSION_COOKIE_SAMESITE" src/ --include="*.py" > session-security.txt; then
+          if [ -s session-security.txt ]; then
+            echo "✅ Session security configuration found:" >> auth-security-summary.md
+            cat session-security.txt | sed 's/^/- /' >> auth-security-summary.md
+          fi
+        else
+          SESSION_ISSUES=$((SESSION_ISSUES + 2))
+          echo "⚠️ **WARNING**: Session security configuration not found" >> auth-security-summary.md
+        fi
+        
+        # Check for session fixation protection
+        if grep -r "session.*regenerate\|new.*session" src/ --include="*.py" > session-regeneration.txt; then
+          if [ -s session-regeneration.txt ]; then
+            echo "✅ Session regeneration found" >> auth-security-summary.md
+          fi
+        else
+          SESSION_ISSUES=$((SESSION_ISSUES + 1))
+          echo "⚠️ **WARNING**: No session regeneration/fixation protection found" >> auth-security-summary.md
+        fi
+        
+        if [ $SESSION_ISSUES -eq 0 ]; then
+          echo "✅ Session security implementation: PASS" >> auth-security-summary.md
+        fi
+
+    - name: OAuth security analysis
+      run: |
+        echo "🔑 Analyzing OAuth implementation security..."
+        
+        echo "" >> auth-security-summary.md
+        echo "### OAuth Security Analysis:" >> auth-security-summary.md
+        
+        OAUTH_ISSUES=0
+        
+        # Check for OAuth state parameter (CSRF protection)
+        if grep -r "state.*=" src/ --include="*.py" | grep -i "oauth\|auth" > oauth-state.txt; then
+          if [ -s oauth-state.txt ]; then
+            echo "✅ OAuth state parameter found (CSRF protection)" >> auth-security-summary.md
+          fi
+        else
+          OAUTH_ISSUES=$((OAUTH_ISSUES + 3))
+          echo "⚠️ **WARNING**: OAuth state parameter not found - CSRF vulnerability risk" >> auth-security-summary.md
+        fi
+        
+        # Check for PKCE implementation
+        if grep -r "code_challenge\|code_verifier" src/ --include="*.py" > oauth-pkce.txt; then
+          if [ -s oauth-pkce.txt ]; then
+            echo "✅ PKCE implementation found" >> auth-security-summary.md
+          fi
+        else
+          OAUTH_ISSUES=$((OAUTH_ISSUES + 2))
+          echo "⚠️ **WARNING**: PKCE not implemented - authorization code interception risk" >> auth-security-summary.md
+        fi
+        
+        # Check for secure redirect URI validation
+        if grep -r "redirect_uri.*valid\|validate.*redirect" src/ --include="*.py" > oauth-redirect-validation.txt; then
+          if [ -s oauth-redirect-validation.txt ]; then
+            echo "✅ Redirect URI validation found" >> auth-security-summary.md
+          fi
+        else
+          OAUTH_ISSUES=$((OAUTH_ISSUES + 4))
+          echo "🚨 **HIGH**: No redirect URI validation found - open redirect vulnerability risk" >> auth-security-summary.md
+        fi
+        
+        if [ $OAUTH_ISSUES -eq 0 ]; then
+          echo "✅ OAuth security implementation: PASS" >> auth-security-summary.md
+        fi
+
+    - name: Generate security recommendations
+      run: |
+        echo "" >> auth-security-summary.md
+        echo "### 🛡️ Authentication Security Recommendations:" >> auth-security-summary.md
+        echo "" >> auth-security-summary.md
+        echo "#### Immediate Actions:" >> auth-security-summary.md
+        echo "1. **Multi-Factor Authentication**: Implement TOTP/SMS 2FA for admin accounts" >> auth-security-summary.md
+        echo "2. **Rate Limiting**: Implement login attempt rate limiting (already partially done)" >> auth-security-summary.md
+        echo "3. **Account Lockout**: Implement progressive account lockout after failed attempts" >> auth-security-summary.md
+        echo "4. **Password Policy**: Enforce strong password requirements" >> auth-security-summary.md
+        echo "" >> auth-security-summary.md
+        echo "#### Long-term Improvements:" >> auth-security-summary.md
+        echo "1. **OAuth 2.1**: Upgrade to OAuth 2.1 with PKCE mandatory" >> auth-security-summary.md
+        echo "2. **WebAuthn**: Implement passwordless authentication with FIDO2/WebAuthn" >> auth-security-summary.md
+        echo "3. **Zero Trust**: Implement continuous authentication and authorization" >> auth-security-summary.md
+        echo "4. **Session Management**: Implement concurrent session limiting" >> auth-security-summary.md
+        echo "5. **Audit Logging**: Enhanced authentication event logging and monitoring" >> auth-security-summary.md
+
+    - name: Upload authentication security artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: auth-security-scan-${{ github.sha }}
+        path: |
+          bandit-auth-scan.json
+          auth-security-summary.md
+          jwt-*.txt
+          password-*.txt
+          session-*.txt
+          oauth-*.txt
+        retention-days: 90
+        if-no-files-found: warn
+
+    - name: Update job summary
+      if: always()
+      run: |
+        echo "## 🔐 Authentication Security Audit Summary" >> $GITHUB_STEP_SUMMARY
+        if [ -f "auth-security-summary.md" ]; then
+          cat auth-security-summary.md >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Cleanup temporary files
+      if: always()
+      run: |
+        rm -f jwt-*.txt
+        rm -f password-*.txt
+        rm -f session-*.txt
+        rm -f oauth-*.txt
