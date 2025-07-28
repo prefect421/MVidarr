@@ -471,6 +471,10 @@ class YouTubePlaylistService:
         if existing_artist:
             return existing_artist
 
+        # Generate default folder path
+        from src.utils.filename_cleanup import FilenameCleanup
+        folder_path = FilenameCleanup.sanitize_folder_name(channel_title)
+        
         # Create new artist
         new_artist = Artist(
             name=channel_title,
@@ -478,6 +482,7 @@ class YouTubePlaylistService:
             auto_download=False,
             source="youtube_playlist",
             created_at=datetime.now(),
+            folder_path=folder_path,
         )
 
         session.add(new_artist)

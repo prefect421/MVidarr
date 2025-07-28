@@ -449,12 +449,19 @@ def add_artist():
             if imvdb_id == "":
                 imvdb_id = None
 
+            # Generate default folder path if not provided
+            folder_path = data.get("folder_path")
+            if not folder_path:
+                from src.utils.filename_cleanup import FilenameCleanup
+                folder_path = FilenameCleanup.sanitize_folder_name(data["name"])
+            
             artist = Artist(
                 name=data["name"],
                 imvdb_id=imvdb_id,
                 auto_download=data.get("auto_download", False),
                 keywords=data.get("keywords", []),
                 monitored=data.get("monitored", True),
+                folder_path=folder_path,
             )
 
             session.add(artist)
@@ -623,6 +630,10 @@ def import_artist_from_imvdb():
                         400,
                     )
 
+            # Generate default folder path
+            from src.utils.filename_cleanup import FilenameCleanup
+            folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
+            
             # Create new artist
             artist = Artist(
                 name=artist_name,
@@ -631,6 +642,7 @@ def import_artist_from_imvdb():
                 auto_download=data.get("auto_download", False),
                 monitored=data.get("monitored", True),
                 keywords=data.get("keywords", []),
+                folder_path=folder_path,
             )
 
             session.add(artist)
@@ -855,6 +867,10 @@ def bulk_import_artists():
                         elif isinstance(artist_data["image"], str):
                             thumbnail_url = artist_data["image"]
 
+                    # Generate default folder path
+                    from src.utils.filename_cleanup import FilenameCleanup
+                    folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
+                    
                     # Create new artist with enhanced metadata
                     artist = Artist(
                         name=artist_name,
@@ -864,6 +880,7 @@ def bulk_import_artists():
                         monitored=artist_request.get("monitored", True),
                         keywords=artist_request.get("keywords", []),
                         imvdb_metadata=artist_data,  # Store full metadata
+                        folder_path=folder_path,
                     )
 
                     session.add(artist)

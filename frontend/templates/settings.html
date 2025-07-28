@@ -576,6 +576,7 @@ function initializeTab() {
 window.addEventListener('hashchange', initializeTab);
 
 function loadSettings() {
+    // Load regular settings
     fetch('/api/settings/')
         .then(response => response.json())
         .then(data => {
@@ -599,6 +600,29 @@ function loadSettings() {
             } else {
                 alert('Error loading settings');
             }
+        });
+    
+    // Load database configuration separately
+    fetch('/api/settings/database-config')
+        .then(response => response.json())
+        .then(data => {
+            const dbConfig = data.database_config;
+            
+            // Populate database configuration fields
+            Object.keys(dbConfig).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = dbConfig[key];
+                    // Make database fields read-only since they come from environment
+                    element.readOnly = true;
+                    element.style.backgroundColor = '#f5f5f5';
+                    element.title = 'This value is read from environment variables and cannot be edited here';
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading database config:', error);
+            // Don't show error for database config as it's supplementary
         });
 }
 
