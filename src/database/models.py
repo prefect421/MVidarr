@@ -199,9 +199,9 @@ class User(Base):
                 {
                     "failed_login_attempts": self.failed_login_attempts,
                     "is_locked": self.is_locked(),
-                    "locked_until": self.locked_until.isoformat()
-                    if self.locked_until
-                    else None,
+                    "locked_until": (
+                        self.locked_until.isoformat() if self.locked_until else None
+                    ),
                     "last_login_ip": self.last_login_ip,
                     "two_factor_enabled": self.two_factor_enabled,
                 }

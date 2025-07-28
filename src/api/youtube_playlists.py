@@ -290,9 +290,11 @@ def get_youtube_status():
             jsonify(
                 {
                     "configured": configured,
-                    "api_key": youtube_playlist_service.api_key[:8] + "..."
-                    if configured
-                    else None,
+                    "api_key": (
+                        youtube_playlist_service.api_key[:8] + "..."
+                        if configured
+                        else None
+                    ),
                     "metube_url": youtube_playlist_service.metube_url,
                 }
             ),

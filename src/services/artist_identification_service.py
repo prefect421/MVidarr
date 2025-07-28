@@ -359,9 +359,9 @@ class ArtistIdentificationService:
                 "total_unknown_videos": len(unknown_artist.videos),
                 "sampled_videos": len(videos),
                 "identifiable_videos": identifiable_videos,
-                "identification_rate": len(identifiable_videos) / len(videos)
-                if videos
-                else 0,
+                "identification_rate": (
+                    len(identifiable_videos) / len(videos) if videos else 0
+                ),
                 "summary": f"Found {len(identifiable_videos)} identifiable videos out of {len(videos)} sampled",
             }
 

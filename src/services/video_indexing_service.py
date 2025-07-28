@@ -566,9 +566,11 @@ class VideoIndexingService:
                     "videos_with_imvdb": videos_with_imvdb,
                     "downloaded_videos": downloaded_videos,
                     "videos_with_files": videos_with_files,
-                    "imvdb_coverage": round((videos_with_imvdb / total_videos * 100), 2)
-                    if total_videos > 0
-                    else 0,
+                    "imvdb_coverage": (
+                        round((videos_with_imvdb / total_videos * 100), 2)
+                        if total_videos > 0
+                        else 0
+                    ),
                 }
 
         except Exception as e:

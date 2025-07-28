@@ -606,9 +606,11 @@ class IMVDbService:
             "genre": str(video_data.get("genre", "")),
             "label": video_data.get("label"),
             "album": video_data.get("album"),
-            "imvdb_url": f"https://imvdb.com/video/{video_data.get('id')}"
-            if video_data.get("id")
-            else None,
+            "imvdb_url": (
+                f"https://imvdb.com/video/{video_data.get('id')}"
+                if video_data.get("id")
+                else None
+            ),
             "raw_metadata": video_data,
         }
 

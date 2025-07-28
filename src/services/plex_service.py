@@ -462,9 +462,9 @@ class PlexService:
                     "total_duration": total_duration,
                     "total_plays": total_plays,
                     "last_played": last_played,
-                    "avg_track_duration": total_duration / total_tracks
-                    if total_tracks > 0
-                    else 0,
+                    "avg_track_duration": (
+                        total_duration / total_tracks if total_tracks > 0 else 0
+                    ),
                 },
             }
 

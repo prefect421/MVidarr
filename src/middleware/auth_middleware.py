@@ -92,15 +92,21 @@ class AuthMiddleware:
             "current_user": g.get("current_user"),
             "is_authenticated": g.get("is_authenticated", False),
             "user_role": g.get("user_role"),
-            "user_can_admin": g.get("current_user").can_access_admin()
-            if g.get("current_user")
-            else False,
-            "user_can_modify": g.get("current_user").can_modify_content()
-            if g.get("current_user")
-            else False,
-            "user_can_delete": g.get("current_user").can_delete_content()
-            if g.get("current_user")
-            else False,
+            "user_can_admin": (
+                g.get("current_user").can_access_admin()
+                if g.get("current_user")
+                else False
+            ),
+            "user_can_modify": (
+                g.get("current_user").can_modify_content()
+                if g.get("current_user")
+                else False
+            ),
+            "user_can_delete": (
+                g.get("current_user").can_delete_content()
+                if g.get("current_user")
+                else False
+            ),
         }
 
     def handle_unauthorized(self, error):

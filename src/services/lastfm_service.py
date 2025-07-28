@@ -648,9 +648,11 @@ class LastFmService:
                     {"name": name, "count": count} for name, count in top_artists
                 ],
                 "daily_pattern": daily_pattern,
-                "most_active_day": max(daily_counts.items(), key=lambda x: x[1])
-                if daily_counts
-                else None,
+                "most_active_day": (
+                    max(daily_counts.items(), key=lambda x: x[1])
+                    if daily_counts
+                    else None
+                ),
             }
 
         except Exception as e:

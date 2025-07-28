@@ -174,9 +174,9 @@ class GoogleProvider(OAuthProvider):
 
         return {
             "id": user_info.get("id"),
-            "username": user_info.get("email").split("@")[0]
-            if user_info.get("email")
-            else None,
+            "username": (
+                user_info.get("email").split("@")[0] if user_info.get("email") else None
+            ),
             "email": user_info.get("email"),
             "name": user_info.get("name"),
             "given_name": user_info.get("given_name"),

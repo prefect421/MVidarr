@@ -255,9 +255,11 @@ def register_auth_health_endpoint(app: Flask):
                 "authentication": status,
                 "protection": {
                     "summary": protection["summary"] if protection else None,
-                    "coverage": protection["summary"]["protection_coverage"]
-                    if protection
-                    else 0,
+                    "coverage": (
+                        protection["summary"]["protection_coverage"]
+                        if protection
+                        else 0
+                    ),
                 },
                 "timestamp": datetime.utcnow().isoformat(),
             }

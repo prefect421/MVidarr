@@ -266,9 +266,9 @@ def toggle_user_active_web(user_id):
                         "success": True,
                         "message": message,
                         "action": action,
-                        "new_status": not user.is_active
-                        if action == "deactivated"
-                        else True,
+                        "new_status": (
+                            not user.is_active if action == "deactivated" else True
+                        ),
                     }
                 )
             else:

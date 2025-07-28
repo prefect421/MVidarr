@@ -381,9 +381,11 @@ class YouTubePlaylistService:
                             view_count=details.get("view_count"),
                             playlist_id=playlist_id,
                             playlist_position=video_data.get("position"),
-                            status=VideoStatus.WANTED
-                            if monitor.auto_download
-                            else VideoStatus.MONITORED,
+                            status=(
+                                VideoStatus.WANTED
+                                if monitor.auto_download
+                                else VideoStatus.MONITORED
+                            ),
                             source="youtube_playlist",
                             created_at=datetime.now(),
                         )
@@ -548,13 +550,15 @@ class YouTubePlaylistService:
                             "channel_title": monitor.channel_title,
                             "auto_download": monitor.auto_download,
                             "quality": monitor.quality,
-                            "keywords": json.loads(monitor.keywords)
-                            if monitor.keywords
-                            else [],
+                            "keywords": (
+                                json.loads(monitor.keywords) if monitor.keywords else []
+                            ),
                             "video_count": video_count,
-                            "last_check": monitor.last_check.isoformat()
-                            if monitor.last_check
-                            else None,
+                            "last_check": (
+                                monitor.last_check.isoformat()
+                                if monitor.last_check
+                                else None
+                            ),
                             "created_at": monitor.created_at.isoformat(),
                             "recent_videos": [
                                 {

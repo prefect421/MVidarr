@@ -301,14 +301,16 @@ def create_endpoint_protection_report(app):
             "protected_endpoints": summary["protected_endpoints"],
             "public_endpoints": summary["public_endpoints"],
             "unprotected_endpoints": len(unprotected),
-            "protection_coverage": round(
-                (summary["protected_endpoints"] + summary["public_endpoints"])
-                / summary["total_endpoints"]
-                * 100,
-                2,
-            )
-            if summary["total_endpoints"] > 0
-            else 0,
+            "protection_coverage": (
+                round(
+                    (summary["protected_endpoints"] + summary["public_endpoints"])
+                    / summary["total_endpoints"]
+                    * 100,
+                    2,
+                )
+                if summary["total_endpoints"] > 0
+                else 0
+            ),
         },
         "by_protection_level": by_protection,
         "unprotected_endpoints": unprotected,

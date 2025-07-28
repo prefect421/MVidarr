@@ -292,9 +292,11 @@ def get_videos():
                         "title": video.title,
                         "artist_id": video.artist_id,
                         "artist_name": video.artist.name if video.artist else None,
-                        "status": video.status.value
-                        if hasattr(video.status, "value")
-                        else video.status,
+                        "status": (
+                            video.status.value
+                            if hasattr(video.status, "value")
+                            else video.status
+                        ),
                         "imvdb_id": video.imvdb_id,
                         "video_url": video.url,
                         "local_path": video.local_path,
@@ -466,9 +468,11 @@ def search_videos():
                         "title": video.title,
                         "artist_id": video.artist_id,
                         "artist_name": video.artist.name if video.artist else None,
-                        "status": video.status.value
-                        if hasattr(video.status, "value")
-                        else video.status,
+                        "status": (
+                            video.status.value
+                            if hasattr(video.status, "value")
+                            else video.status
+                        ),
                         "imvdb_id": video.imvdb_id,
                         "video_url": video.url,
                         "local_path": video.local_path,
@@ -529,9 +533,11 @@ def get_video(video_id):
                 "title": video.title,
                 "artist_id": video.artist_id,
                 "artist_name": video.artist.name if video.artist else None,
-                "status": video.status.value
-                if hasattr(video.status, "value")
-                else video.status,
+                "status": (
+                    video.status.value
+                    if hasattr(video.status, "value")
+                    else video.status
+                ),
                 "imvdb_id": video.imvdb_id,
                 "video_url": video.url,
                 "local_path": video.local_path,
@@ -1699,9 +1705,11 @@ def get_video_thumbnail_info(video_id):
                 "thumbnail_url": video.thumbnail_url,
                 "thumbnail_path": video.thumbnail_path,
                 "thumbnail_source": video.thumbnail_source,
-                "thumbnail_uploaded_at": video.thumbnail_uploaded_at.isoformat()
-                if video.thumbnail_uploaded_at
-                else None,
+                "thumbnail_uploaded_at": (
+                    video.thumbnail_uploaded_at.isoformat()
+                    if video.thumbnail_uploaded_at
+                    else None
+                ),
                 "thumbnail_metadata": video.thumbnail_metadata,
             }
 
@@ -2309,9 +2317,11 @@ def refresh_video_metadata(video_id):
                 "title": video.title,
                 "artist_id": video.artist_id,
                 "artist_name": video.artist.name if video.artist else None,
-                "status": video.status.value
-                if hasattr(video.status, "value")
-                else video.status,
+                "status": (
+                    video.status.value
+                    if hasattr(video.status, "value")
+                    else video.status
+                ),
                 "imvdb_id": video.imvdb_id,
                 "video_url": video.url,
                 "local_path": video.local_path,
@@ -2323,9 +2333,9 @@ def refresh_video_metadata(video_id):
                 "created_at": video.created_at.isoformat(),
                 "metadata_refreshed": True,
                 "metadata_source": metadata_source,
-                "youtube_id": video.youtube_id
-                if hasattr(video, "youtube_id")
-                else None,
+                "youtube_id": (
+                    video.youtube_id if hasattr(video, "youtube_id") else None
+                ),
             }
 
             return (
@@ -2492,9 +2502,9 @@ def fix_title_artist_swap():
                         "processed": processed,
                         "fixed": fixed,
                         "errors": errors,
-                        "changes": changes[:20]
-                        if dry_run
-                        else [],  # Show first 20 changes for dry run
+                        "changes": (
+                            changes[:20] if dry_run else []
+                        ),  # Show first 20 changes for dry run
                         "error_details": error_details[:10] if error_details else [],
                     }
                 ),
@@ -2587,9 +2597,9 @@ def refresh_all_metadata():
                             {
                                 "id": video.id,
                                 "title": video.title,
-                                "artist_name": video.artist.name
-                                if video.artist
-                                else None,
+                                "artist_name": (
+                                    video.artist.name if video.artist else None
+                                ),
                                 "imvdb_id": video.imvdb_id,
                                 "url": video.url,
                             }
@@ -2808,9 +2818,9 @@ def refresh_all_metadata():
                         "processed": processed,
                         "updated": updated,
                         "errors": errors,
-                        "error_details": error_details[:10]
-                        if error_details
-                        else [],  # Limit error details
+                        "error_details": (
+                            error_details[:10] if error_details else []
+                        ),  # Limit error details
                     }
                 ),
                 200,
@@ -2914,9 +2924,11 @@ def update_video(video_id):
                 "title": video.title,
                 "artist_id": video.artist_id,
                 "artist_name": video.artist.name if video.artist else None,
-                "status": video.status.value
-                if hasattr(video.status, "value")
-                else video.status,
+                "status": (
+                    video.status.value
+                    if hasattr(video.status, "value")
+                    else video.status
+                ),
                 "imvdb_id": video.imvdb_id,
                 "video_url": video.url,
                 "local_path": video.local_path,
@@ -3582,21 +3594,27 @@ def scan_artist_directories():
                                 "filename": video_file.name,
                                 "extracted_title": extracted_title,
                                 "file_size": video_file.stat().st_size,
-                                "existing_video_id": matching_video.id
-                                if matching_video
-                                else None,
-                                "existing_video_title": matching_video.title
-                                if matching_video
-                                else None,
-                                "existing_status": matching_video.status.value
-                                if matching_video
-                                and hasattr(matching_video.status, "value")
-                                else (
-                                    matching_video.status if matching_video else None
+                                "existing_video_id": (
+                                    matching_video.id if matching_video else None
                                 ),
-                                "existing_local_path": matching_video.local_path
-                                if matching_video
-                                else None,
+                                "existing_video_title": (
+                                    matching_video.title if matching_video else None
+                                ),
+                                "existing_status": (
+                                    matching_video.status.value
+                                    if matching_video
+                                    and hasattr(matching_video.status, "value")
+                                    else (
+                                        matching_video.status
+                                        if matching_video
+                                        else None
+                                    )
+                                ),
+                                "existing_local_path": (
+                                    matching_video.local_path
+                                    if matching_video
+                                    else None
+                                ),
                             }
 
                             found_videos.append(video_info)
@@ -3845,9 +3863,11 @@ def import_video_from_imvdb():
                     "message": f'Video "{video_metadata["title"]}" imported successfully',
                     "auto_download": {
                         "attempted": auto_download,
-                        "success": download_result.get("success", False)
-                        if download_result and auto_download
-                        else False,
+                        "success": (
+                            download_result.get("success", False)
+                            if download_result and auto_download
+                            else False
+                        ),
                         "error": download_error,
                         "priority": priority if auto_download else None,
                     },
@@ -3857,9 +3877,11 @@ def import_video_from_imvdb():
                         "imvdb_id": imvdb_id,
                         "artist_id": artist_id,
                         "artist_name": artist_name,
-                        "status": "DOWNLOADING"
-                        if download_result and download_result.get("success")
-                        else "WANTED",
+                        "status": (
+                            "DOWNLOADING"
+                            if download_result and download_result.get("success")
+                            else "WANTED"
+                        ),
                         "year": video_metadata.get("year"),
                         "directors": video_metadata.get("directors", []),
                         "producers": video_metadata.get("producers", []),
@@ -4117,9 +4139,11 @@ def import_video_from_youtube():
                     "message": f'Video "{title}" imported successfully',
                     "auto_download": {
                         "attempted": auto_download,
-                        "success": download_result.get("success", False)
-                        if download_result and auto_download
-                        else False,
+                        "success": (
+                            download_result.get("success", False)
+                            if download_result and auto_download
+                            else False
+                        ),
                         "error": download_error,
                         "priority": priority if auto_download else None,
                     },
@@ -4130,9 +4154,11 @@ def import_video_from_youtube():
                         "youtube_url": f"https://www.youtube.com/watch?v={youtube_id}",
                         "artist_id": artist_id,
                         "artist_name": artist_name,
-                        "status": "DOWNLOADING"
-                        if download_result and download_result.get("success")
-                        else "WANTED",
+                        "status": (
+                            "DOWNLOADING"
+                            if download_result and download_result.get("success")
+                            else "WANTED"
+                        ),
                         "year": year,
                         "channel_title": channel_title,
                         "thumbnail_url": thumbnail_url,
@@ -4192,9 +4218,9 @@ def get_download_queue():
                     {
                         "id": download.id,
                         "title": download.title,
-                        "artist_name": download.artist.name
-                        if download.artist
-                        else "Unknown",
+                        "artist_name": (
+                            download.artist.name if download.artist else "Unknown"
+                        ),
                         "artist_id": download.artist_id,
                         "video_id": download.video_id,
                         "status": download.status,
@@ -4204,9 +4230,11 @@ def get_download_queue():
                         "file_size": download.file_size,
                         "quality": download.quality,
                         "format": download.format,
-                        "download_date": download.download_date.isoformat()
-                        if download.download_date
-                        else None,
+                        "download_date": (
+                            download.download_date.isoformat()
+                            if download.download_date
+                            else None
+                        ),
                         "created_at": download.created_at.isoformat(),
                         "updated_at": download.updated_at.isoformat(),
                         "error_message": download.error_message,
@@ -4803,12 +4831,14 @@ def detect_duplicates():
                     {
                         "id": dup_video.id,
                         "title": dup_video.title,
-                        "artist_name": dup_video.artist.name
-                        if dup_video.artist
-                        else None,
-                        "status": dup_video.status.value
-                        if hasattr(dup_video.status, "value")
-                        else dup_video.status,
+                        "artist_name": (
+                            dup_video.artist.name if dup_video.artist else None
+                        ),
+                        "status": (
+                            dup_video.status.value
+                            if hasattr(dup_video.status, "value")
+                            else dup_video.status
+                        ),
                         "year": dup_video.year,
                         "url": dup_video.url,
                         "local_path": dup_video.local_path,
@@ -4823,12 +4853,14 @@ def detect_duplicates():
                     "current_video": {
                         "id": current_video.id,
                         "title": current_video.title,
-                        "artist_name": current_video.artist.name
-                        if current_video.artist
-                        else None,
-                        "status": current_video.status.value
-                        if hasattr(current_video.status, "value")
-                        else current_video.status,
+                        "artist_name": (
+                            current_video.artist.name if current_video.artist else None
+                        ),
+                        "status": (
+                            current_video.status.value
+                            if hasattr(current_video.status, "value")
+                            else current_video.status
+                        ),
                         "year": current_video.year,
                         "url": current_video.url,
                         "local_path": current_video.local_path,
@@ -4959,12 +4991,16 @@ def update_video_safe(video_id):
                                 "duplicate_video": {
                                     "id": existing_video.id,
                                     "title": existing_video.title,
-                                    "artist_name": existing_video.artist.name
-                                    if existing_video.artist
-                                    else None,
-                                    "status": existing_video.status.value
-                                    if hasattr(existing_video.status, "value")
-                                    else existing_video.status,
+                                    "artist_name": (
+                                        existing_video.artist.name
+                                        if existing_video.artist
+                                        else None
+                                    ),
+                                    "status": (
+                                        existing_video.status.value
+                                        if hasattr(existing_video.status, "value")
+                                        else existing_video.status
+                                    ),
                                 },
                                 "suggested_action": "merge",
                             }

@@ -382,9 +382,9 @@ class YtDlpService:
                 download_entry["status"] = "failed"
                 self._update_video_status_in_database(video_id, "FAILED")
                 download_entry["completed_at"] = datetime.utcnow().isoformat()
-                download_entry[
-                    "error_message"
-                ] = f"All download attempts failed. Last error: {last_error}"
+                download_entry["error_message"] = (
+                    f"All download attempts failed. Last error: {last_error}"
+                )
                 logger.error(
                     f"Download {download_id} failed after all attempts: {last_error}"
                 )

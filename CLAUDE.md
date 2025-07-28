@@ -9,9 +9,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Code Formatting and Testing
 
 ### Python Code Formatting
-- **Black Version**: Always use `black==23.11.0` to match the version pinned in `requirements.txt`
+- **Black Version**: Always use `black==24.3.0` to match the version pinned in `requirements.txt`
 - **isort Configuration**: Use `isort --profile black` for import sorting to maintain compatibility with Black
-- **Installation**: Use `pipx install black==23.11.0` and `pipx install isort`
+- **Installation**: Use `pipx install black==24.3.0` and `pipx install isort`
 - **Commands for formatting**:
   ```bash
   # Format with specific black version

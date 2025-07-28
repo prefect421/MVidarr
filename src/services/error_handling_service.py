@@ -271,18 +271,18 @@ class EnhancedErrorHandler:
             if strategy == ErrorRecoveryStrategy.RETRY.value:
                 # Implement retry logic
                 recovery_result["strategy_used"] = strategy
-                recovery_result[
-                    "message"
-                ] = "Retry recommended - operation should be attempted again"
+                recovery_result["message"] = (
+                    "Retry recommended - operation should be attempted again"
+                )
                 recovery_result["successful"] = True
                 break
 
             elif strategy == ErrorRecoveryStrategy.FALLBACK.value:
                 # Implement fallback logic
                 recovery_result["strategy_used"] = strategy
-                recovery_result[
-                    "message"
-                ] = "Fallback available - alternative approach recommended"
+                recovery_result["message"] = (
+                    "Fallback available - alternative approach recommended"
+                )
                 recovery_result["successful"] = True
                 break
 
@@ -295,9 +295,9 @@ class EnhancedErrorHandler:
 
             elif strategy == ErrorRecoveryStrategy.MANUAL_INTERVENTION.value:
                 recovery_result["strategy_used"] = strategy
-                recovery_result[
-                    "message"
-                ] = "Manual intervention required - please check system configuration"
+                recovery_result["message"] = (
+                    "Manual intervention required - please check system configuration"
+                )
                 recovery_result["successful"] = False
                 break
 
@@ -342,16 +342,16 @@ class EnhancedErrorHandler:
             / max(self.error_stats.get("total_operations", 1), 1),
             "recovery_rate": self.error_stats["successful_recoveries"]
             / max(self.error_stats["recovery_attempts"], 1),
-            "most_common_category": max(
-                self.error_stats["by_category"].items(), key=lambda x: x[1]
-            )[0]
-            if self.error_stats["by_category"]
-            else None,
-            "most_common_severity": max(
-                self.error_stats["by_severity"].items(), key=lambda x: x[1]
-            )[0]
-            if self.error_stats["by_severity"]
-            else None,
+            "most_common_category": (
+                max(self.error_stats["by_category"].items(), key=lambda x: x[1])[0]
+                if self.error_stats["by_category"]
+                else None
+            ),
+            "most_common_severity": (
+                max(self.error_stats["by_severity"].items(), key=lambda x: x[1])[0]
+                if self.error_stats["by_severity"]
+                else None
+            ),
         }
 
     def create_progress_indicator(

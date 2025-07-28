@@ -21,9 +21,11 @@ def get_status():
         status = {
             "configured": configured,
             "server_url": plex_service.server_url,
-            "token": plex_service.server_token[:8] + "..."
-            if plex_service.server_token
-            else None,
+            "token": (
+                plex_service.server_token[:8] + "..."
+                if plex_service.server_token
+                else None
+            ),
             "connected": False,
             "server_info": None,
         }

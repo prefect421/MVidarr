@@ -410,9 +410,11 @@ def get_status():
                     "username": username,
                     "subscriber": session.get("lastfm_subscriber", False),
                     "profile": profile,
-                    "api_key": lastfm_service.api_key[:8] + "..."
-                    if lastfm_service.api_key
-                    else None,
+                    "api_key": (
+                        lastfm_service.api_key[:8] + "..."
+                        if lastfm_service.api_key
+                        else None
+                    ),
                 }
             ),
             200,

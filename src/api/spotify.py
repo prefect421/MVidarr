@@ -477,9 +477,11 @@ def get_status():
                     "configured": configured,
                     "authenticated": has_access_token,
                     "profile": profile,
-                    "client_id": spotify_service.client_id[:8] + "..."
-                    if spotify_service.client_id
-                    else None,
+                    "client_id": (
+                        spotify_service.client_id[:8] + "..."
+                        if spotify_service.client_id
+                        else None
+                    ),
                     "redirect_uri": spotify_service.redirect_uri,
                 }
             ),
@@ -503,9 +505,11 @@ def reload_settings():
                     "success": True,
                     "message": "Spotify settings reloaded successfully",
                     "redirect_uri": spotify_service.redirect_uri,
-                    "client_id": spotify_service.client_id[:8] + "..."
-                    if spotify_service.client_id
-                    else None,
+                    "client_id": (
+                        spotify_service.client_id[:8] + "..."
+                        if spotify_service.client_id
+                        else None
+                    ),
                 }
             ),
             200,

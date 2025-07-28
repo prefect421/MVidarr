@@ -323,9 +323,9 @@ def _execute_advanced_search(query_params):
                 "keywords": artist.keywords or [],
                 "monitored": artist.monitored,
                 "folder_path": artist.folder_path,
-                "last_discovery": artist.last_discovery.isoformat()
-                if artist.last_discovery
-                else None,
+                "last_discovery": (
+                    artist.last_discovery.isoformat() if artist.last_discovery else None
+                ),
                 "created_at": artist.created_at.isoformat(),
                 "updated_at": artist.updated_at.isoformat(),
                 "video_count": actual_video_count,
@@ -984,18 +984,22 @@ def get_artist_detailed(artist_id):
                         "local_path": video.local_path,
                         "duration": video.duration,
                         "year": video.year,
-                        "release_date": video.release_date.isoformat()
-                        if video.release_date
-                        else None,
+                        "release_date": (
+                            video.release_date.isoformat()
+                            if video.release_date
+                            else None
+                        ),
                         "description": video.description,
                         "view_count": video.view_count,
                         "directors": video.directors,
                         "producers": video.producers,
                         "status": video.status.value if video.status else None,
                         "quality": video.quality,
-                        "discovered_date": video.discovered_date.isoformat()
-                        if video.discovered_date
-                        else None,
+                        "discovered_date": (
+                            video.discovered_date.isoformat()
+                            if video.discovered_date
+                            else None
+                        ),
                         "created_at": video.created_at.isoformat(),
                         "updated_at": video.updated_at.isoformat(),
                     }
@@ -1013,9 +1017,11 @@ def get_artist_detailed(artist_id):
                         "original_url": download.original_url,
                         "file_path": download.file_path,
                         "file_size": download.file_size,
-                        "download_date": download.download_date.isoformat()
-                        if download.download_date
-                        else None,
+                        "download_date": (
+                            download.download_date.isoformat()
+                            if download.download_date
+                            else None
+                        ),
                         "status": download.status,
                         "progress": download.progress,
                         "error_message": download.error_message,
@@ -1035,9 +1041,9 @@ def get_artist_detailed(artist_id):
                 "keywords": artist.keywords or [],
                 "monitored": artist.monitored,
                 "folder_path": artist.folder_path,
-                "last_discovery": artist.last_discovery.isoformat()
-                if artist.last_discovery
-                else None,
+                "last_discovery": (
+                    artist.last_discovery.isoformat() if artist.last_discovery else None
+                ),
                 "created_at": artist.created_at.isoformat(),
                 "updated_at": artist.updated_at.isoformat(),
                 "imvdb_metadata": artist.imvdb_metadata,
@@ -1186,9 +1192,9 @@ def discover_artist_videos(artist_id):
                     "imvdb_url": video_metadata["imvdb_url"],
                     "already_exists": bool(existing_video),
                     "existing_video_id": existing_video.id if existing_video else None,
-                    "existing_status": existing_video.status.value
-                    if existing_video
-                    else None,
+                    "existing_status": (
+                        existing_video.status.value if existing_video else None
+                    ),
                     "duration": video_metadata.get("duration"),
                     "description": video_metadata.get("description", ""),
                     "search_score": video_metadata.get("search_score", 1.0),
@@ -1277,9 +1283,9 @@ def discover_artist_videos(artist_id):
                     "search_score": youtube_video.get("search_score", 1.0),
                     "already_exists": bool(existing_video),
                     "existing_video_id": existing_video.id if existing_video else None,
-                    "existing_status": existing_video.status.value
-                    if existing_video
-                    else None,
+                    "existing_status": (
+                        existing_video.status.value if existing_video else None
+                    ),
                 }
 
                 discovered_videos.append(video_info)
@@ -1455,23 +1461,33 @@ def get_search_filters():
                         "filters": {
                             "keywords": sorted(list(all_keywords)),
                             "date_range": {
-                                "earliest": date_range.earliest.isoformat()
-                                if date_range.earliest
-                                else None,
-                                "latest": date_range.latest.isoformat()
-                                if date_range.latest
-                                else None,
+                                "earliest": (
+                                    date_range.earliest.isoformat()
+                                    if date_range.earliest
+                                    else None
+                                ),
+                                "latest": (
+                                    date_range.latest.isoformat()
+                                    if date_range.latest
+                                    else None
+                                ),
                             },
                             "video_count_range": {
-                                "min": int(video_count_stats.min_videos)
-                                if video_count_stats.min_videos
-                                else 0,
-                                "max": int(video_count_stats.max_videos)
-                                if video_count_stats.max_videos
-                                else 0,
-                                "average": float(video_count_stats.avg_videos)
-                                if video_count_stats.avg_videos
-                                else 0,
+                                "min": (
+                                    int(video_count_stats.min_videos)
+                                    if video_count_stats.min_videos
+                                    else 0
+                                ),
+                                "max": (
+                                    int(video_count_stats.max_videos)
+                                    if video_count_stats.max_videos
+                                    else 0
+                                ),
+                                "average": (
+                                    float(video_count_stats.avg_videos)
+                                    if video_count_stats.avg_videos
+                                    else 0
+                                ),
                             },
                         },
                         "statistics": {
@@ -1480,21 +1496,23 @@ def get_search_filters():
                             "auto_download_artists": auto_download_artists,
                             "artists_with_thumbnails": artists_with_thumbnails,
                             "artists_with_imvdb": artists_with_imvdb,
-                            "monitoring_percentage": round(
-                                (monitored_artists / total_artists * 100), 2
-                            )
-                            if total_artists > 0
-                            else 0,
-                            "thumbnail_coverage": round(
-                                (artists_with_thumbnails / total_artists * 100), 2
-                            )
-                            if total_artists > 0
-                            else 0,
-                            "imvdb_coverage": round(
-                                (artists_with_imvdb / total_artists * 100), 2
-                            )
-                            if total_artists > 0
-                            else 0,
+                            "monitoring_percentage": (
+                                round((monitored_artists / total_artists * 100), 2)
+                                if total_artists > 0
+                                else 0
+                            ),
+                            "thumbnail_coverage": (
+                                round(
+                                    (artists_with_thumbnails / total_artists * 100), 2
+                                )
+                                if total_artists > 0
+                                else 0
+                            ),
+                            "imvdb_coverage": (
+                                round((artists_with_imvdb / total_artists * 100), 2)
+                                if total_artists > 0
+                                else 0
+                            ),
                         },
                     }
                 ),
@@ -1656,9 +1674,11 @@ def search_imvdb_matches(artist_id):
                 "disambiguation": match.get("disambiguation"),
                 "type": match.get("type"),
                 "slug": match.get("slug"),
-                "confidence": "high"
-                if (display_name and display_name.lower() == artist_name.lower())
-                else "medium",
+                "confidence": (
+                    "high"
+                    if (display_name and display_name.lower() == artist_name.lower())
+                    else "medium"
+                ),
             }
             formatted_matches.append(formatted_match)
 
@@ -3889,9 +3909,11 @@ def get_artist_thumbnail_info(artist_id):
                 "thumbnail_url": artist.thumbnail_url,
                 "thumbnail_path": artist.thumbnail_path,
                 "thumbnail_source": artist.thumbnail_source,
-                "thumbnail_uploaded_at": artist.thumbnail_uploaded_at.isoformat()
-                if artist.thumbnail_uploaded_at
-                else None,
+                "thumbnail_uploaded_at": (
+                    artist.thumbnail_uploaded_at.isoformat()
+                    if artist.thumbnail_uploaded_at
+                    else None
+                ),
                 "metadata": artist.thumbnail_metadata,
                 "file_info": None,
             }
@@ -4026,21 +4048,21 @@ def get_thumbnail_statistics():
                 "artists": {
                     "total": total_artists,
                     "with_thumbnails": artists_with_thumbnails,
-                    "coverage_percentage": round(
-                        (artists_with_thumbnails / total_artists * 100), 2
-                    )
-                    if total_artists > 0
-                    else 0,
+                    "coverage_percentage": (
+                        round((artists_with_thumbnails / total_artists * 100), 2)
+                        if total_artists > 0
+                        else 0
+                    ),
                     "by_source": artists_by_source,
                 },
                 "videos": {
                     "total": total_videos,
                     "with_thumbnails": videos_with_thumbnails,
-                    "coverage_percentage": round(
-                        (videos_with_thumbnails / total_videos * 100), 2
-                    )
-                    if total_videos > 0
-                    else 0,
+                    "coverage_percentage": (
+                        round((videos_with_thumbnails / total_videos * 100), 2)
+                        if total_videos > 0
+                        else 0
+                    ),
                 },
             }
 

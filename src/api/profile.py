@@ -80,9 +80,11 @@ def get_profile_info():
             "two_factor_enabled": user.two_factor_enabled,
             "last_login": user.last_login.isoformat() if user.last_login else None,
             "last_login_ip": user.last_login_ip,
-            "password_changed_at": user.password_changed_at.isoformat()
-            if user.password_changed_at
-            else None,
+            "password_changed_at": (
+                user.password_changed_at.isoformat()
+                if user.password_changed_at
+                else None
+            ),
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "preferences": preferences,
         }
@@ -343,15 +345,15 @@ def get_user_sessions():
                     "id": sess.id,
                     "ip_address": sess.ip_address,
                     "user_agent": sess.user_agent,
-                    "created_at": sess.created_at.isoformat()
-                    if sess.created_at
-                    else None,
-                    "last_activity": sess.last_activity.isoformat()
-                    if sess.last_activity
-                    else None,
-                    "expires_at": sess.expires_at.isoformat()
-                    if sess.expires_at
-                    else None,
+                    "created_at": (
+                        sess.created_at.isoformat() if sess.created_at else None
+                    ),
+                    "last_activity": (
+                        sess.last_activity.isoformat() if sess.last_activity else None
+                    ),
+                    "expires_at": (
+                        sess.expires_at.isoformat() if sess.expires_at else None
+                    ),
                     "is_current": is_current,
                 }
                 session_data.append(session_info)
@@ -452,12 +454,12 @@ def export_profile_data():
 
             for sess in sessions:
                 session_info = {
-                    "created_at": sess.created_at.isoformat()
-                    if sess.created_at
-                    else None,
-                    "last_activity": sess.last_activity.isoformat()
-                    if sess.last_activity
-                    else None,
+                    "created_at": (
+                        sess.created_at.isoformat() if sess.created_at else None
+                    ),
+                    "last_activity": (
+                        sess.last_activity.isoformat() if sess.last_activity else None
+                    ),
                     "ip_address": sess.ip_address,
                     "status": sess.status.value,
                 }
@@ -470,9 +472,11 @@ def export_profile_data():
                 "role": user.role.value,
                 "created_at": user.created_at.isoformat() if user.created_at else None,
                 "last_login": user.last_login.isoformat() if user.last_login else None,
-                "password_changed_at": user.password_changed_at.isoformat()
-                if user.password_changed_at
-                else None,
+                "password_changed_at": (
+                    user.password_changed_at.isoformat()
+                    if user.password_changed_at
+                    else None
+                ),
                 "preferences": preferences,
             },
             "sessions": session_data,

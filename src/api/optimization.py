@@ -163,9 +163,9 @@ def get_optimization_status():
                 ),
             },
             "recommendations": recommendations,
-            "system_health": "optimal"
-            if len(recommendations) == 0
-            else "needs_attention",
+            "system_health": (
+                "optimal" if len(recommendations) == 0 else "needs_attention"
+            ),
         }
 
         return jsonify(status), 200

@@ -192,9 +192,11 @@ class SettingsService:
                     result[setting.key] = {
                         "value": setting.value,
                         "description": setting.description or "",
-                        "updated_at": setting.updated_at.isoformat()
-                        if setting.updated_at
-                        else None,
+                        "updated_at": (
+                            setting.updated_at.isoformat()
+                            if setting.updated_at
+                            else None
+                        ),
                     }
 
                 return result

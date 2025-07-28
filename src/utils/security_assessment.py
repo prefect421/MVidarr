@@ -88,9 +88,9 @@ class SecurityAssessment:
         weak_values = {
             "SECRET_KEY": ["dev", "development", "change_me", ""],
             "DB_PASSWORD": ["", "password", "root", "admin"],
-            "FLASK_DEBUG": ["True", "1", "true"]
-            if os.getenv("FLASK_ENV") == "production"
-            else [],
+            "FLASK_DEBUG": (
+                ["True", "1", "true"] if os.getenv("FLASK_ENV") == "production" else []
+            ),
         }
 
         for var_name, weak_vals in weak_values.items():

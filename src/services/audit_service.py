@@ -117,9 +117,9 @@ class AuditService:
                 "username": username,
                 "ip_address": ip_address,
                 "user_agent": user_agent,
-                "session_token": flask_session.get("session_token")
-                if flask_session
-                else None,
+                "session_token": (
+                    flask_session.get("session_token") if flask_session else None
+                ),
                 "request_method": request.method if request else None,
                 "request_path": request.path if request else None,
                 "request_endpoint": request.endpoint if request else None,

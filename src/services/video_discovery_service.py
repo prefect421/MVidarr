@@ -243,9 +243,9 @@ class VideoDiscoveryService:
                     "year": video.get("year"),
                     "directors": video.get("directors", []),
                     "imvdb_id": video.get("id"),
-                    "thumbnail_url": video.get("image", {}).get("l")
-                    if video.get("image")
-                    else None,
+                    "thumbnail_url": (
+                        video.get("image", {}).get("l") if video.get("image") else None
+                    ),
                 }
 
                 # Try to get YouTube URL from IMVDb

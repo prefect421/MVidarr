@@ -89,9 +89,11 @@ class ArtistService:
                         "name": artist["artist_name"],
                         "auto_download": artist["auto_download"],
                         "videos_found": artist["videos_found"],
-                        "created_at": artist["created_at"].isoformat()
-                        if artist["created_at"]
-                        else None,
+                        "created_at": (
+                            artist["created_at"].isoformat()
+                            if artist["created_at"]
+                            else None
+                        ),
                         "is_active": artist["is_active"],
                     },
                 }
@@ -127,13 +129,17 @@ class ArtistService:
                         "quality_preference": artist["quality_preference"],
                         "format_preference": artist["format_preference"],
                         "is_active": artist["is_active"],
-                        "last_checked": artist["last_checked"].isoformat()
-                        if artist["last_checked"]
-                        else None,
+                        "last_checked": (
+                            artist["last_checked"].isoformat()
+                            if artist["last_checked"]
+                            else None
+                        ),
                         "videos_found": artist["videos_found"],
-                        "created_at": artist["created_at"].isoformat()
-                        if artist["created_at"]
-                        else None,
+                        "created_at": (
+                            artist["created_at"].isoformat()
+                            if artist["created_at"]
+                            else None
+                        ),
                     }
                 )
 

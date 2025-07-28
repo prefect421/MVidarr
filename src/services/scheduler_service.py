@@ -282,9 +282,9 @@ class SchedulerService:
                 "schedule_days": schedule_days,
                 "max_videos": max_videos,
                 "next_run": next_run.isoformat() if next_run else None,
-                "next_run_human": next_run.strftime("%Y-%m-%d %H:%M:%S")
-                if next_run
-                else None,
+                "next_run_human": (
+                    next_run.strftime("%Y-%m-%d %H:%M:%S") if next_run else None
+                ),
                 "job_count": len(schedule.jobs),
             }
 
