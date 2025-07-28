@@ -1,6 +1,6 @@
 services:
   mvidarr:
-    image: ghcr.io/prefect421/mvidarr:latest
+    image: ghcr.io/prefect421/mvidarr:dev
     entrypoint: >
       sh -c "
         echo 'Waiting for MariaDB to be ready...';
