@@ -1,13 +1,12 @@
 #!/bin/bash
-set -e
 
 echo "=============================================="
-echo "🚀 MVIDARR ENHANCED ENTRYPOINT SCRIPT v2.0 🚀"
+echo "🚀 MVIDARR PRODUCTION ENTRYPOINT v4.0 🚀"
 echo "=============================================="
-echo "📅 Current time: $(date)"
-echo "👤 Current user: $(whoami)"
-echo "📁 Current directory: $(pwd)"
-echo "🐧 Container hostname: $(hostname)"
+echo "📅 Start time: $(date)"
+echo "👤 User: $(whoami)"
+echo "📁 Directory: $(pwd)"
+echo "🐧 Hostname: $(hostname)"
 echo "=============================================="
 
 # Wait for database to be ready
@@ -43,92 +42,55 @@ if [ $count -ge $timeout ]; then
 fi
 
 # Initialize database if needed
+echo "🗄️ Checking database initialization..."
 if [ ! -f /app/data/database/.initialized ]; then
-    echo "Initializing database..."
+    echo "🔧 Database not initialized - creating tables..."
     # Use Python to initialize the database through the app's init_db function
     python3 -c "
 import sys
 sys.path.insert(0, '/app/src')
-from database.init_db import create_tables
+print('Importing database initialization module...')
 try:
-    success = create_tables()
-    if success:
-        print('Database initialized successfully')
+    from src.database.init_db import initialize_database
+    print('✅ Successfully imported initialize_database')
+    result = initialize_database()
+    if result:
+        print('✅ Database initialized successfully')
     else:
-        print('Database initialization failed')
+        print('⚠️ Database initialization returned False')
+except ImportError as e:
+    print(f'❌ Import failed: {e}')
+    print('Trying alternative import...')
+    try:
+        from database.init_db import create_tables
+        print('✅ Using create_tables function')
+        success = create_tables()
+        print(f'Database creation result: {success}')
+    except Exception as e2:
+        print(f'❌ Alternative import also failed: {e2}')
+        exit(1)
 except Exception as e:
-    print(f'Database initialization failed: {e}')
-    # Don't exit on database init failure in case it already exists
-" || echo "Database initialization failed or already exists"
-    touch /app/data/database/.initialized
+    print(f'❌ Database initialization error: {e}')
+    import traceback
+    traceback.print_exc()
+    exit(1)
+" 
+    if [ $? -eq 0 ]; then
+        echo "✅ Database initialization completed successfully"
+        touch /app/data/database/.initialized
+    else
+        echo "❌ Database initialization failed - check logs above"
+        echo "🔄 Attempting to start application anyway (database may exist)..."
+    fi
+else
+    echo "✅ Database already initialized (marker file exists)"
 fi
 
 # Start the application
-echo "Starting MVidarr application..."
-echo "Python path: $PYTHONPATH"
-echo "Working directory: $(pwd)"
-echo "App.py exists: $(test -f app.py && echo 'yes' || echo 'no')"
+echo "🚀 Starting MVidarr application..."
+echo "📍 Working directory: $(pwd)"
+echo "🐍 Python path: $PYTHONPATH"
 
-# Test basic Python imports before starting the application
-echo "Testing Python imports..."
-python3 -c "
-import sys
-sys.path.insert(0, '/app/src')
-
-print('🐍 Python sys.path:', sys.path)
-print('📁 Current working directory:', '/app')
-
-try:
-    from src.config.config import Config
-    print('✅ Config import successful')
-except Exception as e:
-    print(f'❌ Config import failed: {e}')
-    import traceback
-    traceback.print_exc()
-
-try:
-    from src.database.connection import init_db
-    print('✅ Database connection import successful')
-except Exception as e:
-    print(f'❌ Database connection import failed: {e}')
-    import traceback
-    traceback.print_exc()
-
-# Test basic Flask import
-try:
-    from flask import Flask
-    print('✅ Flask import successful')
-except Exception as e:
-    print(f'❌ Flask import failed: {e}')
-    import traceback
-    traceback.print_exc()
-    
-print('✅ Import testing completed (with any errors shown above)')
-" 2>&1
-
-# Start with better error handling
-echo "Attempting to start Python application..."
-python3 app.py 2>&1 | tee /tmp/app_output.log &
-APP_PID=$!
-
-# Wait a moment to see if the app starts successfully
-sleep 10
-
-# Check if the process is still running
-if ! kill -0 $APP_PID 2>/dev/null; then
-    echo "Application failed to start. Process exited."
-    echo "=== Application output ==="
-    cat /tmp/app_output.log 2>/dev/null || echo "No output captured"
-    echo "=== End application output ==="
-    echo "=== Checking for common issues ==="
-    echo "Directory contents:"
-    ls -la /app/
-    echo "Python modules in src:"
-    ls -la /app/src/ || echo "src directory not found"
-    echo "Python version: $(python3 --version)"
-    exit 1
-else
-    echo "Application appears to be starting successfully (PID: $APP_PID)"
-    # Wait for the application process
-    wait $APP_PID
-fi
+# Start application with error output
+echo "▶️ Executing: python3 app.py"
+exec python3 app.py
