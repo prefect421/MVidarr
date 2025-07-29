@@ -2117,27 +2117,48 @@ function displaySearchResults(results) {
         return;
     }
     
-    const html = results.map(video => `
-        <div class="search-result-item" style="border: 1px solid #444; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: #1a1a1a;">
-            <div style="display: flex; gap: 15px;">
-                <img src="${video.thumbnail || '/static/default-thumbnail.png'}" 
-                     alt="Thumbnail" 
-                     style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px;">
-                <div style="flex: 1;">
-                    <h5 style="margin: 0 0 5px 0; color: #00d4ff;">${video.sourceIcon} ${video.title}</h5>
-                    <p style="margin: 0 0 5px 0; color: #ccc;">Artist: ${video.artist || 'Unknown'}</p>
-                    <p style="margin: 0 0 5px 0; color: #888; font-size: 0.9em;">Source: ${video.source}</p>
-                    ${video.year ? `<p style="margin: 0 0 10px 0; color: #888; font-size: 0.9em;">Year: ${video.year}</p>` : ''}
-                    <button onclick="addVideoToLibrary('${video.source}', '${video.id}', '${video.title.replace(/'/g, "\\'")}', '${(video.artist || '').replace(/'/g, "\\'")}', '${video.url || ''}')" 
-                            class="btn btn-primary btn-small">
-                        ➕ Add to Library
-                    </button>
+    let html;
+    try {
+        html = results.map((video, index) => {
+            console.log(`🎭 Generating HTML for video ${index + 1}:`, video.title);
+            
+            // Safely escape strings to prevent HTML/JS injection
+            const safeTitle = (video.title || 'Unknown Title').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            const safeArtist = (video.artist || 'Unknown').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            const safeSource = (video.source || 'Unknown').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            const safeId = (video.id || '').toString().replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            const safeUrl = (video.url || '').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            
+            return `
+                <div class="search-result-item" style="border: 1px solid #444; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: #1a1a1a;">
+                    <div style="display: flex; gap: 15px;">
+                        <img src="${video.thumbnail || '/static/default-thumbnail.png'}" 
+                             alt="Thumbnail" 
+                             style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px;">
+                        <div style="flex: 1;">
+                            <h5 style="margin: 0 0 5px 0; color: #00d4ff;">${video.sourceIcon || '🎵'} ${safeTitle}</h5>
+                            <p style="margin: 0 0 5px 0; color: #ccc;">Artist: ${safeArtist}</p>
+                            <p style="margin: 0 0 5px 0; color: #888; font-size: 0.9em;">Source: ${safeSource}</p>
+                            ${video.year ? `<p style="margin: 0 0 10px 0; color: #888; font-size: 0.9em;">Year: ${video.year}</p>` : ''}
+                            <button onclick="addVideoToLibrary('${safeSource}', '${safeId}', '${safeTitle}', '${safeArtist}', '${safeUrl}')" 
+                                    class="btn btn-primary btn-small">
+                                ➕ Add to Library
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    `).join('');
+            `;
+        }).join('');
+        
+        console.log('🎭 Generated HTML length:', html.length);
+    } catch (htmlError) {
+        console.error('❌ Error generating HTML:', htmlError);
+        html = '<div class="error">Error displaying search results. Check console for details.</div>';
+    }
     
     resultsList.innerHTML = html;
+    console.log('🎭 HTML set in DOM. Element children count:', resultsList.children.length);
+    console.log('🎭 Element innerHTML length:', resultsList.innerHTML.length);
 }
 
 async function addVideoToLibrary(source, videoId, title, artist, url) {
