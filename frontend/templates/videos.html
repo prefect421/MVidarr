@@ -2008,11 +2008,19 @@ async function searchIMVDb(searchQuery, artistName, songTitle) {
         const data = await response.json();
         console.log('🎥 IMVDb video data:', data);
         
-        const results = (data.results || []).map(video => ({
-            ...video,
-            source: 'IMVDb',
-            sourceIcon: '🎬'
-        }));
+        const results = (data.results || []).map(video => {
+            console.log('🎬 Processing IMVDb video:', video);
+            try {
+                return {
+                    ...video,
+                    source: 'IMVDb',
+                    sourceIcon: '🎬'
+                };
+            } catch (videoError) {
+                console.error('❌ Error processing IMVDb video:', videoError, video);
+                return null;
+            }
+        }).filter(video => video !== null);
         
         console.log('🎬 IMVDb final results:', results.length);
         return results;
@@ -2051,17 +2059,25 @@ async function searchYouTube(searchQuery, artistName, songTitle) {
         const data = await response.json();
         console.log('📺 YouTube response data:', data);
         
-        const results = (data.items || []).map(video => ({
-            id: video.id.videoId,
-            title: video.snippet.title,
-            artist: artistName || extractArtistFromTitle(video.snippet.title),
-            year: new Date(video.snippet.publishedAt).getFullYear(),
-            description: video.snippet.description,
-            thumbnail: video.snippet.thumbnails.medium.url,
-            url: `https://www.youtube.com/watch?v=${video.id.videoId}`,
-            source: 'YouTube',
-            sourceIcon: '📺'
-        }));
+        const results = (data.items || []).map(video => {
+            console.log('📺 Processing YouTube video:', video);
+            try {
+                return {
+                    id: video.id?.videoId || video.id,
+                    title: video.snippet?.title || 'Unknown Title',
+                    artist: artistName || extractArtistFromTitle(video.snippet?.title || ''),
+                    year: video.snippet?.publishedAt ? new Date(video.snippet.publishedAt).getFullYear() : null,
+                    description: video.snippet?.description || '',
+                    thumbnail: video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.default?.url || '',
+                    url: `https://www.youtube.com/watch?v=${video.id?.videoId || video.id}`,
+                    source: 'YouTube',
+                    sourceIcon: '📺'
+                };
+            } catch (videoError) {
+                console.error('❌ Error processing YouTube video:', videoError, video);
+                return null;
+            }
+        }).filter(video => video !== null);
         
         console.log('📺 YouTube final results:', results.length);
         return results;
