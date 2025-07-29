@@ -2190,8 +2190,12 @@ function displaySearchResults(results) {
                             <p style="margin: 0 0 5px 0; color: #ccc;">Artist: ${safeArtist}</p>
                             <p style="margin: 0 0 5px 0; color: #888; font-size: 0.9em;">Source: ${safeSource}</p>
                             ${video.year ? `<p style="margin: 0 0 10px 0; color: #888; font-size: 0.9em;">Year: ${video.year}</p>` : ''}
-                            <button onclick="console.log('🔧 Button clicked with params:', '${safeSource}', '${safeId}', '${safeTitle}', '${safeArtist}', '${safeUrl}'); addVideoToLibrary('${safeSource}', '${safeId}', '${safeTitle}', '${safeArtist}', '${safeUrl}')" 
-                                    class="btn btn-primary btn-small">
+                            <button class="btn btn-primary btn-small add-to-library-btn" 
+                                    data-source="${video.source}" 
+                                    data-video-id="${video.id}" 
+                                    data-title="${video.title}" 
+                                    data-artist="${video.artist}" 
+                                    data-url="${video.url}">
                                 ➕ Add to Library
                             </button>
                         </div>
@@ -2209,6 +2213,23 @@ function displaySearchResults(results) {
     resultsList.innerHTML = html;
     console.log('🎭 HTML set in DOM. Element children count:', resultsList.children.length);
     console.log('🎭 Element innerHTML length:', resultsList.innerHTML.length);
+    
+    // Add event listeners for Add to Library buttons (avoiding onclick syntax issues)
+    const addToLibraryButtons = resultsList.querySelectorAll('.add-to-library-btn');
+    console.log('🔧 Found', addToLibraryButtons.length, 'Add to Library buttons');
+    
+    addToLibraryButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const source = this.dataset.source;
+            const videoId = this.dataset.videoId;
+            const title = this.dataset.title;
+            const artist = this.dataset.artist;
+            const url = this.dataset.url;
+            
+            console.log('🔧 Button clicked - calling addVideoToLibrary with:', {source, videoId, title, artist, url});
+            addVideoToLibrary(source, videoId, title, artist, url);
+        });
+    });
     
     // Additional debugging to check visibility and positioning
     console.log('🎭 ResultsList element:', resultsList);
