@@ -471,12 +471,10 @@ class YouTubePlaylistService:
         if existing_artist:
             return existing_artist
 
-        # Generate default folder path and sort name
+        # Generate default folder path
         from src.utils.filename_cleanup import FilenameCleanup
-        from src.utils.sort_name_generator import generate_sort_name
 
         folder_path = FilenameCleanup.sanitize_folder_name(channel_title)
-        sort_name = generate_sort_name(channel_title)
 
         # Create new artist
         new_artist = Artist(
@@ -486,7 +484,6 @@ class YouTubePlaylistService:
             source="youtube_playlist",
             created_at=datetime.now(),
             folder_path=folder_path,
-            sort_name=sort_name,
         )
 
         session.add(new_artist)

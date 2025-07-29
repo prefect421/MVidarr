@@ -144,15 +144,10 @@ class VideoIndexingService:
             return artist
 
         # Create new artist
-        from src.utils.sort_name_generator import generate_sort_name
-        
-        sort_name = generate_sort_name(clean_name)
-        
         artist = Artist(
             name=clean_name,
             monitored=True,
             folder_path=str(video_organizer.get_music_videos_path() / clean_name),
-            sort_name=sort_name,
         )
 
         session.add(artist)
