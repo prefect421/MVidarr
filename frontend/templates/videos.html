@@ -1932,12 +1932,15 @@ function searchForVideos() {
     const songTitle = document.getElementById('songTitleInput').value.trim();
     const artistName = document.getElementById('artistNameInput').value.trim();
     
+    console.log('🔍 Starting video search:', { songTitle, artistName });
+    
     if (!songTitle) {
         alert('Please enter a song title to search for videos.');
         return;
     }
     
     const searchQuery = artistName ? `${artistName} ${songTitle}` : songTitle;
+    console.log('📝 Search query:', searchQuery);
     
     // Show loading state
     const resultsDiv = document.getElementById('videoSearchResults');
@@ -1951,24 +1954,39 @@ function searchForVideos() {
         searchIMVDb(searchQuery, artistName, songTitle),
         searchYouTube(searchQuery, artistName, songTitle)
     ]).then(([imvdbResults, youtubeResults]) => {
+        console.log('🎬 IMVDb results:', imvdbResults.length);
+        console.log('📺 YouTube results:', youtubeResults.length);
+        console.log('🔍 Combined results:', [...imvdbResults, ...youtubeResults].length);
         displaySearchResults([...imvdbResults, ...youtubeResults]);
     }).catch(error => {
-        console.error('Error searching for videos:', error);
+        console.error('❌ Error searching for videos:', error);
         resultsList.innerHTML = '<div class="error">❌ Error searching for videos. Please try again.</div>';
     });
 }
 
 async function searchIMVDb(searchQuery, artistName, songTitle) {
     try {
+        console.log('🎬 Searching IMVDb...', { searchQuery, artistName, songTitle });
+        
         // First try to find the artist if provided
         let imvdbArtistId = null;
         if (artistName) {
-            const artistResponse = await fetch(`/api/imvdb/search-artist?q=${encodeURIComponent(artistName)}`);
+            const artistUrl = `/api/imvdb/search-artist?q=${encodeURIComponent(artistName)}`;
+            console.log('🎯 IMVDb artist search URL:', artistUrl);
+            
+            const artistResponse = await fetch(artistUrl);
+            console.log('🎯 IMVDb artist response status:', artistResponse.status);
+            
             if (artistResponse.ok) {
                 const artistData = await artistResponse.json();
+                console.log('🎯 IMVDb artist data:', artistData);
+                
                 if (artistData.results && artistData.results.length > 0) {
                     imvdbArtistId = artistData.results[0].id;
+                    console.log('🎯 Found IMVDb artist ID:', imvdbArtistId);
                 }
+            } else {
+                console.warn('⚠️ IMVDb artist search failed:', await artistResponse.text());
             }
         }
         
@@ -1977,40 +1995,63 @@ async function searchIMVDb(searchQuery, artistName, songTitle) {
         if (imvdbArtistId) {
             searchUrl += `&artist_id=${imvdbArtistId}`;
         }
+        console.log('🎥 IMVDb video search URL:', searchUrl);
         
         const response = await fetch(searchUrl);
-        if (!response.ok) return [];
+        console.log('🎥 IMVDb video response status:', response.status);
+        
+        if (!response.ok) {
+            console.warn('⚠️ IMVDb video search failed:', await response.text());
+            return [];
+        }
         
         const data = await response.json();
-        return (data.results || []).map(video => ({
+        console.log('🎥 IMVDb video data:', data);
+        
+        const results = (data.results || []).map(video => ({
             ...video,
             source: 'IMVDb',
             sourceIcon: '🎬'
         }));
+        
+        console.log('🎬 IMVDb final results:', results.length);
+        return results;
     } catch (error) {
-        console.error('Error searching IMVDb:', error);
+        console.error('❌ Error searching IMVDb:', error);
         return [];
     }
 }
 
 async function searchYouTube(searchQuery, artistName, songTitle) {
     try {
+        console.log('📺 Searching YouTube...', { searchQuery, artistName, songTitle });
+        
+        const requestBody = {
+            q: searchQuery,
+            maxResults: 10,
+            videoCategoryId: '10' // Music category
+        };
+        console.log('📺 YouTube request body:', requestBody);
+        
         const response = await fetch('/api/youtube/search', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                q: searchQuery,
-                maxResults: 10,
-                videoCategoryId: '10' // Music category
-            })
+            body: JSON.stringify(requestBody)
         });
         
-        if (!response.ok) return [];
+        console.log('📺 YouTube response status:', response.status);
+        
+        if (!response.ok) {
+            console.warn('⚠️ YouTube search failed:', await response.text());
+            return [];
+        }
         
         const data = await response.json();
-        return (data.items || []).map(video => ({
+        console.log('📺 YouTube response data:', data);
+        
+        const results = (data.items || []).map(video => ({
             id: video.id.videoId,
             title: video.snippet.title,
             artist: artistName || extractArtistFromTitle(video.snippet.title),
@@ -2021,8 +2062,11 @@ async function searchYouTube(searchQuery, artistName, songTitle) {
             source: 'YouTube',
             sourceIcon: '📺'
         }));
+        
+        console.log('📺 YouTube final results:', results.length);
+        return results;
     } catch (error) {
-        console.error('Error searching YouTube:', error);
+        console.error('❌ Error searching YouTube:', error);
         return [];
     }
 }
@@ -2046,9 +2090,13 @@ function extractArtistFromTitle(title) {
 }
 
 function displaySearchResults(results) {
+    console.log('🎭 Displaying search results:', results.length);
+    console.log('🎭 Results data:', results);
+    
     const resultsList = document.getElementById('videoSearchResultsList');
     
     if (results.length === 0) {
+        console.log('❌ No results to display');
         resultsList.innerHTML = '<div class="no-results">No videos found. Try different search terms.</div>';
         return;
     }
