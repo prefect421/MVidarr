@@ -2154,12 +2154,24 @@ function displaySearchResults(results) {
         html = results.map((video, index) => {
             console.log(`🎭 Generating HTML for video ${index + 1}:`, video.title);
             
-            // Safely escape strings to prevent HTML/JS injection
-            const safeTitle = (video.title || 'Unknown Title').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-            const safeArtist = (video.artist || 'Unknown').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-            const safeSource = (video.source || 'Unknown').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-            const safeId = (video.id || '').toString().replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-            const safeUrl = (video.url || '').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            // Safely escape strings to prevent HTML/JS injection and syntax errors
+            function escapeForJS(str) {
+                return (str || '').toString()
+                    .replace(/\\/g, '\\\\')     // Escape backslashes
+                    .replace(/'/g, "\\'")       // Escape single quotes
+                    .replace(/"/g, '\\"')       // Escape double quotes
+                    .replace(/\n/g, '\\n')      // Escape newlines
+                    .replace(/\r/g, '\\r')      // Escape carriage returns
+                    .replace(/\t/g, '\\t')      // Escape tabs
+                    .replace(/\(/g, '\\(')      // Escape opening parentheses
+                    .replace(/\)/g, '\\)');     // Escape closing parentheses
+            }
+            
+            const safeTitle = escapeForJS(video.title || 'Unknown Title');
+            const safeArtist = escapeForJS(video.artist || 'Unknown');
+            const safeSource = escapeForJS(video.source || 'Unknown');
+            const safeId = escapeForJS(video.id || '');
+            const safeUrl = escapeForJS(video.url || '');
             
             return `
                 <div class="search-result-item" style="border: 1px solid #444; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: #1a1a1a;">
