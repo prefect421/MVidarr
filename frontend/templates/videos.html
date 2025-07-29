@@ -650,6 +650,7 @@ body.light-theme .search-field select:focus {
     <div class="videos-actions">
         <button onclick="refreshVideos()" class="btn btn-primary">Refresh</button>
         <button onclick="toggleSearchPanel()" class="btn btn-secondary">Search</button>
+        <button onclick="showAddVideoModal()" class="btn btn-primary">Add Video</button>
         <button onclick="refreshThumbnails()" class="btn btn-secondary">Find Thumbnails</button>
         <button onclick="refreshAllMetadata()" class="btn btn-secondary">Refresh All Metadata</button>
         
@@ -1911,10 +1912,226 @@ function closeVideoModal() {
     window.currentVideoId = null;
 }
 
+// Add Video Modal Functions
+function showAddVideoModal() {
+    document.getElementById('addVideoModal').style.display = 'block';
+    // Clear previous search results
+    document.getElementById('videoSearchResults').style.display = 'none';
+    document.getElementById('songTitleInput').value = '';
+    document.getElementById('artistNameInput').value = '';
+    document.getElementById('songTitleInput').focus();
+}
+
+function closeAddVideoModal() {
+    document.getElementById('addVideoModal').style.display = 'none';
+    document.getElementById('videoSearchResults').style.display = 'none';
+    document.getElementById('videoSearchResultsList').innerHTML = '';
+}
+
+function searchForVideos() {
+    const songTitle = document.getElementById('songTitleInput').value.trim();
+    const artistName = document.getElementById('artistNameInput').value.trim();
+    
+    if (!songTitle) {
+        alert('Please enter a song title to search for videos.');
+        return;
+    }
+    
+    const searchQuery = artistName ? `${artistName} ${songTitle}` : songTitle;
+    
+    // Show loading state
+    const resultsDiv = document.getElementById('videoSearchResults');
+    const resultsList = document.getElementById('videoSearchResultsList');
+    
+    resultsDiv.style.display = 'block';
+    resultsList.innerHTML = '<div class="loading">🔍 Searching for videos...</div>';
+    
+    // Search both IMVDb and YouTube
+    Promise.all([
+        searchIMVDb(searchQuery, artistName, songTitle),
+        searchYouTube(searchQuery, artistName, songTitle)
+    ]).then(([imvdbResults, youtubeResults]) => {
+        displaySearchResults([...imvdbResults, ...youtubeResults]);
+    }).catch(error => {
+        console.error('Error searching for videos:', error);
+        resultsList.innerHTML = '<div class="error">❌ Error searching for videos. Please try again.</div>';
+    });
+}
+
+async function searchIMVDb(searchQuery, artistName, songTitle) {
+    try {
+        // First try to find the artist if provided
+        let imvdbArtistId = null;
+        if (artistName) {
+            const artistResponse = await fetch(`/api/imvdb/search-artist?q=${encodeURIComponent(artistName)}`);
+            if (artistResponse.ok) {
+                const artistData = await artistResponse.json();
+                if (artistData.results && artistData.results.length > 0) {
+                    imvdbArtistId = artistData.results[0].id;
+                }
+            }
+        }
+        
+        // Search for videos
+        let searchUrl = `/api/imvdb/search-videos?q=${encodeURIComponent(songTitle)}`;
+        if (imvdbArtistId) {
+            searchUrl += `&artist_id=${imvdbArtistId}`;
+        }
+        
+        const response = await fetch(searchUrl);
+        if (!response.ok) return [];
+        
+        const data = await response.json();
+        return (data.results || []).map(video => ({
+            ...video,
+            source: 'IMVDb',
+            sourceIcon: '🎬'
+        }));
+    } catch (error) {
+        console.error('Error searching IMVDb:', error);
+        return [];
+    }
+}
+
+async function searchYouTube(searchQuery, artistName, songTitle) {
+    try {
+        const response = await fetch('/api/youtube/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                q: searchQuery,
+                maxResults: 10,
+                videoCategoryId: '10' // Music category
+            })
+        });
+        
+        if (!response.ok) return [];
+        
+        const data = await response.json();
+        return (data.items || []).map(video => ({
+            id: video.id.videoId,
+            title: video.snippet.title,
+            artist: artistName || extractArtistFromTitle(video.snippet.title),
+            year: new Date(video.snippet.publishedAt).getFullYear(),
+            description: video.snippet.description,
+            thumbnail: video.snippet.thumbnails.medium.url,
+            url: `https://www.youtube.com/watch?v=${video.id.videoId}`,
+            source: 'YouTube',
+            sourceIcon: '📺'
+        }));
+    } catch (error) {
+        console.error('Error searching YouTube:', error);
+        return [];
+    }
+}
+
+function extractArtistFromTitle(title) {
+    // Try to extract artist from common YouTube title patterns
+    const patterns = [
+        /^([^-]+)\s*-\s*(.+)$/,  // "Artist - Song"
+        /^(.+?)\s*by\s*(.+)$/i,  // "Song by Artist"
+        /^(.+?)\s*\|\s*(.+)$/,   // "Artist | Song"
+    ];
+    
+    for (const pattern of patterns) {
+        const match = title.match(pattern);
+        if (match) {
+            return match[1].trim();
+        }
+    }
+    
+    return '';
+}
+
+function displaySearchResults(results) {
+    const resultsList = document.getElementById('videoSearchResultsList');
+    
+    if (results.length === 0) {
+        resultsList.innerHTML = '<div class="no-results">No videos found. Try different search terms.</div>';
+        return;
+    }
+    
+    const html = results.map(video => `
+        <div class="search-result-item" style="border: 1px solid #444; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: #1a1a1a;">
+            <div style="display: flex; gap: 15px;">
+                <img src="${video.thumbnail || '/static/default-thumbnail.png'}" 
+                     alt="Thumbnail" 
+                     style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px;">
+                <div style="flex: 1;">
+                    <h5 style="margin: 0 0 5px 0; color: #00d4ff;">${video.sourceIcon} ${video.title}</h5>
+                    <p style="margin: 0 0 5px 0; color: #ccc;">Artist: ${video.artist || 'Unknown'}</p>
+                    <p style="margin: 0 0 5px 0; color: #888; font-size: 0.9em;">Source: ${video.source}</p>
+                    ${video.year ? `<p style="margin: 0 0 10px 0; color: #888; font-size: 0.9em;">Year: ${video.year}</p>` : ''}
+                    <button onclick="addVideoToLibrary('${video.source}', '${video.id}', '${video.title.replace(/'/g, "\\'")}', '${(video.artist || '').replace(/'/g, "\\'")}', '${video.url || ''}')" 
+                            class="btn btn-primary btn-small">
+                        ➕ Add to Library
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    resultsList.innerHTML = html;
+}
+
+async function addVideoToLibrary(source, videoId, title, artist, url) {
+    try {
+        let endpoint, payload;
+        
+        if (source === 'IMVDb') {
+            endpoint = '/videos/import-from-imvdb';
+            payload = {
+                imvdb_id: videoId,
+                auto_download: true
+            };
+        } else if (source === 'YouTube') {
+            endpoint = '/videos/import-from-youtube';
+            payload = {
+                youtube_id: videoId,
+                url: url,
+                title: title,
+                artist: artist,
+                auto_download: true
+            };
+        } else {
+            throw new Error('Unknown video source');
+        }
+        
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to add video');
+        }
+        
+        const result = await response.json();
+        
+        // Show success message
+        alert(`✅ Video "${title}" has been added to your library and queued for download!`);
+        
+        // Close modal and refresh videos
+        closeAddVideoModal();
+        refreshVideos();
+        
+    } catch (error) {
+        console.error('Error adding video to library:', error);
+        alert(`❌ Error adding video: ${error.message}`);
+    }
+}
+
 // Close modal when clicking outside of it
 window.onclick = function(event) {
     const videoModal = document.getElementById('videoModal');
     const editModal = document.getElementById('editVideoModal');
+    const addVideoModal = document.getElementById('addVideoModal');
     
     if (event.target === videoModal) {
         closeVideoModal();
@@ -1922,6 +2139,10 @@ window.onclick = function(event) {
     
     if (event.target === editModal) {
         closeEditVideoModal();
+    }
+    
+    if (event.target === addVideoModal) {
+        closeAddVideoModal();
     }
 }
 
@@ -2836,6 +3057,35 @@ function deleteSelectedVideos() {
                 <button onclick="applyCrop()" class="btn btn-primary">Apply Crop</button>
                 <button onclick="saveCroppedThumbnail()" class="btn btn-success">Save Thumbnail</button>
                 <button onclick="closeThumbnailCropModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Video Modal -->
+<div id="addVideoModal" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 600px;">
+        <div class="modal-header">
+            <h3>🎵 Add Video</h3>
+            <span class="modal-close" onclick="closeAddVideoModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="songTitleInput">Song Title:</label>
+                <input type="text" id="songTitleInput" placeholder="Enter song title to search" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="artistNameInput">Artist Name (optional):</label>
+                <input type="text" id="artistNameInput" placeholder="Enter artist name to refine search" class="form-control">
+            </div>
+            <div class="form-actions">
+                <button onclick="searchForVideos()" class="btn btn-primary">🔍 Search Videos</button>
+                <button onclick="closeAddVideoModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+            
+            <div id="videoSearchResults" style="display: none; margin-top: 20px;">
+                <h4>Search Results:</h4>
+                <div id="videoSearchResultsList"></div>
             </div>
         </div>
     </div>

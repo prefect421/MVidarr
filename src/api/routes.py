@@ -9,6 +9,7 @@ from src.api.artists import artists_bp
 from src.api.auth import auth_bp
 from src.api.genres import genres_bp
 from src.api.health import health_bp
+from src.api.imvdb import imvdb_bp
 from src.api.lastfm import lastfm_bp
 from src.api.lidarr import lidarr_bp
 from src.api.metube import metube_bp
@@ -31,6 +32,7 @@ from src.api.vlc_streaming import vlc_bp
 
 # Webhook system
 from src.api.webhooks import webhooks_bp
+from src.api.youtube import youtube_bp
 from src.api.youtube_playlists import youtube_playlists_bp
 
 
@@ -56,6 +58,8 @@ def register_routes(app):
 
     # Register external integration blueprints
     api_bp.register_blueprint(spotify_bp)
+    api_bp.register_blueprint(imvdb_bp)
+    api_bp.register_blueprint(youtube_bp)
     api_bp.register_blueprint(youtube_playlists_bp)
     api_bp.register_blueprint(lastfm_bp)
     api_bp.register_blueprint(plex_bp)
