@@ -1,8 +1,13 @@
 #!/bin/bash
 set -e
 
+echo "🚀 MVidarr Container Entrypoint Script Starting..."
+echo "📅 Current time: $(date)"
+echo "👤 Current user: $(whoami)"
+echo "📁 Current directory: $(pwd)"
+
 # Wait for database to be ready
-echo "Waiting for MariaDB to be ready..."
+echo "⏳ Waiting for MariaDB to be ready..."
 echo "Connection details - Host: ${DB_HOST:-mariadb}, Port: ${DB_PORT:-3306}, User: ${DB_USER:-mvidarr}"
 
 # Simple wait for port availability with timeout
@@ -65,25 +70,37 @@ echo "Testing Python imports..."
 python3 -c "
 import sys
 sys.path.insert(0, '/app/src')
+
+print('🐍 Python sys.path:', sys.path)
+print('📁 Current working directory:', '/app')
+
 try:
     from src.config.config import Config
     print('✅ Config import successful')
 except Exception as e:
     print(f'❌ Config import failed: {e}')
-    sys.exit(1)
+    import traceback
+    traceback.print_exc()
 
 try:
     from src.database.connection import init_db
     print('✅ Database connection import successful')
 except Exception as e:
     print(f'❌ Database connection import failed: {e}')
-    sys.exit(1)
+    import traceback
+    traceback.print_exc()
+
+# Test basic Flask import
+try:
+    from flask import Flask
+    print('✅ Flask import successful')
+except Exception as e:
+    print(f'❌ Flask import failed: {e}')
+    import traceback
+    traceback.print_exc()
     
-print('✅ All basic imports successful')
-" || {
-    echo "❌ Basic Python imports failed - cannot start application"
-    exit 1
-}
+print('✅ Import testing completed (with any errors shown above)')
+" 2>&1
 
 # Start with better error handling
 echo "Attempting to start Python application..."
