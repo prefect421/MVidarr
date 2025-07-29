@@ -2013,6 +2013,12 @@ async function searchIMVDb(searchQuery, artistName, songTitle) {
             try {
                 return {
                     ...video,
+                    id: video.id,
+                    title: video.song_title || 'Unknown Title',
+                    artist: video.artists && video.artists.length > 0 ? video.artists[0].name : 'Unknown Artist',
+                    year: video.year || null,
+                    thumbnail: video.image && video.image.o ? video.image.o : (video.image && video.image.m ? video.image.m : ''),
+                    url: video.url || '',
                     source: 'IMVDb',
                     sourceIcon: '🎬'
                 };
