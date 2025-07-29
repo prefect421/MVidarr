@@ -60,13 +60,54 @@ echo "Python path: $PYTHONPATH"
 echo "Working directory: $(pwd)"
 echo "App.py exists: $(test -f app.py && echo 'yes' || echo 'no')"
 
+# Test basic Python imports before starting the application
+echo "Testing Python imports..."
+python3 -c "
+import sys
+sys.path.insert(0, '/app/src')
+try:
+    from src.config.config import Config
+    print('✅ Config import successful')
+except Exception as e:
+    print(f'❌ Config import failed: {e}')
+    sys.exit(1)
+
+try:
+    from src.database.connection import init_db
+    print('✅ Database connection import successful')
+except Exception as e:
+    print(f'❌ Database connection import failed: {e}')
+    sys.exit(1)
+    
+print('✅ All basic imports successful')
+" || {
+    echo "❌ Basic Python imports failed - cannot start application"
+    exit 1
+}
+
 # Start with better error handling
-if ! python3 app.py; then
-    echo "Application failed to start. Checking for common issues..."
+echo "Attempting to start Python application..."
+python3 app.py 2>&1 | tee /tmp/app_output.log &
+APP_PID=$!
+
+# Wait a moment to see if the app starts successfully
+sleep 10
+
+# Check if the process is still running
+if ! kill -0 $APP_PID 2>/dev/null; then
+    echo "Application failed to start. Process exited."
+    echo "=== Application output ==="
+    cat /tmp/app_output.log 2>/dev/null || echo "No output captured"
+    echo "=== End application output ==="
+    echo "=== Checking for common issues ==="
     echo "Directory contents:"
     ls -la /app/
     echo "Python modules in src:"
     ls -la /app/src/ || echo "src directory not found"
     echo "Python version: $(python3 --version)"
     exit 1
+else
+    echo "Application appears to be starting successfully (PID: $APP_PID)"
+    # Wait for the application process
+    wait $APP_PID
 fi
