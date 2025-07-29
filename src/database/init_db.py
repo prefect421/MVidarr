@@ -199,18 +199,20 @@ def create_admin_user():
             existing_users = session.query(User).count()
 
             if existing_users == 0:
-                # Create default admin user
+                # Create default admin user with secure password
+                # Password: MVidarrAdmin123! (meets all security requirements)
+                secure_password = "MVidarrAdmin123!"
                 admin_user = User(
                     username="admin",
                     email="admin@localhost",
-                    password="admin",
+                    password=secure_password,
                     role=UserRole.ADMIN,
                 )
                 session.add(admin_user)
                 session.commit()
 
                 logger.info(
-                    "Created default admin user (username: admin, password: admin)"
+                    f"Created default admin user (username: admin, password: {secure_password})"
                 )
             else:
                 logger.info(f"Users already exist ({existing_users} entries)")
