@@ -35,8 +35,8 @@ def search_videos():
         return jsonify(
             {
                 "success": True,
-                "items": result.get("items", []),
-                "totalResults": result.get("pageInfo", {}).get("totalResults", 0),
+                "items": result.get("results", []),
+                "totalResults": result.get("total", 0),
             }
         )
 
@@ -68,8 +68,8 @@ def search_artist_videos():
         return jsonify(
             {
                 "success": True,
-                "items": result.get("items", []),
-                "totalResults": result.get("pageInfo", {}).get("totalResults", 0),
+                "items": result.get("results", []),
+                "totalResults": result.get("total", 0),
             }
         )
 
