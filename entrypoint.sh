@@ -1,10 +1,14 @@
 #!/bin/bash
 set -e
 
-echo "🚀 MVidarr Container Entrypoint Script Starting..."
+echo "=============================================="
+echo "🚀 MVIDARR ENHANCED ENTRYPOINT SCRIPT v2.0 🚀"
+echo "=============================================="
 echo "📅 Current time: $(date)"
 echo "👤 Current user: $(whoami)"
 echo "📁 Current directory: $(pwd)"
+echo "🐧 Container hostname: $(hostname)"
+echo "=============================================="
 
 # Wait for database to be ready
 echo "⏳ Waiting for MariaDB to be ready..."

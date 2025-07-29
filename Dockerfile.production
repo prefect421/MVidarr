@@ -57,8 +57,8 @@ EXPOSE 5000
 # Note: Container starts as root to handle permissions, then switches to mvidarr user in entrypoint
 
 # Copy entrypoint script
-COPY --chown=mvidarr:mvidarr entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && chown root:root /app/entrypoint.sh
 
 # Run the application
 ENTRYPOINT ["/app/entrypoint.sh"]
