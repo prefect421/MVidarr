@@ -200,8 +200,8 @@ def create_admin_user():
 
             if existing_users == 0:
                 # Create default admin user with secure password
-                # Password: MVidarrAdmin123! (meets all security requirements)
-                secure_password = "MVidarrAdmin123!"
+                # Password: MVidarr@P4ss! (meets all security requirements, avoids common patterns)
+                secure_password = "MVidarr@P4ss!"
                 admin_user = User(
                     username="admin",
                     email="admin@localhost",
