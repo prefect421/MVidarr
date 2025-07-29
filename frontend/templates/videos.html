@@ -2116,6 +2116,15 @@ function displaySearchResults(results) {
     console.log('🎭 Results data:', results);
     
     const resultsList = document.getElementById('videoSearchResultsList');
+    const resultsDiv = document.getElementById('videoSearchResults');
+    
+    // Ensure the results div is visible
+    if (resultsDiv) {
+        resultsDiv.style.display = 'block';
+        console.log('🎭 Results div display set to block');
+    } else {
+        console.error('❌ videoSearchResults div not found!');
+    }
     
     if (results.length === 0) {
         console.log('❌ No results to display');
@@ -2165,6 +2174,14 @@ function displaySearchResults(results) {
     resultsList.innerHTML = html;
     console.log('🎭 HTML set in DOM. Element children count:', resultsList.children.length);
     console.log('🎭 Element innerHTML length:', resultsList.innerHTML.length);
+    
+    // Additional debugging to check visibility
+    console.log('🎭 ResultsList element:', resultsList);
+    console.log('🎭 ResultsList display:', window.getComputedStyle(resultsList).display);
+    console.log('🎭 ResultsList visibility:', window.getComputedStyle(resultsList).visibility);
+    console.log('🎭 ResultsDiv element:', resultsDiv);
+    console.log('🎭 ResultsDiv display:', window.getComputedStyle(resultsDiv).display);
+    console.log('🎭 ResultsDiv visibility:', window.getComputedStyle(resultsDiv).visibility);
 }
 
 async function addVideoToLibrary(source, videoId, title, artist, url) {
@@ -3155,7 +3172,7 @@ function deleteSelectedVideos() {
 
 <!-- Add Video Modal -->
 <div id="addVideoModal" class="modal">
-    <div class="modal-content" style="width: 90%; max-width: 600px;">
+    <div class="modal-content" style="width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
         <div class="modal-header">
             <h3>🎵 Add Video</h3>
             <span class="modal-close" onclick="closeAddVideoModal()">&times;</span>
