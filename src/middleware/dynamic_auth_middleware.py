@@ -48,10 +48,12 @@ class DynamicAuthMiddleware:
             logger.info(f"Session contents: {dict(session)}")
 
             if is_authenticated:
-                # User is already authenticated, redirect to dashboard
+                # User is already authenticated, safe redirect to dashboard
                 next_url = request.args.get("next", "/")
                 logger.info(f"User already authenticated, redirecting to: {next_url}")
-                return redirect(next_url)
+                from src.utils.security import safe_redirect
+
+                return safe_redirect(next_url)
 
             # Show login form for unauthenticated users
             return render_template(
@@ -114,7 +116,9 @@ class DynamicAuthMiddleware:
                     else:
                         next_url = request.args.get("next", "/")
                         logger.debug(f"Redirecting authenticated user to: {next_url}")
-                        return redirect(next_url)
+                        from src.utils.security import safe_redirect
+
+                        return safe_redirect(next_url)
                 else:
                     logger.warning(
                         f"Failed login attempt for user: {username} - {message}"
@@ -175,9 +179,13 @@ class DynamicAuthMiddleware:
 
                 response = make_response(jsonify(response_data))
 
-                # Manual cookie setting as fallback
+                # Manual cookie setting as fallback with security attributes
                 response.set_cookie(
-                    "test_cookie", "test_value", httponly=True, samesite="Lax"
+                    "test_cookie",
+                    "test_value",
+                    httponly=True,
+                    secure=True,
+                    samesite="Lax",
                 )
 
                 logger.info(

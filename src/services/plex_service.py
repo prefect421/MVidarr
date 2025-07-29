@@ -4,11 +4,11 @@ Plex Integration Service for library synchronization and metadata exchange
 
 import json
 import os
-import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set
 from urllib.parse import urljoin, urlparse
 
+import defusedxml.ElementTree as ET
 import requests
 from sqlalchemy.orm import Session
 

@@ -100,7 +100,14 @@ class User(Base):
         self.role = role
 
     def set_password(self, password):
-        """Set password hash"""
+        """Set password hash with validation"""
+        from src.utils.security import PasswordValidator
+
+        # Validate password strength
+        is_valid, errors = PasswordValidator.validate_password_strength(password)
+        if not is_valid:
+            raise ValueError(f"Password validation failed: {'; '.join(errors)}")
+
         self.password_hash = generate_password_hash(password)
         self.password_changed_at = datetime.utcnow()
 

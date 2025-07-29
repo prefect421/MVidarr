@@ -4,7 +4,7 @@ OpenAPI documentation and specification for MVidarr REST API
 
 import os
 
-from flask import Blueprint, jsonify, render_template_string
+from flask import Blueprint, Response, jsonify
 
 from src.utils.logger import get_logger
 
@@ -982,7 +982,7 @@ def swagger_ui():
     </body>
     </html>
     """
-    return render_template_string(swagger_html)
+    return Response(swagger_html, mimetype="text/html")
 
 
 @openapi_bp.route("/redoc", methods=["GET"])
@@ -1009,7 +1009,7 @@ def redoc_ui():
     </body>
     </html>
     """
-    return render_template_string(redoc_html)
+    return Response(redoc_html, mimetype="text/html")
 
 
 @openapi_bp.route("/", methods=["GET"])
@@ -1170,4 +1170,4 @@ def api_docs_index():
     </body>
     </html>
     """
-    return render_template_string(index_html)
+    return Response(index_html, mimetype="text/html")

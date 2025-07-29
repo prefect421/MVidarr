@@ -19,7 +19,7 @@ from functools import wraps
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlparse
 
-from flask import current_app, jsonify, request
+from flask import current_app, jsonify, redirect, request, url_for
 
 # Handle different versions of werkzeug
 try:
@@ -237,6 +237,176 @@ class InputValidator:
         return True, ""
 
 
+class PasswordValidator:
+    """Comprehensive password validation with configurable complexity requirements"""
+
+    @staticmethod
+    def validate_password_strength(
+        password: str, min_length: int = 8
+    ) -> tuple[bool, List[str]]:
+        """
+        Validate password strength with comprehensive requirements
+
+        Args:
+            password: Password to validate
+            min_length: Minimum password length (default: 8)
+
+        Returns:
+            Tuple of (is_valid, list_of_error_messages)
+        """
+        errors = []
+
+        if not password:
+            errors.append("Password is required")
+            return False, errors
+
+        # Length requirement
+        if len(password) < min_length:
+            errors.append(f"Password must be at least {min_length} characters long")
+
+        # Maximum length to prevent DoS
+        if len(password) > 128:
+            errors.append("Password must be no more than 128 characters long")
+
+        # Character complexity requirements
+        has_lower = any(c.islower() for c in password)
+        has_upper = any(c.isupper() for c in password)
+        has_digit = any(c.isdigit() for c in password)
+        has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password)
+
+        if not has_lower:
+            errors.append("Password must contain at least one lowercase letter")
+
+        if not has_upper:
+            errors.append("Password must contain at least one uppercase letter")
+
+        if not has_digit:
+            errors.append("Password must contain at least one number")
+
+        if not has_special:
+            errors.append(
+                "Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)"
+            )
+
+        # Common weak password patterns
+        weak_patterns = [
+            "password",
+            "123456",
+            "qwerty",
+            "admin",
+            "login",
+            "user",
+            "test",
+            "guest",
+            "root",
+            "pass",
+            "1234",
+        ]
+
+        password_lower = password.lower()
+        for pattern in weak_patterns:
+            if pattern in password_lower:
+                errors.append(
+                    f"Password must not contain common weak patterns like '{pattern}'"
+                )
+                break
+
+        # Sequential characters check
+        if len(password) >= 3:
+            for i in range(len(password) - 2):
+                # Check for ascending sequences (abc, 123)
+                if ord(password[i]) + 1 == ord(password[i + 1]) and ord(
+                    password[i + 1]
+                ) + 1 == ord(password[i + 2]):
+                    errors.append(
+                        "Password must not contain sequential characters (e.g., abc, 123)"
+                    )
+                    break
+
+                # Check for descending sequences (cba, 321)
+                if ord(password[i]) - 1 == ord(password[i + 1]) and ord(
+                    password[i + 1]
+                ) - 1 == ord(password[i + 2]):
+                    errors.append(
+                        "Password must not contain sequential characters (e.g., cba, 321)"
+                    )
+                    break
+
+        # Repeated characters check
+        if len(set(password)) < len(password) / 2:
+            errors.append("Password must not have too many repeated characters")
+
+        return len(errors) == 0, errors
+
+    @staticmethod
+    def get_password_strength_score(password: str) -> tuple[int, str]:
+        """
+        Calculate password strength score (0-100) and description
+
+        Args:
+            password: Password to evaluate
+
+        Returns:
+            Tuple of (score, description)
+        """
+        if not password:
+            return 0, "No password"
+
+        score = 0
+
+        # Length scoring (up to 25 points)
+        length_score = min(25, len(password) * 2)
+        score += length_score
+
+        # Character variety (up to 40 points)
+        has_lower = any(c.islower() for c in password)
+        has_upper = any(c.isupper() for c in password)
+        has_digit = any(c.isdigit() for c in password)
+        has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password)
+
+        char_types = sum([has_lower, has_upper, has_digit, has_special])
+        score += char_types * 10
+
+        # Uniqueness (up to 20 points)
+        unique_chars = len(set(password))
+        uniqueness_ratio = unique_chars / len(password) if password else 0
+        score += int(uniqueness_ratio * 20)
+
+        # Pattern penalties (up to -15 points)
+        weak_patterns = ["password", "123456", "qwerty", "admin", "test"]
+        password_lower = password.lower()
+        for pattern in weak_patterns:
+            if pattern in password_lower:
+                score -= 15
+                break
+
+        # Sequential penalties (up to -10 points)
+        if len(password) >= 3:
+            for i in range(len(password) - 2):
+                if ord(password[i]) + 1 == ord(password[i + 1]) and ord(
+                    password[i + 1]
+                ) + 1 == ord(password[i + 2]):
+                    score -= 10
+                    break
+
+        # Ensure score is within bounds
+        score = max(0, min(100, score))
+
+        # Determine description
+        if score >= 80:
+            description = "Very Strong"
+        elif score >= 60:
+            description = "Strong"
+        elif score >= 40:
+            description = "Moderate"
+        elif score >= 20:
+            description = "Weak"
+        else:
+            description = "Very Weak"
+
+        return score, description
+
+
 class SecurityHeaders:
     """Security headers management"""
 
@@ -446,3 +616,52 @@ def apply_security_headers(response):
     for header, value in headers.items():
         response.headers[header] = value
     return response
+
+
+def safe_redirect(
+    url: str, default_endpoint: str = "/", allowed_hosts: List[str] = None
+):
+    """
+    Safely redirect to a URL, preventing open redirect vulnerabilities
+
+    Args:
+        url: The URL to redirect to
+        default_endpoint: Default endpoint if URL is invalid
+        allowed_hosts: List of allowed hostnames (defaults to current app's host)
+
+    Returns:
+        Flask redirect response to a safe URL
+    """
+    if not url:
+        return redirect(default_endpoint)
+
+    try:
+        parsed = urlparse(url)
+
+        # If it's a relative URL (no scheme or netloc), it's safe
+        if not parsed.scheme and not parsed.netloc:
+            # Ensure it starts with / to prevent protocol-relative URLs
+            if not url.startswith("/"):
+                url = "/" + url
+            return redirect(url)
+
+        # For absolute URLs, validate the host
+        if allowed_hosts is None:
+            # Default to current request host if available
+            try:
+                current_host = request.host
+                allowed_hosts = [current_host]
+            except RuntimeError:
+                # Outside request context, be restrictive
+                allowed_hosts = ["localhost", "127.0.0.1"]
+
+        # Check if the host is in the allowed list
+        if parsed.netloc.lower() in [host.lower() for host in allowed_hosts]:
+            return redirect(url)
+
+        # If host is not allowed, redirect to default
+        return redirect(default_endpoint)
+
+    except Exception:
+        # If URL parsing fails, redirect to default
+        return redirect(default_endpoint)

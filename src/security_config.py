@@ -189,9 +189,13 @@ class ProductionSecurityConfig:
     def apply_production_settings(app: Flask):
         """Apply production security settings"""
 
-        # Disable debug mode
-        app.config["DEBUG"] = False
-        app.config["TESTING"] = False
+        # Configure debug and testing mode from environment
+        import os
+
+        app.config["DEBUG"] = os.environ.get("MVIDARR_DEBUG", "false").lower() == "true"
+        app.config["TESTING"] = (
+            os.environ.get("MVIDARR_TESTING", "false").lower() == "true"
+        )
 
         # Hide Flask version and server info
         app.config["SERVER_NAME"] = None

@@ -155,9 +155,11 @@ def login():
                         }
                     )
                 else:
-                    # Redirect for form submissions
+                    # Safe redirect for form submissions
                     next_url = request.args.get("next", "/")
-                    return redirect(next_url)
+                    from src.utils.security import safe_redirect
+
+                    return safe_redirect(next_url)
 
         # Login failed
         log_login_failed(username, message)

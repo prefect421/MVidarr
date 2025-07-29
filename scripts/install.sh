@@ -529,7 +529,7 @@ install_packages_with_pip() {
     
     # Install recommended dependencies
     print_step "Installing recommended dependencies..."
-    $pip_command install mysql-connector-python==8.1.0 bcrypt==4.0.1 flask-cors==4.0.0 python-dotenv==1.0.0
+    $pip_command install mysql-connector-python==8.1.0 bcrypt==4.0.1 "flask-cors>=6.0.0" python-dotenv==1.0.0
     
     # Install optional dependencies
     print_step "Installing optional dependencies..."

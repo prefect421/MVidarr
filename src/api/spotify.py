@@ -44,7 +44,9 @@ def callback():
 
         if error:
             logger.error(f"Spotify OAuth error: {error}")
-            return redirect(f"/settings?spotify_error={error}")
+            from src.utils.security import safe_redirect
+
+            return safe_redirect(f"/settings?spotify_error={error}")
 
         if not code:
             return jsonify({"error": "No authorization code received"}), 400

@@ -142,7 +142,7 @@ if errorlevel 1 (
 )
 
 call :print_step "Installing recommended dependencies..."
-pip install mysql-connector-python==8.1.0 bcrypt==4.0.1 flask-cors==4.0.0 python-dotenv==1.0.0
+pip install mysql-connector-python==8.1.0 bcrypt==4.0.1 "flask-cors>=6.0.0" python-dotenv==1.0.0
 if errorlevel 1 (
     call :print_warning "Some recommended dependencies failed to install"
 )

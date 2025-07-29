@@ -179,3 +179,11 @@ screenshot_env/
 # Allow test files in the tests/ directory
 !tests/
 !tests/*.py
+
+# AI Agent system files (not part of core MVidarr)
+scripts/*_agent.py
+scripts/code_templates.py
+scripts/*_agent_config.json
+scripts/setup_*_agent.sh
+scripts/add_pma_shortcut.sh
+README_*_AGENT.md

@@ -2,6 +2,10 @@
 Health check API endpoints
 """
 
+import json
+import subprocess
+from pathlib import Path
+
 from flask import Blueprint, jsonify
 
 from src.database.connection import get_db
@@ -122,3 +126,62 @@ def check_metube():
     except Exception as e:
         logger.error(f"yt-dlp Web UI health check failed: {e}")
         return jsonify({"status": "unhealthy", "error": str(e)}), 503
+
+
+@health_bp.route("/version", methods=["GET"])
+def get_version_info():
+    """Get version information including version number and git commit"""
+    try:
+        # Get version from src/__init__.py
+        from src import __version__
+
+        version_info = {
+            "version": __version__,
+            "git_commit": "unknown",
+            "git_branch": "unknown",
+        }
+
+        try:
+            # Try to get git commit hash
+            result = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=Path(__file__).parent.parent.parent,
+            )
+            if result.returncode == 0:
+                version_info["git_commit"] = result.stdout.strip()
+        except Exception:
+            pass
+
+        try:
+            # Try to get git branch
+            result = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=Path(__file__).parent.parent.parent,
+            )
+            if result.returncode == 0:
+                version_info["git_branch"] = result.stdout.strip()
+        except Exception:
+            pass
+
+        # Try to read version.json as fallback
+        try:
+            version_json_path = Path(__file__).parent.parent.parent / "version.json"
+            if version_json_path.exists():
+                with open(version_json_path) as f:
+                    version_data = json.load(f)
+                    if version_info["git_commit"] == "unknown":
+                        version_info["git_commit"] = version_data.get(
+                            "git_commit", "unknown"
+                        )
+        except Exception:
+            pass
+
+        return jsonify(version_info), 200
+
+    except Exception as e:
+        logger.error(f"Version info retrieval failed: {e}")
+        return jsonify({"error": str(e)}), 500

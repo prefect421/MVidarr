@@ -629,6 +629,16 @@
             background-color: rgba(102, 126, 234, 0.1);
             color: #667eea;
         }
+        
+        /* Version display styling */
+        .version-display {
+            border-top: 1px solid #333;
+        }
+        
+        body.light-theme .version-display {
+            color: #666 !important;
+            border-top-color: rgba(0, 0, 0, 0.1) !important;
+        }
     </style>
 </head>
 <body>
@@ -687,6 +697,11 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Version Display -->
+                <div class="version-display" style="padding: 0.5rem 0.75rem; color: #888; font-size: 0.75rem; border-top: 1px solid #333; margin-top: 0.5rem;">
+                    <span id="versionInfo">Loading...</span>
                 </div>
             </div>
             
@@ -978,6 +993,9 @@
             
             // Initialize sidebar functionality
             initializeSidebar();
+            
+            // Load version information
+            loadVersionInfo();
         });
         
         // Sidebar functionality
@@ -1085,6 +1103,27 @@
                     }
                 }
             });
+        }
+        
+        // Load version information from API
+        function loadVersionInfo() {
+            fetch('/api/health/version')
+                .then(response => response.json())
+                .then(data => {
+                    const versionElement = document.getElementById('versionInfo');
+                    if (versionElement) {
+                        const version = data.version || 'unknown';
+                        const commit = data.git_commit || 'unknown';
+                        versionElement.textContent = `v${version} (${commit})`;
+                    }
+                })
+                .catch(error => {
+                    console.warn('Failed to load version info:', error);
+                    const versionElement = document.getElementById('versionInfo');
+                    if (versionElement) {
+                        versionElement.textContent = 'v1.0.0';
+                    }
+                });
         }
     </script>
 </body>
