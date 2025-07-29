@@ -410,6 +410,12 @@ class SpotifyService:
                             imvdb_artist = imvdb_results["results"][0]
 
                             # Create new artist
+                            from src.utils.filename_cleanup import FilenameCleanup
+                            from src.utils.sort_name_generator import generate_sort_name
+                            
+                            folder_path = FilenameCleanup.sanitize_folder_name(artist_data["name"])
+                            sort_name = generate_sort_name(artist_data["name"])
+                            
                             new_artist = Artist(
                                 name=artist_data["name"],
                                 imvdb_id=imvdb_artist.get("id"),
@@ -417,6 +423,8 @@ class SpotifyService:
                                 monitored=True,
                                 auto_download=False,
                                 source="spotify_import",
+                                folder_path=folder_path,
+                                sort_name=sort_name,
                             )
 
                             session.add(new_artist)
@@ -466,12 +474,20 @@ class SpotifyService:
 
                         else:
                             # Create artist without IMVDb data
+                            from src.utils.filename_cleanup import FilenameCleanup
+                            from src.utils.sort_name_generator import generate_sort_name
+                            
+                            folder_path = FilenameCleanup.sanitize_folder_name(artist_data["name"])
+                            sort_name = generate_sort_name(artist_data["name"])
+                            
                             new_artist = Artist(
                                 name=artist_data["name"],
                                 spotify_id=spotify_id,
                                 monitored=True,
                                 auto_download=False,
                                 source="spotify_import",
+                                folder_path=folder_path,
+                                sort_name=sort_name,
                             )
 
                             session.add(new_artist)
@@ -544,6 +560,12 @@ class SpotifyService:
                             imvdb_artist = imvdb_results["results"][0]
 
                             # Create new artist
+                            from src.utils.filename_cleanup import FilenameCleanup
+                            from src.utils.sort_name_generator import generate_sort_name
+                            
+                            folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
+                            sort_name = generate_sort_name(artist_name)
+                            
                             new_artist = Artist(
                                 name=artist_name,
                                 imvdb_id=imvdb_artist.get("id"),
@@ -551,6 +573,8 @@ class SpotifyService:
                                 monitored=True,
                                 auto_download=False,
                                 source="spotify_followed",
+                                folder_path=folder_path,
+                                sort_name=sort_name,
                             )
 
                             session.add(new_artist)

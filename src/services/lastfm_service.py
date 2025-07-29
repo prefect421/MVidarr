@@ -389,6 +389,12 @@ class LastFmService:
                             results["existing_artists"] += 1
                         else:
                             # Create new artist
+                            from src.utils.filename_cleanup import FilenameCleanup
+                            from src.utils.sort_name_generator import generate_sort_name
+                            
+                            folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
+                            sort_name = generate_sort_name(artist_name)
+                            
                             new_artist = Artist(
                                 name=artist_name,
                                 lastfm_name=artist_name,
@@ -396,6 +402,8 @@ class LastFmService:
                                 auto_download=False,
                                 source="lastfm_import",
                                 created_at=datetime.now(),
+                                folder_path=folder_path,
+                                sort_name=sort_name,
                             )
 
                             session.add(new_artist)
@@ -505,6 +513,12 @@ class LastFmService:
 
                         if not existing_artist:
                             # Create new artist
+                            from src.utils.filename_cleanup import FilenameCleanup
+                            from src.utils.sort_name_generator import generate_sort_name
+                            
+                            folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
+                            sort_name = generate_sort_name(artist_name)
+                            
                             new_artist = Artist(
                                 name=artist_name,
                                 lastfm_name=artist_name,
@@ -512,6 +526,8 @@ class LastFmService:
                                 auto_download=False,
                                 source="lastfm_loved",
                                 created_at=datetime.now(),
+                                folder_path=folder_path,
+                                sort_name=sort_name,
                             )
                             session.add(new_artist)
                             session.flush()

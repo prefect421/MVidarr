@@ -54,6 +54,35 @@ def ensure_artist_folder_path(artist, session=None):
     return artist.folder_path
 
 
+def ensure_artist_sort_name(artist, session=None):
+    """
+    Ensure artist has a sort_name set. If missing, generate one.
+
+    This addresses Issue #17 by implementing automatic sort name generation
+    with intelligent formatting rules.
+    """
+    if not artist.sort_name or artist.sort_name.strip() == "":
+        from src.utils.sort_name_generator import generate_sort_name
+
+        artist.sort_name = generate_sort_name(artist.name)
+        logger.info(
+            f"Generated missing sort_name for artist '{artist.name}': '{artist.sort_name}'"
+        )
+
+        # If we have a session, commit the change immediately
+        if session:
+            try:
+                session.commit()
+                logger.info(f"Saved sort_name to database for artist '{artist.name}'")
+            except Exception as e:
+                logger.error(
+                    f"Failed to save sort_name for artist '{artist.name}': {e}"
+                )
+                session.rollback()
+
+    return artist.sort_name
+
+
 @artists_bp.route("/", methods=["GET"])
 def get_artists():
     """Get all tracked artists with search and filtering"""
@@ -98,15 +127,23 @@ def get_artists():
                 query = query.filter(Artist.auto_download == auto_download_bool)
 
             # Sorting
-            sort_by = request.args.get("sort", "name")
+            sort_by = request.args.get("sort", "sort_name")
             sort_order = request.args.get("order", "asc")
 
             if sort_by == "name":
                 sort_column = Artist.name
+            elif sort_by == "sort_name":
+                sort_column = Artist.sort_name
             elif sort_by == "created_at":
                 sort_column = Artist.created_at
+            elif sort_by == "updated_at":
+                sort_column = Artist.updated_at
+            elif sort_by == "video_count":
+                # For video_count, we need to use the subquery column
+                sort_column = func.coalesce(video_count_subquery.c.video_count, 0)
             else:
-                sort_column = Artist.name
+                # Default to sort_name for better alphabetical ordering
+                sort_column = Artist.sort_name
 
             if sort_order.lower() == "desc":
                 query = query.order_by(sort_column.desc())
@@ -129,6 +166,7 @@ def get_artists():
                     {
                         "id": artist.id,
                         "name": artist.name,
+                        "sort_name": ensure_artist_sort_name(artist, session),
                         "imvdb_id": artist.imvdb_id,
                         "thumbnail_url": artist.thumbnail_url,
                         "auto_download": artist.auto_download,
@@ -136,6 +174,7 @@ def get_artists():
                         "monitored": artist.monitored,
                         "created_at": artist.created_at.isoformat(),
                         "video_count": video_count,
+                        "folder_path": ensure_artist_folder_path(artist, session),
                         "has_thumbnail": bool(
                             artist.thumbnail_url or artist.thumbnail_path
                         ),
@@ -345,6 +384,7 @@ def _execute_advanced_search(query_params):
             artist_data = {
                 "id": artist.id,
                 "name": artist.name,
+                "sort_name": ensure_artist_sort_name(artist, session),
                 "imvdb_id": artist.imvdb_id,
                 "thumbnail_url": artist.thumbnail_url,
                 "thumbnail_path": artist.thumbnail_path,
@@ -1083,6 +1123,7 @@ def get_artist_detailed(artist_id):
             artist_detailed = {
                 "id": artist.id,
                 "name": artist.name,
+                "sort_name": ensure_artist_sort_name(artist, session),
                 "imvdb_id": artist.imvdb_id,
                 "thumbnail_url": artist.thumbnail_url,
                 "thumbnail_path": artist.thumbnail_path,
@@ -2354,6 +2395,7 @@ def update_artist_settings(artist_id):
                         "artist": {
                             "id": artist.id,
                             "name": artist.name,
+                            "sort_name": ensure_artist_sort_name(artist, session),
                             "imvdb_id": artist.imvdb_id,
                             "folder_path": ensure_artist_folder_path(artist, session),
                             "keywords": artist.keywords or [],
@@ -3640,6 +3682,24 @@ def merge_multiple_artists():
 
     except Exception as e:
         logger.error(f"Failed to merge artists: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@artists_bp.route("/<int:artist_id>/import-metadata", methods=["POST"])
+def import_artist_metadata(artist_id):
+    """
+    Import/update artist metadata from IMVDb and YouTube
+    
+    This is a convenience endpoint that provides enhanced metadata retrieval
+    as requested in Issue #18. It calls the existing comprehensive metadata 
+    update functionality.
+    """
+    try:
+        # Simply call the existing comprehensive metadata update function
+        return update_artist_metadata_from_imvdb(artist_id)
+        
+    except Exception as e:
+        logger.error(f"Failed to import metadata for artist {artist_id}: {e}")
         return jsonify({"error": str(e)}), 500
 
 

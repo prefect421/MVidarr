@@ -2893,8 +2893,11 @@ def update_video(video_id):
                 if not artist:
                     from src.utils.filename_cleanup import FilenameCleanup
 
+                    from src.utils.sort_name_generator import generate_sort_name
+                    
                     folder_path = FilenameCleanup.sanitize_folder_name(new_artist_name)
-                    artist = Artist(name=new_artist_name, folder_path=folder_path)
+                    sort_name = generate_sort_name(new_artist_name)
+                    artist = Artist(name=new_artist_name, folder_path=folder_path, sort_name=sort_name)
                     session.add(artist)
                     session.flush()  # Get the artist ID
                 video.artist_id = artist.id

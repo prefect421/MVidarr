@@ -296,6 +296,7 @@ class Artist(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    sort_name = Column(String(255), nullable=True)  # Automatically generated for sorting
     imvdb_id = Column(String(100), unique=True, nullable=True)
     spotify_id = Column(String(100), nullable=True)  # Spotify artist ID
     lastfm_name = Column(String(255), nullable=True)  # Last.fm artist name
@@ -332,6 +333,7 @@ class Artist(Base):
     # Indexes
     __table_args__ = (
         Index("idx_artist_name", "name"),
+        Index("idx_artist_sort_name", "sort_name"),
         Index("idx_artist_imvdb_id", "imvdb_id"),
         Index("idx_artist_spotify_id", "spotify_id"),
         Index("idx_artist_monitored", "monitored"),

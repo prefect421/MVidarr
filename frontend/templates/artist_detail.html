@@ -892,6 +892,29 @@
                             <textarea id="overviewSetting" name="overview" rows="4"></textarea>
                             <small class="field-hint">Artist biography or description</small>
                         </div>
+                        
+                        <div class="setting-group">
+                            <label for="genresSetting">Genres:</label>
+                            <input type="text" id="genresSetting" name="genres">
+                            <small class="field-hint">Comma-separated music genres</small>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="imvdbIdSetting">IMVDb ID:</label>
+                            <div class="input-group">
+                                <input type="number" id="imvdbIdSetting" name="imvdb_id" placeholder="Enter IMVDb ID or leave empty">
+                                <button type="button" id="clearImvdbId" class="btn-clear" title="Clear IMVDb ID">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button type="button" id="searchImvdbId" class="btn-search" title="Search for correct IMVDb ID">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <small class="field-hint">
+                                Manually enter the correct IMVDb ID, search for it, or clear if incorrect. 
+                                <a href="https://imvdb.com" target="_blank" rel="noopener">Find ID on IMVDb</a>
+                            </small>
+                        </div>
                     </div>
                 </div>
                 
@@ -924,12 +947,6 @@
                                 <option value="other">Other</option>
                             </select>
                             <small class="field-hint">Country or region of origin</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="genresSetting">Genres:</label>
-                            <input type="text" id="genresSetting" name="genres">
-                            <small class="field-hint">Comma-separated music genres</small>
                         </div>
                         
                         <div class="setting-group">
@@ -989,23 +1006,6 @@
                             <label for="instagramUrlSetting">Instagram URL:</label>
                             <input type="url" id="instagramUrlSetting" name="instagram_url">
                             <small class="field-hint">Official Instagram account</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="imvdbIdSetting">IMVDb ID:</label>
-                            <div class="input-group">
-                                <input type="number" id="imvdbIdSetting" name="imvdb_id" placeholder="Enter IMVDb ID or leave empty">
-                                <button type="button" id="clearImvdbId" class="btn-clear" title="Clear IMVDb ID">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                <button type="button" id="searchImvdbId" class="btn-search" title="Search for correct IMVDb ID">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                            <small class="field-hint">
-                                Manually enter the correct IMVDb ID, search for it, or clear if incorrect. 
-                                <a href="https://imvdb.com" target="_blank" rel="noopener">Find ID on IMVDb</a>
-                            </small>
                         </div>
                     </div>
                 </div>
@@ -1090,7 +1090,7 @@
                 <div class="settings-actions">
                     <button type="submit" class="btn btn-primary">💾 Save All Changes</button>
                     <button type="button" onclick="resetSettings()" class="btn btn-secondary">🔄 Reset</button>
-                    <button type="button" onclick="importFromImvdb()" class="btn btn-info">📥 Import from IMVDb</button>
+                    <button type="button" onclick="importFromImvdb()" class="btn btn-info">📥 Import Metadata</button>
                     <button type="button" onclick="validateMetadata()" class="btn btn-secondary">✅ Validate</button>
                 </div>
             </form>

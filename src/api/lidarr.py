@@ -133,11 +133,19 @@ def sync_lidarr_library():
 
                     if not existing_artist:
                         # Add new artist to MVidarr
+                        from src.utils.filename_cleanup import FilenameCleanup
+                        from src.utils.sort_name_generator import generate_sort_name
+                        
+                        folder_path = FilenameCleanup.sanitize_folder_name(artist["artistName"])
+                        sort_name = generate_sort_name(artist["artistName"])
+                        
                         new_artist = Artist(
                             name=artist["artistName"],
                             imvdb_id=artist.get("foreignArtistId"),
                             monitored=artist.get("monitored", False),
                             source="lidarr",
+                            folder_path=folder_path,
+                            sort_name=sort_name,
                         )
                         session.add(new_artist)
                         synced_count += 1
@@ -225,11 +233,19 @@ def import_lidarr_artists():
 
                     if not existing_artist:
                         # Add new artist to MVidarr
+                        from src.utils.filename_cleanup import FilenameCleanup
+                        from src.utils.sort_name_generator import generate_sort_name
+                        
+                        folder_path = FilenameCleanup.sanitize_folder_name(artist["artistName"])
+                        sort_name = generate_sort_name(artist["artistName"])
+                        
                         new_artist = Artist(
                             name=artist["artistName"],
                             imvdb_id=artist.get("foreignArtistId"),
                             monitored=True,  # Set to monitored since they're monitored in Lidarr
                             source="lidarr",
+                            folder_path=folder_path,
+                            sort_name=sort_name,
                         )
                         session.add(new_artist)
                         imported_count += 1
