@@ -25,6 +25,35 @@ artists_bp = Blueprint("artists", __name__, url_prefix="/artists")
 logger = get_logger("mvidarr.api.artists")
 
 
+def ensure_artist_folder_path(artist, session=None):
+    """
+    Ensure artist has a folder_path set. If missing, generate one.
+
+    This addresses Issue #16 where artists (especially from YouTube imports)
+    may not have folder paths set.
+    """
+    if not artist.folder_path or artist.folder_path.strip() == "":
+        from src.utils.filename_cleanup import FilenameCleanup
+
+        artist.folder_path = FilenameCleanup.sanitize_folder_name(artist.name)
+        logger.info(
+            f"Generated missing folder_path for artist '{artist.name}': '{artist.folder_path}'"
+        )
+
+        # If we have a session, commit the change immediately
+        if session:
+            try:
+                session.commit()
+                logger.info(f"Saved folder_path to database for artist '{artist.name}'")
+            except Exception as e:
+                logger.error(
+                    f"Failed to save folder_path for artist '{artist.name}': {e}"
+                )
+                session.rollback()
+
+    return artist.folder_path
+
+
 @artists_bp.route("/", methods=["GET"])
 def get_artists():
     """Get all tracked artists with search and filtering"""
@@ -322,7 +351,7 @@ def _execute_advanced_search(query_params):
                 "auto_download": artist.auto_download,
                 "keywords": artist.keywords or [],
                 "monitored": artist.monitored,
-                "folder_path": artist.folder_path,
+                "folder_path": ensure_artist_folder_path(artist, session),
                 "last_discovery": (
                     artist.last_discovery.isoformat() if artist.last_discovery else None
                 ),
@@ -1060,7 +1089,7 @@ def get_artist_detailed(artist_id):
                 "auto_download": artist.auto_download,
                 "keywords": artist.keywords or [],
                 "monitored": artist.monitored,
-                "folder_path": artist.folder_path,
+                "folder_path": ensure_artist_folder_path(artist, session),
                 "last_discovery": (
                     artist.last_discovery.isoformat() if artist.last_discovery else None
                 ),
@@ -2326,7 +2355,7 @@ def update_artist_settings(artist_id):
                             "id": artist.id,
                             "name": artist.name,
                             "imvdb_id": artist.imvdb_id,
-                            "folder_path": artist.folder_path,
+                            "folder_path": ensure_artist_folder_path(artist, session),
                             "keywords": artist.keywords or [],
                             "monitored": artist.monitored,
                             "auto_download": artist.auto_download,
