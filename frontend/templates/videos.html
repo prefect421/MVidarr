@@ -2173,6 +2173,12 @@ function displaySearchResults(results) {
             const safeId = escapeForJS(video.id || '');
             const safeUrl = escapeForJS(video.url || '');
             
+            // Debug logging to help identify issues
+            console.log('🔧 Original title:', video.title);
+            console.log('🔧 Escaped title:', safeTitle);
+            console.log('🔧 Original artist:', video.artist);
+            console.log('🔧 Escaped artist:', safeArtist);
+            
             return `
                 <div class="search-result-item" style="border: 1px solid #444; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: #1a1a1a;">
                     <div style="display: flex; gap: 15px;">
@@ -2184,7 +2190,7 @@ function displaySearchResults(results) {
                             <p style="margin: 0 0 5px 0; color: #ccc;">Artist: ${safeArtist}</p>
                             <p style="margin: 0 0 5px 0; color: #888; font-size: 0.9em;">Source: ${safeSource}</p>
                             ${video.year ? `<p style="margin: 0 0 10px 0; color: #888; font-size: 0.9em;">Year: ${video.year}</p>` : ''}
-                            <button onclick="addVideoToLibrary('${safeSource}', '${safeId}', '${safeTitle}', '${safeArtist}', '${safeUrl}')" 
+                            <button onclick="console.log('🔧 Button clicked with params:', '${safeSource}', '${safeId}', '${safeTitle}', '${safeArtist}', '${safeUrl}'); addVideoToLibrary('${safeSource}', '${safeId}', '${safeTitle}', '${safeArtist}', '${safeUrl}')" 
                                     class="btn btn-primary btn-small">
                                 ➕ Add to Library
                             </button>
