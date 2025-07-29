@@ -2265,13 +2265,13 @@ async function addVideoToLibrary(source, videoId, title, artist, url) {
         let endpoint, payload;
         
         if (source === 'IMVDb') {
-            endpoint = '/videos/import-from-imvdb';
+            endpoint = '/api/videos/import-from-imvdb';
             payload = {
                 imvdb_id: videoId,
                 auto_download: true
             };
         } else if (source === 'YouTube') {
-            endpoint = '/videos/import-from-youtube';
+            endpoint = '/api/videos/import-from-youtube';
             payload = {
                 youtube_id: videoId,
                 url: url,
