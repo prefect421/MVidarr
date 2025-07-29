@@ -1,8 +1,16 @@
 # Issues Log
 
-## 🎉 ALL ISSUES COMPLETELY RESOLVED - July 22, 2025
+## 🔄 RECENT ISSUES AND FIXES - July 29, 2025
 
-### ✅ NEWEST RESOLVED ISSUE (1/1) - July 22, 2025
+### ✅ RECENTLY RESOLVED ISSUES (3/3) - July 29, 2025
+1. ✅ **Video search results displaying 'undefined' titles** - Fixed IMVDb field mapping (song_title → title, artists[0].name → artist)
+2. ✅ **CI Integration tests failing with container startup errors** - Created proper entrypoint.sh script and fixed Dockerfile
+3. ✅ **Video search results not displaying in Add Video modal** - Fixed modal sizing and overflow handling
+
+### ⚠️ ACTIVE ISSUES (1/1) - July 29, 2025
+1. 🔄 **CI Integration tests still failing with Python startup errors** - Enhanced debugging to capture application startup failures
+
+### ✅ PREVIOUSLY RESOLVED ISSUE (1/1) - July 22, 2025
 1. ✅ **Video thumbnail placeholder path error** - Fixed incorrect path resolution causing continuous error logging
 
 ### ✅ LATEST RESOLVED ISSUES (7/7) - July 19, 2025
@@ -34,16 +42,18 @@
 5. ~~**Video Thumbnail Search refresh functionality**~~ ✅ RESOLVED - Added refresh button and functionality to both videos.html and video_detail.html
 
 ## Current Status
-🎉 **PERFECT COMPLETION**: All 19 issues successfully resolved - system is fully complete
+🔄 **IN PROGRESS**: Recent video search and CI integration issues resolved, one CI issue under investigation
 
-### Final Issue Summary
-- **Current Session Issue**: 1 resolved on July 22, 2025 (critical bug fix)
+### Current Issue Summary
+- **Recent Session Issues**: 3 resolved on July 29, 2025 (video search and CI fixes)
+- **Active Issues**: 1 remaining (CI integration test failures)
+- **Previous Session Issue**: 1 resolved on July 22, 2025 (critical bug fix)
 - **Latest Session Issues**: 7 resolved on July 19, 2025
 - **Previous Session Issues**: 11 resolved on July 17, 2025  
-- **High Priority Issues**: 0 remaining (14 total resolved)
+- **High Priority Issues**: 1 remaining (CI failures)
 - **Medium Priority Issues**: 0 remaining (5 total resolved)
-- **Total Issues Resolved**: 19 across all sessions
-- **Total Outstanding**: 0 issues (100% completion achieved)
+- **Total Issues Resolved**: 22 across all sessions
+- **Total Outstanding**: 1 issue (CI integration test debugging)
 
 ## ✅ RECENTLY RESOLVED ISSUES (5/5) - Previous Session Fixes
 
