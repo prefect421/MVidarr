@@ -2291,12 +2291,31 @@ async function addVideoToLibrary(source, videoId, title, artist, url) {
             body: JSON.stringify(payload)
         });
         
+        console.log('🔧 Response status:', response.status);
+        console.log('🔧 Response headers:', response.headers);
+        
+        // Get response text first to debug JSON parsing issues
+        const responseText = await response.text();
+        console.log('🔧 Raw response:', responseText);
+        
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to add video');
+            console.error('🔧 HTTP error response:', responseText);
+            try {
+                const errorData = JSON.parse(responseText);
+                throw new Error(errorData.error || 'Failed to add video');
+            } catch (parseError) {
+                throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 200)}`);
+            }
         }
         
-        const result = await response.json();
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('🔧 JSON parse error:', parseError);
+            console.error('🔧 Response was:', responseText);
+            throw new Error('Server returned invalid JSON response');
+        }
         
         // Show success message
         alert(`✅ Video "${title}" has been added to your library and queued for download!`);
