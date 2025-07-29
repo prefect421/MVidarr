@@ -1,9 +1,9 @@
 {
   "version": "0.9.2",
-  "build_date": "2025-07-29T02:27:25.390560",
-  "git_commit": "fba339a",
+  "build_date": "2025-07-29T20:47:19.565590",
+  "git_commit": "a5e4a3c",
   "git_branch": "dev",
-  "release_name": "Initial Release",
+  "release_name": "Video Search & CI Fixes",
   "features": [
     "Advanced Artist Management with multi-criteria search and bulk operations",
     "Comprehensive Video Discovery with dual-source integration (IMVDb + YouTube)",
@@ -19,6 +19,9 @@
     "Advanced Security with password policies and audit logging",
     "Modern UI with left sidebar navigation and theme system",
     "MvTV Continuous Player with cinematic mode",
-    "Two-Factor Authentication with TOTP support"
+    "Two-Factor Authentication with TOTP support",
+    "Fixed Video Search Results Display with improved CSS and field mapping",
+    "Robust CI/CD Integration with comprehensive testing and deployment",
+    "Enhanced Database Initialization with secure admin user creation"
   ]
 }
