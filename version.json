@@ -1,7 +1,7 @@
 {
   "version": "0.9.2",
-  "build_date": "2025-07-29T20:47:19.565590",
-  "git_commit": "a5e4a3c",
+  "build_date": "2025-07-29T20:50:06.652691",
+  "git_commit": "8e388a6",
   "git_branch": "dev",
   "release_name": "Video Search & CI Fixes",
   "features": [

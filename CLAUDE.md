@@ -46,10 +46,72 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. Make code changes
 3. Run formatting: `~/.local/bin/black src/ && ~/.local/bin/isort --profile black src/`
 4. Verify formatting: `~/.local/bin/black --check src/ && ~/.local/bin/isort --profile black --check-only src/`
-5. Commit and push to feature branch
-6. Create PR to `dev` branch
-7. After approval, merge to `dev`
-8. Monitor GitHub Actions for any CI/CD issues
+5. **Update version metadata** (before committing major changes)
+6. Commit and push to feature branch
+7. Create PR to `dev` branch
+8. After approval, merge to `dev`
+9. Monitor GitHub Actions for any CI/CD issues
+
+### Version Management
+- **Version Information**: MVidarr displays version and commit information in the sidebar
+- **Version Files**: Two files control version display:
+  - `src/__init__.py` - Contains `__version__` variable
+  - `version.json` - Contains detailed version metadata including commit hash
+- **IMPORTANT**: Always update version metadata when pushing significant changes:
+
+#### Updating Version Metadata
+```bash
+# Get current commit and timestamp
+CURRENT_COMMIT=$(git rev-parse --short HEAD)
+CURRENT_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.%6N")
+
+# Update version.json with current commit and build date
+# Keep version number the same unless explicitly incrementing
+cat > version.json << EOF
+{
+  "version": "0.9.2",
+  "build_date": "$CURRENT_TIMESTAMP",
+  "git_commit": "$CURRENT_COMMIT",
+  "git_branch": "dev",
+  "release_name": "Current Development",
+  "features": [
+    ...existing features...
+  ]
+}
+EOF
+
+# Commit the version update
+git add version.json
+git commit -m "Update version metadata with current commit information"
+```
+
+#### Automated Version Update Process
+**CRITICAL**: Before any push to `dev` branch, ensure version metadata reflects the latest commit:
+
+1. **Update commit hash**: Use `git rev-parse --short HEAD` to get current commit
+2. **Update build date**: Use current UTC timestamp
+3. **Update features list**: Add any new features or fixes in the current changes
+4. **Commit version file**: Include version.json in your commit
+5. **Push changes**: The Docker image will include the correct version information
+
+This ensures that deployed containers always show the correct commit hash in the sidebar, making it easy to identify which code version is running.
+
+#### Quick Version Update Script
+For convenience, use the automated script:
+
+```bash
+# Run the version update script
+./scripts/update_version.sh
+
+# Commit the updated version file
+git add version.json
+git commit -m "Update version metadata with current commit information"
+
+# Push changes
+git push origin dev
+```
+
+**Best Practice**: Run `./scripts/update_version.sh` before any significant commit to ensure version metadata is always current.
 
 ## Project Management
 
