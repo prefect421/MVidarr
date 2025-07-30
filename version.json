@@ -1,25 +1,11 @@
 {
-  "version": "0.9.2",
-  "build_date": "2025-07-30T17:35:30.836425",
-  "git_commit": "63b5672",
+  "version": "0.9.3",
+  "build_date": "2025-07-30T18:01:00.000000",
+  "git_commit": "a69e5f3",
   "git_branch": "dev",
-  "release_name": "Current Development",
+  "release_name": "Development Version",
   "features": [
-    "Enhanced header layout with full-width search bar",
-    "Centered universal search interface", 
-    "Improved sidebar and header z-index hierarchy",
-    "Larger logo and text sizing for better visibility",
-    "Optimized padding and spacing for consistent heights",
-    "Dark grey header background matching sidebar theme",
-    "Visible user information and logout in header bar",
-    "Responsive design for mobile and desktop layouts",
-    "Add Video button on dashboard with full modal functionality",
-    "Complete video search integration from IMVDb and YouTube on dashboard",
-    "Reusable Add Video modal component for consistent functionality across pages",
-    "Fixed IMVDb search results to show correct artist names and thumbnails",
-    "Discover page for extended search results with dual search functionality",
-    "Improved statistics module text sizing for better visual proportions",
-    "Fixed adding videos from universal search results - now accepts artist names",
-    "Enhanced discovery page search query transfer with fallback logic and debugging"
+    "Development branch for upcoming features and improvements",
+    "Based on stable 0.9.2 release with all bug fixes and enhancements"
   ]
 }
