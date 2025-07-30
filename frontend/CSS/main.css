@@ -892,6 +892,7 @@
 .stat-value {
     color: #00d4ff;
     font-weight: bold;
+    font-size: 1.4rem;
 }
 
 .error-container {
@@ -4455,7 +4456,7 @@ body {
 
 .stat-value {
     display: block;
-    font-size: 2rem;
+    font-size: 1.4rem;
     font-weight: bold;
     color: #00d4ff;
     margin-bottom: 0.5rem;
