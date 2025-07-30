@@ -5143,7 +5143,7 @@ def universal_search():
                         "year": video.year,
                         "status": video.status.value if video.status else "unknown",
                         "thumbnail": video.thumbnail_url,
-                        "url": f"/videos/{video.id}",
+                        "url": f"/video/{video.id}",
                     }
                 )
 
@@ -5163,7 +5163,7 @@ def universal_search():
                         "video_count": video_count,
                         "monitored": artist.monitored,
                         "genres": artist.genres or [],
-                        "url": f"/artists/{artist.id}",
+                        "url": f"/artist/{artist.id}",
                     }
                 )
 
