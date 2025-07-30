@@ -573,6 +573,7 @@ async function addVideoToLibrary(source, videoId, title, artist, url) {
             payload = {
                 imvdb_id: videoId,
                 artist: artist,
+                title: title,
                 auto_download: true
             };
         } else if (source === 'YouTube') {
