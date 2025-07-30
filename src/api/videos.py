@@ -16,6 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from src.database.connection import get_db
 from src.database.models import Artist, Download, Video, VideoStatus
 from src.services.imvdb_service import imvdb_service
+from src.services.video_indexing_service import VideoIndexingService
 from src.utils.logger import get_logger
 
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
@@ -3704,20 +3705,43 @@ def import_video_from_imvdb():
     """Import a single video from IMVDb by ID"""
     try:
         data = request.get_json()
-        if not data or "imvdb_id" not in data or "artist_id" not in data:
-            return jsonify({"error": "imvdb_id and artist_id are required"}), 400
+        if not data or "imvdb_id" not in data:
+            return jsonify({"error": "imvdb_id is required"}), 400
+
+        # Check if we have either artist_id or artist name
+        if "artist_id" not in data and "artist" not in data:
+            return (
+                jsonify({"error": "Either artist_id or artist name is required"}),
+                400,
+            )
 
         imvdb_id = data["imvdb_id"]
-        artist_id = data["artist_id"]
         auto_download = data.get("auto_download", False)
         skip_existing = data.get("skip_existing", True)
         priority = data.get("priority", 5)  # Default to normal priority
 
         with get_db() as session:
-            # Check if artist exists
-            artist = session.query(Artist).filter_by(id=artist_id).first()
-            if not artist:
-                return jsonify({"error": "Artist not found"}), 404
+            # Handle artist - either by ID or by name
+            if "artist_id" in data:
+                # Use existing artist_id logic
+                artist_id = data["artist_id"]
+                artist = session.query(Artist).filter_by(id=artist_id).first()
+                if not artist:
+                    return jsonify({"error": "Artist not found"}), 404
+            else:
+                # Find or create artist by name
+                artist_name = data["artist"]
+                if not artist_name or not artist_name.strip():
+                    return jsonify({"error": "Artist name cannot be empty"}), 400
+
+                # Use VideoIndexingService to find or create artist
+                video_indexing_service = VideoIndexingService()
+                artist = video_indexing_service.find_or_create_artist(
+                    artist_name.strip(), session
+                )
+
+                if not artist:
+                    return jsonify({"error": "Failed to create or find artist"}), 500
 
             # Store artist name for later use (avoid session binding issues)
             artist_name = artist.name
@@ -3791,7 +3815,7 @@ def import_video_from_imvdb():
 
             # Create new video
             new_video = Video(
-                artist_id=artist_id,
+                artist_id=artist.id,
                 title=video_metadata["title"],
                 imvdb_id=imvdb_id,
                 thumbnail_url=video_metadata.get("thumbnail_url"),
@@ -3885,7 +3909,7 @@ def import_video_from_imvdb():
                         "id": video_id,
                         "title": video_metadata["title"],
                         "imvdb_id": imvdb_id,
-                        "artist_id": artist_id,
+                        "artist_id": artist.id,
                         "artist_name": artist_name,
                         "status": (
                             "DOWNLOADING"
@@ -3914,20 +3938,43 @@ def import_video_from_youtube():
     """Import a single video from YouTube by ID"""
     try:
         data = request.get_json()
-        if not data or "youtube_id" not in data or "artist_id" not in data:
-            return jsonify({"error": "youtube_id and artist_id are required"}), 400
+        if not data or "youtube_id" not in data:
+            return jsonify({"error": "youtube_id is required"}), 400
+
+        # Check if we have either artist_id or artist name
+        if "artist_id" not in data and "artist" not in data:
+            return (
+                jsonify({"error": "Either artist_id or artist name is required"}),
+                400,
+            )
 
         youtube_id = data["youtube_id"]
-        artist_id = data["artist_id"]
         auto_download = data.get("auto_download", False)
         skip_existing = data.get("skip_existing", True)
         priority = data.get("priority", 5)  # Default to normal priority
 
         with get_db() as session:
-            # Check if artist exists
-            artist = session.query(Artist).filter_by(id=artist_id).first()
-            if not artist:
-                return jsonify({"error": "Artist not found"}), 404
+            # Handle artist - either by ID or by name
+            if "artist_id" in data:
+                # Use existing artist_id logic
+                artist_id = data["artist_id"]
+                artist = session.query(Artist).filter_by(id=artist_id).first()
+                if not artist:
+                    return jsonify({"error": "Artist not found"}), 404
+            else:
+                # Find or create artist by name
+                artist_name = data["artist"]
+                if not artist_name or not artist_name.strip():
+                    return jsonify({"error": "Artist name cannot be empty"}), 400
+
+                # Use VideoIndexingService to find or create artist
+                video_indexing_service = VideoIndexingService()
+                artist = video_indexing_service.find_or_create_artist(
+                    artist_name.strip(), session
+                )
+
+                if not artist:
+                    return jsonify({"error": "Failed to create or find artist"}), 500
 
             # Store artist name for later use (avoid session binding issues)
             artist_name = artist.name
@@ -4066,7 +4113,7 @@ def import_video_from_youtube():
 
             # Create new video
             new_video = Video(
-                artist_id=artist_id,
+                artist_id=artist.id,
                 title=title,
                 youtube_id=youtube_id,
                 youtube_url=f"https://www.youtube.com/watch?v={youtube_id}",
@@ -5066,61 +5113,63 @@ def universal_search():
     try:
         query = request.args.get("q", "").strip()
         extended = request.args.get("extended") == "true"
-        
+
         if not query or len(query) < 2:
-            return jsonify({
-                "videos": [],
-                "artists": [],
-                "external": [],
-                "total": 0
-            })
+            return jsonify({"videos": [], "artists": [], "external": [], "total": 0})
 
         with get_db() as session:
-            results = {
-                "videos": [],
-                "artists": [],
-                "external": [],
-                "total": 0
-            }
+            results = {"videos": [], "artists": [], "external": [], "total": 0}
 
             # Search videos (limit to 5 for UI)
-            video_query = session.query(Video).join(Artist, Video.artist_id == Artist.id).filter(
-                or_(
-                    Video.title.ilike(f"%{query}%"),
-                    Artist.name.ilike(f"%{query}%")
+            video_query = (
+                session.query(Video)
+                .join(Artist, Video.artist_id == Artist.id)
+                .filter(
+                    or_(
+                        Video.title.ilike(f"%{query}%"), Artist.name.ilike(f"%{query}%")
+                    )
                 )
-            ).limit(5)
+                .limit(5)
+            )
 
             for video in video_query:
-                results["videos"].append({
-                    "id": video.id,
-                    "title": video.title,
-                    "artist": video.artist.name if video.artist else "Unknown Artist",
-                    "year": video.year,
-                    "status": video.status.value if video.status else "unknown",
-                    "thumbnail": video.thumbnail_url,
-                    "url": f"/videos/{video.id}"
-                })
+                results["videos"].append(
+                    {
+                        "id": video.id,
+                        "title": video.title,
+                        "artist": (
+                            video.artist.name if video.artist else "Unknown Artist"
+                        ),
+                        "year": video.year,
+                        "status": video.status.value if video.status else "unknown",
+                        "thumbnail": video.thumbnail_url,
+                        "url": f"/videos/{video.id}",
+                    }
+                )
 
             # Search artists (limit to 5 for UI)
-            artist_query = session.query(Artist).filter(
-                Artist.name.ilike(f"%{query}%")
-            ).limit(5)
+            artist_query = (
+                session.query(Artist).filter(Artist.name.ilike(f"%{query}%")).limit(5)
+            )
 
             for artist in artist_query:
-                video_count = session.query(Video).filter(Video.artist_id == artist.id).count()
-                results["artists"].append({
-                    "id": artist.id,
-                    "name": artist.name,
-                    "video_count": video_count,
-                    "monitored": artist.monitored,
-                    "genres": artist.genres or [],
-                    "url": f"/artists/{artist.id}"
-                })
+                video_count = (
+                    session.query(Video).filter(Video.artist_id == artist.id).count()
+                )
+                results["artists"].append(
+                    {
+                        "id": artist.id,
+                        "name": artist.name,
+                        "video_count": video_count,
+                        "monitored": artist.monitored,
+                        "genres": artist.genres or [],
+                        "url": f"/artists/{artist.id}",
+                    }
+                )
 
             # External search (IMVDb and YouTube)
             external_results = []
-            
+
             # Determine limits based on extended search
             if extended:
                 # For extended search, focus more on IMVDb and YouTube with higher limits
@@ -5130,85 +5179,112 @@ def universal_search():
                 # Standard search limits
                 imvdb_limit = 3
                 youtube_limit = 5
-            
+
             # IMVDb search
             try:
                 # IMVDb search_videos method takes artist and title parameters, not limit
                 imvdb_results = imvdb_service.search_videos(query)
                 # Apply limit manually after getting results
-                limited_imvdb_results = imvdb_results[:imvdb_limit] if imvdb_results else []
-                
+                limited_imvdb_results = (
+                    imvdb_results[:imvdb_limit] if imvdb_results else []
+                )
+
                 for result in limited_imvdb_results:
                     # Extract artist name from nested structure
                     artist_name = "Unknown Artist"
                     if "artist" in result and isinstance(result["artist"], dict):
                         artist_name = result["artist"].get("name", "Unknown Artist")
-                    elif "artists" in result and isinstance(result["artists"], list) and len(result["artists"]) > 0:
+                    elif (
+                        "artists" in result
+                        and isinstance(result["artists"], list)
+                        and len(result["artists"]) > 0
+                    ):
                         artist_name = result["artists"][0].get("name", "Unknown Artist")
-                    
+
                     # Handle thumbnail/image field
                     thumbnail_url = result.get("image", "")
                     if isinstance(thumbnail_url, dict):
                         # If image is a dict, try to get a URL from it
-                        thumbnail_url = thumbnail_url.get("url", "") or thumbnail_url.get("medium", "") or thumbnail_url.get("large", "") or ""
-                    
-                    external_results.append({
-                        "source": "IMVDb",
-                        "id": result.get("id"),
-                        "title": result.get("song_title", "Unknown Title"),
-                        "artist": artist_name,
-                        "year": result.get("year"),
-                        "thumbnail": thumbnail_url,
-                        "action": "add_to_library",
-                        "video_id": result.get("id")
-                    })
+                        thumbnail_url = (
+                            thumbnail_url.get("url", "")
+                            or thumbnail_url.get("medium", "")
+                            or thumbnail_url.get("large", "")
+                            or ""
+                        )
+
+                    external_results.append(
+                        {
+                            "source": "IMVDb",
+                            "id": result.get("id"),
+                            "title": result.get("song_title", "Unknown Title"),
+                            "artist": artist_name,
+                            "year": result.get("year"),
+                            "thumbnail": thumbnail_url,
+                            "action": "add_to_library",
+                            "video_id": result.get("id"),
+                        }
+                    )
             except Exception as e:
                 logger.warning(f"IMVDb search failed: {e}")
 
             # YouTube search
             try:
                 from src.services.youtube_service import youtube_service
-                youtube_response = youtube_service.search_videos(query, max_results=youtube_limit)
-                
+
+                youtube_response = youtube_service.search_videos(
+                    query, max_results=youtube_limit
+                )
+
                 # YouTube service returns a dict with 'results' key containing the results
                 youtube_videos = []
-                if youtube_response and youtube_response.get('success'):
-                    youtube_videos = youtube_response.get('results', [])
-                
+                if youtube_response and youtube_response.get("success"):
+                    youtube_videos = youtube_response.get("results", [])
+
                 for result in youtube_videos:
                     # Extract video ID from different possible formats
                     video_id = result.get("id", {})
                     if isinstance(video_id, dict):
                         video_id = video_id.get("videoId", "")
-                    
+
                     snippet = result.get("snippet", {})
                     thumbnails = snippet.get("thumbnails", {})
-                    thumbnail_url = (thumbnails.get("medium", {}).get("url") or 
-                                   thumbnails.get("default", {}).get("url") or "")
-                    
-                    external_results.append({
-                        "source": "YouTube",
-                        "id": video_id,
-                        "title": snippet.get("title", "Unknown Title"),
-                        "artist": snippet.get("channelTitle", "Unknown Artist"),
-                        "thumbnail": thumbnail_url,
-                        "duration": snippet.get("duration", ""),
-                        "view_count": snippet.get("viewCount", ""),
-                        "action": "add_to_library",
-                        "video_id": video_id
-                    })
+                    thumbnail_url = (
+                        thumbnails.get("medium", {}).get("url")
+                        or thumbnails.get("default", {}).get("url")
+                        or ""
+                    )
+
+                    external_results.append(
+                        {
+                            "source": "YouTube",
+                            "id": video_id,
+                            "title": snippet.get("title", "Unknown Title"),
+                            "artist": snippet.get("channelTitle", "Unknown Artist"),
+                            "thumbnail": thumbnail_url,
+                            "duration": snippet.get("duration", ""),
+                            "view_count": snippet.get("viewCount", ""),
+                            "action": "add_to_library",
+                            "video_id": video_id,
+                        }
+                    )
             except Exception as e:
                 logger.warning(f"YouTube search failed: {e}")
-            
+
             # For extended search, skip database results and focus on external only
             if extended:
                 results["videos"] = []
                 results["artists"] = []
                 # Log extended search results for debugging
-                logger.info(f"Extended search for '{query}': IMVDb limit {imvdb_limit}, YouTube limit {youtube_limit}, found {len(external_results)} results")
+                logger.info(
+                    f"Extended search for '{query}': IMVDb limit {imvdb_limit}, YouTube limit {youtube_limit}, found {len(external_results)} results"
+                )
 
             results["external"] = external_results
-            results["total"] = len(results["videos"]) + len(results["artists"]) + len(results["external"])
+            results["total"] = (
+                len(results["videos"])
+                + len(results["artists"])
+                + len(results["external"])
+            )
 
             return jsonify(results)
 
@@ -5225,4 +5301,7 @@ def search_results_page():
         return render_template("search_results.html", query=query)
     except Exception as e:
         logger.error(f"Error rendering search results page: {e}")
-        return render_template("error.html", error="Failed to load search results page"), 500
+        return (
+            render_template("error.html", error="Failed to load search results page"),
+            500,
+        )

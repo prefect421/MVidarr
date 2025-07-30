@@ -1,7 +1,7 @@
 {
   "version": "0.9.2",
-  "build_date": "2025-07-30T13:54:25.345779",
-  "git_commit": "8256cb1",
+  "build_date": "2025-07-30T17:35:30.836425",
+  "git_commit": "63b5672",
   "git_branch": "dev",
   "release_name": "Current Development",
   "features": [
@@ -16,6 +16,10 @@
     "Add Video button on dashboard with full modal functionality",
     "Complete video search integration from IMVDb and YouTube on dashboard",
     "Reusable Add Video modal component for consistent functionality across pages",
-    "Fixed IMVDb search results to show correct artist names and thumbnails"
+    "Fixed IMVDb search results to show correct artist names and thumbnails",
+    "Discover page for extended search results with dual search functionality",
+    "Improved statistics module text sizing for better visual proportions",
+    "Fixed adding videos from universal search results - now accepts artist names",
+    "Enhanced discovery page search query transfer with fallback logic and debugging"
   ]
 }

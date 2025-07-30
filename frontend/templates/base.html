@@ -1916,9 +1916,22 @@
                 if (this.searchMoreButton) {
                     this.searchMoreButton.addEventListener('click', () => {
                         // Open discover page with the current search query
-                        if (this.currentQuery) {
-                            const discoverUrl = `/discover?q=${encodeURIComponent(this.currentQuery)}`;
+                        console.log('🔧 Search More button clicked, current query:', this.currentQuery);
+                        
+                        // Get query from search input if currentQuery is not set
+                        const searchInput = document.getElementById('universalSearchInput');
+                        const queryToUse = this.currentQuery || (searchInput ? searchInput.value.trim() : '');
+                        
+                        console.log('🔧 Query to use for discovery page:', queryToUse);
+                        
+                        if (queryToUse) {
+                            const discoverUrl = `/discover?q=${encodeURIComponent(queryToUse)}`;
+                            console.log('🔧 Opening discover page URL:', discoverUrl);
                             window.open(discoverUrl, '_blank');
+                        } else {
+                            console.warn('⚠️ No search query available for discovery page');
+                            // Open discovery page without query as fallback
+                            window.open('/discover', '_blank');
                         }
                     });
                 }

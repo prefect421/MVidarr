@@ -4,7 +4,7 @@ Frontend routes for serving web interface
 
 from pathlib import Path
 
-from flask import Blueprint, render_template, send_from_directory, request
+from flask import Blueprint, render_template, request, send_from_directory
 
 from src.utils.logger import get_logger
 
@@ -51,7 +51,7 @@ def settings():
 @frontend_bp.route("/discover")
 def discover():
     """Discover page for searching IMVDb and YouTube"""
-    query = request.args.get('q', '')
+    query = request.args.get("q", "")
     return render_template("discover.html", query=query)
 
 

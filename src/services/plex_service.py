@@ -335,9 +335,11 @@ class PlexService:
                         else:
                             # Create new artist
                             from src.utils.filename_cleanup import FilenameCleanup
-                            
-                            folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
-                            
+
+                            folder_path = FilenameCleanup.sanitize_folder_name(
+                                artist_name
+                            )
+
                             new_artist = Artist(
                                 name=artist_name,
                                 monitored=True,

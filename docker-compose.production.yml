@@ -1,4 +1,5 @@
-version: '3.8'
+# MVidarr - Production Docker Compose Configuration
+# Optimized for production deployments with security and performance focus
 
 services:
   mvidarr:
@@ -20,7 +21,7 @@ services:
       "
     container_name: mvidarr
     ports:
-      - "0.0.0.0:${MVIDARR_PORT:-5001}:5000"
+      - "0.0.0.0:${MVIDARR_PORT:-5000}:5000"
     environment:
       - NODE_ENV=production
       - DB_HOST=mariadb
@@ -47,7 +48,6 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
-        restart: true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
@@ -73,7 +73,7 @@ services:
       - ${DATABASE_FOLDER:-./database}/mariadb:/var/lib/mysql
       - ./docker/mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "0.0.0.0:${MARIADB_PORT:-3307}:3306"
+      - "127.0.0.1:${MARIADB_PORT:-3306}:3306"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]

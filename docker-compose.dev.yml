@@ -1,6 +1,4 @@
-version: '3.8'
-
-# Development Docker Compose configuration for MVidarr
+# MVidarr - Development Docker Compose Configuration
 # Includes hot reload, debug mode, and development-friendly settings
 
 services:

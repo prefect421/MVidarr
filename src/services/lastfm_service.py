@@ -390,9 +390,11 @@ class LastFmService:
                         else:
                             # Create new artist
                             from src.utils.filename_cleanup import FilenameCleanup
-                            
-                            folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
-                            
+
+                            folder_path = FilenameCleanup.sanitize_folder_name(
+                                artist_name
+                            )
+
                             new_artist = Artist(
                                 name=artist_name,
                                 lastfm_name=artist_name,
@@ -511,9 +513,11 @@ class LastFmService:
                         if not existing_artist:
                             # Create new artist
                             from src.utils.filename_cleanup import FilenameCleanup
-                            
-                            folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
-                            
+
+                            folder_path = FilenameCleanup.sanitize_folder_name(
+                                artist_name
+                            )
+
                             new_artist = Artist(
                                 name=artist_name,
                                 lastfm_name=artist_name,

@@ -38,7 +38,7 @@ docker-compose up -d
 ### Manual Installation
 
 **Prerequisites:**
-- Python 3.8+
+- Python 3.12+
 - MariaDB 11.4+ (recommended)
 - FFmpeg (for video processing)
 
@@ -67,7 +67,7 @@ python app.py
 
 MVidarr is built with:
 
-- **Backend**: Flask (Python 3.8+) with modular service architecture
+- **Backend**: Flask (Python 3.12+) with modular service architecture
 - **Database**: MariaDB 11.4+ with automatic table initialization
 - **Frontend**: Modern HTML5/CSS3/JavaScript with responsive design
 - **Media Processing**: FFmpeg, yt-dlp for video downloading and processing

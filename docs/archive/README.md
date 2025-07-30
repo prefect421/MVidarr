@@ -14,11 +14,11 @@ This directory contains documentation files that are no longer current or have b
 - `DOCKER-QUICKSTART.md` - Old Docker quickstart (consolidated into main README.md)
 - `DOCKER-CONTAINER.md` - Redundant Docker container guide
 - `README-Docker.md` - Redundant Docker README
-- `docker-compose-fixed-auth.yml` - Old Docker compose file with authentication fixes
+- ~~`docker-compose-fixed-auth.yml`~~ - **REMOVED** (obsolete Docker compose file)
 
-### Historical Status Files
-- `REFACTORING_COMPLETE.md` - Historical refactoring completion status
-- `WEBSITE_FIXED.md` - Historical website fix status
+### Historical Status Files (Cleaned Up)
+- ~~`REFACTORING_COMPLETE.md`~~ - **REMOVED** (outdated refactoring completion status)
+- ~~`WEBSITE_FIXED.md`~~ - **REMOVED** (outdated website fix documentation)
 
 ## Current Documentation
 
@@ -30,4 +30,4 @@ For current documentation, see:
 - `docker-compose.yml` - Current Docker configuration
 
 ## Archive Date
-January 25, 2025 - Documentation reorganization and cleanup
+July 30, 2025 - Documentation reorganization and cleanup

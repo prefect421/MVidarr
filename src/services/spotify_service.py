@@ -411,9 +411,11 @@ class SpotifyService:
 
                             # Create new artist
                             from src.utils.filename_cleanup import FilenameCleanup
-                            
-                            folder_path = FilenameCleanup.sanitize_folder_name(artist_data["name"])
-                            
+
+                            folder_path = FilenameCleanup.sanitize_folder_name(
+                                artist_data["name"]
+                            )
+
                             new_artist = Artist(
                                 name=artist_data["name"],
                                 imvdb_id=imvdb_artist.get("id"),
@@ -472,9 +474,11 @@ class SpotifyService:
                         else:
                             # Create artist without IMVDb data
                             from src.utils.filename_cleanup import FilenameCleanup
-                            
-                            folder_path = FilenameCleanup.sanitize_folder_name(artist_data["name"])
-                            
+
+                            folder_path = FilenameCleanup.sanitize_folder_name(
+                                artist_data["name"]
+                            )
+
                             new_artist = Artist(
                                 name=artist_data["name"],
                                 spotify_id=spotify_id,
@@ -555,9 +559,11 @@ class SpotifyService:
 
                             # Create new artist
                             from src.utils.filename_cleanup import FilenameCleanup
-                            
-                            folder_path = FilenameCleanup.sanitize_folder_name(artist_name)
-                            
+
+                            folder_path = FilenameCleanup.sanitize_folder_name(
+                                artist_name
+                            )
+
                             new_artist = Artist(
                                 name=artist_name,
                                 imvdb_id=imvdb_artist.get("id"),

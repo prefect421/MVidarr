@@ -134,9 +134,11 @@ def sync_lidarr_library():
                     if not existing_artist:
                         # Add new artist to MVidarr
                         from src.utils.filename_cleanup import FilenameCleanup
-                        
-                        folder_path = FilenameCleanup.sanitize_folder_name(artist["artistName"])
-                        
+
+                        folder_path = FilenameCleanup.sanitize_folder_name(
+                            artist["artistName"]
+                        )
+
                         new_artist = Artist(
                             name=artist["artistName"],
                             imvdb_id=artist.get("foreignArtistId"),
@@ -231,9 +233,11 @@ def import_lidarr_artists():
                     if not existing_artist:
                         # Add new artist to MVidarr
                         from src.utils.filename_cleanup import FilenameCleanup
-                        
-                        folder_path = FilenameCleanup.sanitize_folder_name(artist["artistName"])
-                        
+
+                        folder_path = FilenameCleanup.sanitize_folder_name(
+                            artist["artistName"]
+                        )
+
                         new_artist = Artist(
                             name=artist["artistName"],
                             imvdb_id=artist.get("foreignArtistId"),

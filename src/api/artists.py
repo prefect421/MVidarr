@@ -54,7 +54,6 @@ def ensure_artist_folder_path(artist, session=None):
     return artist.folder_path
 
 
-
 @artists_bp.route("/", methods=["GET"])
 def get_artists():
     """Get all tracked artists with search and filtering"""
@@ -2363,7 +2362,7 @@ def update_artist_settings(artist_id):
                         "artist": {
                             "id": artist.id,
                             "name": artist.name,
-                                "imvdb_id": artist.imvdb_id,
+                            "imvdb_id": artist.imvdb_id,
                             "folder_path": ensure_artist_folder_path(artist, session),
                             "keywords": artist.keywords or [],
                             "monitored": artist.monitored,
@@ -3656,15 +3655,15 @@ def merge_multiple_artists():
 def import_artist_metadata(artist_id):
     """
     Import/update artist metadata from IMVDb and YouTube
-    
+
     This is a convenience endpoint that provides enhanced metadata retrieval
-    as requested in Issue #18. It calls the existing comprehensive metadata 
+    as requested in Issue #18. It calls the existing comprehensive metadata
     update functionality.
     """
     try:
         # Simply call the existing comprehensive metadata update function
         return update_artist_metadata_from_imvdb(artist_id)
-        
+
     except Exception as e:
         logger.error(f"Failed to import metadata for artist {artist_id}: {e}")
         return jsonify({"error": str(e)}), 500
