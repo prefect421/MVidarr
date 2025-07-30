@@ -1,7 +1,7 @@
 {
   "version": "0.9.2",
-  "build_date": "2025-07-30T18:02:45.123456",
-  "git_commit": "5882e3e",
+  "build_date": "2025-07-30T13:26:44.471011",
+  "git_commit": "aca5685",
   "git_branch": "dev",
   "release_name": "Current Development",
   "features": [
@@ -12,6 +12,9 @@
     "Optimized padding and spacing for consistent heights",
     "Dark grey header background matching sidebar theme",
     "Visible user information and logout in header bar",
-    "Responsive design for mobile and desktop layouts"
+    "Responsive design for mobile and desktop layouts",
+    "Add Video button on dashboard with full modal functionality",
+    "Complete video search integration from IMVDb and YouTube on dashboard"
   ]
 }
+EOF < /dev/null
