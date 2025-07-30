@@ -5139,13 +5139,26 @@ def universal_search():
                 limited_imvdb_results = imvdb_results[:imvdb_limit] if imvdb_results else []
                 
                 for result in limited_imvdb_results:
+                    # Extract artist name from nested structure
+                    artist_name = "Unknown Artist"
+                    if "artist" in result and isinstance(result["artist"], dict):
+                        artist_name = result["artist"].get("name", "Unknown Artist")
+                    elif "artists" in result and isinstance(result["artists"], list) and len(result["artists"]) > 0:
+                        artist_name = result["artists"][0].get("name", "Unknown Artist")
+                    
+                    # Handle thumbnail/image field
+                    thumbnail_url = result.get("image", "")
+                    if isinstance(thumbnail_url, dict):
+                        # If image is a dict, try to get a URL from it
+                        thumbnail_url = thumbnail_url.get("url", "") or thumbnail_url.get("medium", "") or thumbnail_url.get("large", "") or ""
+                    
                     external_results.append({
                         "source": "IMVDb",
                         "id": result.get("id"),
                         "title": result.get("song_title", "Unknown Title"),
-                        "artist": result.get("artist_name", "Unknown Artist"),
+                        "artist": artist_name,
                         "year": result.get("year"),
-                        "thumbnail": result.get("image"),
+                        "thumbnail": thumbnail_url,
                         "action": "add_to_library",
                         "video_id": result.get("id")
                     })
@@ -5157,20 +5170,32 @@ def universal_search():
                 from src.services.youtube_service import youtube_service
                 youtube_response = youtube_service.search_videos(query, max_results=youtube_limit)
                 
-                # YouTube service returns a dict with 'videos' key containing the results
-                youtube_videos = youtube_response.get('videos', []) if youtube_response else []
+                # YouTube service returns a dict with 'results' key containing the results
+                youtube_videos = []
+                if youtube_response and youtube_response.get('success'):
+                    youtube_videos = youtube_response.get('results', [])
                 
                 for result in youtube_videos:
+                    # Extract video ID from different possible formats
+                    video_id = result.get("id", {})
+                    if isinstance(video_id, dict):
+                        video_id = video_id.get("videoId", "")
+                    
+                    snippet = result.get("snippet", {})
+                    thumbnails = snippet.get("thumbnails", {})
+                    thumbnail_url = (thumbnails.get("medium", {}).get("url") or 
+                                   thumbnails.get("default", {}).get("url") or "")
+                    
                     external_results.append({
                         "source": "YouTube",
-                        "id": result.get("id"),
-                        "title": result.get("title", "Unknown Title"),
-                        "artist": result.get("channel_title", "Unknown Artist"),
-                        "thumbnail": result.get("thumbnail"),
-                        "duration": result.get("duration"),
-                        "view_count": result.get("view_count"),
+                        "id": video_id,
+                        "title": snippet.get("title", "Unknown Title"),
+                        "artist": snippet.get("channelTitle", "Unknown Artist"),
+                        "thumbnail": thumbnail_url,
+                        "duration": snippet.get("duration", ""),
+                        "view_count": snippet.get("viewCount", ""),
                         "action": "add_to_library",
-                        "video_id": result.get("id")
+                        "video_id": video_id
                     })
             except Exception as e:
                 logger.warning(f"YouTube search failed: {e}")
@@ -5190,3 +5215,14 @@ def universal_search():
     except Exception as e:
         logger.error(f"Universal search error: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/search-results")
+def search_results_page():
+    """Render the search results page"""
+    try:
+        query = request.args.get("q", "").strip()
+        return render_template("search_results.html", query=query)
+    except Exception as e:
+        logger.error(f"Error rendering search results page: {e}")
+        return render_template("error.html", error="Failed to load search results page"), 500

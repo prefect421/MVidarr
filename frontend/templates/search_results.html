@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - MVidarr{% endblock %}
+
+{% block content %}
+<div class="search-results-container">
+    <div class="search-results-header">
+        <h2>Search Results for "<span id="searchQuery">{{ query }}</span>"</h2>
+        <div class="search-controls">
+            <input type="text" id="newSearchInput" class="form-control" placeholder="Search again..." value="{{ query }}">
+            <button id="newSearchBtn" class="btn btn-primary">Search</button>
+        </div>
+    </div>
+
+    <div class="search-results-content">
+        <!-- Loading indicator -->
+        <div id="searchLoading" class="loading-indicator" style="display: none;">
+            <div class="spinner"></div>
+            <p>Searching IMVDb and YouTube...</p>
+        </div>
+
+        <!-- Error message -->
+        <div id="searchError" class="alert alert-danger" style="display: none;">
+            <p>Error loading search results. Please try again.</p>
+        </div>
+
+        <!-- Results sections -->
+        <div id="searchResults" style="display: none;">
+            <!-- IMVDb Results -->
+            <div class="results-section">
+                <h3>IMVDb Results</h3>
+                <div id="imvdbResults" class="results-grid">
+                    <!-- IMVDb results will be populated here -->
+                </div>
+                <div id="imvdbNoResults" class="no-results" style="display: none;">
+                    <p>No IMVDb results found.</p>
+                </div>
+            </div>
+
+            <!-- YouTube Results -->
+            <div class="results-section">
+                <h3>YouTube Results</h3>
+                <div id="youtubeResults" class="results-grid">
+                    <!-- YouTube results will be populated here -->
+                </div>
+                <div id="youtubeNoResults" class="no-results" style="display: none;">
+                    <p>No YouTube results found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.search-results-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.search-results-header {
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 20px;
+}
+
+.search-results-header h2 {
+    color: var(--text-color);
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+}
+
+.search-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    max-width: 400px;
+}
+
+.search-controls input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--input-background);
+    color: var(--text-color);
+}
+
+.search-controls button {
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-controls button:hover {
+    background: var(--primary-hover-color);
+}
+
+.loading-indicator {
+    text-align: center;
+    padding: 40px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.results-section {
+    margin-bottom: 40px;
+}
+
+.results-section h3 {
+    color: var(--text-color);
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.result-item {
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.result-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.result-item h4 {
+    color: var(--text-color);
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.result-item p {
+    color: var(--text-secondary);
+    margin: 4px 0;
+    font-size: 0.9rem;
+}
+
+.result-item .artist-name {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.result-item .result-source {
+    background: var(--tag-background);
+    color: var(--tag-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    display: inline-block;
+    margin-top: 8px;
+}
+
+.result-item .result-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+}
+
+.result-item .btn {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.result-item .btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.result-item .btn-primary:hover {
+    background: var(--primary-hover-color);
+}
+
+.result-item .btn-secondary {
+    background: var(--secondary-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.result-item .btn-secondary:hover {
+    background: var(--secondary-hover-color);
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.no-results p {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Dark mode styles */
+:root {
+    --card-background: #ffffff;
+    --input-background: #ffffff;
+    --tag-background: #f0f0f0;
+    --tag-color: #666666;
+    --secondary-color: #f8f9fa;
+    --secondary-hover-color: #e9ecef;
+}
+
+.dark-mode {
+    --card-background: #2d3748;
+    --input-background: #2d3748;
+    --tag-background: #4a5568;
+    --tag-color: #e2e8f0;
+    --secondary-color: #4a5568;
+    --secondary-hover-color: #2d3748;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .search-results-container {
+        padding: 15px;
+    }
+    
+    .results-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+        max-width: none;
+    }
+    
+    .search-controls input,
+    .search-controls button {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+class SearchResultsPage {
+    constructor() {
+        this.currentQuery = '';
+        this.init();
+    }
+
+    init() {
+        // Get query from URL parameter or page
+        const urlParams = new URLSearchParams(window.location.search);
+        this.currentQuery = urlParams.get('q') || document.getElementById('searchQuery')?.textContent || '';
+        
+        // Set up event listeners
+        this.setupEventListeners();
+        
+        // Perform initial search if query exists
+        if (this.currentQuery) {
+            this.performSearch(this.currentQuery);
+        }
+    }
+
+    setupEventListeners() {
+        const newSearchBtn = document.getElementById('newSearchBtn');
+        const newSearchInput = document.getElementById('newSearchInput');
+        
+        newSearchBtn?.addEventListener('click', () => {
+            const query = newSearchInput.value.trim();
+            if (query) {
+                this.performSearch(query);
+                // Update URL
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('q', query);
+                window.history.pushState({}, '', newUrl);
+            }
+        });
+        
+        newSearchInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                newSearchBtn?.click();
+            }
+        });
+    }
+
+    async performSearch(query) {
+        this.currentQuery = query;
+        document.getElementById('searchQuery').textContent = query;
+        
+        // Show loading
+        this.showLoading();
+        
+        try {
+            // Search both IMVDb and YouTube
+            const [imvdbResults, youtubeResults] = await Promise.all([
+                this.searchIMVDb(query),
+                this.searchYouTube(query)
+            ]);
+            
+            // Display results
+            this.displayResults(imvdbResults, youtubeResults);
+            
+        } catch (error) {
+            console.error('Search error:', error);
+            this.showError();
+        }
+    }
+
+    async searchIMVDb(query) {
+        try {
+            const response = await fetch(`/api/imvdb/search-videos?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            return data.success ? data.results : [];
+        } catch (error) {
+            console.error('IMVDb search error:', error);
+            return [];
+        }
+    }
+
+    async searchYouTube(query) {
+        try {
+            const response = await fetch('/api/youtube/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    q: query,
+                    maxResults: 25
+                })
+            });
+            const data = await response.json();
+            return data.success ? data.items : [];
+        } catch (error) {
+            console.error('YouTube search error:', error);
+            return [];
+        }
+    }
+
+    displayResults(imvdbResults, youtubeResults) {
+        // Hide loading, show results
+        document.getElementById('searchLoading').style.display = 'none';
+        document.getElementById('searchError').style.display = 'none';
+        document.getElementById('searchResults').style.display = 'block';
+        
+        // Display IMVDb results
+        this.displayIMVDbResults(imvdbResults);
+        
+        // Display YouTube results
+        this.displayYouTubeResults(youtubeResults);
+    }
+
+    displayIMVDbResults(results) {
+        const container = document.getElementById('imvdbResults');
+        const noResults = document.getElementById('imvdbNoResults');
+        
+        if (!results || results.length === 0) {
+            container.innerHTML = '';
+            noResults.style.display = 'block';
+            return;
+        }
+        
+        noResults.style.display = 'none';
+        container.innerHTML = results.map(result => this.createIMVDbResultCard(result)).join('');
+    }
+
+    displayYouTubeResults(results) {
+        const container = document.getElementById('youtubeResults');
+        const noResults = document.getElementById('youtubeNoResults');
+        
+        if (!results || results.length === 0) {
+            container.innerHTML = '';
+            noResults.style.display = 'block';
+            return;
+        }
+        
+        noResults.style.display = 'none';
+        container.innerHTML = results.map(result => this.createYouTubeResultCard(result)).join('');
+    }
+
+    createIMVDbResultCard(result) {
+        const artistName = this.getArtistName(result);
+        const title = result.song_title || 'Unknown Title';
+        const year = result.year ? ` (${result.year})` : '';
+        
+        return `
+            <div class="result-item" onclick="window.open('/imvdb/video/${result.id}', '_blank')">
+                <h4>${title}${year}</h4>
+                <p class="artist-name">${artistName}</p>
+                ${result.directors && result.directors.length > 0 ? `<p>Director: ${result.directors.join(', ')}</p>` : ''}
+                <span class="result-source">IMVDb</span>
+                <div class="result-actions">
+                    <button class="btn btn-primary" onclick="event.stopPropagation(); addToLibrary('${result.id}', 'imvdb')">Add to Library</button>
+                    <button class="btn btn-secondary" onclick="event.stopPropagation(); window.open('https://imvdb.com/video/${result.id}', '_blank')">View on IMVDb</button>
+                </div>
+            </div>
+        `;
+    }
+
+    createYouTubeResultCard(result) {
+        const title = result.snippet?.title || 'Unknown Title';
+        const channelTitle = result.snippet?.channelTitle || 'Unknown Channel';
+        const publishedAt = result.snippet?.publishedAt ? new Date(result.snippet.publishedAt).getFullYear() : '';
+        
+        return `
+            <div class="result-item" onclick="window.open('https://youtube.com/watch?v=${result.id.videoId}', '_blank')">
+                <h4>${title}</h4>
+                <p class="artist-name">${channelTitle}</p>
+                ${publishedAt ? `<p>Published: ${publishedAt}</p>` : ''}
+                <span class="result-source">YouTube</span>
+                <div class="result-actions">
+                    <button class="btn btn-primary" onclick="event.stopPropagation(); addToLibrary('${result.id.videoId}', 'youtube')">Add to Library</button>
+                    <button class="btn btn-secondary" onclick="event.stopPropagation(); window.open('https://youtube.com/watch?v=${result.id.videoId}', '_blank')">Watch on YouTube</button>
+                </div>
+            </div>
+        `;
+    }
+
+    getArtistName(result) {
+        // Handle different artist field structures
+        if (result.artist && typeof result.artist === 'object' && result.artist.name) {
+            return result.artist.name;
+        }
+        if (result.artists && Array.isArray(result.artists) && result.artists.length > 0) {
+            return result.artists[0].name || 'Unknown Artist';
+        }
+        return 'Unknown Artist';
+    }
+
+    showLoading() {
+        document.getElementById('searchLoading').style.display = 'block';
+        document.getElementById('searchError').style.display = 'none';
+        document.getElementById('searchResults').style.display = 'none';
+    }
+
+    showError() {
+        document.getElementById('searchLoading').style.display = 'none';
+        document.getElementById('searchError').style.display = 'block';
+        document.getElementById('searchResults').style.display = 'none';
+    }
+}
+
+// Global function for adding to library (reuse existing functionality)
+async function addToLibrary(videoId, source) {
+    try {
+        const response = await fetch('/api/videos/add-to-library', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                video_id: videoId,
+                source: source
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Video added to library successfully!');
+        } else {
+            alert(`Error: ${result.error || 'Failed to add video'}`);
+        }
+    } catch (error) {
+        console.error('Error adding to library:', error);
+        alert('Error adding video to library');
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new SearchResultsPage();
+});
+</script>
+{% endblock %}
