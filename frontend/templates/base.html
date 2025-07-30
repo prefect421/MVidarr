@@ -276,6 +276,7 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             margin: 1rem;
+            margin-top: calc(4rem + 1rem); /* Account for fixed header height + margin */
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 		
@@ -352,6 +353,7 @@
             background: rgba(255, 255, 255, 0.4);
             border-radius: 12px;
             margin: 1rem;
+            margin-top: calc(4rem + 1rem); /* Account for fixed header height + margin */
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
         
@@ -941,23 +943,21 @@
         
         /* Header Bar Styles */
         .app-header {
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: var(--sidebar-width, 250px);
+            right: 0;
             z-index: 1001;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: rgba(30, 41, 59, 0.95);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
-            margin-left: var(--sidebar-width, 250px);
-            transition: margin-left 0.3s ease, width 0.3s ease;
-            width: calc(100vw - var(--sidebar-width, 250px));
-            left: 0;
-            right: 0;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: left 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         
         body.light-theme .app-header {
@@ -1004,30 +1004,61 @@
         .app-header .universal-search-input {
             padding: 0.5rem 2.5rem 0.5rem 2.5rem;
             font-size: 0.875rem;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: inherit;
         }
         
         .app-header .universal-search-input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
+            color: #6b7280;
         }
         
         .app-header .universal-search-input:focus {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #3b82f6;
+            color: inherit;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .app-header .universal-search-icon {
-            color: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
         }
         
         .app-header .universal-search-clear {
-            color: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
         }
         
         .app-header .universal-search-clear:hover {
+            color: #ef4444;
+        }
+        
+        /* Light theme search adjustments */
+        body.light-theme .app-header .universal-search-input {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+        
+        body.light-theme .app-header .universal-search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        body.light-theme .app-header .universal-search-input:focus {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
+        
+        body.light-theme .app-header .universal-search-icon {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        body.light-theme .app-header .universal-search-clear {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        body.light-theme .app-header .universal-search-clear:hover {
             color: rgba(255, 255, 255, 1);
         }
         
@@ -1037,14 +1068,14 @@
             align-items: center;
             padding: 0.5rem;
             border-radius: 0.5rem;
-            transition: background-color 0.2s ease;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .header-theme-toggle:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
             transform: translateY(-1px);
         }
         
@@ -1072,10 +1103,10 @@
             gap: 0.75rem;
             padding: 0.5rem 0.75rem;
             border-radius: 0.5rem;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.2s ease;
-            color: white;
+            color: inherit;
         }
         
         body.light-theme .header-user-info {
@@ -1091,9 +1122,15 @@
             width: 2rem;
             height: 2rem;
             border-radius: 50%;
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        body.light-theme .header-user-avatar {
             background: rgba(255, 255, 255, 0.2);
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.3);
         }
         
         .header-user-avatar iconify-icon {
@@ -1109,14 +1146,18 @@
         .header-username {
             font-size: 0.875rem;
             font-weight: 600;
-            color: white;
+            color: inherit;
             line-height: 1.2;
         }
         
         .header-user-role {
             font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
             line-height: 1.2;
+        }
+        
+        body.light-theme .header-username {
+            color: white;
         }
         
         body.light-theme .header-user-role {
@@ -1128,10 +1169,10 @@
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 0.75rem;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 0.5rem;
-            color: white;
+            color: inherit;
             font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
@@ -1139,10 +1180,23 @@
         }
         
         .header-logout-button:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+        }
+        
+        body.light-theme .header-logout-button {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+        
+        body.light-theme .header-logout-button:hover {
             background: rgba(239, 68, 68, 0.8);
             border-color: rgba(239, 68, 68, 1);
             color: white;
-            transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
         
@@ -1153,8 +1207,8 @@
         /* Mobile header responsiveness */
         @media (max-width: 1024px) {
             .app-header {
-                margin-left: 0;
-                width: 100vw;
+                left: 0;
+                right: 0;
                 padding: 0.5rem;
             }
             
@@ -2280,10 +2334,12 @@
             // Update CSS custom property
             document.documentElement.style.setProperty('--sidebar-width', sidebarWidth);
             
-            // Force update for immediate visual feedback
+            // Force update for immediate visual feedback on desktop
             if (window.innerWidth > 1024) {
-                header.style.marginLeft = sidebarWidth;
-                header.style.width = `calc(100vw - ${sidebarWidth})`;
+                header.style.left = sidebarWidth;
+            } else {
+                // On mobile, header spans full width
+                header.style.left = '0';
             }
         }
         
