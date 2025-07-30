@@ -4209,7 +4209,7 @@ def import_video_from_youtube():
                         "title": title,
                         "youtube_id": youtube_id,
                         "youtube_url": f"https://www.youtube.com/watch?v={youtube_id}",
-                        "artist_id": artist_id,
+                        "artist_id": artist.id,
                         "artist_name": artist_name,
                         "status": (
                             "DOWNLOADING"
