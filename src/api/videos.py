@@ -3743,8 +3743,9 @@ def import_video_from_imvdb():
                 if not artist:
                     return jsonify({"error": "Failed to create or find artist"}), 500
 
-            # Store artist name for later use (avoid session binding issues)
+            # Store artist info for later use (avoid session binding issues)
             artist_name = artist.name
+            artist_id_value = artist.id
 
             # Check if video already exists
             existing_video = session.query(Video).filter_by(imvdb_id=imvdb_id).first()
@@ -3815,7 +3816,7 @@ def import_video_from_imvdb():
 
             # Create new video
             new_video = Video(
-                artist_id=artist.id,
+                artist_id=artist_id_value,
                 title=video_metadata["title"],
                 imvdb_id=imvdb_id,
                 thumbnail_url=video_metadata.get("thumbnail_url"),
@@ -3909,7 +3910,7 @@ def import_video_from_imvdb():
                         "id": video_id,
                         "title": video_metadata["title"],
                         "imvdb_id": imvdb_id,
-                        "artist_id": artist.id,
+                        "artist_id": artist_id_value,
                         "artist_name": artist_name,
                         "status": (
                             "DOWNLOADING"
@@ -3979,8 +3980,9 @@ def import_video_from_youtube():
                 if not artist:
                     return jsonify({"error": "Failed to create or find artist"}), 500
 
-            # Store artist name for later use (avoid session binding issues)
+            # Store artist info for later use (avoid session binding issues)
             artist_name = artist.name
+            artist_id_value = artist.id
 
             # Check if video already exists
             existing_video = (
@@ -4116,7 +4118,7 @@ def import_video_from_youtube():
 
             # Create new video
             new_video = Video(
-                artist_id=artist.id,
+                artist_id=artist_id_value,
                 title=title,
                 youtube_id=youtube_id,
                 youtube_url=f"https://www.youtube.com/watch?v={youtube_id}",
@@ -4212,7 +4214,7 @@ def import_video_from_youtube():
                         "title": title,
                         "youtube_id": youtube_id,
                         "youtube_url": f"https://www.youtube.com/watch?v={youtube_id}",
-                        "artist_id": artist.id,
+                        "artist_id": artist_id_value,
                         "artist_name": artist_name,
                         "status": (
                             "DOWNLOADING"
