@@ -1,0 +1,703 @@
+{% extends "base.html" %}
+
+{% block title %}Discover - MVidarr{% endblock %}
+
+{% block content %}
+<div class="discover-container">
+    <div class="discover-header">
+        <h1>🌟 Discover Music Videos</h1>
+        <p class="page-description">Search across IMVDb and YouTube to discover new music videos</p>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <div class="search-form">
+            <div class="search-input-wrapper">
+                <input type="text" id="discoverSearchInput" class="search-input" placeholder="Search for artists, songs, or music videos..." value="{{ query or '' }}">
+                <button id="discoverSearchButton" class="search-button">
+                    <iconify-icon icon="tabler:search"></iconify-icon>
+                    Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Status -->
+    <div id="searchStatus" class="search-status" style="display: none;">
+        <div class="loading-spinner">
+            <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+            <span id="searchStatusText">Searching IMVDb & YouTube...</span>
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    <div id="searchResults" class="search-results-container" style="display: none;">
+        <div class="results-header">
+            <h2 id="resultsTitle">Search Results</h2>
+            <p id="resultsCount" class="results-count"></p>
+        </div>
+
+        <!-- IMVDb Results -->
+        <div id="imvdbResults" class="results-section" style="display: none;">
+            <h3 class="section-title">
+                <iconify-icon icon="tabler:video"></iconify-icon>
+                IMVDb Results
+            </h3>
+            <div id="imvdbResultsList" class="results-grid"></div>
+        </div>
+
+        <!-- YouTube Results -->
+        <div id="youtubeResults" class="results-section" style="display: none;">
+            <h3 class="section-title">
+                <iconify-icon icon="tabler:brand-youtube"></iconify-icon>
+                YouTube Results
+            </h3>
+            <div id="youtubeResultsList" class="results-grid"></div>
+        </div>
+
+        <!-- No Results -->
+        <div id="noResults" class="no-results" style="display: none;">
+            <iconify-icon icon="tabler:search-off"></iconify-icon>
+            <h3>No Results Found</h3>
+            <p>Try different search terms or check your spelling</p>
+        </div>
+    </div>
+</div>
+
+<!-- Include the shared Add Video Modal component -->
+{% include 'components/add_video_modal.html' %}
+
+<style>
+.discover-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.discover-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.discover-header h1 {
+    color: #00d4ff;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.page-description {
+    color: #ccc;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.search-section {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.1);
+}
+
+.search-input-wrapper {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    padding: 15px 20px;
+    font-size: 16px;
+    border: 2px solid #444;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: #fff;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+
+.search-input::placeholder {
+    color: #666;
+}
+
+.search-button {
+    padding: 15px 25px;
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.search-button:hover {
+    background: linear-gradient(135deg, #0099cc 0%, #007799 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.search-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.search-status {
+    text-align: center;
+    padding: 30px;
+    color: #00d4ff;
+}
+
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 1.1rem;
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.search-results-container {
+    margin-top: 30px;
+}
+
+.results-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #00d4ff;
+}
+
+.results-header h2 {
+    color: #00d4ff;
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.results-count {
+    color: #ccc;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.results-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    color: #00d4ff;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #444;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.result-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+}
+
+.result-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.2);
+    border-color: #00d4ff;
+}
+
+.result-content {
+    display: flex;
+    gap: 15px;
+}
+
+.result-thumbnail {
+    flex-shrink: 0;
+    width: 120px;
+    height: 90px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.result-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.result-thumbnail .placeholder {
+    color: #666;
+    font-size: 2rem;
+}
+
+.result-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.result-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.result-artist {
+    color: #00d4ff;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.result-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.result-source {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.result-year {
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.result-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-add-video {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-add-video:hover {
+    background: linear-gradient(135deg, #0099cc 0%, #007799 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 212, 255, 0.3);
+}
+
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.no-results iconify-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.no-results h3 {
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+.no-results p {
+    color: #666;
+    margin: 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .discover-container {
+        padding: 15px;
+    }
+    
+    .discover-header h1 {
+        font-size: 2rem;
+    }
+    
+    .search-input-wrapper {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .search-button {
+        align-self: stretch;
+        justify-content: center;
+    }
+    
+    .results-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .result-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .result-thumbnail {
+        align-self: center;
+    }
+    
+    .result-title, .result-artist {
+        white-space: normal;
+        text-align: center;
+    }
+    
+    .result-meta {
+        justify-content: center;
+    }
+    
+    .result-actions {
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+// Discover page JavaScript functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('discoverSearchInput');
+    const searchButton = document.getElementById('discoverSearchButton');
+    const searchStatus = document.getElementById('searchStatus');
+    const searchResults = document.getElementById('searchResults');
+    const searchStatusText = document.getElementById('searchStatusText');
+    const resultsTitle = document.getElementById('resultsTitle');
+    const resultsCount = document.getElementById('resultsCount');
+    const imvdbResults = document.getElementById('imvdbResults');
+    const youtubeResults = document.getElementById('youtubeResults');
+    const imvdbResultsList = document.getElementById('imvdbResultsList');
+    const youtubeResultsList = document.getElementById('youtubeResultsList');
+    const noResults = document.getElementById('noResults');
+
+    // Auto-search if query parameter is present
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get('q');
+    if (initialQuery) {
+        searchInput.value = initialQuery;
+        performSearch(initialQuery);
+    }
+
+    // Search button click handler
+    searchButton.addEventListener('click', function() {
+        const query = searchInput.value.trim();
+        if (query) {
+            performSearch(query);
+            // Update URL without page reload
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('q', query);
+            window.history.pushState({}, '', newUrl);
+        }
+    });
+
+    // Enter key handler
+    searchInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            searchButton.click();
+        }
+    });
+
+    async function performSearch(query) {
+        console.log('🔍 Starting discover search for:', query);
+        showSearchStatus(true);
+        hideResults();
+
+        try {
+            // Search both IMVDb and YouTube
+            const [imvdbData, youtubeData] = await Promise.all([
+                searchIMVDb(query),
+                searchYouTube(query)
+            ]);
+
+            console.log('🎬 IMVDb results:', imvdbData.length);
+            console.log('📺 YouTube results:', youtubeData.length);
+
+            const totalResults = imvdbData.length + youtubeData.length;
+            
+            if (totalResults > 0) {
+                displayResults(query, imvdbData, youtubeData);
+            } else {
+                showNoResults();
+            }
+
+        } catch (error) {
+            console.error('❌ Search error:', error);
+            showError('Search failed. Please try again.');
+        } finally {
+            showSearchStatus(false);
+        }
+    }
+
+    async function searchIMVDb(query) {
+        try {
+            const response = await fetch(`/api/imvdb/search-videos?q=${encodeURIComponent(query)}`);
+            if (!response.ok) {
+                console.warn('⚠️ IMVDb search failed:', response.status);
+                return [];
+            }
+            
+            const data = await response.json();
+            const videos = data.results || [];
+            
+            return videos.map(video => {
+                let artistName = 'Unknown Artist';
+                if (video.artists && video.artists.length > 0) {
+                    artistName = video.artists[0].name;
+                } else if (video.artist_name) {
+                    artistName = video.artist_name;
+                } else if (video.artist) {
+                    artistName = video.artist;
+                }
+                
+                let thumbnailUrl = '';
+                if (video.image) {
+                    thumbnailUrl = video.image.o || video.image.thumbnail || video.image.url || '';
+                } else if (video.thumbnail) {
+                    thumbnailUrl = video.thumbnail;
+                }
+                
+                return {
+                    id: video.id,
+                    title: video.song_title || video.title || 'Unknown Title',
+                    artist: artistName,
+                    source: 'IMVDb',
+                    sourceIcon: '🎬',
+                    thumbnail: thumbnailUrl,
+                    year: video.year,
+                    url: video.permalink || video.url || ''
+                };
+            });
+        } catch (error) {
+            console.error('❌ IMVDb search error:', error);
+            return [];
+        }
+    }
+
+    async function searchYouTube(query) {
+        try {
+            const response = await fetch('/api/youtube/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    q: query,
+                    maxResults: 20,
+                    videoCategoryId: '10' // Music category
+                })
+            });
+            
+            if (!response.ok) {
+                console.warn('⚠️ YouTube search failed:', response.status);
+                return [];
+            }
+            
+            const data = await response.json();
+            const videos = data.items || [];
+            
+            return videos.map(video => ({
+                id: video.id.videoId || video.id,
+                title: video.snippet?.title || video.title || 'Unknown Title',
+                artist: video.snippet?.channelTitle || 'Unknown Artist',
+                source: 'YouTube',
+                sourceIcon: '📺',
+                thumbnail: video.snippet?.thumbnails?.medium?.url || video.thumbnail || '',
+                url: `https://www.youtube.com/watch?v=${video.id.videoId || video.id}`,
+                year: video.snippet?.publishedAt ? new Date(video.snippet.publishedAt).getFullYear() : null
+            }));
+        } catch (error) {
+            console.error('❌ YouTube search error:', error);
+            return [];
+        }
+    }
+
+    function displayResults(query, imvdbData, youtubeData) {
+        const totalResults = imvdbData.length + youtubeData.length;
+        
+        resultsTitle.textContent = `Search Results for "${query}"`;
+        resultsCount.textContent = `Found ${totalResults} results`;
+        
+        // Display IMVDb results
+        if (imvdbData.length > 0) {
+            imvdbResultsList.innerHTML = imvdbData.map(video => createResultCard(video)).join('');
+            imvdbResults.style.display = 'block';
+        } else {
+            imvdbResults.style.display = 'none';
+        }
+        
+        // Display YouTube results
+        if (youtubeData.length > 0) {
+            youtubeResultsList.innerHTML = youtubeData.map(video => createResultCard(video)).join('');
+            youtubeResults.style.display = 'block';
+        } else {
+            youtubeResults.style.display = 'none';
+        }
+        
+        searchResults.style.display = 'block';
+        
+        // Add event listeners to Add to Library buttons
+        attachAddVideoListeners();
+    }
+
+    function createResultCard(video) {
+        const escapedTitle = escapeHtml(video.title);
+        const escapedArtist = escapeHtml(video.artist);
+        
+        return `
+            <div class="result-card">
+                <div class="result-content">
+                    <div class="result-thumbnail">
+                        ${video.thumbnail ? 
+                            `<img src="${video.thumbnail}" alt="Thumbnail" onerror="this.parentElement.innerHTML='<div class=\\"placeholder\\">🎵</div>';">` :
+                            `<div class="placeholder">🎵</div>`
+                        }
+                    </div>
+                    <div class="result-info">
+                        <div class="result-title">${video.sourceIcon} ${escapedTitle}</div>
+                        <div class="result-artist">${escapedArtist}</div>
+                        <div class="result-meta">
+                            <div class="result-source">
+                                <iconify-icon icon="${video.source === 'YouTube' ? 'tabler:brand-youtube' : 'tabler:video'}"></iconify-icon>
+                                ${video.source}
+                            </div>
+                            ${video.year ? `<div class="result-year">${video.year}</div>` : ''}
+                        </div>
+                        <div class="result-actions">
+                            <button class="btn-add-video" 
+                                    data-source="${video.source}" 
+                                    data-video-id="${video.id}" 
+                                    data-title="${escapedTitle}" 
+                                    data-artist="${escapedArtist}" 
+                                    data-url="${video.url}">
+                                <iconify-icon icon="tabler:plus"></iconify-icon>
+                                Add to Library
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function attachAddVideoListeners() {
+        const addButtons = document.querySelectorAll('.btn-add-video');
+        addButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const source = this.dataset.source;
+                const videoId = this.dataset.videoId;
+                const title = this.dataset.title;
+                const artist = this.dataset.artist;
+                const url = this.dataset.url;
+                
+                // Use the shared Add Video modal functionality
+                if (typeof addVideoToLibrary === 'function') {
+                    addVideoToLibrary(source, videoId, title, artist, url);
+                } else {
+                    console.error('addVideoToLibrary function not available');
+                    alert('Add to library functionality is not available');
+                }
+            });
+        });
+    }
+
+    function showSearchStatus(show) {
+        if (show) {
+            searchStatus.style.display = 'block';
+            searchButton.disabled = true;
+            searchButton.innerHTML = `
+                <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+                Searching...
+            `;
+        } else {
+            searchStatus.style.display = 'none';
+            searchButton.disabled = false;
+            searchButton.innerHTML = `
+                <iconify-icon icon="tabler:search"></iconify-icon>
+                Search
+            `;
+        }
+    }
+
+    function hideResults() {
+        searchResults.style.display = 'none';
+        imvdbResults.style.display = 'none';
+        youtubeResults.style.display = 'none';
+        noResults.style.display = 'none';
+    }
+
+    function showNoResults() {
+        searchResults.style.display = 'block';
+        imvdbResults.style.display = 'none';
+        youtubeResults.style.display = 'none';
+        noResults.style.display = 'block';
+    }
+
+    function showError(message) {
+        if (typeof showToast === 'function') {
+            showToast(message, 'error');
+        } else {
+            alert(message);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});
+</script>
+{% endblock %}

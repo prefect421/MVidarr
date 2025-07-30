@@ -1915,7 +1915,11 @@
                 // Search more button handler
                 if (this.searchMoreButton) {
                     this.searchMoreButton.addEventListener('click', () => {
-                        this.performExtendedSearch(this.currentQuery);
+                        // Open discover page with the current search query
+                        if (this.currentQuery) {
+                            const discoverUrl = `/discover?q=${encodeURIComponent(this.currentQuery)}`;
+                            window.open(discoverUrl, '_blank');
+                        }
                     });
                 }
             }
