@@ -572,6 +572,7 @@ async function addVideoToLibrary(source, videoId, title, artist, url) {
             endpoint = '/api/videos/import-from-imvdb';
             payload = {
                 imvdb_id: videoId,
+                artist: artist,
                 auto_download: true
             };
         } else if (source === 'YouTube') {
