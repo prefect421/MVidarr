@@ -888,6 +888,44 @@
             opacity: 0.5;
         }
         
+        .universal-search-more {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        
+        body.light-theme .universal-search-more {
+            border-top-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .universal-search-more-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.5rem;
+            color: #3b82f6;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .universal-search-more-button:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+        
+        .universal-search-more-button iconify-icon {
+            font-size: 1.125rem;
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .universal-search-input-wrapper {
@@ -1188,6 +1226,14 @@
                     <div class="universal-search-no-results" id="noResultsMessage" style="display: none;">
                         <iconify-icon icon="tabler:search-off"></iconify-icon>
                         <span>No results found</span>
+                    </div>
+                    
+                    <!-- Search More Button -->
+                    <div class="universal-search-more" id="searchMoreSection" style="display: none;">
+                        <button class="universal-search-more-button" id="searchMoreButton">
+                            <iconify-icon icon="tabler:world-search"></iconify-icon>
+                            <span>Search IMVDb & YouTube for more results</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1620,6 +1666,8 @@
                 this.clearButton = document.getElementById('universalSearchClear');
                 this.loadingElement = document.getElementById('universalSearchLoading');
                 this.noResultsElement = document.getElementById('noResultsMessage');
+                this.searchMoreSection = document.getElementById('searchMoreSection');
+                this.searchMoreButton = document.getElementById('searchMoreButton');
                 
                 this.videosSection = document.getElementById('videosSection');
                 this.artistsSection = document.getElementById('artistsSection');
@@ -1635,6 +1683,7 @@
                 
                 this.searchTimeout = null;
                 this.isSearching = false;
+                this.currentQuery = '';
                 
                 this.init();
             }
@@ -1692,12 +1741,20 @@
                         this.showResults();
                     }
                 });
+                
+                // Search more button handler
+                if (this.searchMoreButton) {
+                    this.searchMoreButton.addEventListener('click', () => {
+                        this.performExtendedSearch(this.currentQuery);
+                    });
+                }
             }
             
             async performSearch(query) {
                 if (this.isSearching) return;
                 
                 this.isSearching = true;
+                this.currentQuery = query;
                 this.showLoading();
                 
                 try {
@@ -1724,6 +1781,7 @@
                 
                 if (data.total === 0) {
                     this.showNoResults();
+                    this.showSearchMore();
                     return;
                 }
                 
@@ -1741,6 +1799,9 @@
                 if (data.external && data.external.length > 0) {
                     this.displayExternal(data.external);
                 }
+                
+                // Always show search more button for additional discovery
+                this.showSearchMore();
                 
                 this.showResults();
             }
@@ -1905,6 +1966,7 @@
                 this.artistsSection.style.display = 'none';
                 this.externalSection.style.display = 'none';
                 this.noResultsElement.style.display = 'none';
+                this.searchMoreSection.style.display = 'none';
                 this.hideLoading();
             }
             
@@ -1916,6 +1978,54 @@
             showError(message) {
                 showToast(message, 'error');
                 this.hideResults();
+            }
+            
+            showSearchMore() {
+                if (this.searchMoreSection && this.currentQuery) {
+                    this.searchMoreSection.style.display = 'block';
+                }
+            }
+            
+            async performExtendedSearch(query) {
+                if (!query || this.isSearching) return;
+                
+                this.isSearching = true;
+                this.searchMoreButton.innerHTML = `
+                    <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+                    <span>Searching IMVDb & YouTube...</span>
+                `;
+                this.searchMoreButton.disabled = true;
+                
+                try {
+                    // Force a more extensive external search by requesting more results
+                    const response = await fetch(`/api/videos/universal-search?q=${encodeURIComponent(query)}&extended=true`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Extended search failed: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // If we get more external results, update just the external section
+                    if (data.external && data.external.length > 0) {
+                        this.displayExternal(data.external);
+                        this.externalSection.style.display = 'block';
+                        showToast(`Found ${data.external.length} additional results from IMVDb & YouTube!`, 'success');
+                    } else {
+                        showToast('No additional results found on IMVDb & YouTube', 'info');
+                    }
+                    
+                } catch (error) {
+                    console.error('Extended search error:', error);
+                    showToast('Extended search failed. Please try again.', 'error');
+                } finally {
+                    this.isSearching = false;
+                    this.searchMoreButton.innerHTML = `
+                        <iconify-icon icon="tabler:world-search"></iconify-icon>
+                        <span>Search IMVDb & YouTube for more results</span>
+                    `;
+                    this.searchMoreButton.disabled = false;
+                }
             }
             
             escapeHtml(unsafe) {

@@ -5065,6 +5065,8 @@ def universal_search():
     """
     try:
         query = request.args.get("q", "").strip()
+        extended = request.args.get("extended") == "true"
+        
         if not query or len(query) < 2:
             return jsonify({
                 "videos": [],
@@ -5116,12 +5118,22 @@ def universal_search():
                     "url": f"/artists/{artist.id}"
                 })
 
-            # External search (IMVDb and YouTube) - limit to 5 total
+            # External search (IMVDb and YouTube)
             external_results = []
+            
+            # Determine limits based on extended search
+            if extended:
+                # For extended search, focus more on IMVDb and YouTube with higher limits
+                imvdb_limit = 8
+                youtube_limit = 10
+            else:
+                # Standard search limits
+                imvdb_limit = 3
+                youtube_limit = 5
             
             # IMVDb search
             try:
-                imvdb_results = imvdb_service.search_videos(query, limit=3)
+                imvdb_results = imvdb_service.search_videos(query, limit=imvdb_limit)
                 for result in imvdb_results:
                     external_results.append({
                         "source": "IMVDb",
@@ -5136,27 +5148,30 @@ def universal_search():
             except Exception as e:
                 logger.warning(f"IMVDb search failed: {e}")
 
-            # YouTube search (if we have fewer than 5 external results)
-            remaining_slots = 5 - len(external_results)
-            if remaining_slots > 0:
-                try:
-                    from src.services.youtube_search_service import youtube_search_service
-                    youtube_results = youtube_search_service.search_videos(query, max_results=remaining_slots)
-                    
-                    for result in youtube_results:
-                        external_results.append({
-                            "source": "YouTube",
-                            "id": result.get("id"),
-                            "title": result.get("title", "Unknown Title"),
-                            "artist": result.get("channel_title", "Unknown Artist"),
-                            "thumbnail": result.get("thumbnail"),
-                            "duration": result.get("duration"),
-                            "view_count": result.get("view_count"),
-                            "action": "add_to_library",
-                            "video_id": result.get("id")
-                        })
-                except Exception as e:
-                    logger.warning(f"YouTube search failed: {e}")
+            # YouTube search
+            try:
+                from src.services.youtube_search_service import youtube_search_service
+                youtube_results = youtube_search_service.search_videos(query, max_results=youtube_limit)
+                
+                for result in youtube_results:
+                    external_results.append({
+                        "source": "YouTube",
+                        "id": result.get("id"),
+                        "title": result.get("title", "Unknown Title"),
+                        "artist": result.get("channel_title", "Unknown Artist"),
+                        "thumbnail": result.get("thumbnail"),
+                        "duration": result.get("duration"),
+                        "view_count": result.get("view_count"),
+                        "action": "add_to_library",
+                        "video_id": result.get("id")
+                    })
+            except Exception as e:
+                logger.warning(f"YouTube search failed: {e}")
+            
+            # For extended search, skip database results and focus on external only
+            if extended:
+                results["videos"] = []
+                results["artists"] = []
 
             results["external"] = external_results
             results["total"] = len(results["videos"]) + len(results["artists"]) + len(results["external"])
