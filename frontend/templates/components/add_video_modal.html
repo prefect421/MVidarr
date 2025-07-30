@@ -369,18 +369,49 @@ async function searchIMVDb(searchQuery, artistName, songTitle) {
         }
         
         const videoData = await videoResponse.json();
+        console.log('🎬 IMVDb API response:', videoData);
         const videos = videoData.results || [];
+        console.log('🎬 IMVDb videos array:', videos);
         
-        return videos.map(video => ({
-            id: video.id,
-            title: video.song_title || video.title,
-            artist: video.artist_name || video.artist,
-            source: 'IMVDb',
-            sourceIcon: '🎬',
-            thumbnail: video.image?.thumbnail || video.thumbnail || '',
-            year: video.year,
-            url: video.permalink || video.url || ''
-        }));
+        return videos.map(video => {
+            // IMVDb has nested structure: video.artists[0].name for artist name
+            // and video.image.o for original thumbnail, video.image.thumbnail for smaller
+            let artistName = 'Unknown Artist';
+            if (video.artists && video.artists.length > 0) {
+                artistName = video.artists[0].name;
+            } else if (video.artist_name) {
+                artistName = video.artist_name;
+            } else if (video.artist) {
+                artistName = video.artist;
+            }
+            
+            // IMVDb thumbnail structure: video.image.o (original) or video.image.thumbnail
+            let thumbnailUrl = '';
+            if (video.image) {
+                thumbnailUrl = video.image.o || video.image.thumbnail || video.image.url || '';
+            } else if (video.thumbnail) {
+                thumbnailUrl = video.thumbnail;
+            }
+            
+            console.log('🎬 IMVDb video processed:', {
+                id: video.id,
+                title: video.song_title || video.title,
+                artist: artistName,
+                thumbnail: thumbnailUrl,
+                rawVideo: video
+            });
+            
+            return {
+                id: video.id,
+                title: video.song_title || video.title,
+                artist: artistName,
+                source: 'IMVDb',
+                sourceIcon: '🎬',
+                thumbnail: thumbnailUrl,
+                year: video.year,
+                url: video.permalink || video.url || ''
+            };
+        });
     } catch (error) {
         console.error('❌ IMVDb search error:', error);
         return [];
@@ -483,7 +514,8 @@ function displaySearchResults(results) {
                 <div class="search-result-item">
                     <div>
                         <img src="${video.thumbnail || '/static/default-thumbnail.png'}" 
-                             alt="Thumbnail">
+                             alt="Thumbnail"
+                             onerror="this.src='/static/default-thumbnail.png'; this.onerror=null;">
                         <div>
                             <h5>${video.sourceIcon || '🎵'} ${safeTitle}</h5>
                             <p>Artist: ${safeArtist}</p>
