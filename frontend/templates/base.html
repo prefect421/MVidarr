@@ -1927,11 +1927,11 @@
                         if (queryToUse) {
                             const discoverUrl = `/discover?q=${encodeURIComponent(queryToUse)}`;
                             console.log('🔧 Opening discover page URL:', discoverUrl);
-                            window.open(discoverUrl, '_blank');
+                            window.location.href = discoverUrl;
                         } else {
                             console.warn('⚠️ No search query available for discovery page');
                             // Open discovery page without query as fallback
-                            window.open('/discover', '_blank');
+                            window.location.href = '/discover';
                         }
                     });
                 }
