@@ -944,26 +944,36 @@
             position: sticky;
             top: 0;
             z-index: 1001;
-            background: rgba(30, 41, 59, 0.95);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
-            margin-left: 250px; /* Offset for sidebar */
-            transition: margin-left 0.3s ease;
+            margin-left: var(--sidebar-width, 250px);
+            transition: margin-left 0.3s ease, width 0.3s ease;
+            width: calc(100vw - var(--sidebar-width, 250px));
+            left: 0;
+            right: 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
         
         body.light-theme .app-header {
-            background: rgba(255, 255, 255, 0.95);
-            border-bottom-color: rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-bottom-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
         
-        /* Adjust for collapsed sidebar */
-        .sidebar.collapsed + .sidebar-overlay + .app-header {
-            margin-left: 60px;
+        /* Dynamic width based on sidebar state */
+        :root {
+            --sidebar-width: 250px;
+        }
+        
+        .sidebar.collapsed ~ .app-header,
+        body.sidebar-collapsed .app-header {
+            --sidebar-width: 60px;
         }
         
         .header-left {
@@ -994,6 +1004,31 @@
         .app-header .universal-search-input {
             padding: 0.5rem 2.5rem 0.5rem 2.5rem;
             font-size: 0.875rem;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+        
+        .app-header .universal-search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .app-header .universal-search-input:focus {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+        
+        .app-header .universal-search-icon {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .app-header .universal-search-clear {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .app-header .universal-search-clear:hover {
+            color: rgba(255, 255, 255, 1);
         }
         
         /* Header Theme Toggle */
@@ -1003,88 +1038,123 @@
             padding: 0.5rem;
             border-radius: 0.5rem;
             transition: background-color 0.2s ease;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .header-theme-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        body.light-theme .header-theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
         }
         
         body.light-theme .header-theme-toggle:hover {
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
         }
         
-        /* Header User Menu */
-        .header-user-menu {
-            position: relative;
+        /* Header User Section */
+        .header-user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.25rem;
         }
         
         .header-user-info {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
             padding: 0.5rem 0.75rem;
             border-radius: 0.5rem;
-            transition: background-color 0.2s ease;
-            color: inherit;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            transition: all 0.2s ease;
+            color: white;
         }
         
-        .header-user-info:hover {
-            background: rgba(255, 255, 255, 0.1);
+        body.light-theme .header-user-info {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: white;
         }
         
-        body.light-theme .header-user-info:hover {
-            background: rgba(0, 0, 0, 0.1);
+        .header-user-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .header-user-avatar iconify-icon {
+            font-size: 1.25rem;
+        }
+        
+        .header-user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
         }
         
         .header-username {
             font-size: 0.875rem;
-            font-weight: 500;
+            font-weight: 600;
+            color: white;
+            line-height: 1.2;
         }
         
-        .header-user-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: rgba(30, 41, 59, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0.5rem;
-            padding: 0.5rem 0;
-            min-width: 150px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            margin-top: 0.25rem;
+        .header-user-role {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.2;
         }
         
-        body.light-theme .header-user-dropdown {
-            background: rgba(255, 255, 255, 0.95);
-            border-color: rgba(0, 0, 0, 0.1);
+        body.light-theme .header-user-role {
+            color: rgba(255, 255, 255, 0.9);
         }
         
-        .header-user-item {
+        .header-logout-button {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 0.75rem;
-            color: inherit;
-            text-decoration: none;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 0.5rem;
+            color: white;
             font-size: 0.875rem;
-            transition: background-color 0.2s ease;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         
-        .header-user-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: inherit;
-            text-decoration: none;
+        .header-logout-button:hover {
+            background: rgba(239, 68, 68, 0.8);
+            border-color: rgba(239, 68, 68, 1);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
         
-        body.light-theme .header-user-item:hover {
-            background: rgba(0, 0, 0, 0.1);
+        .header-logout-button iconify-icon {
+            font-size: 1rem;
         }
         
         /* Mobile header responsiveness */
         @media (max-width: 1024px) {
             .app-header {
                 margin-left: 0;
+                width: 100vw;
                 padding: 0.5rem;
             }
             
@@ -1092,15 +1162,24 @@
                 max-width: none;
             }
             
-            .header-username {
+            .header-user-details {
                 display: none;
+            }
+            
+            .header-logout-text {
+                display: none;
+            }
+            
+            .header-user-section {
+                gap: 0.5rem;
             }
         }
         
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
             .app-header {
                 flex-wrap: wrap;
                 gap: 0.5rem;
+                padding: 0.5rem;
             }
             
             .header-left {
@@ -1111,6 +1190,32 @@
             .header-right {
                 order: 1;
                 flex: none;
+                gap: 0.5rem;
+            }
+            
+            .header-user-info {
+                padding: 0.375rem;
+                gap: 0;
+            }
+            
+            .header-logout-button {
+                padding: 0.375rem;
+                gap: 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header-theme-toggle {
+                padding: 0.375rem;
+            }
+            
+            .header-user-avatar {
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+            
+            .header-user-avatar iconify-icon {
+                font-size: 1rem;
             }
         }
     </style>
@@ -1241,7 +1346,7 @@
         
         <div class="header-right">
             <!-- Theme Toggle -->
-            <div class="header-theme-toggle" onclick="toggleDayNightMode()" style="cursor: pointer;">
+            <div class="header-theme-toggle" onclick="toggleDayNightMode()" style="cursor: pointer;" title="Toggle Theme">
                 <div class="theme-slider" id="headerThemeSlider" style="width: 40px; height: 20px;">
                     <div class="theme-slider-track">
                         <div class="theme-slider-thumb" style="width: 16px; height: 16px; top: 2px; left: 2px;">
@@ -1251,18 +1356,24 @@
                 </div>
             </div>
             
-            <!-- User Menu -->
-            <div class="header-user-menu" id="headerUserMenu" style="display: none;">
-                <div class="header-user-info" onclick="goToUserCredentials(); return false;" style="cursor: pointer;">
-                    <iconify-icon icon="tabler:user-circle" style="font-size: 1.5rem;"></iconify-icon>
-                    <span class="header-username" id="headerUsername">User</span>
+            <!-- User Info Section -->
+            <div class="header-user-section" id="headerUserSection" style="display: none;">
+                <!-- User Info Display -->
+                <div class="header-user-info">
+                    <div class="header-user-avatar">
+                        <iconify-icon icon="tabler:user-circle"></iconify-icon>
+                    </div>
+                    <div class="header-user-details" id="headerUserDetails">
+                        <span class="header-username" id="headerUsername">User</span>
+                        <span class="header-user-role">Authenticated</span>
+                    </div>
                 </div>
-                <div class="header-user-dropdown" id="headerUserDropdown" style="display: none;">
-                    <a href="#" onclick="logout(); return false;" class="header-user-item">
-                        <iconify-icon icon="tabler:logout"></iconify-icon>
-                        <span>Logout</span>
-                    </a>
-                </div>
+                
+                <!-- Logout Button -->
+                <button class="header-logout-button" onclick="logout(); return false;" title="Logout">
+                    <iconify-icon icon="tabler:logout"></iconify-icon>
+                    <span class="header-logout-text">Logout</span>
+                </button>
             </div>
         </div>
     </header>
@@ -2088,8 +2199,36 @@
                 });
             }
             
-            // Show/hide header user menu based on authentication
-            updateHeaderUserMenu();
+            // Show/hide header user section based on authentication
+            updateHeaderUserSection();
+            
+            // Update header width on initialization
+            updateHeaderWidth();
+            
+            // Add sidebar toggle event listeners
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    // Add a small delay to allow the sidebar animation to start
+                    setTimeout(updateHeaderWidth, 50);
+                });
+            }
+            
+            // Listen for window resize to update header width
+            window.addEventListener('resize', updateHeaderWidth);
+            
+            // Use MutationObserver to watch for sidebar class changes
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            updateHeaderWidth();
+                        }
+                    });
+                });
+                observer.observe(sidebar, { attributes: true });
+            }
         }
         
         function updateHeaderThemeSlider() {
@@ -2110,22 +2249,41 @@
             }
         }
         
-        function updateHeaderUserMenu() {
-            const headerUserMenu = document.getElementById('headerUserMenu');
+        function updateHeaderUserSection() {
+            const headerUserSection = document.getElementById('headerUserSection');
             const headerUsername = document.getElementById('headerUsername');
             const sidebarUserMenu = document.getElementById('userMenu');
             const sidebarUsername = document.getElementById('username');
             
-            if (!headerUserMenu) return;
+            if (!headerUserSection) return;
             
             // Sync with sidebar user menu visibility and username
             if (sidebarUserMenu && sidebarUsername) {
                 const isVisible = sidebarUserMenu.style.display !== 'none';
-                headerUserMenu.style.display = isVisible ? 'flex' : 'none';
+                headerUserSection.style.display = isVisible ? 'flex' : 'none';
                 
                 if (headerUsername && isVisible) {
                     headerUsername.textContent = sidebarUsername.textContent || 'User';
                 }
+            }
+        }
+        
+        function updateHeaderWidth() {
+            const sidebar = document.getElementById('sidebar');
+            const header = document.getElementById('appHeader');
+            
+            if (!sidebar || !header) return;
+            
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            const sidebarWidth = isCollapsed ? '60px' : '250px';
+            
+            // Update CSS custom property
+            document.documentElement.style.setProperty('--sidebar-width', sidebarWidth);
+            
+            // Force update for immediate visual feedback
+            if (window.innerWidth > 1024) {
+                header.style.marginLeft = sidebarWidth;
+                header.style.width = `calc(100vw - ${sidebarWidth})`;
             }
         }
         
@@ -2134,7 +2292,7 @@
         if (originalShowUserMenu) {
             window.showUserMenu = function() {
                 originalShowUserMenu();
-                updateHeaderUserMenu();
+                updateHeaderUserSection();
             };
         }
         
@@ -2142,7 +2300,7 @@
         if (originalHideUserMenu) {
             window.hideUserMenu = function() {
                 originalHideUserMenu();
-                updateHeaderUserMenu();
+                updateHeaderUserSection();
             };
         }
     </script>
