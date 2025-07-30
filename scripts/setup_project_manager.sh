@@ -46,8 +46,10 @@ fi
 if [ "$MISSING_KEYS" = true ]; then
     echo ""
     echo "🔧 Example shell configuration (~/.bashrc or ~/.zshrc):"
-    echo "export GITHUB_TOKEN='ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'"
-    echo "export ANTHROPIC_API_KEY='sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'"
+    echo "# Replace 'your_token_here' with your actual GitHub Personal Access Token"
+    echo "export GITHUB_TOKEN='your_github_token_here'"
+    echo "# Replace 'your_key_here' with your actual Anthropic API key"
+    echo "export ANTHROPIC_API_KEY='your_anthropic_key_here'"
     echo ""
     echo "After setting these, restart your shell or run: source ~/.bashrc"
 fi
