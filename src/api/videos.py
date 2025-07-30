@@ -5133,8 +5133,12 @@ def universal_search():
             
             # IMVDb search
             try:
-                imvdb_results = imvdb_service.search_videos(query, limit=imvdb_limit)
-                for result in imvdb_results:
+                # IMVDb search_videos method takes artist and title parameters, not limit
+                imvdb_results = imvdb_service.search_videos(query)
+                # Apply limit manually after getting results
+                limited_imvdb_results = imvdb_results[:imvdb_limit] if imvdb_results else []
+                
+                for result in limited_imvdb_results:
                     external_results.append({
                         "source": "IMVDb",
                         "id": result.get("id"),
@@ -5150,10 +5154,13 @@ def universal_search():
 
             # YouTube search
             try:
-                from src.services.youtube_search_service import youtube_search_service
-                youtube_results = youtube_search_service.search_videos(query, max_results=youtube_limit)
+                from src.services.youtube_service import youtube_service
+                youtube_response = youtube_service.search_videos(query, max_results=youtube_limit)
                 
-                for result in youtube_results:
+                # YouTube service returns a dict with 'videos' key containing the results
+                youtube_videos = youtube_response.get('videos', []) if youtube_response else []
+                
+                for result in youtube_videos:
                     external_results.append({
                         "source": "YouTube",
                         "id": result.get("id"),
@@ -5172,6 +5179,8 @@ def universal_search():
             if extended:
                 results["videos"] = []
                 results["artists"] = []
+                # Log extended search results for debugging
+                logger.info(f"Extended search for '{query}': IMVDb limit {imvdb_limit}, YouTube limit {youtube_limit}, found {len(external_results)} results")
 
             results["external"] = external_results
             results["total"] = len(results["videos"]) + len(results["artists"]) + len(results["external"])
