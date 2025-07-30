@@ -276,7 +276,7 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             margin: 1rem;
-            margin-top: calc(4rem + 1rem); /* Account for fixed header height + margin */
+            margin-top: calc(60px + 1rem); /* Account for fixed header height + margin */
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 		
@@ -353,7 +353,7 @@
             background: rgba(255, 255, 255, 0.4);
             border-radius: 12px;
             margin: 1rem;
-            margin-top: calc(4rem + 1rem); /* Account for fixed header height + margin */
+            margin-top: calc(60px + 1rem); /* Account for fixed header height + margin */
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
         
@@ -945,24 +945,24 @@
         .app-header {
             position: fixed;
             top: 0;
-            left: var(--sidebar-width, 250px);
+            left: 0;
             right: 0;
-            z-index: 1001;
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(10px);
+            z-index: 999;
+            background: #2d2d2d;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             gap: 1rem;
             transition: left 0.3s ease;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            height: 60px;
         }
         
         body.light-theme .app-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-bottom-color: rgba(255, 255, 255, 0.3);
+            background: #ddddff;
+            border-bottom-color: rgba(0, 0, 0, 0.1);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
         
@@ -978,10 +978,14 @@
         
         .header-left {
             flex: 1;
-            max-width: 600px;
+            display: flex;
+            justify-content: center;
+            max-width: none;
         }
         
         .header-right {
+            position: absolute;
+            right: 1rem;
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -994,11 +998,14 @@
             margin: 0;
             border: none;
             background: transparent;
+            width: 100%;
+            max-width: 600px;
         }
         
         .app-header .universal-search-input-wrapper {
             max-width: none;
             margin: 0;
+            width: 100%;
         }
         
         .app-header .universal-search-input {
@@ -1278,10 +1285,10 @@
     
     <!-- Left Sidebar Navigation -->
     <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header">
+        <div class="sidebar-header" style="padding: 0.75rem 1rem; height: 60px;">
             <div class="sidebar-logo">
-                <a href="{{ url_for('frontend.index') }}">
-                    <img width="24" src="{{ url_for('frontend.static_files', filename='MVidarr.png') }}">
+                <a href="{{ url_for('frontend.index') }}" style="font-size: 1.5rem;">
+                    <img width="32" src="{{ url_for('frontend.static_files', filename='MVidarr.png') }}">
                     <span class="sidebar-logo-text">MVidarr</span>
                 </a>
             </div>
@@ -1411,15 +1418,15 @@
             </div>
             
             <!-- User Info Section -->
-            <div class="header-user-section" id="headerUserSection" style="display: none;">
+            <div class="header-user-section" id="headerUserSection" style="display: flex;">
                 <!-- User Info Display -->
                 <div class="header-user-info">
                     <div class="header-user-avatar">
                         <iconify-icon icon="tabler:user-circle"></iconify-icon>
                     </div>
                     <div class="header-user-details" id="headerUserDetails">
-                        <span class="header-username" id="headerUsername">User</span>
-                        <span class="header-user-role">Authenticated</span>
+                        <span class="header-username" id="headerUsername">admin</span>
+                        <span class="header-user-role" id="headerUserRole">Admin</span>
                     </div>
                 </div>
                 
