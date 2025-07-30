@@ -639,6 +639,442 @@
             color: #666 !important;
             border-top-color: rgba(0, 0, 0, 0.1) !important;
         }
+        
+        /* Universal Search Styles */
+        .universal-search-container {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: inherit;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        body.light-theme .universal-search-container {
+            border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .universal-search-input-wrapper {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .universal-search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.25rem;
+            color: #6b7280;
+            pointer-events: none;
+        }
+        
+        .universal-search-input {
+            width: 100%;
+            padding: 0.75rem 3rem 0.75rem 3rem;
+            font-size: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: inherit;
+            transition: all 0.3s ease;
+        }
+        
+        .universal-search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        body.light-theme .universal-search-input {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        body.light-theme .universal-search-input:focus {
+            border-color: #3b82f6;
+            background: #fff;
+        }
+        
+        .universal-search-clear {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            font-size: 1.25rem;
+            transition: color 0.2s ease;
+        }
+        
+        .universal-search-clear:hover {
+            color: #ef4444;
+        }
+        
+        .universal-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            max-height: 500px;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            margin-top: 0.5rem;
+        }
+        
+        body.light-theme .universal-search-results {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .universal-search-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .universal-search-section {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        body.light-theme .universal-search-section {
+            border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .universal-search-section:last-child {
+            border-bottom: none;
+        }
+        
+        .universal-search-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        body.light-theme .universal-search-section-header {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .universal-search-section-count {
+            margin-left: auto;
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            padding: 0.125rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+        }
+        
+        .universal-search-section-results {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .universal-search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .universal-search-result-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        body.light-theme .universal-search-result-item {
+            border-bottom-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        body.light-theme .universal-search-result-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .universal-search-result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .universal-search-result-icon {
+            font-size: 1.25rem;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+        
+        .universal-search-result-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .universal-search-result-title {
+            font-weight: 500;
+            color: inherit;
+            margin-bottom: 0.25rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .universal-search-result-subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .universal-search-result-action {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: none;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .universal-search-result-action:hover {
+            background: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .universal-search-no-results {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 3rem 2rem;
+            color: #6b7280;
+            text-align: center;
+        }
+        
+        .universal-search-no-results iconify-icon {
+            font-size: 3rem;
+            opacity: 0.5;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .universal-search-input-wrapper {
+                margin: 0 1rem;
+            }
+            
+            .universal-search-results {
+                left: 1rem;
+                right: 1rem;
+                max-width: none;
+            }
+        }
+        
+        /* Header Bar Styles */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-left: 250px; /* Offset for sidebar */
+            transition: margin-left 0.3s ease;
+        }
+        
+        body.light-theme .app-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Adjust for collapsed sidebar */
+        .sidebar.collapsed + .sidebar-overlay + .app-header {
+            margin-left: 60px;
+        }
+        
+        .header-left {
+            flex: 1;
+            max-width: 600px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        /* Header Universal Search adjustments */
+        .app-header .universal-search-container {
+            position: static;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background: transparent;
+        }
+        
+        .app-header .universal-search-input-wrapper {
+            max-width: none;
+            margin: 0;
+        }
+        
+        .app-header .universal-search-input {
+            padding: 0.5rem 2.5rem 0.5rem 2.5rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Header Theme Toggle */
+        .header-theme-toggle {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        .header-theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        body.light-theme .header-theme-toggle:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Header User Menu */
+        .header-user-menu {
+            position: relative;
+        }
+        
+        .header-user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease;
+            color: inherit;
+        }
+        
+        .header-user-info:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        body.light-theme .header-user-info:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-username {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .header-user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0;
+            min-width: 150px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            margin-top: 0.25rem;
+        }
+        
+        body.light-theme .header-user-dropdown {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-user-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            color: inherit;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        .header-user-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: inherit;
+            text-decoration: none;
+        }
+        
+        body.light-theme .header-user-item:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Mobile header responsiveness */
+        @media (max-width: 1024px) {
+            .app-header {
+                margin-left: 0;
+                padding: 0.5rem;
+            }
+            
+            .header-left {
+                max-width: none;
+            }
+            
+            .header-username {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .app-header {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .header-left {
+                order: 2;
+                flex: 1 1 100%;
+            }
+            
+            .header-right {
+                order: 1;
+                flex: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -686,54 +1122,104 @@
             </ul>
             
             <!-- Theme Toggle - Always visible at bottom of sidebar -->
+            <!-- Version Display -->
             <div class="sidebar-bottom-section" style="margin-top: auto; border-top: 1px solid #444; padding-top: 1rem;">
-                <div class="theme-slider-container sidebar-item" onclick="toggleDayNightMode()" style="cursor: pointer; padding: 0.75rem;">
-                    <iconify-icon icon="tabler:palette" class="sidebar-icon"></iconify-icon>
-                    <span class="sidebar-text" style="font-size: 0.875rem;">Theme</span>
-                    <div class="theme-slider" id="themeSlider" style="width: 40px; height: 20px; margin-left: auto;">
-                        <div class="theme-slider-track">
-                            <div class="theme-slider-thumb" style="width: 16px; height: 16px; top: 2px; left: 2px;">
-                                <iconify-icon icon="tabler:moon" id="themeSliderIcon" style="font-size: 10px;"></iconify-icon>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Version Display -->
-                <div class="version-display" style="padding: 0.5rem 0.75rem; color: #888; font-size: 0.75rem; border-top: 1px solid #333; margin-top: 0.5rem;">
+                <div class="version-display" style="padding: 0.5rem 0.75rem; color: #888; font-size: 0.75rem;">
                     <span id="versionInfo">Loading...</span>
                 </div>
-            </div>
-            
-            <!-- First logout button removed - using the one in user menu instead -->
-            
-            <!-- Theme slider moved to user menu -->
-            
-            <!-- User Menu (shown when authenticated) -->
-            <div class="sidebar-user" id="userMenu" style="display: none;">
-                <div class="sidebar-user-info" onclick="goToUserCredentials(); return false;" style="cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background-color 0.2s ease;">
-                    <div class="sidebar-user-avatar">
-                        <iconify-icon icon="tabler:user-circle" style="font-size: 1.2rem;"></iconify-icon>
-                    </div>
-                    <div class="sidebar-user-details">
-                        <span class="sidebar-username" id="username">User</span>
-                        <span class="sidebar-user-role">Authenticated User</span>
-                    </div>
-                </div>
-                <ul class="sidebar-user-menu">
-                    <!-- Profile and Change Password removed - click username to go to User Credentials in Settings -->
-                    <!-- Theme toggle moved to main sidebar menu -->
-                    <li><a href="#" onclick="logout(); return false;" class="sidebar-user-item logout">
-                        <iconify-icon icon="tabler:logout" class="sidebar-icon"></iconify-icon>
-                        <span class="sidebar-text">Logout</span>
-                    </a></li>
-                </ul>
             </div>
         </div>
     </nav>
     
     <!-- Mobile overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Header Bar -->
+    <header class="app-header" id="appHeader">
+        <div class="header-left">
+            <!-- Universal Search Component -->
+            <div class="universal-search-container" id="universalSearchContainer">
+                <div class="universal-search-input-wrapper">
+                    <iconify-icon icon="tabler:search" class="universal-search-icon"></iconify-icon>
+                    <input type="text" id="universalSearchInput" class="universal-search-input" placeholder="Search videos, artists, or discover new content..." autocomplete="off">
+                    <button class="universal-search-clear" id="universalSearchClear" style="display: none;">
+                        <iconify-icon icon="tabler:x"></iconify-icon>
+                    </button>
+                </div>
+                
+                <!-- Search Results Dropdown -->
+                <div class="universal-search-results" id="universalSearchResults" style="display: none;">
+                    <div class="universal-search-loading" id="universalSearchLoading" style="display: none;">
+                        <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+                        <span>Searching...</span>
+                    </div>
+                    
+                    <!-- Videos Section -->
+                    <div class="universal-search-section" id="videosSection" style="display: none;">
+                        <div class="universal-search-section-header">
+                            <iconify-icon icon="tabler:video"></iconify-icon>
+                            <span>Videos</span>
+                            <span class="universal-search-section-count" id="videosCount"></span>
+                        </div>
+                        <div class="universal-search-section-results" id="videosResults"></div>
+                    </div>
+                    
+                    <!-- Artists Section -->
+                    <div class="universal-search-section" id="artistsSection" style="display: none;">
+                        <div class="universal-search-section-header">
+                            <iconify-icon icon="tabler:users"></iconify-icon>
+                            <span>Artists</span>
+                            <span class="universal-search-section-count" id="artistsCount"></span>
+                        </div>
+                        <div class="universal-search-section-results" id="artistsResults"></div>
+                    </div>
+                    
+                    <!-- External Search Results Section -->
+                    <div class="universal-search-section" id="externalSection" style="display: none;">
+                        <div class="universal-search-section-header">
+                            <iconify-icon icon="tabler:world"></iconify-icon>
+                            <span>Discover</span>
+                            <span class="universal-search-section-count" id="externalCount"></span>
+                        </div>
+                        <div class="universal-search-section-results" id="externalResults"></div>
+                    </div>
+                    
+                    <!-- No Results -->
+                    <div class="universal-search-no-results" id="noResultsMessage" style="display: none;">
+                        <iconify-icon icon="tabler:search-off"></iconify-icon>
+                        <span>No results found</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <!-- Theme Toggle -->
+            <div class="header-theme-toggle" onclick="toggleDayNightMode()" style="cursor: pointer;">
+                <div class="theme-slider" id="headerThemeSlider" style="width: 40px; height: 20px;">
+                    <div class="theme-slider-track">
+                        <div class="theme-slider-thumb" style="width: 16px; height: 16px; top: 2px; left: 2px;">
+                            <iconify-icon icon="tabler:moon" id="headerThemeSliderIcon" style="font-size: 10px;"></iconify-icon>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Menu -->
+            <div class="header-user-menu" id="headerUserMenu" style="display: none;">
+                <div class="header-user-info" onclick="goToUserCredentials(); return false;" style="cursor: pointer;">
+                    <iconify-icon icon="tabler:user-circle" style="font-size: 1.5rem;"></iconify-icon>
+                    <span class="header-username" id="headerUsername">User</span>
+                </div>
+                <div class="header-user-dropdown" id="headerUserDropdown" style="display: none;">
+                    <a href="#" onclick="logout(); return false;" class="header-user-item">
+                        <iconify-icon icon="tabler:logout"></iconify-icon>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
 
     <!-- Main content area -->
     <div class="app-layout">
@@ -1124,6 +1610,430 @@
                         versionElement.textContent = 'v1.0.0';
                     }
                 });
+        }
+        
+        // Universal Search Functionality
+        class UniversalSearch {
+            constructor() {
+                this.searchInput = document.getElementById('universalSearchInput');
+                this.searchResults = document.getElementById('universalSearchResults');
+                this.clearButton = document.getElementById('universalSearchClear');
+                this.loadingElement = document.getElementById('universalSearchLoading');
+                this.noResultsElement = document.getElementById('noResultsMessage');
+                
+                this.videosSection = document.getElementById('videosSection');
+                this.artistsSection = document.getElementById('artistsSection');
+                this.externalSection = document.getElementById('externalSection');
+                
+                this.videosResults = document.getElementById('videosResults');
+                this.artistsResults = document.getElementById('artistsResults');
+                this.externalResults = document.getElementById('externalResults');
+                
+                this.videosCount = document.getElementById('videosCount');
+                this.artistsCount = document.getElementById('artistsCount');
+                this.externalCount = document.getElementById('externalCount');
+                
+                this.searchTimeout = null;
+                this.isSearching = false;
+                
+                this.init();
+            }
+            
+            init() {
+                if (!this.searchInput) return;
+                
+                // Input event listener with debouncing
+                this.searchInput.addEventListener('input', (e) => {
+                    const query = e.target.value.trim();
+                    
+                    if (query.length === 0) {
+                        this.clearResults();
+                        this.clearButton.style.display = 'none';
+                        return;
+                    }
+                    
+                    this.clearButton.style.display = 'block';
+                    
+                    if (query.length < 2) {
+                        this.clearResults();
+                        return;
+                    }
+                    
+                    // Debounce search
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => {
+                        this.performSearch(query);
+                    }, 300);
+                });
+                
+                // Clear button
+                this.clearButton.addEventListener('click', () => {
+                    this.searchInput.value = '';
+                    this.clearResults();
+                    this.clearButton.style.display = 'none';
+                    this.searchInput.focus();
+                });
+                
+                // Close results when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.universal-search-container')) {
+                        this.hideResults();
+                    }
+                });
+                
+                // Keep results open when clicking inside
+                this.searchResults.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+                
+                // Focus handling
+                this.searchInput.addEventListener('focus', () => {
+                    if (this.searchInput.value.trim().length >= 2) {
+                        this.showResults();
+                    }
+                });
+            }
+            
+            async performSearch(query) {
+                if (this.isSearching) return;
+                
+                this.isSearching = true;
+                this.showLoading();
+                
+                try {
+                    const response = await fetch(`/api/videos/universal-search?q=${encodeURIComponent(query)}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Search failed: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    this.displayResults(data);
+                    
+                } catch (error) {
+                    console.error('Search error:', error);
+                    this.showError('Search failed. Please try again.');
+                } finally {
+                    this.isSearching = false;
+                    this.hideLoading();
+                }
+            }
+            
+            displayResults(data) {
+                this.clearSections();
+                
+                if (data.total === 0) {
+                    this.showNoResults();
+                    return;
+                }
+                
+                // Display videos
+                if (data.videos && data.videos.length > 0) {
+                    this.displayVideos(data.videos);
+                }
+                
+                // Display artists
+                if (data.artists && data.artists.length > 0) {
+                    this.displayArtists(data.artists);
+                }
+                
+                // Display external results
+                if (data.external && data.external.length > 0) {
+                    this.displayExternal(data.external);
+                }
+                
+                this.showResults();
+            }
+            
+            displayVideos(videos) {
+                this.videosCount.textContent = videos.length;
+                this.videosResults.innerHTML = '';
+                
+                videos.forEach(video => {
+                    const item = document.createElement('div');
+                    item.className = 'universal-search-result-item';
+                    item.innerHTML = `
+                        <iconify-icon icon="tabler:video" class="universal-search-result-icon"></iconify-icon>
+                        <div class="universal-search-result-content">
+                            <div class="universal-search-result-title">${this.escapeHtml(video.title)}</div>
+                            <div class="universal-search-result-subtitle">${this.escapeHtml(video.artist)} ${video.year ? `• ${video.year}` : ''}</div>
+                        </div>
+                        <button class="universal-search-result-action" data-video-id="${video.id}">View</button>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        window.location.href = video.url;
+                    });
+                    
+                    this.videosResults.appendChild(item);
+                });
+                
+                this.videosSection.style.display = 'block';
+            }
+            
+            displayArtists(artists) {
+                this.artistsCount.textContent = artists.length;
+                this.artistsResults.innerHTML = '';
+                
+                artists.forEach(artist => {
+                    const item = document.createElement('div');
+                    item.className = 'universal-search-result-item';
+                    item.innerHTML = `
+                        <iconify-icon icon="tabler:user" class="universal-search-result-icon"></iconify-icon>
+                        <div class="universal-search-result-content">
+                            <div class="universal-search-result-title">${this.escapeHtml(artist.name)}</div>
+                            <div class="universal-search-result-subtitle">${artist.video_count} video${artist.video_count !== 1 ? 's' : ''}</div>
+                        </div>
+                        <button class="universal-search-result-action" data-artist-id="${artist.id}">View</button>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        window.location.href = artist.url;
+                    });
+                    
+                    this.artistsResults.appendChild(item);
+                });
+                
+                this.artistsSection.style.display = 'block';
+            }
+            
+            displayExternal(external) {
+                this.externalCount.textContent = external.length;
+                this.externalResults.innerHTML = '';
+                
+                external.forEach(result => {
+                    const item = document.createElement('div');
+                    item.className = 'universal-search-result-item';
+                    
+                    const sourceIcon = result.source === 'YouTube' ? 'tabler:brand-youtube' : 'tabler:world';
+                    
+                    item.innerHTML = `
+                        <iconify-icon icon="${sourceIcon}" class="universal-search-result-icon"></iconify-icon>
+                        <div class="universal-search-result-content">
+                            <div class="universal-search-result-title">${this.escapeHtml(result.title)}</div>
+                            <div class="universal-search-result-subtitle">${this.escapeHtml(result.artist)} • ${result.source}</div>
+                        </div>
+                        <button class="universal-search-result-action" data-source="${result.source}" data-video-id="${result.video_id}">Add</button>
+                    `;
+                    
+                    const addButton = item.querySelector('.universal-search-result-action');
+                    addButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.addToLibrary(result);
+                    });
+                    
+                    this.externalResults.appendChild(item);
+                });
+                
+                this.externalSection.style.display = 'block';
+            }
+            
+            async addToLibrary(result) {
+                try {
+                    const source = result.source;
+                    const videoId = result.video_id;
+                    const title = result.title;
+                    const artist = result.artist;
+                    const url = result.source === 'YouTube' ? `https://youtube.com/watch?v=${videoId}` : '';
+                    
+                    // Use the existing addVideoToLibrary function if available
+                    if (typeof addVideoToLibrary === 'function') {
+                        await addVideoToLibrary(source, videoId, title, artist, url);
+                    } else {
+                        // Fallback to direct API call
+                        const endpoint = source === 'YouTube' ? '/api/videos/import-from-youtube' : '/api/videos/import-from-imvdb';
+                        
+                        const payload = source === 'YouTube' ? {
+                            youtube_id: videoId,
+                            url: url,
+                            title: title,
+                            artist: artist,
+                            auto_download: true
+                        } : {
+                            imvdb_id: videoId,
+                            auto_download: true
+                        };
+                        
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (response.ok) {
+                            showToast('Video added to library successfully!', 'success');
+                        } else {
+                            const error = await response.text();
+                            showToast(`Failed to add video: ${error}`, 'error');
+                        }
+                    }
+                    
+                    this.hideResults();
+                    
+                } catch (error) {
+                    console.error('Add to library error:', error);
+                    showToast('Failed to add video to library', 'error');
+                }
+            }
+            
+            showLoading() {
+                this.loadingElement.style.display = 'flex';
+                this.showResults();
+            }
+            
+            hideLoading() {
+                this.loadingElement.style.display = 'none';
+            }
+            
+            showResults() {
+                this.searchResults.style.display = 'block';
+            }
+            
+            hideResults() {
+                this.searchResults.style.display = 'none';
+            }
+            
+            clearResults() {
+                this.hideResults();
+                this.clearSections();
+            }
+            
+            clearSections() {
+                this.videosSection.style.display = 'none';
+                this.artistsSection.style.display = 'none';
+                this.externalSection.style.display = 'none';
+                this.noResultsElement.style.display = 'none';
+                this.hideLoading();
+            }
+            
+            showNoResults() {
+                this.noResultsElement.style.display = 'flex';
+                this.showResults();
+            }
+            
+            showError(message) {
+                showToast(message, 'error');
+                this.hideResults();
+            }
+            
+            escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+        }
+        
+        // Initialize universal search when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('universalSearchInput')) {
+                window.universalSearch = new UniversalSearch();
+            }
+            
+            // Initialize header functionality
+            initializeHeader();
+        });
+        
+        // Header functionality
+        function initializeHeader() {
+            // Synchronize header theme slider with main theme slider
+            const headerThemeSlider = document.getElementById('headerThemeSlider');
+            const headerThemeIcon = document.getElementById('headerThemeSliderIcon');
+            
+            if (headerThemeSlider && headerThemeIcon) {
+                // Update header theme slider to match current theme
+                updateHeaderThemeSlider();
+                
+                // Override the toggleDayNightMode function to update both sliders
+                const originalToggle = window.toggleDayNightMode;
+                window.toggleDayNightMode = function() {
+                    if (originalToggle) {
+                        originalToggle();
+                    }
+                    updateHeaderThemeSlider();
+                };
+            }
+            
+            // Header user menu dropdown functionality
+            const headerUserMenu = document.getElementById('headerUserMenu');
+            const headerUserInfo = headerUserMenu?.querySelector('.header-user-info');
+            const headerUserDropdown = document.getElementById('headerUserDropdown');
+            
+            if (headerUserInfo && headerUserDropdown) {
+                headerUserInfo.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isVisible = headerUserDropdown.style.display === 'block';
+                    headerUserDropdown.style.display = isVisible ? 'none' : 'block';
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!headerUserMenu.contains(e.target)) {
+                        headerUserDropdown.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Show/hide header user menu based on authentication
+            updateHeaderUserMenu();
+        }
+        
+        function updateHeaderThemeSlider() {
+            const headerThemeSlider = document.getElementById('headerThemeSlider');
+            const headerThemeIcon = document.getElementById('headerThemeSliderIcon');
+            
+            if (!headerThemeSlider || !headerThemeIcon) return;
+            
+            const isLightTheme = document.body.classList.contains('light-theme');
+            const thumb = headerThemeSlider.querySelector('.theme-slider-thumb');
+            
+            if (isLightTheme) {
+                thumb.style.left = '22px';
+                headerThemeIcon.setAttribute('icon', 'tabler:sun');
+            } else {
+                thumb.style.left = '2px';
+                headerThemeIcon.setAttribute('icon', 'tabler:moon');
+            }
+        }
+        
+        function updateHeaderUserMenu() {
+            const headerUserMenu = document.getElementById('headerUserMenu');
+            const headerUsername = document.getElementById('headerUsername');
+            const sidebarUserMenu = document.getElementById('userMenu');
+            const sidebarUsername = document.getElementById('username');
+            
+            if (!headerUserMenu) return;
+            
+            // Sync with sidebar user menu visibility and username
+            if (sidebarUserMenu && sidebarUsername) {
+                const isVisible = sidebarUserMenu.style.display !== 'none';
+                headerUserMenu.style.display = isVisible ? 'flex' : 'none';
+                
+                if (headerUsername && isVisible) {
+                    headerUsername.textContent = sidebarUsername.textContent || 'User';
+                }
+            }
+        }
+        
+        // Override the existing functions to sync with header
+        const originalShowUserMenu = window.showUserMenu;
+        if (originalShowUserMenu) {
+            window.showUserMenu = function() {
+                originalShowUserMenu();
+                updateHeaderUserMenu();
+            };
+        }
+        
+        const originalHideUserMenu = window.hideUserMenu;
+        if (originalHideUserMenu) {
+            window.hideUserMenu = function() {
+                originalHideUserMenu();
+                updateHeaderUserMenu();
+            };
         }
     </script>
 </body>

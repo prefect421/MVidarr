@@ -5055,3 +5055,114 @@ def update_video_safe(video_id):
     except Exception as e:
         logger.error(f"Error updating video {video_id}: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/universal-search", methods=["GET"])
+def universal_search():
+    """
+    Universal search endpoint that searches across videos, artists, and external sources
+    Returns results in structured sections for the universal search UI
+    """
+    try:
+        query = request.args.get("q", "").strip()
+        if not query or len(query) < 2:
+            return jsonify({
+                "videos": [],
+                "artists": [],
+                "external": [],
+                "total": 0
+            })
+
+        with get_db() as session:
+            results = {
+                "videos": [],
+                "artists": [],
+                "external": [],
+                "total": 0
+            }
+
+            # Search videos (limit to 5 for UI)
+            video_query = session.query(Video).join(Artist, Video.artist_id == Artist.id).filter(
+                or_(
+                    Video.title.ilike(f"%{query}%"),
+                    Artist.name.ilike(f"%{query}%")
+                )
+            ).limit(5)
+
+            for video in video_query:
+                results["videos"].append({
+                    "id": video.id,
+                    "title": video.title,
+                    "artist": video.artist.name if video.artist else "Unknown Artist",
+                    "year": video.year,
+                    "status": video.status.value if video.status else "unknown",
+                    "thumbnail": video.thumbnail_url,
+                    "url": f"/videos/{video.id}"
+                })
+
+            # Search artists (limit to 5 for UI)
+            artist_query = session.query(Artist).filter(
+                Artist.name.ilike(f"%{query}%")
+            ).limit(5)
+
+            for artist in artist_query:
+                video_count = session.query(Video).filter(Video.artist_id == artist.id).count()
+                results["artists"].append({
+                    "id": artist.id,
+                    "name": artist.name,
+                    "video_count": video_count,
+                    "monitored": artist.monitored,
+                    "genres": artist.genres or [],
+                    "url": f"/artists/{artist.id}"
+                })
+
+            # External search (IMVDb and YouTube) - limit to 5 total
+            external_results = []
+            
+            # IMVDb search
+            try:
+                imvdb_results = imvdb_service.search_videos(query, limit=3)
+                for result in imvdb_results:
+                    external_results.append({
+                        "source": "IMVDb",
+                        "id": result.get("id"),
+                        "title": result.get("song_title", "Unknown Title"),
+                        "artist": result.get("artist_name", "Unknown Artist"),
+                        "year": result.get("year"),
+                        "thumbnail": result.get("image"),
+                        "action": "add_to_library",
+                        "video_id": result.get("id")
+                    })
+            except Exception as e:
+                logger.warning(f"IMVDb search failed: {e}")
+
+            # YouTube search (if we have fewer than 5 external results)
+            remaining_slots = 5 - len(external_results)
+            if remaining_slots > 0:
+                try:
+                    from src.services.youtube_search_service import youtube_search_service
+                    youtube_results = youtube_search_service.search_videos(query, max_results=remaining_slots)
+                    
+                    for result in youtube_results:
+                        external_results.append({
+                            "source": "YouTube",
+                            "id": result.get("id"),
+                            "title": result.get("title", "Unknown Title"),
+                            "artist": result.get("channel_title", "Unknown Artist"),
+                            "thumbnail": result.get("thumbnail"),
+                            "duration": result.get("duration"),
+                            "view_count": result.get("view_count"),
+                            "action": "add_to_library",
+                            "video_id": result.get("id")
+                        })
+                except Exception as e:
+                    logger.warning(f"YouTube search failed: {e}")
+
+            results["external"] = external_results
+            results["total"] = len(results["videos"]) + len(results["artists"]) + len(results["external"])
+
+            return jsonify(results)
+
+    except Exception as e:
+        logger.error(f"Universal search error: {e}")
+        return jsonify({"error": str(e)}), 500
