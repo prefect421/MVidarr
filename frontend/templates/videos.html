@@ -2262,6 +2262,8 @@ function displaySearchResults(results) {
 
 async function addVideoToLibrary(source, videoId, title, artist, url) {
     try {
+        console.log('🔧 addVideoToLibrary called with:', {source, videoId, title, artist, url});
+        
         let endpoint, payload;
         
         if (source === 'IMVDb') {
@@ -2272,13 +2274,64 @@ async function addVideoToLibrary(source, videoId, title, artist, url) {
             };
         } else if (source === 'YouTube') {
             endpoint = '/api/videos/import-from-youtube';
+            
+            // For YouTube videos, we need to find or create the artist first
+            // since 'artist' parameter contains the artist name, not ID
+            console.log('🔧 Looking up artist ID for:', artist);
+            
+            let artistId;
+            try {
+                // First, try to find existing artist by name
+                const artistSearchResponse = await fetch(`/api/videos/search-artists?q=${encodeURIComponent(artist)}`);
+                if (artistSearchResponse.ok) {
+                    const artistData = await artistSearchResponse.json();
+                    const existingArtist = artistData.artists.find(a => a.name.toLowerCase() === artist.toLowerCase());
+                    
+                    if (existingArtist) {
+                        artistId = existingArtist.id;
+                        console.log('🔧 Found existing artist:', existingArtist.name, 'with ID:', artistId);
+                    } else {
+                        // Artist doesn't exist, create a new one
+                        console.log('🔧 Artist not found, creating new artist:', artist);
+                        const createArtistResponse = await fetch('/api/artists', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name: artist,
+                                monitored: true,
+                                auto_download: false
+                            })
+                        });
+                        
+                        if (createArtistResponse.ok) {
+                            const newArtist = await createArtistResponse.json();
+                            artistId = newArtist.id;
+                            console.log('🔧 Created new artist:', newArtist.name, 'with ID:', artistId);
+                        } else {
+                            const errorText = await createArtistResponse.text();
+                            console.error('🔧 Failed to create artist:', errorText);
+                            throw new Error(`Failed to create artist "${artist}": ${errorText}`);
+                        }
+                    }
+                } else {
+                    throw new Error('Failed to search for existing artists');
+                }
+            } catch (artistError) {
+                console.error('🔧 Error handling artist lookup/creation:', artistError);
+                throw new Error(`Failed to handle artist "${artist}": ${artistError.message}`);
+            }
+            
             payload = {
                 youtube_id: videoId,
                 url: url,
                 title: title,
-                artist_id: artist,
+                artist_id: artistId,
                 auto_download: true
             };
+            
+            console.log('🔧 Final YouTube payload:', payload);
         } else {
             throw new Error('Unknown video source');
         }
