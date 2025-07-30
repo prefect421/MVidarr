@@ -3953,6 +3953,9 @@ def import_video_from_youtube():
         skip_existing = data.get("skip_existing", True)
         priority = data.get("priority", 5)  # Default to normal priority
 
+        # Initialize variables to avoid undefined reference errors
+        artist_id = None
+
         with get_db() as session:
             # Handle artist - either by ID or by name
             if "artist_id" in data:
