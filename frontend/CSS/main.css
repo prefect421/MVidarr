@@ -1,5 +1,17 @@
 /* MVidarr Enhanced - Main CSS */
 
+/* Z-Index Scale - Proper layering hierarchy */
+:root {
+    --z-base: 0;
+    --z-content: 10;
+    --z-nav: 100;
+    --z-dropdown: 1000;
+    --z-overlay: 2000;
+    --z-modal: 9000;
+    --z-notification: 9999;
+    --z-tooltip: 10000;
+}
+
 /* Reset and base styles */
 * {
     margin: 0;
@@ -12,7 +24,7 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 9999;
+    z-index: var(--z-notification);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -20,11 +32,11 @@
 }
 
 .toast {
-    background-color: #333;
-    color: #fff;
+    background-color: var(--bg-modal, #333);
+    color: var(--text-primary, #fff);
     padding: 16px 20px;
     border-radius: 8px;
-    border-left: 4px solid #00d4ff;
+    border-left: 4px solid var(--info, #00d4ff);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transform: translateX(100%);
     transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -41,23 +53,23 @@
 }
 
 .toast.success {
-    border-left-color: #4caf50;
-    background-color: #1b5e20;
+    border-left-color: var(--success, #4caf50);
+    background-color: var(--success, #1b5e20);
 }
 
 .toast.error {
-    border-left-color: #f44336;
-    background-color: #d32f2f;
+    border-left-color: var(--error, #f44336);
+    background-color: var(--error, #d32f2f);
 }
 
 .toast.warning {
-    border-left-color: #ff9800;
-    background-color: #e65100;
+    border-left-color: var(--warning, #ff9800);
+    background-color: var(--warning, #e65100);
 }
 
 .toast.info {
-    border-left-color: #2196f3;
-    background-color: #1565c0;
+    border-left-color: var(--info, #2196f3);
+    background-color: var(--info, #1565c0);
 }
 
 .toast-icon {
@@ -4276,68 +4288,61 @@ body {
 }
 
 #settingsContent .settings-panel {
-    margin: 0 0 1rem 0 !important;
-    padding: 1.5rem !important;
-    background-color: #2a2a2a !important;
-    border-radius: 8px !important;
-    border: 1px solid #444 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+    margin: 0 0 1rem 0;
+    padding: 1.5rem;
+    background-color: var(--bg-card, #2a2a2a);
+    border-radius: 8px;
+    border: 1px solid var(--border-primary, #444);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #settingsContent .settings-panel:first-child {
-    margin-top: 0 !important;
+    margin-top: 0;
 }
 
 #settingsContent .settings-panel:last-child {
-    margin-bottom: 0 !important;
+    margin-bottom: 0;
 }
 
-/* Fix internal elements that may constrain width */
+/* Optimized settings grid layout */
 #settingsContent .settings-grid {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 1.5rem !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    margin-bottom: 0 !important;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0;
 }
 
 #settingsContent .metadata-panel {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    border-left: none !important;
-    border-right: none !important;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-left: none;
+    border-right: none;
 }
 
 #settingsContent .setting-group {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 #settingsContent .setting-group input,
 #settingsContent .setting-group select,
 #settingsContent .setting-group textarea {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 #settingsContent .input-group {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #settingsContent .metadata-tabs {

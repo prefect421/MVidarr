@@ -56,6 +56,9 @@
                 </div>
                 
                 <div class="theme-actions" id="theme-actions" style="display: none;">
+                    <button onclick="applyCurrentTheme()" class="btn btn-success">
+                        <iconify-icon icon="tabler:check"></iconify-icon> Apply Theme
+                    </button>
                     <button onclick="saveCurrentTheme()" class="btn btn-primary">
                         <iconify-icon icon="tabler:device-floppy"></iconify-icon> Save Theme
                     </button>
@@ -379,6 +382,7 @@
     padding: 20px;
     transition: all 0.3s ease;
     cursor: pointer;
+    position: relative;
 }
 
 .theme-card:hover {
@@ -390,6 +394,24 @@
 .theme-card.active {
     border-color: var(--text-accent);
     background: var(--bg-hover);
+}
+
+.theme-card.applied {
+    border-color: var(--success);
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+.theme-card.applied::after {
+    content: '✓ Applied';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--success);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .theme-preview {
@@ -430,6 +452,38 @@
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 0.75em;
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-success {
+    background: var(--success, #28a745);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--btn-secondary-bg, #6c757d);
+    color: var(--btn-secondary-text, white);
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
 }
 
 /* Customize Panel */
@@ -805,7 +859,30 @@ let previewMode = 'dark';
 document.addEventListener('DOMContentLoaded', function() {
     loadThemes();
     setupColorInputSynchronization();
+    loadCurrentlyAppliedTheme();
 });
+
+// Load currently applied theme and mark it as applied
+async function loadCurrentlyAppliedTheme() {
+    try {
+        const response = await fetch('/api/settings/ui_theme');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.value) {
+                const appliedThemeId = data.value;
+                // Wait for themes to load, then mark the applied theme
+                setTimeout(() => {
+                    const appliedCard = document.querySelector(`[data-theme-id="${appliedThemeId}"]`);
+                    if (appliedCard) {
+                        appliedCard.classList.add('applied');
+                    }
+                }, 1000);
+            }
+        }
+    } catch (error) {
+        console.log('Could not load currently applied theme');
+    }
+}
 
 // Helper function for API calls with authentication
 async function apiCall(url, options = {}) {
@@ -899,7 +976,7 @@ function renderThemesGrid() {
     }
     
     grid.innerHTML = allThemes.map(theme => `
-        <div class="theme-card" onclick="selectTheme('${theme.id || theme.name}')" data-theme-id="${theme.id || theme.name}">
+        <div class="theme-card" data-theme-id="${theme.id || theme.name}">
             <div class="theme-preview">
                 ${generateThemePreview(theme)}
             </div>
@@ -910,6 +987,14 @@ function renderThemesGrid() {
                     ${theme.is_built_in ? '<span class="theme-badge">Built-in</span>' : ''}
                     ${theme.is_public ? '<span class="theme-badge">Public</span>' : ''}
                     ${theme.creator_username ? `<span>by ${theme.creator_username}</span>` : ''}
+                </div>
+                <div class="theme-card-actions" style="margin-top: 10px; display: flex; gap: 5px;">
+                    <button onclick="quickApplyTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-success">
+                        <iconify-icon icon="tabler:check"></iconify-icon> Apply
+                    </button>
+                    <button onclick="selectTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-secondary">
+                        <iconify-icon icon="tabler:edit"></iconify-icon> ${theme.is_built_in ? 'View' : 'Edit'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -942,6 +1027,73 @@ function generateThemePreview(theme) {
         
         const colors = builtInColors[theme.name] || builtInColors['default'];
         return colors.map(color => `<div class="theme-color" style="background: ${color}"></div>`).join('');
+    }
+}
+
+// Quick apply theme directly from theme card
+async function quickApplyTheme(themeId) {
+    // Find the theme
+    const theme = allThemes.find(theme => (theme.id || theme.name) === themeId);
+    
+    if (!theme) {
+        showError('Theme not found');
+        return;
+    }
+    
+    try {
+        let themeToApply = theme;
+        
+        // If this is a built-in theme, get its CSS variables
+        if (theme.is_built_in) {
+            const extractResponse = await apiCall(`/api/themes/built-in/${theme.name}/extract`, {
+                method: 'POST'
+            });
+            if (extractResponse.ok) {
+                const extractData = await extractResponse.json();
+                themeToApply = {
+                    ...theme,
+                    theme_data: extractData.variables
+                };
+            }
+        }
+        
+        // Apply theme variables to the document
+        if (themeToApply.theme_data) {
+            Object.entries(themeToApply.theme_data).forEach(([cssVar, value]) => {
+                document.documentElement.style.setProperty(cssVar, value);
+            });
+        }
+        
+        // Save theme preference to settings
+        const response = await apiCall('/api/settings/ui_theme', {
+            method: 'POST',
+            body: JSON.stringify({
+                value: theme.id || theme.name
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to save theme setting');
+        }
+        
+        // Update the global theme variable
+        window.currentTheme = theme.id || theme.name;
+        document.documentElement.setAttribute('data-theme', window.currentTheme);
+        
+        // Update visual feedback on theme cards
+        document.querySelectorAll('.theme-card').forEach(card => {
+            card.classList.remove('applied');
+        });
+        const appliedCard = document.querySelector(`[data-theme-id="${themeId}"]`);
+        if (appliedCard) {
+            appliedCard.classList.add('applied');
+        }
+        
+        showSuccess(`Applied theme "${theme.display_name}" successfully!`);
+        
+    } catch (error) {
+        console.error('Failed to apply theme:', error);
+        showError('Failed to apply theme: ' + error.message);
     }
 }
 
@@ -985,10 +1137,34 @@ function loadThemeForCustomization(theme) {
     const colorPanel = document.getElementById('color-panel');
     
     if (theme.is_built_in) {
-        actions.style.display = 'none';
+        // Show apply and duplicate buttons for built-in themes
+        actions.innerHTML = `
+            <button onclick="applyCurrentTheme()" class="btn btn-success">
+                <iconify-icon icon="tabler:check"></iconify-icon> Apply Theme
+            </button>
+            <button onclick="duplicateCurrentTheme()" class="btn btn-secondary">
+                <iconify-icon icon="tabler:copy"></iconify-icon> Duplicate
+            </button>
+        `;
+        actions.style.display = 'block';
         colorPanel.style.display = 'none';
         metadata.innerHTML += '<p><em>Built-in themes cannot be edited directly. Use "Duplicate" to create a customizable copy.</em></p>';
     } else {
+        // Show all buttons for custom themes
+        actions.innerHTML = `
+            <button onclick="applyCurrentTheme()" class="btn btn-success">
+                <iconify-icon icon="tabler:check"></iconify-icon> Apply Theme
+            </button>
+            <button onclick="saveCurrentTheme()" class="btn btn-primary">
+                <iconify-icon icon="tabler:device-floppy"></iconify-icon> Save Theme
+            </button>
+            <button onclick="duplicateCurrentTheme()" class="btn btn-secondary">
+                <iconify-icon icon="tabler:copy"></iconify-icon> Duplicate
+            </button>
+            <button onclick="deleteCurrentTheme()" class="btn btn-danger">
+                <iconify-icon icon="tabler:trash"></iconify-icon> Delete
+            </button>
+        `;
         actions.style.display = 'block';
         colorPanel.style.display = 'block';
         
@@ -1130,6 +1306,61 @@ async function saveThemeModal() {
     } catch (error) {
         console.error('Failed to create theme:', error);
         showError('Failed to create theme: ' + error.message);
+    }
+}
+
+// Apply current theme to the application
+async function applyCurrentTheme() {
+    if (!currentTheme) {
+        showError('No theme selected');
+        return;
+    }
+    
+    try {
+        let themeToApply = currentTheme;
+        
+        // If this is a built-in theme, get its CSS variables
+        if (currentTheme.is_built_in) {
+            const extractResponse = await apiCall(`/api/themes/built-in/${currentTheme.name}/extract`, {
+                method: 'POST'
+            });
+            if (extractResponse.ok) {
+                const extractData = await extractResponse.json();
+                themeToApply = {
+                    ...currentTheme,
+                    theme_data: extractData.variables
+                };
+            }
+        }
+        
+        // Apply theme variables to the document
+        if (themeToApply.theme_data) {
+            Object.entries(themeToApply.theme_data).forEach(([cssVar, value]) => {
+                document.documentElement.style.setProperty(cssVar, value);
+            });
+        }
+        
+        // Save theme preference to settings
+        const response = await apiCall('/api/settings/ui_theme', {
+            method: 'POST',
+            body: JSON.stringify({
+                value: currentTheme.id || currentTheme.name
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to save theme setting');
+        }
+        
+        // Update the global theme variable
+        window.currentTheme = currentTheme.id || currentTheme.name;
+        document.documentElement.setAttribute('data-theme', window.currentTheme);
+        
+        showSuccess(`Applied theme "${currentTheme.display_name}" successfully!`);
+        
+    } catch (error) {
+        console.error('Failed to apply theme:', error);
+        showError('Failed to apply theme: ' + error.message);
     }
 }
 

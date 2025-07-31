@@ -1509,13 +1509,52 @@
                 .then(data => {
                     if (data.success && data.value) {
                         window.currentTheme = data.value;
+                        loadThemeVariables(data.value);
+                    } else {
+                        applyCurrentTheme();
                     }
-                    applyCurrentTheme();
                 })
                 .catch(error => {
                     console.log('Theme setting not found, using default');
                     applyCurrentTheme();
                 });
+        }
+        
+        // Load theme CSS variables
+        async function loadThemeVariables(themeId) {
+            try {
+                // First try to get it as a custom theme
+                let response = await fetch(`/api/themes/${themeId}`);
+                
+                if (response.ok) {
+                    const themeData = await response.json();
+                    if (themeData.theme_data) {
+                        Object.entries(themeData.theme_data).forEach(([cssVar, value]) => {
+                            document.documentElement.style.setProperty(cssVar, value);
+                        });
+                    }
+                } else {
+                    // Try as built-in theme
+                    response = await fetch(`/api/themes/built-in/${themeId}/extract`, {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        const extractData = await response.json();
+                        if (extractData.variables) {
+                            Object.entries(extractData.variables).forEach(([cssVar, value]) => {
+                                document.documentElement.style.setProperty(cssVar, value);
+                            });
+                        }
+                    }
+                }
+                
+                applyCurrentTheme();
+                
+            } catch (error) {
+                console.error('Failed to load theme variables:', error);
+                applyCurrentTheme();
+            }
         }
         
         function initializeThemeSystem() {
