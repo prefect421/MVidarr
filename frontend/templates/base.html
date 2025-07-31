@@ -224,16 +224,16 @@
         .theme-slider {
             width: 48px;
             height: 24px;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            background: var(--btn-primary-bg, #3b82f6);
             border-radius: 12px;
             position: relative;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 4px var(--shadow, rgba(0, 0, 0, 0.2));
         }
         
         .theme-slider.light-mode {
-            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            background: var(--warning, #fbbf24);
         }
         
         .theme-slider-track {
@@ -351,31 +351,31 @@
         /* Theme toggle button inherits light theme sidebar item styling */
         
         body.light-theme .main-content {
-            background: rgba(255, 255, 255, 0.4);
+            background: var(--bg-primary, rgba(255, 255, 255, 0.4));
             border-radius: 12px;
             margin: 1rem;
             margin-top: calc(60px + 1rem); /* Account for fixed header height + margin */
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px var(--shadow, rgba(0,0,0,0.1));
         }
         
         body.light-theme .footer {
-            background-color: #667eea;
-            color: #fff;
+            background-color: var(--nav-active, #667eea);
+            color: var(--text-inverse, #fff);
         }
         
         /* Light theme cards and components */
         body.light-theme .artists-actions,
         body.light-theme .videos-actions {
-            background: white;
-            border: 1px solid #e1e5e9;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: var(--bg-card, white);
+            border: 1px solid var(--border-primary, #e1e5e9);
+            box-shadow: 0 2px 4px var(--shadow, rgba(0, 0, 0, 0.1));
             border-radius: 8px;
         }
         
         body.light-theme .advanced-search-panel {
-            background: white;
-            border: 1px solid #e1e5e9;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: var(--bg-card, white);
+            border: 1px solid var(--border-primary, #e1e5e9);
+            box-shadow: 0 2px 8px var(--shadow, rgba(0, 0, 0, 0.1));
         }
         
         body.light-theme .advanced-search-panel:hover {
@@ -447,42 +447,11 @@
             color: #333;
         }
         
-        body.light-theme .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-        }
+        /* Button styles now handled by CSS variables in themes.css */
         
-        body.light-theme .btn-primary:hover {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
-        }
+        /* Additional light theme overrides removed - now handled by CSS variables */
         
-        body.light-theme .btn-secondary {
-            background: white;
-            border: 2px solid #e1e5e9;
-            color: #333;
-            border-radius: 8px;
-        }
-        
-        body.light-theme .btn-secondary:hover {
-            background: #f0f0ff;
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.15);
-        }
-        
-        body.light-theme .genre-tag {
-            background-color: rgba(102, 126, 234, 0.1);
-            color: #667eea;
-            border: 1px solid rgba(102, 126, 234, 0.3);
-        }
-        
-        body.light-theme .genre-tag:hover {
-            background-color: rgba(102, 126, 234, 0.2);
-            color: #5a67d8;
-        }
+        /* Genre tag hover now handled by CSS variables */
         
         /* User info section styling - compact and interactive */
         .sidebar-user-info {
