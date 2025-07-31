@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - MVidarr</title>
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='themes.css') }}" id="themes-stylesheet">
     <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
     <style>
         * {
@@ -497,6 +498,37 @@ The cookie file should contain YouTube authentication data including session tok
         
         // Check cookie status on page load
         document.addEventListener('DOMContentLoaded', checkCookieStatus);
+        
+        // Theme management
+        window.currentTheme = window.currentTheme || 'default';
+        window.currentMode = window.currentMode || 'dark';
+        
+        function applyCurrentTheme() {
+            document.documentElement.setAttribute('data-theme', window.currentTheme);
+            document.documentElement.setAttribute('data-mode', window.currentMode);
+        }
+        
+        function loadSavedTheme() {
+            const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
+            window.currentMode = savedDayNightMode || 'dark';
+            
+            fetch('/api/settings/ui_theme')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.value) {
+                        window.currentTheme = data.value;
+                    }
+                    applyCurrentTheme();
+                })
+                .catch(error => {
+                    console.log('Theme setting not found, using default');
+                    applyCurrentTheme();
+                });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedTheme();
+        });
     </script>
 </body>
 </html>
