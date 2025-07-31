@@ -1459,16 +1459,16 @@ body {
     flex: 1;
     max-width: 400px;
     padding: 0.75rem;
-    border: 1px solid #444;
+    border: 1px solid var(--input-border, #444);
     border-radius: 4px;
-    background: #2d2d2d;
-    color: #ffffff;
+    background: var(--input-bg, #2d2d2d);
+    color: var(--input-text, #ffffff);
     font-size: 1rem;
 }
 
 .search-container input:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
 }
 
 .action-buttons {
@@ -1583,16 +1583,16 @@ body {
 .discovery-search input {
     flex: 1;
     padding: 0.75rem;
-    border: 1px solid #444;
+    border: 1px solid var(--input-border, #444);
     border-radius: 4px;
-    background: #2d2d2d;
-    color: #ffffff;
+    background: var(--input-bg, #2d2d2d);
+    color: var(--input-text, #ffffff);
     font-size: 1rem;
 }
 
 .discovery-search input:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
 }
 
 .discovery-header {
@@ -2159,10 +2159,10 @@ body {
 .search-input-container input[type="text"] {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #444;
+    border: 1px solid var(--input-border, #444);
     border-radius: 4px;
-    background-color: #1a1a1a;
-    color: #ffffff;
+    background-color: var(--input-bg, #1a1a1a);
+    color: var(--input-text, #ffffff);
     font-size: 1rem;
 }
 

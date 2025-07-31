@@ -393,13 +393,13 @@
     --info: #cc66ff;
     
     /* Form Colors */
-    --input-bg: #2d2d2d;
+    --input-bg: #daa520;
     --input-text: #ffffff;
     --input-border: #fbb03b;
     --input-focus: #ffff66;
     
     /* Sidebar & Navigation */
-    --nav-bg: #1a1a1a;
+    --nav-bg: #daa520;
     --nav-text: #ffffff;
     --nav-hover: #333333;
     --nav-active: #fbb03b;
