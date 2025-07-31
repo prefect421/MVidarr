@@ -1489,7 +1489,7 @@
             if (body.classList.contains('light-theme')) {
                 // Switch to dark mode within current theme
                 body.classList.remove('light-theme');
-                currentMode = 'dark';
+                window.currentMode = 'dark';
                 
                 // Update slider to dark mode
                 if (toggleSlider) toggleSlider.classList.remove('light-mode');
@@ -1498,7 +1498,7 @@
             } else {
                 // Switch to light mode within current theme
                 body.classList.add('light-theme');
-                currentMode = 'light';
+                window.currentMode = 'light';
                 
                 // Update slider to light mode
                 if (toggleSlider) toggleSlider.classList.add('light-mode');
@@ -1515,8 +1515,9 @@
         }
 
         // Enhanced Theme Management System
-        let currentTheme = 'default';
-        let currentMode = 'dark';
+        // Use global variables to avoid redeclaration conflicts
+        window.currentTheme = window.currentTheme || 'default';
+        window.currentMode = window.currentMode || 'dark';
         
         // Load saved theme and mode on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -1527,14 +1528,14 @@
         function loadSavedTheme() {
             // Load saved day/night mode from localStorage
             const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
-            currentMode = savedDayNightMode || 'dark';
+            window.currentMode = savedDayNightMode || 'dark';
             
             // Load saved theme from settings API
             fetch('/api/settings/ui_theme')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.value) {
-                        currentTheme = data.value;
+                        window.currentTheme = data.value;
                     }
                     applyCurrentTheme();
                 })
@@ -1549,7 +1550,7 @@
             const toggleIcon = document.getElementById('themeSliderIcon');
             
             // Apply current mode to UI elements
-            if (currentMode === 'light') {
+            if (window.currentMode === 'light') {
                 document.body.classList.add('light-theme');
                 if (toggleBtn) toggleBtn.classList.add('light-mode');
                 if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
@@ -1562,8 +1563,8 @@
         
         function applyCurrentTheme() {
             // Apply theme data attributes to document
-            document.documentElement.setAttribute('data-theme', currentTheme);
-            document.documentElement.setAttribute('data-mode', currentMode);
+            document.documentElement.setAttribute('data-theme', window.currentTheme);
+            document.documentElement.setAttribute('data-mode', window.currentMode);
             
             // Update settings page preview if it exists
             if (typeof updateThemePreviewMode === 'function') {

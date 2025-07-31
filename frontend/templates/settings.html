@@ -4135,8 +4135,13 @@ body.light-theme .preview-text {
 
 <script>
 // Theme management functionality
-let currentTheme = 'default';
-let currentMode = 'dark';
+// Use existing global variables if available, otherwise create local ones
+if (typeof window.currentTheme === 'undefined') {
+    window.currentTheme = 'default';
+}
+if (typeof window.currentMode === 'undefined') {
+    window.currentMode = 'dark';
+}
 
 // Initialize theme settings
 document.addEventListener('DOMContentLoaded', function() {
@@ -4150,21 +4155,21 @@ function loadThemeSettings() {
         .then(response => response.json())
         .then(data => {
             if (data.success && data.value) {
-                currentTheme = data.value;
-                document.getElementById('ui_theme').value = currentTheme;
+                window.currentTheme = data.value;
+                document.getElementById('ui_theme').value = window.currentTheme;
                 updateThemePreview();
             }
         })
         .catch(error => console.log('Theme setting not found, using default'));
     
     // Get current light/dark mode from localStorage or body class
-    currentMode = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+    window.currentMode = document.body.classList.contains('light-theme') ? 'light' : 'dark';
 }
 
 function setupThemePreview() {
     const themeSelect = document.getElementById('ui_theme');
     themeSelect.addEventListener('change', function() {
-        currentTheme = this.value;
+        window.currentTheme = this.value;
         updateThemePreview();
         saveThemeSetting();
     });
@@ -4176,12 +4181,12 @@ function updateThemePreview() {
     const previewElement = document.getElementById('theme-preview');
     
     // Apply theme data attributes to preview element
-    previewElement.setAttribute('data-theme', currentTheme);
-    previewElement.setAttribute('data-mode', currentMode);
+    previewElement.setAttribute('data-theme', window.currentTheme);
+    previewElement.setAttribute('data-mode', window.currentMode);
     
     // Apply theme-specific styles to preview
-    if (currentTheme !== 'default') {
-        previewElement.style.cssText = getThemePreviewStyles(currentTheme, currentMode);
+    if (window.currentTheme !== 'default') {
+        previewElement.style.cssText = getThemePreviewStyles(window.currentTheme, window.currentMode);
     } else {
         previewElement.style.cssText = '';
     }
@@ -4201,7 +4206,7 @@ function saveThemeSetting() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            value: currentTheme
+            value: window.currentTheme
         })
     })
     .then(response => response.json())
@@ -4221,7 +4226,7 @@ function saveThemeSetting() {
 
 function applyThemeToInterface() {
     // Apply the selected theme to the main interface
-    document.documentElement.setAttribute('data-theme', currentTheme);
+    document.documentElement.setAttribute('data-theme', window.currentTheme);
     
     // Update preview when mode changes (from existing light/dark toggle)
     updateThemePreview();
@@ -4229,8 +4234,8 @@ function applyThemeToInterface() {
 
 // Hook into existing theme toggle functionality
 function updateThemePreviewMode() {
-    currentMode = document.body.classList.contains('light-theme') ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-mode', currentMode);
+    window.currentMode = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-mode', window.currentMode);
     updateThemePreview();
 }
 
