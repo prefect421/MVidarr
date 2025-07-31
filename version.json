@@ -1,13 +1,15 @@
 {
   "version": "0.9.3",
-  "build_date": "2025-07-31T13:04:04.637814",
-  "git_commit": "6166051",
+  "build_date": "2025-07-31T13:18:26.681329",
+  "git_commit": "76bf7c9",
   "git_branch": "dev",
   "release_name": "Development Version",
   "features": [
     "Development branch for upcoming features and improvements",
+    "Complete theme system implementation across all application pages",
     "Enhanced LCARS TNG theme with goldenrod sidebar and search bar backgrounds",
-    "Improved CSS variable system for consistent theming across search inputs",
+    "Universal theme support for authentication, admin, profile, and standalone pages",
+    "Improved CSS variable system for consistent theming throughout application",
     "Based on stable 0.9.2 release with all bug fixes and enhancements"
   ]
 }
