@@ -1505,9 +1505,18 @@
             
             // Load saved theme from settings API
             fetch('/api/settings/ui_theme')
-                .then(response => response.json())
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else if (response.status === 404) {
+                        // Setting doesn't exist yet, use default
+                        return null;
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                })
                 .then(data => {
-                    if (data.success && data.value) {
+                    if (data && data.value) {
                         window.currentTheme = data.value;
                         loadThemeVariables(data.value);
                     } else {

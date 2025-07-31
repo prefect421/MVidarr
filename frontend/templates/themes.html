@@ -868,7 +868,7 @@ async function loadCurrentlyAppliedTheme() {
         const response = await fetch('/api/settings/ui_theme');
         if (response.ok) {
             const data = await response.json();
-            if (data.success && data.value) {
+            if (data && data.value) {
                 const appliedThemeId = data.value;
                 // Wait for themes to load, then mark the applied theme
                 setTimeout(() => {
@@ -1066,7 +1066,7 @@ async function quickApplyTheme(themeId) {
         
         // Save theme preference to settings
         const response = await apiCall('/api/settings/ui_theme', {
-            method: 'POST',
+            method: 'PUT',
             body: JSON.stringify({
                 value: theme.id || theme.name
             })
@@ -1342,7 +1342,7 @@ async function applyCurrentTheme() {
         
         // Save theme preference to settings
         const response = await apiCall('/api/settings/ui_theme', {
-            method: 'POST',
+            method: 'PUT',
             body: JSON.stringify({
                 value: currentTheme.id || currentTheme.name
             })

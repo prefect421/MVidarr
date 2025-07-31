@@ -93,6 +93,7 @@ def init_default_settings():
             "http://127.0.0.1:5000/api/spotify/callback",
             "Spotify OAuth redirect URI",
         ),
+        ("ui_theme", "default", "User interface theme selection"),
     ]
 
     try:
