@@ -1064,16 +1064,22 @@ async function quickApplyTheme(themeId) {
             });
         }
         
-        // Save theme preference to settings
-        const response = await apiCall('/api/settings/ui_theme', {
-            method: 'PUT',
+        // Save theme preference using themes API
+        console.log('Attempting to save theme:', theme.id || theme.name);
+        const response = await apiCall('/api/themes/apply', {
+            method: 'POST',
             body: JSON.stringify({
-                value: theme.id || theme.name
+                theme_name: theme.id || theme.name
             })
         });
         
+        console.log('API response status:', response.status);
+        console.log('API response ok:', response.ok);
+        
         if (!response.ok) {
-            throw new Error('Failed to save theme setting');
+            const errorText = await response.text();
+            console.error('Theme apply API error:', response.status, errorText);
+            throw new Error(`Failed to apply theme: ${response.status} - ${errorText}`);
         }
         
         // Update the global theme variable
@@ -1340,16 +1346,22 @@ async function applyCurrentTheme() {
             });
         }
         
-        // Save theme preference to settings
-        const response = await apiCall('/api/settings/ui_theme', {
-            method: 'PUT',
+        // Save theme preference using themes API
+        console.log('Attempting to save current theme:', currentTheme.id || currentTheme.name);
+        const response = await apiCall('/api/themes/apply', {
+            method: 'POST',
             body: JSON.stringify({
-                value: currentTheme.id || currentTheme.name
+                theme_name: currentTheme.id || currentTheme.name
             })
         });
         
+        console.log('API response status:', response.status);
+        console.log('API response ok:', response.ok);
+        
         if (!response.ok) {
-            throw new Error('Failed to save theme setting');
+            const errorText = await response.text();
+            console.error('Theme apply API error:', response.status, errorText);
+            throw new Error(`Failed to apply theme: ${response.status} - ${errorText}`);
         }
         
         // Update the global theme variable

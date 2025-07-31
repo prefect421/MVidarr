@@ -1503,28 +1503,28 @@
             const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
             window.currentMode = savedDayNightMode || 'dark';
             
-            // Load saved theme from settings API
-            fetch('/api/settings/ui_theme')
+            // Load saved theme using themes API
+            fetch('/api/themes/current')
                 .then(response => {
                     if (response.ok) {
                         return response.json();
                     } else if (response.status === 404) {
-                        // Setting doesn't exist yet, use default
+                        // Theme not set yet, use default
                         return null;
                     } else {
                         throw new Error(`HTTP ${response.status}`);
                     }
                 })
                 .then(data => {
-                    if (data && data.value) {
-                        window.currentTheme = data.value;
-                        loadThemeVariables(data.value);
+                    if (data && data.current_theme) {
+                        window.currentTheme = data.current_theme;
+                        loadThemeVariables(data.current_theme);
                     } else {
                         applyCurrentTheme();
                     }
                 })
                 .catch(error => {
-                    console.log('Theme setting not found, using default');
+                    console.log('Current theme not found, using default');
                     applyCurrentTheme();
                 });
         }

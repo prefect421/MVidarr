@@ -428,3 +428,52 @@ def extract_built_in_theme(theme_name):
     except Exception as e:
         logger.error(f"Failed to extract built-in theme {theme_name}: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@themes_bp.route("/apply", methods=["POST"])
+@simple_auth_required
+def apply_theme():
+    """Apply a theme for the current user"""
+    try:
+        data = request.get_json()
+        if not data or "theme_name" not in data:
+            return jsonify({"error": "Theme name is required"}), 400
+
+        theme_name = data["theme_name"]
+        user_id = request.current_user.id
+
+        # Import settings service to save theme preference
+        from src.services.settings_service import SettingsService
+        
+        # Save the theme preference
+        if SettingsService.set("ui_theme", theme_name, "User interface theme selection"):
+            logger.info(f"Applied theme '{theme_name}' for user {user_id}")
+            return jsonify({
+                "message": f"Theme '{theme_name}' applied successfully",
+                "theme": theme_name
+            }), 200
+        else:
+            return jsonify({"error": "Failed to save theme preference"}), 500
+
+    except Exception as e:
+        logger.error(f"Failed to apply theme: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@themes_bp.route("/current", methods=["GET"])
+@simple_auth_required
+def get_current_theme():
+    """Get the current user's applied theme"""
+    try:
+        # Import settings service to get current theme
+        from src.services.settings_service import SettingsService
+        
+        current_theme = SettingsService.get("ui_theme", "default")
+        
+        return jsonify({
+            "current_theme": current_theme
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Failed to get current theme: {e}")
+        return jsonify({"error": str(e)}), 500
