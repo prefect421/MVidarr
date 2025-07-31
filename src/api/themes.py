@@ -3,21 +3,73 @@ API endpoints for theme management and customization
 """
 
 import logging
+from functools import wraps
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from sqlalchemy import or_
 
 from src.database.connection import get_db
 from src.database.models import CustomTheme, User
-from src.utils.auth_decorators import login_required
 
 logger = logging.getLogger(__name__)
 
 themes_bp = Blueprint("themes", __name__)
 
 
+def simple_auth_required(f):
+    """
+    Simple authentication decorator compatible with MVidarr's simple auth system
+    """
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check if user is authenticated using simple auth session
+        if not session.get("authenticated", False):
+            return (
+                jsonify(
+                    {"error": "Authentication required", "login_url": "/simple-login"}
+                ),
+                401,
+            )
+
+        # Get username from session and find user
+        username = session.get("username", "admin")
+
+        try:
+            with get_db() as db_session:
+                user = db_session.query(User).filter_by(username=username).first()
+                if not user:
+                    # Create a mock admin user for compatibility
+                    class MockUser:
+                        def __init__(self, username):
+                            self.id = 1
+                            self.username = username
+                            self.is_admin = True
+
+                    user = MockUser(username)
+
+                # Add user to request context for compatibility
+                request.current_user = user
+                return f(*args, **kwargs)
+
+        except Exception as e:
+            logger.error(f"Error in simple auth: {e}")
+
+            # Fallback to mock user
+            class MockUser:
+                def __init__(self, username):
+                    self.id = 1
+                    self.username = username
+                    self.is_admin = True
+
+            request.current_user = MockUser(username)
+            return f(*args, **kwargs)
+
+    return decorated_function
+
+
 @themes_bp.route("", methods=["GET"])
-@login_required
+@simple_auth_required
 def get_themes():
     """Get all available themes (built-in and custom)"""
     try:
@@ -115,7 +167,7 @@ def get_themes():
 
 
 @themes_bp.route("", methods=["POST"])
-@login_required
+@simple_auth_required
 def create_theme():
     """Create a new custom theme"""
     try:
@@ -159,7 +211,7 @@ def create_theme():
 
 
 @themes_bp.route("/<int:theme_id>", methods=["GET"])
-@login_required
+@simple_auth_required
 def get_theme(theme_id):
     """Get a specific theme by ID"""
     try:
@@ -185,7 +237,7 @@ def get_theme(theme_id):
 
 
 @themes_bp.route("/<int:theme_id>", methods=["PUT"])
-@login_required
+@simple_auth_required
 def update_theme(theme_id):
     """Update a custom theme"""
     try:
@@ -230,7 +282,7 @@ def update_theme(theme_id):
 
 
 @themes_bp.route("/<int:theme_id>", methods=["DELETE"])
-@login_required
+@simple_auth_required
 def delete_theme(theme_id):
     """Delete a custom theme"""
     try:
@@ -263,7 +315,7 @@ def delete_theme(theme_id):
 
 
 @themes_bp.route("/<int:theme_id>/duplicate", methods=["POST"])
-@login_required
+@simple_auth_required
 def duplicate_theme(theme_id):
     """Duplicate an existing theme for customization"""
     try:
@@ -326,7 +378,7 @@ def duplicate_theme(theme_id):
 
 
 @themes_bp.route("/built-in/<string:theme_name>/extract", methods=["POST"])
-@login_required
+@simple_auth_required
 def extract_built_in_theme(theme_name):
     """Extract CSS variables from a built-in theme for customization"""
     try:

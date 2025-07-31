@@ -807,6 +807,43 @@ document.addEventListener('DOMContentLoaded', function() {
     setupColorInputSynchronization();
 });
 
+// Helper function for API calls with authentication
+async function apiCall(url, options = {}) {
+    const defaultOptions = {
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    };
+    
+    const response = await fetch(url, { ...defaultOptions, ...options });
+    
+    if (response.status === 401) {
+        // Handle authentication required
+        try {
+            const errorData = await response.json();
+            if (errorData.login_url) {
+                showError('Authentication required. Redirecting to login...');
+                setTimeout(() => {
+                    window.location.href = errorData.login_url;
+                }, 2000);
+                throw new Error('Authentication required');
+            }
+        } catch (e) {
+            if (e.message !== 'Authentication required') {
+                showError('Authentication required. Please log in.');
+                setTimeout(() => {
+                    window.location.href = '/simple-login';
+                }, 2000);
+            }
+            throw new Error('Authentication required');
+        }
+    }
+    
+    return response;
+}
+
 // Theme tab switching
 function switchThemeTab(event, tabName) {
     // Hide all tab contents
@@ -825,7 +862,8 @@ function switchThemeTab(event, tabName) {
 // Load all themes from API
 async function loadThemes() {
     try {
-        const response = await fetch('/api/themes');
+        const response = await apiCall('/api/themes');
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -836,7 +874,18 @@ async function loadThemes() {
         
     } catch (error) {
         console.error('Failed to load themes:', error);
-        showError('Failed to load themes');
+        
+        if (error.message !== 'Authentication required') {
+            // Check if this is a JSON parsing error (common when getting HTML instead of JSON)
+            if (error.message.includes('JSON.parse') || error.message.includes('Unexpected token')) {
+                showError('Failed to load themes. You may need to log in first.');
+                setTimeout(() => {
+                    window.location.href = '/simple-login';
+                }, 2000);
+            } else {
+                showError('Failed to load themes: ' + error.message);
+            }
+        }
     }
 }
 
@@ -1027,7 +1076,7 @@ async function saveThemeModal() {
         // Get base theme data
         let themeData = {};
         if (baseTheme !== 'default') {
-            const extractResponse = await fetch(`/api/themes/built-in/${baseTheme}/extract`, {
+            const extractResponse = await apiCall(`/api/themes/built-in/${baseTheme}/extract`, {
                 method: 'POST'
             });
             if (extractResponse.ok) {
@@ -1054,11 +1103,8 @@ async function saveThemeModal() {
             };
         }
         
-        const response = await fetch('/api/themes', {
+        const response = await apiCall('/api/themes', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({
                 name: name,
                 display_name: displayName,
@@ -1095,11 +1141,8 @@ async function saveCurrentTheme() {
     }
     
     try {
-        const response = await fetch(`/api/themes/${currentTheme.id}`, {
+        const response = await apiCall(`/api/themes/${currentTheme.id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({
                 theme_data: currentTheme.theme_data
             })
@@ -1131,11 +1174,8 @@ async function duplicateCurrentTheme() {
             ? `/api/themes/built-in/${currentTheme.name}/extract`
             : `/api/themes/${currentTheme.id}/duplicate`;
             
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+        const response = await apiCall(endpoint, {
+            method: 'POST'
         });
         
         if (!response.ok) {
@@ -1164,7 +1204,7 @@ async function deleteCurrentTheme() {
     }
     
     try {
-        const response = await fetch(`/api/themes/${currentTheme.id}`, {
+        const response = await apiCall(`/api/themes/${currentTheme.id}`, {
             method: 'DELETE'
         });
         
