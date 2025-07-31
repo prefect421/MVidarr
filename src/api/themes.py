@@ -445,6 +445,9 @@ def extract_built_in_theme(theme_name):
                 "--warning": "#ffff00",
                 "--error": "#ff0000",
                 "--info": "#00ffff",
+                "--sidebar-bg": "#000000",
+                "--sidebar-bg-secondary": "#1a1a1a",
+                "--search-bar-bg": "#333333",
             },
             "lcars_ds9": {
                 "--bg-primary": "#000000",
@@ -460,6 +463,9 @@ def extract_built_in_theme(theme_name):
                 "--warning": "#ffff00",
                 "--error": "#ff0000",
                 "--info": "#00ffff",
+                "--sidebar-bg": "#000000",
+                "--sidebar-bg-secondary": "#1a1a1a",
+                "--search-bar-bg": "#333333",
             },
             "lcars_voy": {
                 "--bg-primary": "#000000",
@@ -475,6 +481,9 @@ def extract_built_in_theme(theme_name):
                 "--warning": "#ffff00",
                 "--error": "#ff0000",
                 "--info": "#00ffff",
+                "--sidebar-bg": "#000000",
+                "--sidebar-bg-secondary": "#1a1a1a",
+                "--search-bar-bg": "#333333",
             },
             "lcars_tng_e": {
                 "--bg-primary": "#000000",
@@ -490,6 +499,9 @@ def extract_built_in_theme(theme_name):
                 "--warning": "#ffff00",
                 "--error": "#ff0000",
                 "--info": "#00ffff",
+                "--sidebar-bg": "#000000",
+                "--sidebar-bg-secondary": "#1a1a1a",
+                "--search-bar-bg": "#333333",
             },
         }
 
@@ -551,4 +563,278 @@ def get_current_theme():
 
     except Exception as e:
         logger.error(f"Failed to get current theme: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@themes_bp.route("/built-in/<string:theme_name>/edit", methods=["POST"])
+@simple_auth_required
+def edit_built_in_theme(theme_name):
+    """Create a customized version of a built-in theme with user edits"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request data is required"}), 400
+
+        user_id = request.current_user.id
+
+        # Built-in theme definitions (reuse from extract endpoint)
+        built_in_themes = {
+            "default": {
+                "display_name": "Default",
+                "description": "Default MVidarr theme",
+                "variables": {
+                    "--bg-primary": "#1a1a1a",
+                    "--bg-secondary": "#2d2d2d", 
+                    "--bg-tertiary": "#3a3a3a",
+                    "--text-primary": "#ffffff",
+                    "--text-secondary": "#cccccc",
+                    "--text-accent": "#4a9eff",
+                    "--btn-primary-bg": "#4a9eff",
+                    "--btn-primary-text": "#ffffff",
+                    "--border-primary": "#444444",
+                    "--success": "#28a745",
+                    "--warning": "#ffc107",
+                    "--error": "#dc3545",
+                    "--info": "#17a2b8",
+                    "--sidebar-bg": "#1a1a1a",
+                    "--sidebar-bg-secondary": "#2d2d2d",
+                    "--search-bar-bg": "#2d2d2d",
+                }
+            },
+            "cyber": {
+                "display_name": "Cyber",
+                "description": "Cyberpunk-inspired theme",
+                "variables": {
+                    "--bg-primary": "#0a0a0a",
+                    "--bg-secondary": "#1a1a2e",
+                    "--bg-tertiary": "#16213e",
+                    "--text-primary": "#00ff00",
+                    "--text-secondary": "#00cccc",
+                    "--text-accent": "#ff00ff",
+                    "--btn-primary-bg": "#00ff00",
+                    "--btn-primary-text": "#000000",
+                    "--border-primary": "#00ff00",
+                    "--success": "#00ff00",
+                    "--warning": "#ffff00",
+                    "--error": "#ff0000",
+                    "--info": "#00ffff",
+                    "--sidebar-bg": "#0a0a0a",
+                    "--sidebar-bg-secondary": "#1a1a2e",
+                    "--search-bar-bg": "#16213e",
+                }
+            },
+            "vaporwave": {
+                "display_name": "VaporWave",
+                "description": "Synthwave/vaporwave aesthetic",
+                "variables": {
+                    "--bg-primary": "#0d0221",
+                    "--bg-secondary": "#1a0933",
+                    "--bg-tertiary": "#2d1b69",
+                    "--text-primary": "#ffffff",
+                    "--text-secondary": "#e0b3ff",
+                    "--text-accent": "#ff3cac",
+                    "--btn-primary-bg": "#ff3cac",
+                    "--btn-primary-text": "#ffffff",
+                    "--border-primary": "#662d91",
+                    "--success": "#00ff88",
+                    "--warning": "#ffaa00",
+                    "--error": "#ff0080",
+                    "--info": "#00ddff",
+                    "--sidebar-bg": "#0d0221",
+                    "--sidebar-bg-secondary": "#1a0933",
+                    "--search-bar-bg": "#2d1b69",
+                }
+            },
+            "lcars_tng": {
+                "display_name": "LCARS - TNG",
+                "description": "Star Trek: The Next Generation theme",
+                "variables": {
+                    "--bg-primary": "#000000",
+                    "--bg-secondary": "#1a1a1a",
+                    "--bg-tertiary": "#333333",
+                    "--text-primary": "#ffffff",
+                    "--text-secondary": "#cccccc",
+                    "--text-accent": "#fbb03b",
+                    "--btn-primary-bg": "#fbb03b",
+                    "--btn-primary-text": "#000000",
+                    "--border-primary": "#fbb03b",
+                    "--success": "#00ff00",
+                    "--warning": "#ffff00",
+                    "--error": "#ff0000",
+                    "--info": "#00ffff",
+                    "--sidebar-bg": "#000000",
+                    "--sidebar-bg-secondary": "#1a1a1a",
+                    "--search-bar-bg": "#333333",
+                }
+            },
+            "lcars_ds9": {
+                "display_name": "LCARS - DS9",
+                "description": "Star Trek: Deep Space Nine theme",
+                "variables": {
+                    "--bg-primary": "#000000",
+                    "--bg-secondary": "#1a1a1a",
+                    "--bg-tertiary": "#333333",
+                    "--text-primary": "#ffffff",
+                    "--text-secondary": "#cccccc",
+                    "--text-accent": "#c04c00",
+                    "--btn-primary-bg": "#c04c00",
+                    "--btn-primary-text": "#ffffff",
+                    "--border-primary": "#c04c00",
+                    "--success": "#00ff00",
+                    "--warning": "#ffff00",
+                    "--error": "#ff0000",
+                    "--info": "#00ffff",
+                    "--sidebar-bg": "#000000",
+                    "--sidebar-bg-secondary": "#1a1a1a",
+                    "--search-bar-bg": "#333333",
+                }
+            },
+            "lcars_voy": {
+                "display_name": "LCARS - Voy",
+                "description": "Star Trek: Voyager theme",
+                "variables": {
+                    "--bg-primary": "#000000",
+                    "--bg-secondary": "#1a1a1a",
+                    "--bg-tertiary": "#333333",
+                    "--text-primary": "#ffffff",
+                    "--text-secondary": "#cccccc",
+                    "--text-accent": "#ffb07c",
+                    "--btn-primary-bg": "#ffb07c",
+                    "--btn-primary-text": "#1a1a1a",
+                    "--border-primary": "#ffb07c",
+                    "--success": "#00ff00",
+                    "--warning": "#ffff00",
+                    "--error": "#ff0000",
+                    "--info": "#00ffff",
+                    "--sidebar-bg": "#000000",
+                    "--sidebar-bg-secondary": "#1a1a1a",
+                    "--search-bar-bg": "#333333",
+                }
+            },
+            "lcars_tng_e": {
+                "display_name": "LCARS - TNG-E",
+                "description": "Star Trek: Enterprise theme",
+                "variables": {
+                    "--bg-primary": "#000000",
+                    "--bg-secondary": "#1a1a1a",
+                    "--bg-tertiary": "#333333",
+                    "--text-primary": "#ffffff",
+                    "--text-secondary": "#cccccc",
+                    "--text-accent": "#d97904",
+                    "--btn-primary-bg": "#d97904",
+                    "--btn-primary-text": "#ffffff",
+                    "--border-primary": "#d97904",
+                    "--success": "#00ff00",
+                    "--warning": "#ffff00",
+                    "--error": "#ff0000",
+                    "--info": "#00ffff",
+                    "--sidebar-bg": "#000000",
+                    "--sidebar-bg-secondary": "#1a1a1a",
+                    "--search-bar-bg": "#333333",
+                }
+            }
+        }
+
+        if theme_name not in built_in_themes:
+            return jsonify({"error": "Built-in theme not found"}), 404
+
+        built_in_theme = built_in_themes[theme_name]
+
+        # Validate required fields
+        if "name" not in data:
+            return jsonify({"error": "Theme name is required"}), 400
+
+        with get_db() as session:
+            # Check if theme name already exists
+            existing = session.query(CustomTheme).filter_by(name=data["name"]).first()
+            if existing:
+                return jsonify({"error": "Theme name already exists"}), 400
+
+            # Merge built-in variables with user customizations
+            theme_variables = built_in_theme["variables"].copy()
+            if "theme_data" in data and isinstance(data["theme_data"], dict):
+                theme_variables.update(data["theme_data"])
+
+            # Create new customized theme
+            custom_theme = CustomTheme(
+                name=data["name"],
+                display_name=data.get("display_name", built_in_theme["display_name"]),
+                description=data.get("description", built_in_theme["description"]),
+                created_by=user_id,
+                is_public=data.get("is_public", False),
+                is_built_in=False,
+                theme_data=theme_variables,
+            )
+
+            session.add(custom_theme)
+            session.commit()
+
+            logger.info(f"Created custom theme '{custom_theme.name}' based on built-in theme '{theme_name}' by user {user_id}")
+            return jsonify(custom_theme.to_dict()), 201
+
+    except Exception as e:
+        logger.error(f"Failed to edit built-in theme {theme_name}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@themes_bp.route("/built-in/<string:theme_name>/duplicate", methods=["POST"])
+@simple_auth_required
+def duplicate_built_in_theme(theme_name):
+    """Duplicate a built-in theme for customization"""
+    try:
+        data = request.get_json() or {}
+        user_id = request.current_user.id
+
+        # Built-in theme definitions (reuse from extract endpoint)
+        built_in_themes = {
+            "default": {"display_name": "Default", "description": "Default MVidarr theme"},
+            "cyber": {"display_name": "Cyber", "description": "Cyberpunk-inspired theme"},
+            "vaporwave": {"display_name": "VaporWave", "description": "Synthwave/vaporwave aesthetic"},
+            "lcars_tng": {"display_name": "LCARS - TNG", "description": "Star Trek: The Next Generation theme"},
+            "lcars_ds9": {"display_name": "LCARS - DS9", "description": "Star Trek: Deep Space Nine theme"},
+            "lcars_voy": {"display_name": "LCARS - Voy", "description": "Star Trek: Voyager theme"},
+            "lcars_tng_e": {"display_name": "LCARS - TNG-E", "description": "Star Trek: Enterprise theme"}
+        }
+
+        if theme_name not in built_in_themes:
+            return jsonify({"error": "Built-in theme not found"}), 404
+
+        # Extract theme variables from the extract endpoint definition
+        extract_response = extract_built_in_theme(theme_name)
+        if extract_response[1] != 200:
+            return jsonify({"error": "Failed to extract theme variables"}), 500
+        
+        theme_variables = extract_response[0].get_json()["variables"]
+
+        with get_db() as session:
+            built_in_theme = built_in_themes[theme_name]
+            
+            # Generate unique name for duplicate
+            base_name = data.get("name", f"{theme_name}_custom")
+            new_name = base_name
+            counter = 1
+
+            while session.query(CustomTheme).filter_by(name=new_name).first():
+                new_name = f"{base_name}_{counter}"
+                counter += 1
+
+            # Create duplicate theme with customizations
+            duplicate = CustomTheme(
+                name=new_name,
+                display_name=data.get("display_name", f"{built_in_theme['display_name']} (Custom)"),
+                description=data.get("description", f"Custom version of {built_in_theme['display_name']}"),
+                created_by=user_id,
+                is_public=False,
+                is_built_in=False,
+                theme_data=data.get("theme_data", theme_variables),
+            )
+
+            session.add(duplicate)
+            session.commit()
+
+            logger.info(f"Duplicated built-in theme '{theme_name}' as '{duplicate.name}' by user {user_id}")
+            return jsonify(duplicate.to_dict()), 201
+
+    except Exception as e:
+        logger.error(f"Failed to duplicate built-in theme {theme_name}: {e}")
         return jsonify({"error": str(e)}), 500

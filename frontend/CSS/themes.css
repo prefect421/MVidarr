@@ -55,6 +55,9 @@
     --nav-text: #ffffff;
     --nav-hover: #404040;
     --nav-active: #4a9eff;
+    --sidebar-bg: #1a1a1a;
+    --sidebar-bg-secondary: #2d2d2d;
+    --search-bar-bg: #2d2d2d;
     
     /* Shadow */
     --shadow: rgba(0, 0, 0, 0.3);
@@ -106,6 +109,9 @@
     --nav-text: #495057;
     --nav-hover: #e9ecef;
     --nav-active: #0066cc;
+    --sidebar-bg: #ffffff;
+    --sidebar-bg-secondary: #f8f9fa;
+    --search-bar-bg: #ffffff;
     
     /* Shadow */
     --shadow: rgba(0, 0, 0, 0.1);
@@ -167,6 +173,9 @@
     --nav-text: #e4eaf1;
     --nav-hover: #1e2a33;
     --nav-active: #00fff7;
+    --sidebar-bg: #0b0f14;
+    --sidebar-bg-secondary: #12181f;
+    --search-bar-bg: #1a2129;
     
     /* Shadow */
     --shadow: rgba(0, 255, 247, 0.15);
@@ -224,6 +233,9 @@
     --nav-text: #1d1f21;
     --nav-hover: #e8ecf0;
     --nav-active: #007f7b;
+    --sidebar-bg: #f3f6fa;
+    --sidebar-bg-secondary: #ffffff;
+    --search-bar-bg: #ffffff;
     
     /* Shadow */
     --shadow: rgba(0, 127, 123, 0.15);
@@ -285,6 +297,9 @@
     --nav-text: #ffffff;
     --nav-hover: #3d1574;
     --nav-active: #ff3cac;
+    --sidebar-bg: #0d0221;
+    --sidebar-bg-secondary: #1a0440;
+    --search-bar-bg: #2f0f5d;
     
     /* Shadow */
     --shadow: rgba(255, 60, 172, 0.2);
@@ -342,6 +357,9 @@
     --nav-text: #2c003e;
     --nav-hover: #f0d9ff;
     --nav-active: #9b5de5;
+    --sidebar-bg: #f8f0ff;
+    --sidebar-bg-secondary: #ffe3f4;
+    --search-bar-bg: #ffffff;
     
     /* Shadow */
     --shadow: rgba(155, 93, 229, 0.15);
@@ -403,6 +421,9 @@
     --nav-text: #ffffff;
     --nav-hover: #333333;
     --nav-active: #fbb03b;
+    --sidebar-bg: #000000;
+    --sidebar-bg-secondary: #1a1a1a;
+    --search-bar-bg: #2d2d2d;
     
     /* Shadow */
     --shadow: rgba(251, 176, 59, 0.2);
@@ -460,6 +481,9 @@
     --nav-text: #000000;
     --nav-hover: #ebebeb;
     --nav-active: #cc7700;
+    --sidebar-bg: #f5f5f5;
+    --sidebar-bg-secondary: #ffffff;
+    --search-bar-bg: #ffffff;
     
     /* Shadow */
     --shadow: rgba(204, 119, 0, 0.15);
@@ -521,6 +545,9 @@
     --nav-text: #ffffff;
     --nav-hover: #333333;
     --nav-active: #c04c00;
+    --sidebar-bg: #000000;
+    --sidebar-bg-secondary: #1a1a1a;
+    --search-bar-bg: #2d2d2d;
     
     /* Shadow */
     --shadow: rgba(192, 76, 0, 0.2);
@@ -578,6 +605,9 @@
     --nav-text: #000000;
     --nav-hover: #ebebeb;
     --nav-active: #803300;
+    --sidebar-bg: #f5f5f5;
+    --sidebar-bg-secondary: #ffffff;
+    --search-bar-bg: #ffffff;
     
     /* Shadow */
     --shadow: rgba(128, 51, 0, 0.15);
@@ -639,6 +669,9 @@
     --nav-text: #ffffff;
     --nav-hover: #333333;
     --nav-active: #ffb07c;
+    --sidebar-bg: #000000;
+    --sidebar-bg-secondary: #1a1a1a;
+    --search-bar-bg: #2d2d2d;
     
     /* Shadow */
     --shadow: rgba(255, 176, 124, 0.2);
@@ -696,6 +729,9 @@
     --nav-text: #1a1a1a;
     --nav-hover: #f0d9b3;
     --nav-active: #cc5500;
+    --sidebar-bg: #f5e3c3;
+    --sidebar-bg-secondary: #ffffff;
+    --search-bar-bg: #ffffff;
     
     /* Shadow */
     --shadow: rgba(204, 85, 0, 0.15);
@@ -757,6 +793,9 @@
     --nav-text: #ffffff;
     --nav-hover: #333333;
     --nav-active: #d97904;
+    --sidebar-bg: #000000;
+    --sidebar-bg-secondary: #1a1a1a;
+    --search-bar-bg: #2d2d2d;
     
     /* Shadow */
     --shadow: rgba(217, 121, 4, 0.2);
@@ -814,6 +853,9 @@
     --nav-text: #000000;
     --nav-hover: #ebebeb;
     --nav-active: #b36600;
+    --sidebar-bg: #f5f5f5;
+    --sidebar-bg-secondary: #ffffff;
+    --search-bar-bg: #ffffff;
     
     /* Shadow */
     --shadow: rgba(179, 102, 0, 0.15);
