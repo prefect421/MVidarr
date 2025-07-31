@@ -4,26 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - MVidarr</title>
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='themes.css') }}" id="themes-stylesheet">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
             margin: 0;
             padding: 0;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--text-primary, #ffffff);
         }
         
         .login-container {
-            background: white;
+            background: var(--bg-secondary, white);
             border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px var(--shadow, rgba(0,0,0,0.1));
             padding: 2rem;
             width: 100%;
             max-width: 400px;
             margin: 1rem;
+            border: 1px solid var(--border-primary, transparent);
         }
         
         .logo {
@@ -32,14 +35,14 @@
         }
         
         .logo h1 {
-            color: #333;
+            color: var(--text-primary, #333);
             margin: 0;
             font-size: 2rem;
             font-weight: 700;
         }
         
         .logo p {
-            color: #666;
+            color: var(--text-secondary, #666);
             margin: 0.5rem 0 0 0;
             font-size: 0.9rem;
         }
@@ -51,30 +54,32 @@
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #333;
+            color: var(--text-primary, #333);
             font-weight: 500;
         }
         
         .form-group input {
             width: 100%;
             padding: 0.75rem;
-            border: 2px solid #e1e5e9;
+            border: 2px solid var(--input-border, #e1e5e9);
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.3s;
             box-sizing: border-box;
+            background: var(--input-bg, #ffffff);
+            color: var(--input-text, #333);
         }
         
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--input-focus, #667eea);
         }
         
         .login-button {
             width: 100%;
             padding: 0.75rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--btn-primary-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+            color: var(--btn-primary-text, white);
             border: none;
             border-radius: 8px;
             font-size: 1rem;
@@ -85,6 +90,7 @@
         }
         
         .login-button:hover {
+            background: var(--btn-primary-hover, #667eea);
             transform: translateY(-2px);
         }
         
@@ -97,12 +103,12 @@
         .oauth-section {
             margin-top: 2rem;
             padding-top: 1.5rem;
-            border-top: 1px solid #e1e5e9;
+            border-top: 1px solid var(--border-primary, #e1e5e9);
         }
         
         .oauth-title {
             text-align: center;
-            color: #666;
+            color: var(--text-secondary, #666);
             margin-bottom: 1rem;
             font-size: 0.9rem;
         }
@@ -111,10 +117,10 @@
             width: 100%;
             padding: 0.75rem;
             margin-bottom: 0.5rem;
-            border: 2px solid #e1e5e9;
+            border: 2px solid var(--border-primary, #e1e5e9);
             border-radius: 8px;
-            background: white;
-            color: #333;
+            background: var(--bg-card, white);
+            color: var(--text-primary, #333);
             text-decoration: none;
             display: flex;
             align-items: center;
@@ -124,8 +130,8 @@
         }
         
         .oauth-button:hover {
-            border-color: #667eea;
-            background: #f8f9fa;
+            border-color: var(--text-accent, #667eea);
+            background: var(--bg-hover, #f8f9fa);
         }
         
         .oauth-button.authentik {
@@ -159,17 +165,17 @@
         }
         
         .error-message {
-            background: #fee;
-            color: #c33;
+            background: var(--error, #fee);
+            color: var(--text-inverse, #c33);
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1rem;
-            border: 1px solid #fcc;
+            border: 1px solid var(--border-secondary, #fcc);
         }
         
         .loading {
             text-align: center;
-            color: #666;
+            color: var(--text-secondary, #666);
             margin-top: 1rem;
         }
         
@@ -260,6 +266,39 @@
         
         // Auto-focus username field
         document.getElementById('username').focus();
+        
+        // Theme management for login page
+        window.currentTheme = window.currentTheme || 'default';
+        window.currentMode = window.currentMode || 'dark';
+        
+        function applyCurrentTheme() {
+            document.documentElement.setAttribute('data-theme', window.currentTheme);
+            document.documentElement.setAttribute('data-mode', window.currentMode);
+        }
+        
+        function loadSavedTheme() {
+            const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
+            window.currentMode = savedDayNightMode || 'dark';
+            
+            // Load saved theme from settings API
+            fetch('/api/settings/ui_theme')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.value) {
+                        window.currentTheme = data.value;
+                    }
+                    applyCurrentTheme();
+                })
+                .catch(error => {
+                    console.log('Theme setting not found, using default');
+                    applyCurrentTheme();
+                });
+        }
+        
+        // Load theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedTheme();
+        });
     </script>
 </body>
 </html>
