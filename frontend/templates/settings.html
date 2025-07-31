@@ -30,6 +30,9 @@
         <button class="settings-tab-btn" onclick="switchTab(event, 'system-tab')">
             <iconify-icon icon="tabler:tool" class="tab-icon"></iconify-icon> System
         </button>
+        <button class="settings-tab-btn" onclick="switchTab(event, 'themes-tab')">
+            <iconify-icon icon="tabler:palette" class="tab-icon"></iconify-icon> Themes
+        </button>
     </div>
 
     <!-- Tab Content -->
@@ -99,42 +102,6 @@
             </div>
         </div>
 
-        <div class="settings-section">
-            <h2>User Interface</h2>
-            <div class="form-group">
-                <label for="ui_theme">Theme:</label>
-                <select id="ui_theme" name="ui_theme">
-                    <option value="default">Default</option>
-                    <option value="Cyber">Cyber</option>
-                    <option value="VaporWave">VaporWave</option>
-                    <option value="LCARS - TNG">LCARS - TNG</option>
-                    <option value="LCARS - DS9">LCARS - DS9</option>
-                    <option value="LCARS - Voy">LCARS - Voy</option>
-                    <option value="LCARS - TNG-E">LCARS - TNG-E</option>
-                </select>
-                <div class="form-help">
-                    <small>Choose your preferred theme. Use the light/dark toggle to switch between modes within the selected theme.</small>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Theme Preview:</label>
-                <div id="theme-preview" class="theme-preview">
-                    <div class="preview-card">
-                        <div class="preview-header">
-                            <span class="preview-title">Sample Interface</span>
-                            <button class="preview-button">Button</button>
-                        </div>
-                        <div class="preview-content">
-                            <p class="preview-text">This is how text will appear with your selected theme.</p>
-                            <div class="preview-form">
-                                <input type="text" class="preview-input" placeholder="Input field">
-                                <button class="preview-button-secondary">Secondary</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="settings-section">
             <h2>Paths</h2>
@@ -562,6 +529,182 @@
             </div>
         </div>
         
+            </div>
+        </div>
+
+        <!-- Themes Tab -->
+        <div id="themes-tab" class="settings-tab-panel">
+            <div class="themes-container">
+                
+                <!-- Theme Actions -->
+                <div class="theme-actions">
+                    <button onclick="refreshThemes()" class="btn btn-secondary">
+                        <iconify-icon icon="tabler:refresh" style="margin-right: 5px;"></iconify-icon>
+                        Refresh Themes
+                    </button>
+                </div>
+
+                <!-- Theme Tabs -->
+                <div class="theme-tabs">
+                    <button class="theme-tab-btn active" onclick="switchThemeTab(event, 'browse-tab')">
+                        <iconify-icon icon="tabler:grid-3x3" class="tab-icon"></iconify-icon> Browse Themes
+                    </button>
+                    <button class="theme-tab-btn" onclick="switchThemeTab(event, 'customize-tab')">
+                        <iconify-icon icon="tabler:brush" class="tab-icon"></iconify-icon> Customize
+                    </button>
+                </div>
+
+                <!-- Browse Themes Tab -->
+                <div id="browse-tab" class="theme-tab-content active">
+                    <div class="themes-grid-container">
+                        <h3>Available Themes</h3>
+                        <div id="themes-grid" class="themes-grid">
+                            <!-- Themes will be loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customize Tab -->
+                <div id="customize-tab" class="theme-tab-content">
+                    <div class="theme-customize-container">
+                        <div class="customize-header">
+                            <h3>Theme Customizer</h3>
+                            <p class="customize-description">
+                                Select a theme to customize its colors and properties. Changes are applied immediately as you make them.
+                            </p>
+                        </div>
+
+                        <!-- Theme Selection for Customization -->
+                        <div class="customize-theme-selection">
+                            <h4>Select Theme to Customize</h4>
+                            <div id="customize-theme-grid" class="customize-themes-grid">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Color Customization Panel -->
+                        <div id="color-customization-panel" class="color-panel" style="display: none;">
+                            <div class="panel-header">
+                                <h4 id="customizing-theme-name">Customizing: Theme Name</h4>
+                                <div class="panel-actions">
+                                    <button onclick="resetToDefault()" class="btn btn-secondary">
+                                        <iconify-icon icon="tabler:refresh"></iconify-icon>
+                                        Reset to Default
+                                    </button>
+                                    <button onclick="applyCurrentTheme()" class="btn btn-success">
+                                        <iconify-icon icon="tabler:check"></iconify-icon>
+                                        Apply Theme
+                                    </button>
+                                    <button onclick="saveCustomTheme()" class="btn btn-primary">
+                                        <iconify-icon icon="tabler:device-floppy"></iconify-icon>
+                                        Save as Custom
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Color Controls -->
+                            <div class="color-controls">
+                                <div class="color-groups">
+                                    <!-- Background Colors -->
+                                    <div class="color-group">
+                                        <h5>Background Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="bg-primary">Primary Background:</label>
+                                                <input type="color" id="bg-primary" data-css-var="--bg-primary">
+                                                <span class="color-value">#1a1a1a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="bg-secondary">Secondary Background:</label>
+                                                <input type="color" id="bg-secondary" data-css-var="--bg-secondary">
+                                                <span class="color-value">#2d2d2d</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="bg-tertiary">Tertiary Background:</label>
+                                                <input type="color" id="bg-tertiary" data-css-var="--bg-tertiary">
+                                                <span class="color-value">#3a3a3a</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Text Colors -->
+                                    <div class="color-group">
+                                        <h5>Text Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="text-primary">Primary Text:</label>
+                                                <input type="color" id="text-primary" data-css-var="--text-primary">
+                                                <span class="color-value">#ffffff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="text-secondary">Secondary Text:</label>
+                                                <input type="color" id="text-secondary" data-css-var="--text-secondary">
+                                                <span class="color-value">#cccccc</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="text-accent">Accent Text:</label>
+                                                <input type="color" id="text-accent" data-css-var="--text-accent">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Button Colors -->
+                                    <div class="color-group">
+                                        <h5>Button Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="btn-primary-bg">Primary Button Background:</label>
+                                                <input type="color" id="btn-primary-bg" data-css-var="--btn-primary-bg">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="btn-primary-text">Primary Button Text:</label>
+                                                <input type="color" id="btn-primary-text" data-css-var="--btn-primary-text">
+                                                <span class="color-value">#ffffff</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Border and Accent Colors -->
+                                    <div class="color-group">
+                                        <h5>Border & Accent Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="border-primary">Primary Border:</label>
+                                                <input type="color" id="border-primary" data-css-var="--border-primary">
+                                                <span class="color-value">#444444</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="success-color">Success Color:</label>
+                                                <input type="color" id="success-color" data-css-var="--success">
+                                                <span class="color-value">#00ff00</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="error-color">Error Color:</label>
+                                                <input type="color" id="error-color" data-css-var="--error">
+                                                <span class="color-value">#ff0000</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="warning-color">Warning Color:</label>
+                                                <input type="color" id="warning-color" data-css-var="--warning">
+                                                <span class="color-value">#ffff00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Live Preview -->
+                            <div class="theme-preview-section">
+                                <h5>Live Preview</h5>
+                                <div class="preview-container">
+                                    <!-- Preview sections will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -4131,6 +4274,339 @@ body.light-theme .preview-header {
 body.light-theme .preview-text {
     color: var(--text-secondary, #495057);
 }
+
+/* ============== THEMES TAB STYLES ============== */
+
+.themes-container {
+    padding: 0;
+}
+
+.theme-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.theme-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-primary, #444);
+    margin-bottom: 2rem;
+}
+
+.theme-tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #ccc);
+    padding: 1rem 2rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-tab-btn:hover {
+    color: var(--text-primary, #fff);
+    background: color-mix(in srgb, var(--text-accent, #4a9eff) 10%, transparent);
+}
+
+.theme-tab-btn.active {
+    color: var(--text-accent, #4a9eff);
+    border-bottom-color: var(--text-accent, #4a9eff);
+}
+
+.theme-tab-content {
+    display: none;
+}
+
+.theme-tab-content.active {
+    display: block;
+}
+
+/* Themes Grid */
+.themes-grid-container h3 {
+    color: var(--text-primary, #fff);
+    margin-bottom: 1.5rem;
+}
+
+.themes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.theme-card {
+    background: var(--bg-secondary, #2d2d2d);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.theme-card:hover {
+    border-color: var(--text-accent, #4a9eff);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--text-accent, #4a9eff) 20%, transparent);
+}
+
+.theme-card.applied {
+    border-color: var(--success, #00ff00);
+    background: color-mix(in srgb, var(--success, #00ff00) 5%, var(--bg-secondary, #2d2d2d));
+}
+
+.theme-card.applied::before {
+    content: "✓ Applied";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--success, #00ff00);
+    color: var(--bg-primary, #000);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.theme-preview-mini {
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-primary, #444);
+}
+
+.preview-bg {
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.5rem;
+}
+
+.preview-accent {
+    width: 40px;
+    height: 8px;
+    border-radius: 2px;
+}
+
+.theme-info h4 {
+    color: var(--text-primary, #fff);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.theme-description {
+    color: var(--text-secondary, #ccc);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.theme-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.theme-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.theme-badge.built-in {
+    background: var(--info, #17a2b8);
+    color: var(--text-primary, #fff);
+}
+
+.theme-badge.public {
+    background: var(--success, #28a745);
+    color: var(--text-primary, #fff);
+}
+
+.theme-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Customize Theme Selection */
+.customize-theme-selection h4 {
+    color: var(--text-primary, #fff);
+    margin-bottom: 1rem;
+}
+
+.customize-themes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.customize-theme-card {
+    background: var(--bg-secondary, #2d2d2d);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.customize-theme-card:hover {
+    border-color: var(--text-accent, #4a9eff);
+}
+
+.customize-theme-card.active {
+    border-color: var(--text-accent, #4a9eff);
+    background: color-mix(in srgb, var(--text-accent, #4a9eff) 10%, var(--bg-secondary, #2d2d2d));
+}
+
+.customize-theme-card .theme-preview-mini {
+    height: 40px;
+    margin-bottom: 0.5rem;
+}
+
+.theme-name {
+    color: var(--text-primary, #fff);
+    font-size: 0.875rem;
+}
+
+/* Color Customization Panel */
+.color-panel {
+    background: var(--bg-secondary, #2d2d2d);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-primary, #444);
+}
+
+.panel-header h4 {
+    color: var(--text-primary, #fff);
+    margin: 0;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.color-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.color-group h5 {
+    color: var(--text-accent, #4a9eff);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.color-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.color-input-group label {
+    color: var(--text-primary, #fff);
+    min-width: 180px;
+    font-size: 0.9rem;
+}
+
+.color-input-group input[type="color"] {
+    width: 50px;
+    height: 35px;
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.color-value {
+    color: var(--text-secondary, #ccc);
+    font-family: monospace;
+    font-size: 0.875rem;
+    min-width: 80px;
+}
+
+.theme-preview-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-primary, #444);
+}
+
+.theme-preview-section h5 {
+    color: var(--text-accent, #4a9eff);
+    margin-bottom: 1rem;
+}
+
+.preview-container {
+    background: var(--bg-tertiary, #3a3a3a);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+    padding: 1.5rem;
+    min-height: 200px;
+}
+
+.no-themes {
+    text-align: center;
+    color: var(--text-secondary, #ccc);
+    font-style: italic;
+    padding: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .themes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .customize-themes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+    
+    .color-groups {
+        grid-template-columns: 1fr;
+    }
+    
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .color-input-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .color-input-group label {
+        min-width: auto;
+    }
+}
 </style>
 
 <script>
@@ -4261,6 +4737,385 @@ window.saveSettings = async function() {
         originalSaveSettings();
     }
 };
+
+// ============== THEMES TAB FUNCTIONALITY ==============
+
+let allThemes = [];
+let currentTheme = null;
+
+// Initialize themes when tab is activated
+function initializeThemesTab() {
+    if (document.getElementById('themes-tab').classList.contains('active')) {
+        loadThemes();
+    }
+}
+
+// Theme tab switching functionality
+function switchThemeTab(event, tabId) {
+    // Remove active class from all theme tabs and panels
+    const tabButtons = document.querySelectorAll('.theme-tab-btn');
+    const tabPanels = document.querySelectorAll('.theme-tab-content');
+    
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabPanels.forEach(panel => panel.classList.remove('active'));
+    
+    // Add active class to clicked tab and corresponding panel
+    event.target.classList.add('active');
+    const targetPanel = document.getElementById(tabId);
+    if (targetPanel) {
+        targetPanel.classList.add('active');
+        
+        // Load customize grid if switching to customize tab
+        if (tabId === 'customize-tab') {
+            loadCustomizeThemeGrid();
+        }
+    }
+}
+
+// Load all themes from API
+async function loadThemes() {
+    try {
+        const response = await fetch('/api/themes');
+        if (!response.ok) throw new Error('Failed to load themes');
+        
+        const data = await response.json();
+        allThemes = data.themes;
+        renderThemesGrid();
+        loadCustomizeThemeGrid();
+        
+    } catch (error) {
+        console.error('Failed to load themes:', error);
+        showError('Failed to load themes: ' + error.message);
+    }
+}
+
+// Render themes grid
+function renderThemesGrid() {
+    const grid = document.getElementById('themes-grid');
+    
+    if (allThemes.length === 0) {
+        grid.innerHTML = '<p class="no-themes">No themes available. Check your internet connection or refresh the page.</p>';
+        return;
+    }
+
+    grid.innerHTML = allThemes.map(theme => `
+        <div class="theme-card ${theme.is_applied ? 'applied' : ''}" data-theme-id="${theme.id || theme.name}">
+            <div class="theme-preview-mini">
+                <div class="preview-bg" style="background: ${theme.theme_data?.['--bg-primary'] || '#1a1a1a'};">
+                    <div class="preview-accent" style="background: ${theme.theme_data?.['--text-accent'] || '#4a9eff'};"></div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h4 class="theme-title">${theme.display_name || theme.name}</h4>
+                <p class="theme-description">${theme.description || 'No description available'}</p>
+                <div class="theme-meta">
+                    ${theme.is_built_in ? '<span class="theme-badge built-in">Built-in</span>' : ''}
+                    ${theme.is_public ? '<span class="theme-badge public">Public</span>' : ''}
+                </div>
+            </div>
+            <div class="theme-actions">
+                <button onclick="quickApplyTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-success">
+                    Apply
+                </button>
+                <button onclick="selectTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-primary">
+                    Customize
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Load customize theme grid
+function loadCustomizeThemeGrid() {
+    const grid = document.getElementById('customize-theme-grid');
+    if (!grid || allThemes.length === 0) return;
+    
+    grid.innerHTML = allThemes.map(theme => `
+        <div class="customize-theme-card" data-theme-id="${theme.id || theme.name}" onclick="selectTheme('${theme.id || theme.name}')">
+            <div class="theme-preview-mini">
+                <div class="preview-bg" style="background: ${theme.theme_data?.['--bg-primary'] || '#1a1a1a'};">
+                    <div class="preview-accent" style="background: ${theme.theme_data?.['--text-accent'] || '#4a9eff'};"></div>
+                </div>
+            </div>
+            <span class="theme-name">${theme.display_name || theme.name}</span>
+        </div>
+    `).join('');
+}
+
+// Quick apply theme directly from theme card
+async function quickApplyTheme(themeId) {
+    const theme = allThemes.find(theme => (theme.id || theme.name) === themeId);
+    
+    if (!theme) {
+        showError('Theme not found');
+        return;
+    }
+    
+    try {
+        let themeToApply = theme;
+        
+        // If this is a built-in theme, get its CSS variables
+        if (theme.is_built_in) {
+            const extractResponse = await fetch(`/api/themes/built-in/${theme.name}/extract`, {
+                method: 'POST'
+            });
+            if (extractResponse.ok) {
+                const extractData = await extractResponse.json();
+                themeToApply = {
+                    ...theme,
+                    theme_data: extractData.variables
+                };
+            }
+        }
+        
+        // Apply theme variables to the document
+        if (themeToApply.theme_data) {
+            Object.entries(themeToApply.theme_data).forEach(([cssVar, value]) => {
+                document.documentElement.style.setProperty(cssVar, value);
+            });
+        }
+        
+        // Save theme preference using themes API
+        const response = await fetch('/api/themes/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                theme_name: theme.id || theme.name
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to apply theme: ${response.status} - ${errorText}`);
+        }
+        
+        // Update the global theme variable
+        window.currentTheme = theme.id || theme.name;
+        document.documentElement.setAttribute('data-theme', window.currentTheme);
+        
+        // Update visual feedback on theme cards
+        document.querySelectorAll('.theme-card').forEach(card => {
+            card.classList.remove('applied');
+        });
+        const appliedCard = document.querySelector(`[data-theme-id="${themeId}"]`);
+        if (appliedCard) {
+            appliedCard.classList.add('applied');
+        }
+        
+        showSuccess(`Applied theme "${theme.display_name}" successfully!`);
+        
+    } catch (error) {
+        console.error('Failed to apply theme:', error);
+        showError('Failed to apply theme: ' + error.message);
+    }
+}
+
+// Select a theme for customization
+function selectTheme(themeId) {
+    // Remove active class from all cards
+    document.querySelectorAll('.customize-theme-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    // Add active class to selected card
+    const selectedCard = document.querySelector(`[data-theme-id="${themeId}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('active');
+    }
+    
+    // Find the theme
+    currentTheme = allThemes.find(theme => (theme.id || theme.name) === themeId);
+    
+    if (currentTheme) {
+        loadThemeForCustomization(currentTheme);
+        // Switch to customize tab if not already active
+        const customizeTab = document.querySelector('[onclick*="customize-tab"]');
+        if (customizeTab && !customizeTab.classList.contains('active')) {
+            switchThemeTab({target: customizeTab}, 'customize-tab');
+        }
+    }
+}
+
+// Load theme for customization
+async function loadThemeForCustomization(theme) {
+    let themeData = theme.theme_data;
+    
+    // If this is a built-in theme, extract its variables
+    if (theme.is_built_in && !themeData) {
+        try {
+            const response = await fetch(`/api/themes/built-in/${theme.name}/extract`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                const extractData = await response.json();
+                themeData = extractData.variables;
+            }
+        } catch (error) {
+            console.error('Failed to extract theme variables:', error);
+            themeData = {};
+        }
+    }
+    
+    // Update theme name
+    document.getElementById('customizing-theme-name').textContent = `Customizing: ${theme.display_name || theme.name}`;
+    
+    // Load colors into inputs
+    const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
+    colorInputs.forEach(input => {
+        const cssVar = input.dataset.cssVar;
+        const value = themeData?.[cssVar] || input.nextElementSibling.textContent;
+        input.value = value;
+        input.nextElementSibling.textContent = value;
+        
+        // Apply the color to the document for live preview
+        document.documentElement.style.setProperty(cssVar, value);
+        
+        // Add event listener for live updates
+        input.addEventListener('input', function() {
+            document.documentElement.style.setProperty(cssVar, this.value);
+            this.nextElementSibling.textContent = this.value;
+        });
+    });
+    
+    // Show the customization panel
+    document.getElementById('color-customization-panel').style.display = 'block';
+}
+
+// Apply current theme
+async function applyCurrentTheme() {
+    if (!currentTheme) {
+        showError('No theme selected');
+        return;
+    }
+    
+    try {
+        // Get current values from color inputs
+        const themeData = {};
+        const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
+        colorInputs.forEach(input => {
+            const cssVar = input.dataset.cssVar;
+            themeData[cssVar] = input.value;
+        });
+        
+        // Apply theme variables to the document
+        Object.entries(themeData).forEach(([cssVar, value]) => {
+            document.documentElement.style.setProperty(cssVar, value);
+        });
+        
+        // Save theme preference using themes API
+        const response = await fetch('/api/themes/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                theme_name: currentTheme.id || currentTheme.name
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to apply theme: ${response.status} - ${errorText}`);
+        }
+        
+        // Update the global theme variable
+        window.currentTheme = currentTheme.id || currentTheme.name;
+        document.documentElement.setAttribute('data-theme', window.currentTheme);
+        
+        showSuccess(`Applied theme "${currentTheme.display_name}" successfully!`);
+        
+    } catch (error) {
+        console.error('Failed to apply theme:', error);
+        showError('Failed to apply theme: ' + error.message);
+    }
+}
+
+// Reset to default colors
+async function resetToDefault() {
+    if (!currentTheme) return;
+    
+    try {
+        // Reload the original theme
+        await loadThemeForCustomization(currentTheme);
+        showSuccess('Reset to default colors');
+    } catch (error) {
+        console.error('Failed to reset theme:', error);
+        showError('Failed to reset theme: ' + error.message);
+    }
+}
+
+// Save custom theme
+async function saveCustomTheme() {
+    if (!currentTheme) {
+        showError('No theme selected');
+        return;
+    }
+    
+    const customName = prompt('Enter a name for your custom theme:', `${currentTheme.display_name || currentTheme.name} Custom`);
+    if (!customName) return;
+    
+    try {
+        // Get current values from color inputs
+        const themeData = {};
+        const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
+        colorInputs.forEach(input => {
+            const cssVar = input.dataset.cssVar;
+            themeData[cssVar] = input.value;
+        });
+        
+        // Save custom theme
+        const response = await fetch('/api/themes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: customName.toLowerCase().replace(/\s+/g, '_'),
+                display_name: customName,
+                description: `Custom theme based on ${currentTheme.display_name || currentTheme.name}`,
+                theme_data: themeData
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to save custom theme: ${response.status} - ${errorText}`);
+        }
+        
+        showSuccess(`Custom theme "${customName}" saved successfully!`);
+        loadThemes(); // Reload themes to show the new custom theme
+        
+    } catch (error) {
+        console.error('Failed to save custom theme:', error);
+        showError('Failed to save custom theme: ' + error.message);
+    }
+}
+
+// Refresh themes
+function refreshThemes() {
+    loadThemes()
+        .then(() => showSuccess('Themes refreshed successfully!'))
+        .catch(error => showError('Failed to refresh themes: ' + error.message));
+}
+
+// Helper functions for notifications
+function showSuccess(message) {
+    console.log('Success:', message);
+    // You can implement toast notifications here if available
+}
+
+function showError(message) {
+    console.error('Error:', message);
+    // You can implement toast notifications here if available
+}
+
+// Override the main switchTab function to initialize themes when themes tab is activated
+const originalSwitchTab = switchTab;
+switchTab = function(event, tabId) {
+    originalSwitchTab(event, tabId);
+    
+    if (tabId === 'themes-tab') {
+        // Small delay to ensure tab is fully activated
+        setTimeout(initializeThemesTab, 100);
+    }
+};
+
 </script>
 
 {% endblock %}
