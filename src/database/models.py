@@ -536,3 +536,53 @@ class PlaylistMonitor(Base):
         return (
             f"<PlaylistMonitor(name='{self.name}', playlist_id='{self.playlist_id}')>"
         )
+
+
+class CustomTheme(Base):
+    """Custom theme model for theme customization"""
+
+    __tablename__ = "custom_themes"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True)
+    display_name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    is_public = Column(Boolean, default=False, nullable=False)
+    is_built_in = Column(Boolean, default=False, nullable=False)
+
+    # Theme definition stored as JSON with CSS variables
+    theme_data = Column(JSON, nullable=False)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    creator = relationship("User", backref="created_themes")
+
+    __table_args__ = (
+        Index("idx_custom_theme_name", "name"),
+        Index("idx_custom_theme_creator", "created_by"),
+        Index("idx_custom_theme_public", "is_public"),
+        {"extend_existing": True},
+    )
+
+    def to_dict(self):
+        """Convert to dictionary for API responses"""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "display_name": self.display_name,
+            "description": self.description,
+            "created_by": self.created_by,
+            "creator_username": self.creator.username if self.creator else None,
+            "is_public": self.is_public,
+            "is_built_in": self.is_built_in,
+            "theme_data": self.theme_data,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<CustomTheme(name='{self.name}', display_name='{self.display_name}')>"

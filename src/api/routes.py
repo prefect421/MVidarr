@@ -22,6 +22,7 @@ from src.api.settings import settings_bp
 
 # External integration blueprints
 from src.api.spotify import spotify_bp
+from src.api.themes import themes_bp
 from src.api.two_factor import two_factor_bp
 from src.api.users import users_bp
 from src.api.video_discovery import video_discovery_bp
@@ -46,6 +47,7 @@ def register_routes(app):
     api_bp.register_blueprint(artists_bp)
     api_bp.register_blueprint(videos_bp)
     api_bp.register_blueprint(settings_bp)
+    api_bp.register_blueprint(themes_bp, url_prefix="/themes")
     api_bp.register_blueprint(health_bp)
     api_bp.register_blueprint(users_bp)
     api_bp.register_blueprint(video_org_bp)

@@ -5,7 +5,15 @@ Database initialization and migration utilities
 from sqlalchemy import text
 
 from src.database.connection import Base, get_engine
-from src.database.models import Artist, Download, Setting, TaskQueue, User, Video
+from src.database.models import (
+    Artist,
+    CustomTheme,
+    Download,
+    Setting,
+    TaskQueue,
+    User,
+    Video,
+)
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.database")
@@ -248,6 +256,7 @@ def check_database_health():
                 "downloads",
                 "users",
                 "task_queue",
+                "custom_themes",
             ]
             for table in tables:
                 result = connection.execute(text(f"SHOW TABLES LIKE '{table}'"))

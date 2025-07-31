@@ -3806,24 +3806,28 @@ def import_video_from_imvdb():
             if not video_data:
                 # If direct fetch fails, try to find the video through search
                 # This can happen due to IMVDb API inconsistencies
-                logger.warning(f"Direct fetch failed for IMVDb ID {imvdb_id}, trying search fallback")
-                
+                logger.warning(
+                    f"Direct fetch failed for IMVDb ID {imvdb_id}, trying search fallback"
+                )
+
                 # Try to search for the video using artist info
                 if "title" in data and data["title"]:
                     # Use provided title if available
                     search_query = data["title"]
                     if artist_name:
                         search_query = f"{artist_name} {data['title']}"
-                    
+
                     search_results = imvdb_service.search_videos(search_query)
                     if search_results and search_results.get("results"):
                         # Look for a video with matching ID in search results
                         for result_video in search_results["results"]:
                             if str(result_video.get("id")) == str(imvdb_id):
                                 video_data = result_video
-                                logger.info(f"Found video via search fallback: {imvdb_id}")
+                                logger.info(
+                                    f"Found video via search fallback: {imvdb_id}"
+                                )
                                 break
-                
+
                 if not video_data:
                     return jsonify({"error": "Video not found on IMVDb"}), 404
 
