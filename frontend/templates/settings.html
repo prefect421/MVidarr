@@ -4171,7 +4171,8 @@ function setupThemePreview() {
     themeSelect.addEventListener('change', function() {
         window.currentTheme = this.value;
         updateThemePreview();
-        saveThemeSetting();
+        // Note: Theme will be saved when user clicks "Save Settings" button
+        // This prevents duplicate API calls and race conditions
     });
     
     updateThemePreview();
@@ -4200,7 +4201,7 @@ function getThemePreviewStyles(theme, mode) {
 
 function saveThemeSetting() {
     // Save theme setting to database
-    fetch('/api/settings/ui_theme', {
+    return fetch('/api/settings/ui_theme', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -4216,11 +4217,13 @@ function saveThemeSetting() {
             // Apply theme to main interface
             applyThemeToInterface();
         } else {
-            console.error('Failed to save theme setting');
+            console.error('Failed to save theme setting:', data.error || 'Unknown error');
+            throw new Error(data.error || 'Failed to save theme setting');
         }
     })
     .catch(error => {
         console.error('Error saving theme setting:', error);
+        throw error; // Re-throw so the calling function can handle it
     });
 }
 
@@ -4241,8 +4244,14 @@ function updateThemePreviewMode() {
 
 // Extend existing saveSettings function to include theme
 const originalSaveSettings = window.saveSettings;
-window.saveSettings = function() {
-    saveThemeSetting();
+window.saveSettings = async function() {
+    try {
+        await saveThemeSetting();
+    } catch (error) {
+        console.error('Error saving theme setting:', error);
+        // Continue with other settings even if theme save fails
+    }
+    
     if (originalSaveSettings) {
         originalSaveSettings();
     }
