@@ -33,6 +33,7 @@
     <meta name="apple-mobile-web-app-title" content="MVidarr">
     
     <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='main.css') }}" id="main-theme">
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='themes.css') }}" id="themes-stylesheet">
     <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
     <!-- Test if Iconify works at all -->
     <script>
@@ -68,20 +69,20 @@
         }
         
         .genre-tag {
-            background-color: #e3f2fd;
-            color: #1976d2;
+            background-color: var(--bg-tertiary, #e3f2fd);
+            color: var(--text-accent, #1976d2);
             padding: 0.25rem 0.5rem;
             border-radius: 0.5rem;
             font-size: 0.875rem;
             font-weight: 500;
-            border: 1px solid #bbdefb;
+            border: 1px solid var(--border-secondary, #bbdefb);
             transition: all 0.2s ease;
         }
         
         .genre-tag:hover {
-            background-color: #bbdefb;
+            background-color: var(--bg-hover, #bbdefb);
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px var(--shadow, rgba(0, 0, 0, 0.1));
         }
         
         /* Apply Bauhaus styling to common elements */
@@ -99,10 +100,10 @@
             position: absolute;
             top: calc(100% - 2px);  /* Small overlap to prevent gaps */
             left: 0;
-            background-color: #2d2d2d;
-            border: 1px solid #444;
+            background-color: var(--bg-secondary, #2d2d2d);
+            border: 1px solid var(--border-primary, #444);
             border-radius: 4px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 6px var(--shadow, rgba(0, 0, 0, 0.3));
             min-width: 180px;
             z-index: 1500;
             padding: 8px 0;
@@ -123,8 +124,8 @@
         }
         
         .nav-dropdown-menu a:hover {
-            background-color: #444;
-            color: #00d4ff;
+            background-color: var(--nav-hover, #444);
+            color: var(--nav-active, #00d4ff);
         }
         
         /* Improved hover behavior with transition delay */
@@ -634,12 +635,10 @@
         
         /* Version display styling */
         .version-display {
-            border-top: 1px solid #333;
         }
         
         body.light-theme .version-display {
             color: #666 !important;
-            border-top-color: rgba(0, 0, 0, 0.1) !important;
         }
         
         /* Universal Search Styles */
@@ -1326,8 +1325,8 @@
             
             <!-- Theme Toggle - Always visible at bottom of sidebar -->
             <!-- Version Display -->
-            <div class="sidebar-bottom-section" style="margin-top: auto; border-top: 1px solid #444; padding-top: 1rem;">
-                <div class="version-display" style="padding: 0.5rem 0.75rem; color: #888; font-size: 0.75rem;">
+            <div class="sidebar-bottom-section" style="margin-top: auto; border-top: 1px solid #444; padding-top: 0.5rem;">
+                <div class="version-display" style="padding: 0.25rem 0.75rem; color: #888; font-size: 0.75rem;">
                     <span id="versionInfo">Loading...</span>
                 </div>
             </div>
@@ -1481,99 +1480,96 @@
             if (bauhausTheme) bauhausTheme.disabled = true;
         }
         
-        // Day/Night Mode Toggle
+        // Day/Night Mode Toggle - Enhanced for Multiple Themes
         function toggleDayNightMode() {
             const body = document.body;
             const toggleSlider = document.getElementById('themeSlider');
             const toggleIcon = document.getElementById('themeSliderIcon');
             
             if (body.classList.contains('light-theme')) {
-                // Switch to dark theme (default)
+                // Switch to dark mode within current theme
                 body.classList.remove('light-theme');
-                body.classList.remove('bauhaus-theme');
-                body.className = body.className.replace(/\btheme-\w+/g, '');
-                
-                // Remove theme.park stylesheet
-                const existingThemeLink = document.getElementById('theme-stylesheet');
-                if (existingThemeLink) {
-                    existingThemeLink.remove();
-                }
-                
-                // Enable default theme
-                const mainTheme = document.getElementById('main-theme');
-                const bauhausTheme = document.getElementById('bauhaus-theme');
-                if (mainTheme) mainTheme.disabled = false;
-                if (bauhausTheme) bauhausTheme.disabled = true;
+                currentMode = 'dark';
                 
                 // Update slider to dark mode
                 if (toggleSlider) toggleSlider.classList.remove('light-mode');
                 if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
                 localStorage.setItem('mvidarr-daynight-mode', 'dark');
             } else {
-                // Switch to light theme
-                body.classList.remove('bauhaus-theme');
-                body.className = body.className.replace(/\btheme-\w+/g, '');
+                // Switch to light mode within current theme
                 body.classList.add('light-theme');
-                
-                // Remove theme.park stylesheet
-                const existingThemeLink = document.getElementById('theme-stylesheet');
-                if (existingThemeLink) {
-                    existingThemeLink.remove();
-                }
-                
-                // Enable main theme for light mode
-                const mainTheme = document.getElementById('main-theme');
-                const bauhausTheme = document.getElementById('bauhaus-theme');
-                if (mainTheme) mainTheme.disabled = false;
-                if (bauhausTheme) bauhausTheme.disabled = true;
+                currentMode = 'light';
                 
                 // Update slider to light mode
                 if (toggleSlider) toggleSlider.classList.add('light-mode');
                 if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
                 localStorage.setItem('mvidarr-daynight-mode', 'light');
             }
-        }
-        // Light/Dark Mode Toggle Functions
-        function toggleDayNight() {
-            const body = document.body;
-            const toggleSlider = document.getElementById('themeSlider');
-            const toggleIcon = document.getElementById('themeSliderIcon');
             
-            if (body.classList.contains('light-theme')) {
-                // Switch to dark mode (default)
-                body.classList.remove('light-theme');
-                
-                // Update slider to dark mode
-                if (toggleSlider) toggleSlider.classList.remove('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
-                localStorage.setItem('mvidarr-daynight-mode', 'dark');
-            } else {
-                // Switch to light mode
-                body.classList.add('light-theme');
-                
-                // Update slider to light mode
-                if (toggleSlider) toggleSlider.classList.add('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
-                localStorage.setItem('mvidarr-daynight-mode', 'light');
-            }
+            // Apply the current theme with new mode
+            applyCurrentTheme();
+        }
+        // Light/Dark Mode Toggle Functions (Alias for toggleDayNightMode)
+        function toggleDayNight() {
+            toggleDayNightMode();
         }
 
-        // Load saved day/night mode on page load
+        // Enhanced Theme Management System
+        let currentTheme = 'default';
+        let currentMode = 'dark';
+        
+        // Load saved theme and mode on page load
         document.addEventListener('DOMContentLoaded', function() {
+            loadSavedTheme();
+            initializeThemeSystem();
+        });
+        
+        function loadSavedTheme() {
+            // Load saved day/night mode from localStorage
             const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
+            currentMode = savedDayNightMode || 'dark';
+            
+            // Load saved theme from settings API
+            fetch('/api/settings/ui_theme')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.value) {
+                        currentTheme = data.value;
+                    }
+                    applyCurrentTheme();
+                })
+                .catch(error => {
+                    console.log('Theme setting not found, using default');
+                    applyCurrentTheme();
+                });
+        }
+        
+        function initializeThemeSystem() {
             const toggleBtn = document.getElementById('themeSlider');
             const toggleIcon = document.getElementById('themeSliderIcon');
             
-            // Apply saved day/night mode
-            if (savedDayNightMode === 'light') {
+            // Apply current mode to UI elements
+            if (currentMode === 'light') {
                 document.body.classList.add('light-theme');
                 if (toggleBtn) toggleBtn.classList.add('light-mode');
                 if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
             } else {
+                document.body.classList.remove('light-theme');
                 if (toggleBtn) toggleBtn.classList.remove('light-mode');
                 if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
             }
-        });
+        }
+        
+        function applyCurrentTheme() {
+            // Apply theme data attributes to document
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            document.documentElement.setAttribute('data-mode', currentMode);
+            
+            // Update settings page preview if it exists
+            if (typeof updateThemePreviewMode === 'function') {
+                updateThemePreviewMode();
+            }
+        }
         
         // User Authentication and Menu Management
         function checkUserAuthentication() {

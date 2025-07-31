@@ -601,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="result-content">
                     <div class="result-thumbnail">
                         ${video.thumbnail ? 
-                            `<img src="${video.thumbnail}" alt="Thumbnail" onerror="this.parentElement.innerHTML='<div class=&quot;placeholder&quot;>🎵</div>'">` :
+                            `<img src="${video.thumbnail}" alt="Thumbnail" onerror="this.src='/static/default-thumbnail.png'; this.onerror=null;">` :
                             `<div class="placeholder">🎵</div>`
                         }
                     </div>

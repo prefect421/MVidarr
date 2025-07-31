@@ -2020,6 +2020,18 @@ function showVideoEditModal(video) {
                         <input type="text" id="editVideoTitle" value="${video.title}" style="width: 100%; padding: 8px; margin: 5px 0;">
                     </div>
                     <div class="form-group">
+                        <label>Artist Name:</label>
+                        <div class="artist-input-container" style="display: flex; align-items: center; position: relative;">
+                            <input type="text" id="editVideoArtist" value="${video.artist_name || ''}" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <button type="button" id="identifyArtistBtn" onclick="identifyArtistInModal()" style="margin-left: 10px; padding: 6px 12px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                🔍 Identify Artist
+                            </button>
+                        </div>
+                        <div id="artistSuggestions" class="artist-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: #2d2d2d; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); z-index: 10000; max-height: 200px; overflow-y: auto;">
+                            <!-- Artist suggestions will be populated here -->
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label>Year:</label>
                         <input type="number" id="editVideoYear" value="${video.year || ''}" style="width: 100%; padding: 8px; margin: 5px 0;">
                     </div>
@@ -2061,6 +2073,7 @@ function saveVideoChanges() {
     
     const updates = {
         title: document.getElementById('editVideoTitle').value,
+        artist_name: document.getElementById('editVideoArtist').value,
         year: parseInt(document.getElementById('editVideoYear').value) || null,
         status: document.getElementById('editVideoStatus').value
     };
@@ -2092,6 +2105,75 @@ function openVideoThumbnailManager() {
     
     // Launch thumbnail search for the current video
     searchVideoThumbnails(window.currentEditVideoId);
+}
+
+function identifyArtistInModal() {
+    const videoId = window.currentEditVideoId;
+    if (!videoId) {
+        showWarning('No video selected');
+        return;
+    }
+    
+    const button = document.getElementById('identifyArtistBtn');
+    const originalText = button.innerHTML;
+    button.innerHTML = '🔄 Identifying...';
+    button.disabled = true;
+    
+    fetch(`/api/videos/${videoId}/identify-artist`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        displayArtistSuggestionsInModal(result);
+        button.innerHTML = originalText;
+        button.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error identifying artist:', error);
+        showError('Failed to identify artist');
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function displayArtistSuggestionsInModal(data) {
+    const suggestionsDiv = document.getElementById('artistSuggestions');
+    
+    if (!data.success || !data.suggestions || data.suggestions.length === 0) {
+        suggestionsDiv.innerHTML = '<div style="padding: 10px; color: #888;">No artist suggestions found</div>';
+        suggestionsDiv.style.display = 'block';
+        return;
+    }
+    
+    let suggestionsHtml = '';
+    data.suggestions.forEach(suggestion => {
+        const confidencePercent = Math.round(suggestion.confidence * 100);
+        suggestionsHtml += `
+            <div class="artist-suggestion" onclick="selectArtistInModal('${suggestion.artist.replace(/'/g, "\\'")}', ${suggestion.artist_id})" 
+                 style="padding: 10px; border-bottom: 1px solid #555; cursor: pointer; color: white;">
+                <strong>${suggestion.artist}</strong>
+                <span style="float: right; color: #888; font-size: 0.9em;">${confidencePercent}% match</span>
+            </div>
+        `;
+    });
+    
+    suggestionsDiv.innerHTML = suggestionsHtml;
+    suggestionsDiv.style.display = 'block';
+    
+    // Hide suggestions when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', function hideOnClickOutside(event) {
+            if (!suggestionsDiv.contains(event.target) && event.target.id !== 'identifyArtistBtn') {
+                suggestionsDiv.style.display = 'none';
+                document.removeEventListener('click', hideOnClickOutside);
+            }
+        });
+    }, 100);
+}
+
+function selectArtistInModal(artistName, artistId) {
+    document.getElementById('editVideoArtist').value = artistName;
+    document.getElementById('artistSuggestions').style.display = 'none';
 }
 
 function searchVideoThumbnails(videoId) {

@@ -1,0 +1,821 @@
+/* ========================================
+   MVidarr Centralized Theme System
+   Comprehensive CSS Variables for All Themes
+======================================== */
+
+/* Default Theme (Current Dark) - Baseline */
+:root,
+[data-theme="default"] {
+    /* Base Colors */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #3a3a3a;
+    --bg-modal: #333333;
+    --bg-card: #2a2a2a;
+    --bg-hover: #404040;
+    
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #888888;
+    --text-accent: #4a9eff;
+    --text-inverse: #000000;
+    
+    /* Border Colors */
+    --border-primary: #444444;
+    --border-secondary: #555555;
+    --border-focus: #4a9eff;
+    --border-hover: #666666;
+    
+    /* Button Colors */
+    --btn-primary-bg: #4a9eff;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #3a8eef;
+    --btn-secondary-bg: #666666;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #777777;
+    --btn-danger-bg: #dc3545;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #c82333;
+    
+    /* Status Colors */
+    --success: #28a745;
+    --warning: #ffc107;
+    --error: #dc3545;
+    --info: #17a2b8;
+    
+    /* Form Colors */
+    --input-bg: #3a3a3a;
+    --input-text: #ffffff;
+    --input-border: #555555;
+    --input-focus: #4a9eff;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #2d2d2d;
+    --nav-text: #ffffff;
+    --nav-hover: #404040;
+    --nav-active: #4a9eff;
+    
+    /* Shadow */
+    --shadow: rgba(0, 0, 0, 0.3);
+    --shadow-hover: rgba(0, 0, 0, 0.5);
+}
+
+/* Default Light Theme */
+[data-theme="default"][data-mode="light"] {
+    /* Base Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --bg-modal: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #f5f5f5;
+    
+    /* Text Colors */
+    --text-primary: #212529;
+    --text-secondary: #495057;
+    --text-muted: #6c757d;
+    --text-accent: #0066cc;
+    --text-inverse: #ffffff;
+    
+    /* Border Colors */
+    --border-primary: #dee2e6;
+    --border-secondary: #ced4da;
+    --border-focus: #0066cc;
+    --border-hover: #adb5bd;
+    
+    /* Button Colors */
+    --btn-primary-bg: #0066cc;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #0056b3;
+    --btn-secondary-bg: #6c757d;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #5a6268;
+    --btn-danger-bg: #dc3545;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #c82333;
+    
+    /* Form Colors */
+    --input-bg: #ffffff;
+    --input-text: #495057;
+    --input-border: #ced4da;
+    --input-focus: #0066cc;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #f8f9fa;
+    --nav-text: #495057;
+    --nav-hover: #e9ecef;
+    --nav-active: #0066cc;
+    
+    /* Shadow */
+    --shadow: rgba(0, 0, 0, 0.1);
+    --shadow-hover: rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   CYBER THEME (Cyberpunk UI Inspired)
+======================================== */
+
+/* Cyber Dark Theme */
+[data-theme="Cyber"] {
+    /* Base Colors */
+    --bg-primary: #0b0f14;
+    --bg-secondary: #12181f;
+    --bg-tertiary: #1a2129;
+    --bg-modal: #12181f;
+    --bg-card: #12181f;
+    --bg-hover: #1e2a33;
+    
+    /* Text Colors */
+    --text-primary: #e4eaf1;
+    --text-secondary: #c4d0dd;
+    --text-muted: #8896a5;
+    --text-accent: #00fff7;
+    --text-inverse: #0b0f14;
+    
+    /* Border Colors */
+    --border-primary: #2e3947;
+    --border-secondary: #3a4754;
+    --border-focus: #00fff7;
+    --border-hover: #4a5968;
+    
+    /* Button Colors */
+    --btn-primary-bg: #00fff7;
+    --btn-primary-text: #0b0f14;
+    --btn-primary-hover: #00e6de;
+    --btn-secondary-bg: #2e3947;
+    --btn-secondary-text: #e4eaf1;
+    --btn-secondary-hover: #3a4754;
+    --btn-danger-bg: #ff003c;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #e6003a;
+    
+    /* Status Colors */
+    --success: #00fff7;
+    --warning: #ffcc00;
+    --error: #ff003c;
+    --info: #00fff7;
+    
+    /* Form Colors */
+    --input-bg: #1a2129;
+    --input-text: #e4eaf1;
+    --input-border: #2e3947;
+    --input-focus: #00fff7;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #12181f;
+    --nav-text: #e4eaf1;
+    --nav-hover: #1e2a33;
+    --nav-active: #00fff7;
+    
+    /* Shadow */
+    --shadow: rgba(0, 255, 247, 0.15);
+    --shadow-hover: rgba(0, 255, 247, 0.25);
+}
+
+/* Cyber Light Theme */
+[data-theme="Cyber"][data-mode="light"] {
+    /* Base Colors */
+    --bg-primary: #f3f6fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8ecf0;
+    --bg-modal: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #e0e6eb;
+    
+    /* Text Colors */
+    --text-primary: #1d1f21;
+    --text-secondary: #2d3436;
+    --text-muted: #687a8b;
+    --text-accent: #007f7b;
+    --text-inverse: #ffffff;
+    
+    /* Border Colors */
+    --border-primary: #ccd6e0;
+    --border-secondary: #b8c4d0;
+    --border-focus: #007f7b;
+    --border-hover: #a4b2c0;
+    
+    /* Button Colors */
+    --btn-primary-bg: #007f7b;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #006b68;
+    --btn-secondary-bg: #687a8b;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #5a6c7d;
+    --btn-danger-bg: #cc0033;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #b8002e;
+    
+    /* Status Colors */
+    --success: #007f7b;
+    --warning: #e6b800;
+    --error: #cc0033;
+    --info: #007f7b;
+    
+    /* Form Colors */
+    --input-bg: #ffffff;
+    --input-text: #1d1f21;
+    --input-border: #ccd6e0;
+    --input-focus: #007f7b;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #ffffff;
+    --nav-text: #1d1f21;
+    --nav-hover: #e8ecf0;
+    --nav-active: #007f7b;
+    
+    /* Shadow */
+    --shadow: rgba(0, 127, 123, 0.15);
+    --shadow-hover: rgba(0, 127, 123, 0.25);
+}
+
+/* ========================================
+   VAPORWAVE THEME (Synthwave / Vaporwave)
+======================================== */
+
+/* VaporWave Dark Theme */
+[data-theme="VaporWave"] {
+    /* Base Colors */
+    --bg-primary: #0d0221;
+    --bg-secondary: #1a0440;
+    --bg-tertiary: #2f0f5d;
+    --bg-modal: #1a0440;
+    --bg-card: #1a0440;
+    --bg-hover: #3d1574;
+    
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #e6d6ff;
+    --text-muted: #b399ff;
+    --text-accent: #ff3cac;
+    --text-inverse: #0d0221;
+    
+    /* Border Colors */
+    --border-primary: #2f0f5d;
+    --border-secondary: #4a1a7a;
+    --border-focus: #ff3cac;
+    --border-hover: #5c2491;
+    
+    /* Button Colors */
+    --btn-primary-bg: #ff3cac;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #e6359c;
+    --btn-secondary-bg: #8c1eff;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #7a1ae6;
+    --btn-danger-bg: #ff3c00;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #e63500;
+    
+    /* Status Colors */
+    --success: #00f0ff;
+    --warning: #fff600;
+    --error: #ff3c00;
+    --info: #8c1eff;
+    
+    /* Form Colors */
+    --input-bg: #2f0f5d;
+    --input-text: #ffffff;
+    --input-border: #4a1a7a;
+    --input-focus: #ff3cac;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #1a0440;
+    --nav-text: #ffffff;
+    --nav-hover: #3d1574;
+    --nav-active: #ff3cac;
+    
+    /* Shadow */
+    --shadow: rgba(255, 60, 172, 0.2);
+    --shadow-hover: rgba(255, 60, 172, 0.3);
+}
+
+/* VaporWave Light Theme */
+[data-theme="VaporWave"][data-mode="light"] {
+    /* Base Colors */
+    --bg-primary: #f8f0ff;
+    --bg-secondary: #ffe3f4;
+    --bg-tertiary: #f0d9ff;
+    --bg-modal: #ffe3f4;
+    --bg-card: #ffe3f4;
+    --bg-hover: #e6ccf7;
+    
+    /* Text Colors */
+    --text-primary: #2c003e;
+    --text-secondary: #4a0066;
+    --text-muted: #8c8c8c;
+    --text-accent: #9b5de5;
+    --text-inverse: #ffffff;
+    
+    /* Border Colors */
+    --border-primary: #d9b3ff;
+    --border-secondary: #cc99ff;
+    --border-focus: #9b5de5;
+    --border-hover: #bf80ff;
+    
+    /* Button Colors */
+    --btn-primary-bg: #ff3cac;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #e6359c;
+    --btn-secondary-bg: #9b5de5;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #8a4dd9;
+    --btn-danger-bg: #ff8855;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #e6754d;
+    
+    /* Status Colors */
+    --success: #00cfff;
+    --warning: #fdfd96;
+    --error: #ff8855;
+    --info: #9b5de5;
+    
+    /* Form Colors */
+    --input-bg: #ffffff;
+    --input-text: #2c003e;
+    --input-border: #d9b3ff;
+    --input-focus: #9b5de5;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #ffe3f4;
+    --nav-text: #2c003e;
+    --nav-hover: #f0d9ff;
+    --nav-active: #9b5de5;
+    
+    /* Shadow */
+    --shadow: rgba(155, 93, 229, 0.15);
+    --shadow-hover: rgba(155, 93, 229, 0.25);
+}
+
+/* ========================================
+   LCARS - TNG THEME (Star Trek TNG Style)
+======================================== */
+
+/* LCARS - TNG Dark Theme */
+[data-theme="LCARS - TNG"] {
+    /* Base Colors */
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2d2d2d;
+    --bg-modal: #1a1a1a;
+    --bg-card: #1a1a1a;
+    --bg-hover: #333333;
+    
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #e6e6e6;
+    --text-muted: #cccccc;
+    --text-accent: #fbb03b;
+    --text-inverse: #000000;
+    
+    /* Border Colors */
+    --border-primary: #fbb03b;
+    --border-secondary: #ff9900;
+    --border-focus: #ffff66;
+    --border-hover: #ffcc66;
+    
+    /* Button Colors */
+    --btn-primary-bg: #fbb03b;
+    --btn-primary-text: #000000;
+    --btn-primary-hover: #ff9900;
+    --btn-secondary-bg: #9933cc;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #8028b8;
+    --btn-danger-bg: #ff6699;
+    --btn-danger-text: #000000;
+    --btn-danger-hover: #e6528a;
+    
+    /* Status Colors */
+    --success: #3399cc;
+    --warning: #ffff66;
+    --error: #ff6699;
+    --info: #cc66ff;
+    
+    /* Form Colors */
+    --input-bg: #2d2d2d;
+    --input-text: #ffffff;
+    --input-border: #fbb03b;
+    --input-focus: #ffff66;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #1a1a1a;
+    --nav-text: #ffffff;
+    --nav-hover: #333333;
+    --nav-active: #fbb03b;
+    
+    /* Shadow */
+    --shadow: rgba(251, 176, 59, 0.2);
+    --shadow-hover: rgba(251, 176, 59, 0.3);
+}
+
+/* LCARS - TNG Light Theme */
+[data-theme="LCARS - TNG"][data-mode="light"] {
+    /* Base Colors */
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8e8e8;
+    --bg-modal: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #ebebeb;
+    
+    /* Text Colors */
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+    --text-accent: #cc7700;
+    --text-inverse: #ffffff;
+    
+    /* Border Colors */
+    --border-primary: #cc7700;
+    --border-secondary: #b36600;
+    --border-focus: #e6cc00;
+    --border-hover: #d9aa00;
+    
+    /* Button Colors */
+    --btn-primary-bg: #cc7700;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #b36600;
+    --btn-secondary-bg: #7a1acc;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #6617b3;
+    --btn-danger-bg: #cc3366;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #b32e59;
+    
+    /* Status Colors */
+    --success: #1a80cc;
+    --warning: #e6cc00;
+    --error: #cc3366;
+    --info: #9933cc;
+    
+    /* Form Colors */
+    --input-bg: #ffffff;
+    --input-text: #000000;
+    --input-border: #cc7700;
+    --input-focus: #e6cc00;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #ffffff;
+    --nav-text: #000000;
+    --nav-hover: #ebebeb;
+    --nav-active: #cc7700;
+    
+    /* Shadow */
+    --shadow: rgba(204, 119, 0, 0.15);
+    --shadow-hover: rgba(204, 119, 0, 0.25);
+}
+
+/* ========================================
+   LCARS - DS9 THEME (Deep Space Nine Style)
+======================================== */
+
+/* LCARS - DS9 Dark Theme */
+[data-theme="LCARS - DS9"] {
+    /* Base Colors */
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2d2d2d;
+    --bg-modal: #1a1a1a;
+    --bg-card: #1a1a1a;
+    --bg-hover: #333333;
+    
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #e6e6e6;
+    --text-muted: #888888;
+    --text-accent: #c04c00;
+    --text-inverse: #000000;
+    
+    /* Border Colors */
+    --border-primary: #c04c00;
+    --border-secondary: #2a4b6e;
+    --border-focus: #e4d000;
+    --border-hover: #3a7669;
+    
+    /* Button Colors */
+    --btn-primary-bg: #c04c00;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #a64000;
+    --btn-secondary-bg: #2a4b6e;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #1e3a57;
+    --btn-danger-bg: #a80000;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #940000;
+    
+    /* Status Colors */
+    --success: #3a7669;
+    --warning: #e4d000;
+    --error: #a80000;
+    --info: #2a4b6e;
+    
+    /* Form Colors */
+    --input-bg: #2d2d2d;
+    --input-text: #ffffff;
+    --input-border: #c04c00;
+    --input-focus: #e4d000;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #1a1a1a;
+    --nav-text: #ffffff;
+    --nav-hover: #333333;
+    --nav-active: #c04c00;
+    
+    /* Shadow */
+    --shadow: rgba(192, 76, 0, 0.2);
+    --shadow-hover: rgba(192, 76, 0, 0.3);
+}
+
+/* LCARS - DS9 Light Theme */
+[data-theme="LCARS - DS9"][data-mode="light"] {
+    /* Base Colors */
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8e8e8;
+    --bg-modal: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #ebebeb;
+    
+    /* Text Colors */
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+    --text-accent: #803300;
+    --text-inverse: #ffffff;
+    
+    /* Border Colors */
+    --border-primary: #803300;
+    --border-secondary: #1e3857;
+    --border-focus: #ccb300;
+    --border-hover: #2e5c4f;
+    
+    /* Button Colors */
+    --btn-primary-bg: #803300;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #662800;
+    --btn-secondary-bg: #1e3857;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #152940;
+    --btn-danger-bg: #800000;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #660000;
+    
+    /* Status Colors */
+    --success: #2e5c4f;
+    --warning: #ccb300;
+    --error: #800000;
+    --info: #1e3857;
+    
+    /* Form Colors */
+    --input-bg: #ffffff;
+    --input-text: #000000;
+    --input-border: #803300;
+    --input-focus: #ccb300;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #ffffff;
+    --nav-text: #000000;
+    --nav-hover: #ebebeb;
+    --nav-active: #803300;
+    
+    /* Shadow */
+    --shadow: rgba(128, 51, 0, 0.15);
+    --shadow-hover: rgba(128, 51, 0, 0.25);
+}
+
+/* ========================================
+   LCARS - Voy THEME (Voyager Style)
+======================================== */
+
+/* LCARS - Voy Dark Theme */
+[data-theme="LCARS - Voy"] {
+    /* Base Colors */
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2d2d2d;
+    --bg-modal: #1a1a1a;
+    --bg-card: #1a1a1a;
+    --bg-hover: #333333;
+    
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #f5e3c3;
+    --text-muted: #cccccc;
+    --text-accent: #ffb07c;
+    --text-inverse: #1a1a1a;
+    
+    /* Border Colors */
+    --border-primary: #ffb07c;
+    --border-secondary: #ff6b1a;
+    --border-focus: #f7ea48;
+    --border-hover: #ff91af;
+    
+    /* Button Colors */
+    --btn-primary-bg: #ffb07c;
+    --btn-primary-text: #1a1a1a;
+    --btn-primary-hover: #ff9959;
+    --btn-secondary-bg: #a682bd;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #9570ad;
+    --btn-danger-bg: #ff91af;
+    --btn-danger-text: #1a1a1a;
+    --btn-danger-hover: #ff7a9a;
+    
+    /* Status Colors */
+    --success: #4ca4cb;
+    --warning: #f7ea48;
+    --error: #ff91af;
+    --info: #a682bd;
+    
+    /* Form Colors */
+    --input-bg: #2d2d2d;
+    --input-text: #ffffff;
+    --input-border: #ffb07c;
+    --input-focus: #f7ea48;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #1a1a1a;
+    --nav-text: #ffffff;
+    --nav-hover: #333333;
+    --nav-active: #ffb07c;
+    
+    /* Shadow */
+    --shadow: rgba(255, 176, 124, 0.2);
+    --shadow-hover: rgba(255, 176, 124, 0.3);
+}
+
+/* LCARS - Voy Light Theme */
+[data-theme="LCARS - Voy"][data-mode="light"] {
+    /* Base Colors */
+    --bg-primary: #f5e3c3;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f0d9b3;
+    --bg-modal: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #ead3a3;
+    
+    /* Text Colors */
+    --text-primary: #1a1a1a;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+    --text-accent: #cc5500;
+    --text-inverse: #ffffff;
+    
+    /* Border Colors */
+    --border-primary: #cc5500;
+    --border-secondary: #cc4400;
+    --border-focus: #e6cc00;
+    --border-hover: #cc6699;
+    
+    /* Button Colors */
+    --btn-primary-bg: #cc5500;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #b34700;
+    --btn-secondary-bg: #8a6ba6;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #795b93;
+    --btn-danger-bg: #cc6699;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #b35a85;
+    
+    /* Status Colors */
+    --success: #3a85a6;
+    --warning: #e6cc00;
+    --error: #cc6699;
+    --info: #8a6ba6;
+    
+    /* Form Colors */
+    --input-bg: #ffffff;
+    --input-text: #1a1a1a;
+    --input-border: #cc5500;
+    --input-focus: #e6cc00;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #ffffff;
+    --nav-text: #1a1a1a;
+    --nav-hover: #f0d9b3;
+    --nav-active: #cc5500;
+    
+    /* Shadow */
+    --shadow: rgba(204, 85, 0, 0.15);
+    --shadow-hover: rgba(204, 85, 0, 0.25);
+}
+
+/* ========================================
+   LCARS - TNG-E THEME (Next Generation Enterprise)
+======================================== */
+
+/* LCARS - TNG-E Dark Theme */
+[data-theme="LCARS - TNG-E"] {
+    /* Base Colors */
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2d2d2d;
+    --bg-modal: #1a1a1a;
+    --bg-card: #1a1a1a;
+    --bg-hover: #333333;
+    
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #e6e6e6;
+    --text-muted: #cccccc;
+    --text-accent: #d97904;
+    --text-inverse: #000000;
+    
+    /* Border Colors */
+    --border-primary: #d97904;
+    --border-secondary: #cc5c6f;
+    --border-focus: #fff275;
+    --border-hover: #e6b95a;
+    
+    /* Button Colors */
+    --btn-primary-bg: #d97904;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #c26a03;
+    --btn-secondary-bg: #a084c4;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #8f73b3;
+    --btn-danger-bg: #cc5c6f;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #b3515f;
+    
+    /* Status Colors */
+    --success: #4b4e6d;
+    --warning: #fff275;
+    --error: #cc5c6f;
+    --info: #a084c4;
+    
+    /* Form Colors */
+    --input-bg: #2d2d2d;
+    --input-text: #ffffff;
+    --input-border: #d97904;
+    --input-focus: #fff275;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #1a1a1a;
+    --nav-text: #ffffff;
+    --nav-hover: #333333;
+    --nav-active: #d97904;
+    
+    /* Shadow */
+    --shadow: rgba(217, 121, 4, 0.2);
+    --shadow-hover: rgba(217, 121, 4, 0.3);
+}
+
+/* LCARS - TNG-E Light Theme */
+[data-theme="LCARS - TNG-E"][data-mode="light"] {
+    /* Base Colors */
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8e8e8;
+    --bg-modal: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #ebebeb;
+    
+    /* Text Colors */
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+    --text-accent: #b36600;
+    --text-inverse: #ffffff;
+    
+    /* Border Colors */
+    --border-primary: #b36600;
+    --border-secondary: #a64d5c;
+    --border-focus: #e6cc33;
+    --border-hover: #cc9944;
+    
+    /* Button Colors */
+    --btn-primary-bg: #b36600;
+    --btn-primary-text: #ffffff;
+    --btn-primary-hover: #995500;
+    --btn-secondary-bg: #8066a3;
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-hover: #6e5690;
+    --btn-danger-bg: #a64d5c;
+    --btn-danger-text: #ffffff;
+    --btn-danger-hover: #94434f;
+    
+    /* Status Colors */
+    --success: #3a3d59;
+    --warning: #e6cc33;
+    --error: #a64d5c;
+    --info: #8066a3;
+    
+    /* Form Colors */
+    --input-bg: #ffffff;
+    --input-text: #000000;
+    --input-border: #b36600;
+    --input-focus: #e6cc33;
+    
+    /* Sidebar & Navigation */
+    --nav-bg: #ffffff;
+    --nav-text: #000000;
+    --nav-hover: #ebebeb;
+    --nav-active: #b36600;
+    
+    /* Shadow */
+    --shadow: rgba(179, 102, 0, 0.15);
+    --shadow-hover: rgba(179, 102, 0, 0.25);
+}
