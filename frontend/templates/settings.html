@@ -714,7 +714,65 @@
                             <div class="theme-preview-section">
                                 <h5>Live Preview</h5>
                                 <div class="preview-container">
-                                    <!-- Preview sections will be added here -->
+                                    <!-- Live Theme Preview Content -->
+                                    <div class="preview-section">
+                                        <h6>Cards & Panels</h6>
+                                        <div class="preview-cards">
+                                            <div class="preview-card">
+                                                <div class="card-header">Album Title</div>
+                                                <div class="card-content">This shows how cards look in the current theme</div>
+                                            </div>
+                                            <div class="preview-card">
+                                                <div class="card-header">Artist Name</div>
+                                                <div class="card-content">Secondary card example</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="preview-section">
+                                        <h6>Buttons & Controls</h6>
+                                        <div class="preview-buttons">
+                                            <button class="preview-btn-primary">Primary Button</button>
+                                            <button class="preview-btn-secondary">Secondary Button</button>
+                                            <button class="preview-btn-danger">Danger Button</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="preview-section">
+                                        <h6>Form Elements</h6>
+                                        <div class="preview-form">
+                                            <div class="form-group">
+                                                <label>Input Field:</label>
+                                                <input type="text" placeholder="Sample input text" class="preview-input">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Select Dropdown:</label>
+                                                <select class="preview-select">
+                                                    <option>Option 1</option>
+                                                    <option>Option 2</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="preview-section">
+                                        <h6>Navigation & Menu</h6>
+                                        <div class="preview-nav">
+                                            <div class="nav-item active">Active Item</div>
+                                            <div class="nav-item">Regular Item</div>
+                                            <div class="nav-item">Another Item</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="preview-section">
+                                        <h6>Status Messages</h6>
+                                        <div class="preview-alerts">
+                                            <div class="alert-success">✓ Success message</div>
+                                            <div class="alert-warning">⚠ Warning message</div>
+                                            <div class="alert-error">✗ Error message</div>
+                                            <div class="alert-info">ℹ Info message</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4506,6 +4564,218 @@ body.light-theme .cookie-management-section {
     
     .color-input-group label {
         min-width: auto;
+    }
+}
+
+/* Live Preview Styles */
+.preview-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-primary, #444);
+}
+
+.preview-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.preview-section h6 {
+    color: var(--text-accent, #4a9eff);
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Preview Cards */
+.preview-cards {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.preview-card {
+    background: var(--cardBackgroundColor, var(--bg-card, #2a2a2a));
+    border: 1px solid var(--borderColor, var(--border-primary, #444));
+    border-radius: 6px;
+    padding: 1rem;
+    min-width: 150px;
+    flex: 1;
+    box-shadow: 0 2px 4px var(--cardShadowColor, rgba(0,0,0,0.3));
+}
+
+.preview-card .card-header {
+    color: var(--text-primary, #fff);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.preview-card .card-content {
+    color: var(--text-secondary, #ccc);
+    font-size: 0.9rem;
+}
+
+/* Preview Buttons */
+.preview-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.preview-btn-primary {
+    background: var(--btn-primary-bg, #4a9eff);
+    color: var(--btn-primary-text, #fff);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.preview-btn-primary:hover {
+    background: var(--btn-primary-hover, #3a8eef);
+}
+
+.preview-btn-secondary {
+    background: var(--btn-secondary-bg, #666);
+    color: var(--btn-secondary-text, #fff);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.preview-btn-secondary:hover {
+    background: var(--btn-secondary-hover, #777);
+}
+
+.preview-btn-danger {
+    background: var(--btn-danger-bg, #dc3545);
+    color: var(--btn-danger-text, #fff);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.preview-btn-danger:hover {
+    background: var(--btn-danger-hover, #c82333);
+}
+
+/* Preview Form Elements */
+.preview-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.preview-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.preview-form label {
+    color: var(--text-primary, #fff);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.preview-input, .preview-select {
+    background: var(--inputBackgroundColor, var(--input-bg, #3a3a3a));
+    color: var(--textColor, var(--input-text, #fff));
+    border: 1px solid var(--inputBorderColor, var(--input-border, #555));
+    border-radius: 4px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    width: 200px;
+}
+
+.preview-input:focus, .preview-select:focus {
+    outline: none;
+    border-color: var(--inputFocusBorderColor, var(--input-focus, #4a9eff));
+    box-shadow: 0 0 0 2px var(--inputFocusBoxShadowColor, rgba(74, 158, 255, 0.25));
+}
+
+/* Preview Navigation */
+.preview-nav {
+    display: flex;
+    background: var(--nav-bg, #2d2d2d);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.nav-item {
+    padding: 0.75rem 1rem;
+    color: var(--nav-text, #fff);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.9rem;
+}
+
+.nav-item:hover {
+    background: var(--nav-hover, #404040);
+}
+
+.nav-item.active {
+    background: var(--nav-active, #4a9eff);
+    color: var(--text-inverse, #000);
+}
+
+/* Preview Alerts */
+.preview-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.alert-success, .alert-warning, .alert-error, .alert-info {
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    border: 1px solid;
+}
+
+.alert-success {
+    background: var(--alertSuccessBackgroundColor, var(--bg-secondary, #2d2d2d));
+    color: var(--successColor, var(--success, #28a745));
+    border-color: var(--successColor, var(--success, #28a745));
+}
+
+.alert-warning {
+    background: var(--alertWarningBackgroundColor, var(--bg-secondary, #2d2d2d));
+    color: var(--warningColor, var(--warning, #ffc107));
+    border-color: var(--warningColor, var(--warning, #ffc107));
+}
+
+.alert-error {
+    background: var(--alertDangerBackgroundColor, var(--bg-secondary, #2d2d2d));
+    color: var(--dangerColor, var(--error, #dc3545));
+    border-color: var(--dangerColor, var(--error, #dc3545));
+}
+
+.alert-info {
+    background: var(--alertInfoBackgroundColor, var(--bg-secondary, #2d2d2d));
+    color: var(--primaryColor, var(--info, #17a2b8));
+    border-color: var(--primaryColor, var(--info, #17a2b8));
+}
+
+/* Preview Responsive */
+@media (max-width: 768px) {
+    .preview-cards, .preview-buttons {
+        flex-direction: column;
+    }
+    
+    .preview-input, .preview-select {
+        width: 100%;
+    }
+    
+    .preview-nav {
+        flex-direction: column;
     }
 }
 </style>
