@@ -1384,11 +1384,11 @@ function handleThumbnailError(img) {
     placeholder.style.cssText = `
         width: 100%;
         height: 100%;
-        background-color: #444;
+        background-color: var(--bg-tertiary, #444);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #aaa;
+        color: var(--text-secondary, #aaa);
         font-size: 0.8rem;
         border-radius: 4px;
     `;
@@ -2268,7 +2268,7 @@ function hideBulkProgress() {
 }
 
 .artists-container h1 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 10px;
     font-size: 2.5rem;
     text-align: center;
@@ -2276,7 +2276,7 @@ function hideBulkProgress() {
 
 .page-description {
     text-align: center;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     margin-bottom: 30px;
     font-size: 1.1rem;
 }
@@ -2286,8 +2286,8 @@ function hideBulkProgress() {
 }
 
 .advanced-search-panel {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 1px solid #444;
+    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 25px;
     margin-bottom: 20px;
@@ -2314,18 +2314,18 @@ function hideBulkProgress() {
 .search-input-container input {
     width: 100%;
     padding: 12px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--input-bg, #333);
+    border: 2px solid var(--input-border, #444);
     border-radius: 8px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .search-input-container input:focus {
     outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+    border-color: var(--input-focus, #00d4ff);
+    box-shadow: 0 0 0 3px var(--accent-shadow, rgba(0, 212, 255, 0.2));
 }
 
 .search-suggestions {
@@ -2333,8 +2333,8 @@ function hideBulkProgress() {
     top: 100%;
     left: 0;
     right: 0;
-    background: #333;
-    border: 1px solid #444;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 8px;
     margin-top: 5px;
     max-height: 200px;
@@ -2349,11 +2349,11 @@ function hideBulkProgress() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid var(--border-primary, #444);
 }
 
 .suggestion-item:hover {
-    background: #404040;
+    background: var(--bg-hover, #404040);
 }
 
 .suggestion-item:last-child {
@@ -2361,16 +2361,16 @@ function hideBulkProgress() {
 }
 
 .suggestion-text {
-    color: #fff;
+    color: var(--text-primary, #fff);
 }
 
 .suggestion-type {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-size: 12px;
 }
 
 .advanced-filters {
-    background: #2a2a2a;
+    background: var(--bg-card, #2a2a2a);
     border-radius: 8px;
     padding: 20px;
     margin-top: 15px;
@@ -2393,7 +2393,7 @@ function hideBulkProgress() {
 }
 
 .filter-group label {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 5px;
     font-weight: 500;
 }
@@ -2401,10 +2401,10 @@ function hideBulkProgress() {
 .filter-group input,
 .filter-group select {
     padding: 8px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--input-bg, #333);
+    border: 2px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
     transition: border-color 0.3s ease;
 }
@@ -2412,8 +2412,8 @@ function hideBulkProgress() {
 .filter-group input:focus,
 .filter-group select:focus {
     outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+    border-color: var(--input-focus, #00d4ff);
+    box-shadow: 0 0 0 2px var(--accent-shadow, rgba(0, 212, 255, 0.2));
 }
 
 .filter-actions {
