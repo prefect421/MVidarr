@@ -34,15 +34,29 @@
     --btn-secondary-bg: #666666;
     --btn-secondary-text: #ffffff;
     --btn-secondary-hover: #777777;
+    --btn-secondary-darker: #484e53;
+    --secondary-shadow: rgba(108, 117, 125, 0.3);
     --btn-danger-bg: #dc3545;
     --btn-danger-text: #ffffff;
     --btn-danger-hover: #c82333;
+    --btn-danger-darker: #a01e2a;
+    --danger-shadow: rgba(220, 53, 69, 0.3);
     
     /* Status Colors */
     --success: #28a745;
+    --success-dark: #1e7e34;
+    --success-darker: #155724;
+    --success-shadow: rgba(40, 167, 69, 0.3);
     --warning: #ffc107;
+    --warning-dark: #d39e00;
+    --warning-darker: #b08800;
+    --warning-shadow: rgba(255, 193, 7, 0.3);
     --error: #dc3545;
+    --error-color: #ff6b6b;
     --info: #17a2b8;
+    --info-dark: #117a8b;
+    --info-darker: #0c5460;
+    --info-shadow: rgba(23, 162, 184, 0.3);
     
     /* Form Colors */
     --input-bg: #3a3a3a;
@@ -58,6 +72,7 @@
     --sidebar-bg: #1a1a1a;
     --sidebar-bg-secondary: #2d2d2d;
     --search-bar-bg: #2d2d2d;
+    --top-bar-bg: #2d2d2d;
     
     /* Shadow */
     --shadow: rgba(0, 0, 0, 0.3);
@@ -72,6 +87,10 @@
     --modalBackgroundColor: var(--bg-modal);
     --modalBackdropBackgroundColor: rgba(0, 0, 0, 0.5);
     --modalCloseButtonHoverColor: var(--text-accent);
+    --modal-overlay: rgba(0, 0, 0, 0.7);
+    --accent-secondary: #0099cc;
+    --accent-dark: #007799;
+    --accent-shadow: rgba(0, 212, 255, 0.2);
     --popoverBodyBackgroundColor: var(--bg-secondary);
     --popoverTitleBackgroundColor: var(--bg-secondary);
     --popoverTitleBorderColor: var(--border-primary);
@@ -174,9 +193,29 @@
     --btn-secondary-bg: #6c757d;
     --btn-secondary-text: #ffffff;
     --btn-secondary-hover: #5a6268;
+    --btn-secondary-darker: #484e53;
+    --secondary-shadow: rgba(108, 117, 125, 0.3);
     --btn-danger-bg: #dc3545;
     --btn-danger-text: #ffffff;
     --btn-danger-hover: #c82333;
+    --btn-danger-darker: #a01e2a;
+    --danger-shadow: rgba(220, 53, 69, 0.3);
+    
+    /* Status Colors */
+    --success: #28a745;
+    --success-dark: #1e7e34;
+    --success-darker: #155724;
+    --success-shadow: rgba(40, 167, 69, 0.3);
+    --warning: #ffc107;
+    --warning-dark: #d39e00;
+    --warning-darker: #b08800;
+    --warning-shadow: rgba(255, 193, 7, 0.3);
+    --error: #dc3545;
+    --error-color: #e74c3c;
+    --info: #17a2b8;
+    --info-dark: #117a8b;
+    --info-darker: #0c5460;
+    --info-shadow: rgba(23, 162, 184, 0.3);
     
     /* Form Colors */
     --input-bg: #ffffff;
@@ -192,6 +231,7 @@
     --sidebar-bg: #ffffff;
     --sidebar-bg-secondary: #f8f9fa;
     --search-bar-bg: #ffffff;
+    --top-bar-bg: #f8f9fa;
     
     /* Shadow */
     --shadow: rgba(0, 0, 0, 0.1);
@@ -206,6 +246,10 @@
     --modalBackgroundColor: var(--bg-modal);
     --modalBackdropBackgroundColor: rgba(255, 255, 255, 0.5);
     --modalCloseButtonHoverColor: var(--text-accent);
+    --modal-overlay: rgba(0, 0, 0, 0.4);
+    --accent-secondary: #0056b3;
+    --accent-dark: #004085;
+    --accent-shadow: rgba(0, 102, 204, 0.25);
     --popoverBodyBackgroundColor: var(--bg-secondary);
     --popoverTitleBackgroundColor: var(--bg-secondary);
     --popoverTitleBorderColor: var(--border-primary);

@@ -916,22 +916,22 @@
             left: 0;
             right: 0;
             z-index: 999;
-            background: #2d2d2d;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--top-bar-bg, #2d2d2d);
+            border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
             padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 1rem;
             transition: left 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px var(--shadow, rgba(0, 0, 0, 0.2));
             height: 60px;
         }
         
         body.light-theme .app-header {
-            background: #ddddff;
-            border-bottom-color: rgba(0, 0, 0, 0.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            background: var(--top-bar-bg, #ddddff);
+            border-bottom-color: var(--border-primary, rgba(0, 0, 0, 0.1));
+            box-shadow: 0 4px 15px var(--shadow, rgba(0, 0, 0, 0.08));
         }
         
         /* Dynamic width based on sidebar state */
@@ -980,7 +980,7 @@
             padding: 0.5rem 2.5rem 0.5rem 2.5rem;
             font-size: 0.875rem;
             background: var(--search-bar-bg, rgba(255, 255, 255, 0.05));
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--border-secondary, rgba(255, 255, 255, 0.1));
             color: inherit;
         }
         
@@ -989,8 +989,8 @@
         }
         
         .app-header .universal-search-input:focus {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: #3b82f6;
+            background: var(--input-bg, rgba(255, 255, 255, 0.1));
+            border-color: var(--border-focus, #3b82f6);
             color: inherit;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
@@ -1009,9 +1009,9 @@
         
         /* Light theme search adjustments */
         body.light-theme .app-header .universal-search-input {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.25);
-            color: white;
+            background: var(--search-bar-bg, rgba(255, 255, 255, 0.15));
+            border-color: var(--border-secondary, rgba(255, 255, 255, 0.25));
+            color: var(--text-primary, white);
         }
         
         body.light-theme .app-header .universal-search-input::placeholder {
@@ -1019,9 +1019,9 @@
         }
         
         body.light-theme .app-header .universal-search-input:focus {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
+            background: var(--input-bg, rgba(255, 255, 255, 0.25));
+            border-color: var(--border-focus, rgba(255, 255, 255, 0.5));
+            color: var(--text-primary, white);
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
         }
         

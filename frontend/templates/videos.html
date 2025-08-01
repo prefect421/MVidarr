@@ -11,7 +11,7 @@
 }
 
 .videos-container h1 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 10px;
     font-size: 2.5rem;
     text-align: center;
@@ -19,14 +19,14 @@
 
 .page-description {
     text-align: center;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     margin-bottom: 30px;
     font-size: 1.1rem;
 }
 
 .videos-actions {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 1px solid #444;
+    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 25px;
     margin-bottom: 20px;
@@ -57,69 +57,69 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--text-accent, #00d4ff) 0%, var(--accent-secondary, #0099cc) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #0099cc 0%, #007799 100%);
+    background: linear-gradient(135deg, var(--accent-secondary, #0099cc) 0%, var(--accent-dark, #007799) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+    box-shadow: 0 4px 12px var(--accent-shadow, rgba(0, 212, 255, 0.3));
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--success, #28a745) 0%, var(--success-dark, #1e7e34) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-success:hover {
-    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    background: linear-gradient(135deg, var(--success-dark, #1e7e34) 0%, var(--success-darker, #155724) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 4px 12px var(--success-shadow, rgba(40, 167, 69, 0.3));
 }
 
 .btn-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--info, #17a2b8) 0%, var(--info-dark, #117a8b) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-info:hover {
-    background: linear-gradient(135deg, #117a8b 0%, #0c5460 100%);
+    background: linear-gradient(135deg, var(--info-dark, #117a8b) 0%, var(--info-darker, #0c5460) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+    box-shadow: 0 4px 12px var(--info-shadow, rgba(23, 162, 184, 0.3));
 }
 
 .btn-warning {
-    background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
-    color: #000;
+    background: linear-gradient(135deg, var(--warning, #ffc107) 0%, var(--warning-dark, #d39e00) 100%);
+    color: var(--text-inverse, #000);
 }
 
 .btn-warning:hover {
-    background: linear-gradient(135deg, #d39e00 0%, #b08800 100%);
+    background: linear-gradient(135deg, var(--warning-dark, #d39e00) 0%, var(--warning-darker, #b08800) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    box-shadow: 0 4px 12px var(--warning-shadow, rgba(255, 193, 7, 0.3));
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--btn-secondary-bg, #6c757d) 0%, var(--btn-secondary-hover, #5a6268) 100%);
+    color: var(--btn-secondary-text, #fff);
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #5a6268 0%, #484e53 100%);
+    background: linear-gradient(135deg, var(--btn-secondary-hover, #5a6268) 0%, var(--btn-secondary-darker, #484e53) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    box-shadow: 0 4px 12px var(--secondary-shadow, rgba(108, 117, 125, 0.3));
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--btn-danger-bg, #dc3545) 0%, var(--btn-danger-hover, #bd2130) 100%);
+    color: var(--btn-danger-text, #fff);
 }
 
 .btn-danger:hover {
-    background: linear-gradient(135deg, #bd2130 0%, #a01e2a 100%);
+    background: linear-gradient(135deg, var(--btn-danger-hover, #bd2130) 0%, var(--btn-danger-darker, #a01e2a) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 12px var(--danger-shadow, rgba(220, 53, 69, 0.3));
 }
 
 .btn:disabled {
@@ -135,7 +135,7 @@
 
 .form-group label {
     display: block;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 8px;
     font-weight: 500;
 }
@@ -143,28 +143,28 @@
 .form-control {
     width: 100%;
     padding: 12px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--input-bg, #333);
+    border: 2px solid var(--input-border, #444);
     border-radius: 8px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+    border-color: var(--input-focus, #00d4ff);
+    box-shadow: 0 0 0 3px var(--accent-shadow, rgba(0, 212, 255, 0.2));
 }
 
 .form-control option {
-    background: #333;
-    color: #fff;
+    background: var(--input-bg, #333);
+    color: var(--input-text, #fff);
 }
 
 .search-panel {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 1px solid #444;
+    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 25px;
     margin-bottom: 20px;
@@ -196,7 +196,7 @@
 }
 
 .search-field label {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-weight: 500;
     font-size: 0.9rem;
 }
@@ -204,10 +204,10 @@
 .search-field input,
 .search-field select {
     padding: 10px 12px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--input-bg, #333);
+    border: 2px solid var(--input-border, #444);
     border-radius: 8px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -215,8 +215,8 @@
 .search-field input:focus,
 .search-field select:focus {
     outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+    border-color: var(--input-focus, #00d4ff);
+    box-shadow: 0 0 0 3px var(--accent-shadow, rgba(0, 212, 255, 0.2));
 }
 
 .modal {
@@ -231,10 +231,10 @@
 }
 
 .modal-content {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
     margin: 5% auto;
     padding: 0;
-    border: 1px solid #444;
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     width: 90%;
     max-width: 600px;

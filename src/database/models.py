@@ -553,6 +553,8 @@ class CustomTheme(Base):
 
     # Theme definition stored as JSON with CSS variables
     theme_data = Column(JSON, nullable=False)
+    # Light theme variant (optional - falls back to theme_data if not provided)
+    light_theme_data = Column(JSON, nullable=True)
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -580,6 +582,7 @@ class CustomTheme(Base):
             "is_public": self.is_public,
             "is_built_in": self.is_built_in,
             "theme_data": self.theme_data,
+            "light_theme_data": self.light_theme_data,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

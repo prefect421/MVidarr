@@ -98,7 +98,9 @@ def get_themes():
                     "description": "Default MVidarr theme",
                     "is_built_in": True,
                     "is_public": True,
-                    "theme_data": None,  # These use CSS files
+                    "theme_data": None,
+                    "light_theme_data": None,  # These use CSS files
+                    "light_theme_data": None,  # These use CSS files
                 },
                 {
                     "id": "cyber",
@@ -108,6 +110,7 @@ def get_themes():
                     "is_built_in": True,
                     "is_public": True,
                     "theme_data": None,
+                    "light_theme_data": None,
                 },
                 {
                     "id": "vaporwave",
@@ -117,6 +120,7 @@ def get_themes():
                     "is_built_in": True,
                     "is_public": True,
                     "theme_data": None,
+                    "light_theme_data": None,
                 },
                 {
                     "id": "lcars_tng",
@@ -126,6 +130,7 @@ def get_themes():
                     "is_built_in": True,
                     "is_public": True,
                     "theme_data": None,
+                    "light_theme_data": None,
                 },
                 {
                     "id": "lcars_ds9",
@@ -135,6 +140,7 @@ def get_themes():
                     "is_built_in": True,
                     "is_public": True,
                     "theme_data": None,
+                    "light_theme_data": None,
                 },
                 {
                     "id": "lcars_voy",
@@ -144,6 +150,7 @@ def get_themes():
                     "is_built_in": True,
                     "is_public": True,
                     "theme_data": None,
+                    "light_theme_data": None,
                 },
                 {
                     "id": "lcars_tng_e",
@@ -153,6 +160,7 @@ def get_themes():
                     "is_built_in": True,
                     "is_public": True,
                     "theme_data": None,
+                    "light_theme_data": None,
                 },
             ]
 
@@ -197,6 +205,7 @@ def create_theme():
                 is_public=data.get("is_public", False),
                 is_built_in=False,
                 theme_data=data["theme_data"],
+                light_theme_data=data.get("light_theme_data"),
             )
 
             session.add(theme)
@@ -268,6 +277,8 @@ def update_theme(theme_id):
                 theme.description = data["description"]
             if "theme_data" in data:
                 theme.theme_data = data["theme_data"]
+            if "light_theme_data" in data:
+                theme.light_theme_data = data["light_theme_data"]
             if "is_public" in data and request.current_user.is_admin:
                 theme.is_public = data["is_public"]
 
@@ -362,6 +373,11 @@ def duplicate_theme(theme_id):
                     if original_theme.theme_data
                     else {}
                 ),
+                light_theme_data=(
+                    original_theme.light_theme_data.copy()
+                    if original_theme.light_theme_data
+                    else None
+                ),
             )
 
             session.add(duplicate)
@@ -433,6 +449,7 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#1a1a1a",
                 "--sidebar-bg-secondary": "#2d2d2d",
                 "--search-bar-bg": "#2d2d2d",
+                "--top-bar-bg": "#2d2d2d",
                 # Shadow
                 "--shadow": "rgba(0, 0, 0, 0.3)",
                 "--shadow-hover": "rgba(0, 0, 0, 0.5)",
@@ -522,6 +539,7 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#0b0f14",
                 "--sidebar-bg-secondary": "#12181f",
                 "--search-bar-bg": "#1a2129",
+                "--top-bar-bg": "#12181f",
                 # Shadow - Cyan glow
                 "--shadow": "rgba(0, 255, 247, 0.15)",
                 "--shadow-hover": "rgba(0, 255, 247, 0.25)",
@@ -611,6 +629,7 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#0d0221",
                 "--sidebar-bg-secondary": "#1a0440",
                 "--search-bar-bg": "#2f0f5d",
+                "--top-bar-bg": "#1a0440",
                 # Shadow - Pink glow
                 "--shadow": "rgba(255, 60, 172, 0.2)",
                 "--shadow-hover": "rgba(255, 60, 172, 0.3)",
@@ -700,6 +719,7 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#000000",
                 "--sidebar-bg-secondary": "#1a1a1a",
                 "--search-bar-bg": "#2d2d2d",
+                "--top-bar-bg": "#1a1a1a",
                 # Shadow - Gold glow
                 "--shadow": "rgba(251, 176, 59, 0.2)",
                 "--shadow-hover": "rgba(251, 176, 59, 0.3)",
@@ -789,6 +809,7 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#000000",
                 "--sidebar-bg-secondary": "#1a1a1a",
                 "--search-bar-bg": "#2d2d2d",
+                "--top-bar-bg": "#1a1a1a",
                 # Shadow - Orange glow
                 "--shadow": "rgba(192, 76, 0, 0.2)",
                 "--shadow-hover": "rgba(192, 76, 0, 0.3)",
@@ -878,6 +899,7 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#000000",
                 "--sidebar-bg-secondary": "#1a1a1a",
                 "--search-bar-bg": "#2d2d2d",
+                "--top-bar-bg": "#1a1a1a",
                 # Shadow - Orange glow
                 "--shadow": "rgba(255, 176, 124, 0.2)",
                 "--shadow-hover": "rgba(255, 176, 124, 0.3)",
@@ -967,6 +989,7 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#000000",
                 "--sidebar-bg-secondary": "#1a1a1a",
                 "--search-bar-bg": "#2d2d2d",
+                "--top-bar-bg": "#1a1a1a",
                 # Shadow - Orange glow
                 "--shadow": "rgba(217, 121, 4, 0.2)",
                 "--shadow-hover": "rgba(217, 121, 4, 0.3)",
@@ -1014,9 +1037,40 @@ def extract_built_in_theme(theme_name):
         if theme_name not in built_in_themes:
             return jsonify({"error": "Built-in theme not found"}), 404
 
-        return jsonify(
-            {"theme_name": theme_name, "variables": built_in_themes[theme_name]}
-        )
+        # Also provide light theme defaults based on the theme
+        light_theme_vars = {}
+        if theme_name == "default":
+            # Default light theme is already defined in CSS
+            light_theme_vars = {
+                "--bg-primary": "#ffffff",
+                "--bg-secondary": "#f8f9fa", 
+                "--bg-tertiary": "#e9ecef",
+                "--text-primary": "#212529",
+                "--text-secondary": "#495057",
+                "--text-accent": "#0066cc",
+                "--border-primary": "#dee2e6",
+                "--btn-primary-bg": "#0066cc",
+                "--sidebar-bg": "#ffffff",
+                "--search-bar-bg": "#ffffff",
+                "--top-bar-bg": "#f8f9fa",
+            }
+        else:
+            # For other themes, provide lighter variants
+            light_theme_vars = built_in_themes[theme_name].copy()
+            # Auto-generate lighter colors (this is a simplified approach)
+            for key, value in light_theme_vars.items():
+                if isinstance(value, str) and value.startswith('#'):
+                    # This is a basic lightening - in practice you'd want more sophisticated color manipulation
+                    if 'bg-' in key:
+                        light_theme_vars[key] = value  # Keep as is for now
+                    elif 'text-' in key:
+                        light_theme_vars[key] = value  # Keep as is for now
+
+        return jsonify({
+            "theme_name": theme_name, 
+            "variables": built_in_themes[theme_name],
+            "light_variables": light_theme_vars
+        })
 
     except Exception as e:
         logger.error(f"Failed to extract built-in theme {theme_name}: {e}")
@@ -1135,6 +1189,7 @@ def edit_built_in_theme(theme_name):
                     "--sidebar-bg": "#1a1a1a",
                     "--sidebar-bg-secondary": "#2d2d2d",
                     "--search-bar-bg": "#2d2d2d",
+                    "--top-bar-bg": "#2d2d2d",
                     # Shadow
                     "--shadow": "rgba(0, 0, 0, 0.3)",
                     "--shadow-hover": "rgba(0, 0, 0, 0.5)",
@@ -1198,6 +1253,7 @@ def edit_built_in_theme(theme_name):
                     "--sidebar-bg": "#0a0a0a",
                     "--sidebar-bg-secondary": "#1a1a2e",
                     "--search-bar-bg": "#16213e",
+                    "--top-bar-bg": "#1a1a2e",
                 }
             },
             "vaporwave": {
@@ -1220,6 +1276,7 @@ def edit_built_in_theme(theme_name):
                     "--sidebar-bg": "#0d0221",
                     "--sidebar-bg-secondary": "#1a0933",
                     "--search-bar-bg": "#2d1b69",
+                    "--top-bar-bg": "#1a0933",
                 }
             },
             "lcars_tng": {
@@ -1242,6 +1299,7 @@ def edit_built_in_theme(theme_name):
                     "--sidebar-bg": "#000000",
                     "--sidebar-bg-secondary": "#1a1a1a",
                     "--search-bar-bg": "#333333",
+                    "--top-bar-bg": "#1a1a1a",
                 }
             },
             "lcars_ds9": {
@@ -1264,6 +1322,7 @@ def edit_built_in_theme(theme_name):
                     "--sidebar-bg": "#000000",
                     "--sidebar-bg-secondary": "#1a1a1a",
                     "--search-bar-bg": "#333333",
+                    "--top-bar-bg": "#1a1a1a",
                 }
             },
             "lcars_voy": {
@@ -1286,6 +1345,7 @@ def edit_built_in_theme(theme_name):
                     "--sidebar-bg": "#000000",
                     "--sidebar-bg-secondary": "#1a1a1a",
                     "--search-bar-bg": "#333333",
+                    "--top-bar-bg": "#1a1a1a",
                 }
             },
             "lcars_tng_e": {
@@ -1308,6 +1368,7 @@ def edit_built_in_theme(theme_name):
                     "--sidebar-bg": "#000000",
                     "--sidebar-bg-secondary": "#1a1a1a",
                     "--search-bar-bg": "#333333",
+                    "--top-bar-bg": "#1a1a1a",
                 }
             }
         }
