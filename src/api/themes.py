@@ -279,7 +279,14 @@ def update_theme(theme_id):
                 return jsonify({"error": "Theme not found"}), 404
 
             # Only allow theme creator or admin to edit
-            if theme.created_by != user_id and not request.current_user.is_admin:
+            # Handle both mock user (has is_admin) and real user (has role)
+            is_admin = (
+                getattr(request.current_user, 'is_admin', False) or 
+                (hasattr(request.current_user, 'role') and 
+                 request.current_user.role.name == 'ADMIN')
+            )
+            
+            if theme.created_by != user_id and not is_admin:
                 return jsonify({"error": "Permission denied"}), 403
 
             # Don't allow editing the Default theme, but allow other built-in themes
@@ -295,7 +302,14 @@ def update_theme(theme_id):
                 theme.theme_data = data["theme_data"]
             if "light_theme_data" in data:
                 theme.light_theme_data = data["light_theme_data"]
-            if "is_public" in data and request.current_user.is_admin:
+            # Handle both mock user (has is_admin) and real user (has role)
+            is_admin_for_public = (
+                getattr(request.current_user, 'is_admin', False) or 
+                (hasattr(request.current_user, 'role') and 
+                 request.current_user.role.name == 'ADMIN')
+            )
+            
+            if "is_public" in data and is_admin_for_public:
                 theme.is_public = data["is_public"]
 
             session.commit()
@@ -322,7 +336,14 @@ def delete_theme(theme_id):
                 return jsonify({"error": "Theme not found"}), 404
 
             # Only allow theme creator or admin to delete
-            if theme.created_by != user_id and not request.current_user.is_admin:
+            # Handle both mock user (has is_admin) and real user (has role)
+            is_admin_for_delete = (
+                getattr(request.current_user, 'is_admin', False) or 
+                (hasattr(request.current_user, 'role') and 
+                 request.current_user.role.name == 'ADMIN')
+            )
+            
+            if theme.created_by != user_id and not is_admin_for_delete:
                 return jsonify({"error": "Permission denied"}), 403
 
             # Don't allow deleting built-in themes
@@ -1529,7 +1550,14 @@ def update_built_in_theme(theme_name):
         user_id = request.current_user.id
         
         # Check if user is admin (only admins can update built-in themes)
-        if not request.current_user.is_admin:
+        # Handle both mock user (has is_admin) and real user (has role)
+        is_admin = (
+            getattr(request.current_user, 'is_admin', False) or 
+            (hasattr(request.current_user, 'role') and 
+             request.current_user.role.name == 'ADMIN')
+        )
+        
+        if not is_admin:
             return jsonify({"error": "Admin privileges required to update built-in themes"}), 403
 
         with get_db() as session:
