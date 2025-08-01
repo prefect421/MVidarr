@@ -5262,7 +5262,10 @@ function loadCustomizeThemeGrid() {
 
 // Quick apply theme directly from theme card
 async function quickApplyTheme(themeId) {
-    const theme = allThemes.find(theme => (theme.id || theme.name) === themeId);
+    const theme = allThemes.find(theme => {
+        const themeIdentifier = theme.id || theme.name;
+        return String(themeIdentifier) === String(themeId);
+    });
     
     if (!theme) {
         showError('Theme not found');
@@ -5341,8 +5344,11 @@ function selectTheme(themeId) {
         selectedCard.classList.add('active');
     }
     
-    // Find the theme
-    currentTheme = allThemes.find(theme => (theme.id || theme.name) === themeId);
+    // Find the theme - handle both numeric and string IDs
+    currentTheme = allThemes.find(theme => {
+        const themeIdentifier = theme.id || theme.name;
+        return String(themeIdentifier) === String(themeId);
+    });
     
     if (currentTheme) {
         loadThemeForCustomization(currentTheme);
@@ -5729,7 +5735,10 @@ function showError(message) {
 
 // Edit theme function
 async function editTheme(themeId) {
-    const theme = allThemes.find(t => (t.id || t.name) === themeId);
+    const theme = allThemes.find(t => {
+        const themeIdentifier = t.id || t.name;
+        return String(themeIdentifier) === String(themeId);
+    });
     if (!theme) {
         showError('Theme not found');
         return;
@@ -5762,7 +5771,10 @@ async function editTheme(themeId) {
 
 // Delete theme function with confirmation
 async function deleteTheme(themeId, themeName) {
-    const theme = allThemes.find(t => (t.id || t.name) === themeId);
+    const theme = allThemes.find(t => {
+        const themeIdentifier = t.id || t.name;
+        return String(themeIdentifier) === String(themeId);
+    });
     if (!theme) {
         showError('Theme not found');
         return;
@@ -5828,7 +5840,10 @@ async function updateCurrentTheme() {
         return;
     }
     
-    const themeToUpdate = allThemes.find(t => (t.id || t.name) === window.editingThemeId);
+    const themeToUpdate = allThemes.find(t => {
+        const themeIdentifier = t.id || t.name;
+        return String(themeIdentifier) === String(window.editingThemeId);
+    });
     if (!themeToUpdate) {
         showError('Theme to update not found');
         return;
