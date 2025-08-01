@@ -25,6 +25,7 @@
     --border-primary: #444444;
     --border-secondary: #555555;
     --border-focus: #4a9eff;
+    --border-focus-shadow: rgba(74, 158, 255, 0.1);
     --border-hover: #666666;
     
     /* Button Colors */
@@ -184,6 +185,7 @@
     --border-primary: #dee2e6;
     --border-secondary: #ced4da;
     --border-focus: #0066cc;
+    --border-focus-shadow: rgba(0, 102, 204, 0.1);
     --border-hover: #adb5bd;
     
     /* Button Colors */

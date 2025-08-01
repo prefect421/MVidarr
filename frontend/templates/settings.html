@@ -603,6 +603,10 @@
                                         <iconify-icon icon="tabler:refresh"></iconify-icon>
                                         Update Theme
                                     </button>
+                                    <button onclick="saveCurrentTheme()" class="btn btn-info" id="save-current-theme-btn">
+                                        <iconify-icon icon="tabler:device-floppy"></iconify-icon>
+                                        Save Current Theme
+                                    </button>
                                 </div>
                             </div>
 
@@ -618,8 +622,23 @@
                                 </div>
                             </div>
 
-                            <!-- Color Controls -->
+                            <!-- Color Controls with Dark/Light tabs -->
                             <div class="color-controls">
+                                <div class="theme-mode-tabs">
+                                    <button class="theme-mode-tab active" onclick="switchThemeMode('dark')" id="dark-theme-tab">
+                                        <iconify-icon icon="tabler:moon"></iconify-icon>
+                                        Dark Theme
+                                    </button>
+                                    <button class="theme-mode-tab" onclick="switchThemeMode('light')" id="light-theme-tab">
+                                        <iconify-icon icon="tabler:sun"></iconify-icon>
+                                        Light Theme
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Dark Theme Colors -->
+                            <div class="theme-mode-content active" id="dark-theme-content">
+                                <div class="color-controls">
                                 <div class="color-groups">
                                     <!-- Background Colors -->
                                     <div class="color-group">
@@ -903,6 +922,32 @@
                                                 <label for="accent-dark">Accent Dark:</label>
                                                 <input type="color" id="accent-dark" data-css-var="--accent-dark">
                                                 <span class="color-value">#007799</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                            
+                            <!-- Light Theme Colors -->
+                            <div class="theme-mode-content" id="light-theme-content" style="display: none;">
+                                <div class="color-controls">
+                                    <div class="color-groups">
+                                        <!-- Same structure as dark theme but for light theme colors -->
+                                        <div class="color-group">
+                                            <h5>Background Colors (Light)</h5>
+                                            <div class="color-inputs">
+                                                <div class="color-input-group">
+                                                    <label for="bg-primary-light">Primary Background (Light):</label>
+                                                    <input type="color" id="bg-primary-light" data-css-var="--bg-primary" data-mode="light">
+                                                    <span class="color-value">#ffffff</span>
+                                                </div>
+                                                <div class="color-input-group">
+                                                    <label for="bg-secondary-light">Secondary Background (Light):</label>
+                                                    <input type="color" id="bg-secondary-light" data-css-var="--bg-secondary" data-mode="light">
+                                                    <span class="color-value">#f8f9fa</span>
+                                                </div>
+                                                <!-- Add more light theme color inputs as needed -->
                                             </div>
                                         </div>
                                     </div>
@@ -4711,6 +4756,49 @@ body.light-theme .cookie-management-section {
     min-height: 3rem;
 }
 
+/* Theme Mode Tabs */
+.theme-mode-tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-primary, #444);
+}
+
+.theme-mode-tab {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    color: var(--text-secondary, #ccc);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    border-bottom: 2px solid transparent;
+}
+
+.theme-mode-tab:hover {
+    color: var(--text-primary, #fff);
+    background: var(--bg-hover, #404040);
+}
+
+.theme-mode-tab.active {
+    color: var(--text-accent, #4a9eff);
+    border-bottom-color: var(--text-accent, #4a9eff);
+}
+
+.theme-mode-tab iconify-icon {
+    font-size: 1rem;
+}
+
+.theme-mode-content {
+    display: none;
+}
+
+.theme-mode-content.active {
+    display: block;
+}
+
 .color-groups {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -5262,6 +5350,7 @@ function selectTheme(themeId) {
         // Manage button visibility based on theme type and editing state
         const updateBtn = document.getElementById('update-theme-btn');
         const saveBtn = document.querySelector('[onclick*="saveCustomTheme"]');
+        const saveCurrentBtn = document.getElementById('save-current-theme-btn');
         
         if (window.editingThemeId === themeId) {
             // This theme is being edited
@@ -5270,6 +5359,9 @@ function selectTheme(themeId) {
             }
             if (saveBtn) {
                 saveBtn.style.display = 'none';
+            }
+            if (saveCurrentBtn) {
+                saveCurrentBtn.style.display = 'none';
             }
         } else {
             // Reset editing state
@@ -5280,6 +5372,14 @@ function selectTheme(themeId) {
             if (saveBtn) {
                 // Show Save as Custom button for all themes
                 saveBtn.style.display = 'inline-block';
+            }
+            if (saveCurrentBtn) {
+                // Show Save Current Theme button for editable themes (not Default)
+                if (currentTheme.is_built_in && currentTheme.name.toLowerCase() === 'default') {
+                    saveCurrentBtn.style.display = 'none';
+                } else {
+                    saveCurrentBtn.style.display = 'inline-block';
+                }
             }
         }
         
@@ -5330,23 +5430,45 @@ async function loadThemeForCustomization(theme) {
         themeDescriptionInput.value = '';
     }
     
-    // Load colors into inputs
+    // Load colors into inputs for both dark and light modes
     const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
     colorInputs.forEach(input => {
         const cssVar = input.dataset.cssVar;
-        const value = themeData?.[cssVar] || input.nextElementSibling.textContent;
+        const mode = input.dataset.mode;
+        
+        let value;
+        if (mode === 'light') {
+            // Use light theme data if available
+            value = theme.light_theme_data?.[cssVar] || input.nextElementSibling.textContent;
+        } else {
+            // Use regular theme data for dark mode
+            value = themeData?.[cssVar] || input.nextElementSibling.textContent;
+        }
+        
         input.value = value;
         input.nextElementSibling.textContent = value;
         
-        // Apply the color to the document for live preview
-        document.documentElement.style.setProperty(cssVar, value);
+        // Apply the color to the document for live preview (only if current mode matches)
+        if ((mode === 'light' && window.currentThemeMode === 'light') || 
+            (!mode && window.currentThemeMode !== 'light')) {
+            document.documentElement.style.setProperty(cssVar, value);
+        }
         
         // Add event listener for live updates
         input.addEventListener('input', function() {
-            document.documentElement.style.setProperty(cssVar, this.value);
+            // Only apply live preview if this input's mode matches current mode
+            if ((this.dataset.mode === 'light' && window.currentThemeMode === 'light') || 
+                (!this.dataset.mode && window.currentThemeMode !== 'light')) {
+                document.documentElement.style.setProperty(cssVar, this.value);
+            }
             this.nextElementSibling.textContent = this.value;
         });
     });
+    
+    // Initialize theme mode to dark if not set
+    if (!window.currentThemeMode) {
+        window.currentThemeMode = 'dark';
+    }
     
     // Show the customization panel
     document.getElementById('color-customization-panel').style.display = 'block';
@@ -5463,6 +5585,120 @@ function refreshThemes() {
     loadThemes()
         .then(() => showSuccess('Themes refreshed successfully!'))
         .catch(error => showError('Failed to refresh themes: ' + error.message));
+}
+
+// Switch between Dark and Light theme customization modes
+function switchThemeMode(mode) {
+    // Update tab states
+    const darkTab = document.getElementById('dark-theme-tab');
+    const lightTab = document.getElementById('light-theme-tab');
+    const darkContent = document.getElementById('dark-theme-content');
+    const lightContent = document.getElementById('light-theme-content');
+    
+    if (mode === 'dark') {
+        darkTab.classList.add('active');
+        lightTab.classList.remove('active');
+        darkContent.classList.add('active');
+        darkContent.style.display = 'block';
+        lightContent.classList.remove('active');
+        lightContent.style.display = 'none';
+    } else {
+        lightTab.classList.add('active');
+        darkTab.classList.remove('active');
+        lightContent.classList.add('active');
+        lightContent.style.display = 'block';
+        darkContent.classList.remove('active');
+        darkContent.style.display = 'none';
+    }
+    
+    // Store current mode
+    window.currentThemeMode = mode;
+}
+
+// Save current theme (update the theme that's currently applied)
+async function saveCurrentTheme() {
+    if (!currentTheme) {
+        showError('No theme selected');
+        return;
+    }
+    
+    // Check if this is the Default theme
+    if (currentTheme.is_built_in && currentTheme.name.toLowerCase() === 'default') {
+        showError('The Default theme cannot be modified. Use "Save as Custom" to create a new theme based on Default.');
+        return;
+    }
+    
+    try {
+        // Get current values from color inputs
+        const themeData = {};
+        const lightThemeData = {};
+        
+        const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
+        colorInputs.forEach(input => {
+            const cssVar = input.dataset.cssVar;
+            if (input.dataset.mode === 'light') {
+                lightThemeData[cssVar] = input.value;
+            } else {
+                themeData[cssVar] = input.value;
+            }
+        });
+
+        // Get theme name and description
+        const themeName = document.getElementById('theme-name-input').value.trim();
+        const themeDescription = document.getElementById('theme-description-input').value.trim();
+        
+        // Prepare update data
+        const updateData = {
+            theme_data: themeData,
+            light_theme_data: Object.keys(lightThemeData).length > 0 ? lightThemeData : undefined
+        };
+        
+        if (themeName) {
+            updateData.display_name = themeName;
+        }
+        if (themeDescription) {
+            updateData.description = themeDescription;
+        }
+        
+        // Choose endpoint based on theme type
+        let url, method;
+        if (currentTheme.is_built_in) {
+            url = `/api/themes/built-in/${currentTheme.name}`;
+            method = 'PUT';
+        } else {
+            url = `/api/themes/${currentTheme.id}`;
+            method = 'PUT';
+        }
+        
+        // Update the theme
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Failed to save theme: ${response.status}`);
+        }
+        
+        const updatedTheme = await response.json();
+        showSuccess(`Theme "${updatedTheme.display_name || updatedTheme.name}" saved successfully!`);
+        
+        // Reload themes and reapply the current theme
+        await loadThemes();
+        
+        // Find and reselect the updated theme
+        const refreshedTheme = allThemes.find(t => (t.id || t.name) === (currentTheme.id || currentTheme.name));
+        if (refreshedTheme) {
+            currentTheme = refreshedTheme;
+            loadThemeForCustomization(currentTheme);
+        }
+        
+    } catch (error) {
+        console.error('Failed to save current theme:', error);
+        showError('Failed to save current theme: ' + error.message);
+    }
 }
 
 // Helper functions for notifications
