@@ -572,7 +572,7 @@ class CustomTheme(Base):
 
     def to_dict(self):
         """Convert to dictionary for API responses"""
-        return {
+        result = {
             "id": self.id,
             "name": self.name,
             "display_name": self.display_name,
@@ -582,10 +582,17 @@ class CustomTheme(Base):
             "is_public": self.is_public,
             "is_built_in": self.is_built_in,
             "theme_data": self.theme_data,
-            "light_theme_data": self.light_theme_data,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+        
+        # Handle light_theme_data gracefully in case column doesn't exist yet
+        try:
+            result["light_theme_data"] = self.light_theme_data
+        except AttributeError:
+            result["light_theme_data"] = None
+            
+        return result
 
     def __repr__(self):
         return f"<CustomTheme(name='{self.name}', display_name='{self.display_name}')>"

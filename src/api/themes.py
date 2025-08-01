@@ -100,7 +100,6 @@ def get_themes():
                     "is_public": True,
                     "theme_data": None,
                     "light_theme_data": None,  # These use CSS files
-                    "light_theme_data": None,  # These use CSS files
                 },
                 {
                     "id": "cyber",
