@@ -5500,7 +5500,7 @@ async function applyCurrentTheme() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                theme_name: currentTheme.id || currentTheme.name
+                theme_name: currentTheme.name  // Always use name, not ID
             })
         });
         
@@ -5689,10 +5689,25 @@ async function saveCurrentTheme() {
         await loadThemes();
         
         // Find and reselect the updated theme
-        const refreshedTheme = allThemes.find(t => (t.id || t.name) === (currentTheme.id || currentTheme.name));
+        // For built-in themes, prioritize database records over hardcoded definitions
+        let refreshedTheme;
+        if (currentTheme.is_built_in) {
+            // Look for the database record first (it will have an ID)
+            refreshedTheme = allThemes.find(t => t.name === currentTheme.name && t.id);
+            // Fallback to name-based lookup if no database record found
+            if (!refreshedTheme) {
+                refreshedTheme = allThemes.find(t => t.name === currentTheme.name);
+            }
+        } else {
+            // For custom themes, use ID-based lookup
+            refreshedTheme = allThemes.find(t => t.id === currentTheme.id);
+        }
+        
         if (refreshedTheme) {
             currentTheme = refreshedTheme;
             loadThemeForCustomization(currentTheme);
+        } else {
+            console.error('Could not find refreshed theme after save:', currentTheme);
         }
         
     } catch (error) {

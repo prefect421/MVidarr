@@ -172,15 +172,28 @@ def get_themes():
 
             # Convert custom themes to dict format safely
             custom_themes = []
+            custom_theme_names = set()  # Track which built-in themes have been customized
+            
             for theme in themes:
                 try:
-                    custom_themes.append(theme.to_dict())
+                    theme_dict = theme.to_dict()
+                    custom_themes.append(theme_dict)
+                    if theme.is_built_in:
+                        custom_theme_names.add(theme.name)
                 except Exception as theme_error:
                     logger.error(f"Error converting theme {theme.id} to dict: {theme_error}")
                     continue
             
+            # Filter out built-in themes that have database records (avoid duplicates)
+            filtered_built_in_themes = [
+                theme for theme in built_in_themes 
+                if theme["name"] not in custom_theme_names
+            ]
+            
             logger.info(f"Successfully converted {len(custom_themes)} custom themes")
-            all_themes = built_in_themes + custom_themes
+            logger.info(f"Filtered {len(filtered_built_in_themes)} built-in themes (avoiding {len(custom_theme_names)} duplicates)")
+            
+            all_themes = filtered_built_in_themes + custom_themes  
             logger.info(f"Returning {len(all_themes)} total themes")
 
             return jsonify({"themes": all_themes, "total": len(all_themes)})
