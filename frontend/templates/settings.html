@@ -4840,16 +4840,31 @@ function switchThemeTab(event, tabId) {
 // Load all themes from API
 async function loadThemes() {
     try {
+        console.log('Loading themes from /api/themes...');
         const response = await fetch('/api/themes');
-        if (!response.ok) throw new Error('Failed to load themes');
+        console.log('Themes API response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Themes API error response:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
         
         const data = await response.json();
+        console.log('Themes API response data:', data);
+        
+        if (!data.themes) {
+            throw new Error('No themes property in response');
+        }
+        
         allThemes = data.themes;
+        console.log('Loaded themes:', allThemes.length);
         renderThemesGrid();
         loadCustomizeThemeGrid();
         
     } catch (error) {
         console.error('Failed to load themes:', error);
+        console.error('Error stack:', error.stack);
         showError('Failed to load themes: ' + error.message);
     }
 }

@@ -74,20 +74,27 @@ def get_themes():
     """Get all available themes (built-in and custom)"""
     try:
         user_id = request.current_user.id
+        logger.info(f"Loading themes for user {user_id}")
 
         with get_db() as session:
             # Get all themes that are either public, built-in, or created by the current user
-            themes = (
-                session.query(CustomTheme)
-                .filter(
-                    or_(
-                        CustomTheme.is_public == True,
-                        CustomTheme.is_built_in == True,
-                        CustomTheme.created_by == user_id,
+            try:
+                themes = (
+                    session.query(CustomTheme)
+                    .filter(
+                        or_(
+                            CustomTheme.is_public == True,
+                            CustomTheme.is_built_in == True,
+                            CustomTheme.created_by == user_id,
+                        )
                     )
+                    .all()
                 )
-                .all()
-            )
+                logger.info(f"Found {len(themes)} custom themes in database")
+            except Exception as db_error:
+                logger.error(f"Database error querying themes: {db_error}")
+                # Continue with empty themes list if database query fails
+                themes = []
 
             # Also include built-in CSS themes
             built_in_themes = [
@@ -163,8 +170,18 @@ def get_themes():
                 },
             ]
 
-            custom_themes = [theme.to_dict() for theme in themes]
+            # Convert custom themes to dict format safely
+            custom_themes = []
+            for theme in themes:
+                try:
+                    custom_themes.append(theme.to_dict())
+                except Exception as theme_error:
+                    logger.error(f"Error converting theme {theme.id} to dict: {theme_error}")
+                    continue
+            
+            logger.info(f"Successfully converted {len(custom_themes)} custom themes")
             all_themes = built_in_themes + custom_themes
+            logger.info(f"Returning {len(all_themes)} total themes")
 
             return jsonify({"themes": all_themes, "total": len(all_themes)})
 
