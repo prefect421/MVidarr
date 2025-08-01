@@ -282,9 +282,9 @@ def update_theme(theme_id):
             if theme.created_by != user_id and not request.current_user.is_admin:
                 return jsonify({"error": "Permission denied"}), 403
 
-            # Don't allow editing built-in themes
-            if theme.is_built_in:
-                return jsonify({"error": "Cannot edit built-in themes"}), 400
+            # Don't allow editing the Default theme, but allow other built-in themes
+            if theme.is_built_in and theme.name.lower() == "default":
+                return jsonify({"error": "Cannot edit the Default theme"}), 400
 
             # Update fields
             if "display_name" in data:
@@ -1510,4 +1510,65 @@ def duplicate_built_in_theme(theme_name):
 
     except Exception as e:
         logger.error(f"Failed to duplicate built-in theme {theme_name}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@themes_bp.route("/built-in/<string:theme_name>", methods=["PUT"])
+@simple_auth_required  
+def update_built_in_theme(theme_name):
+    """Update a built-in theme (except Default)"""
+    try:
+        # Prevent updating the Default theme
+        if theme_name.lower() == "default":
+            return jsonify({"error": "Cannot edit the Default theme"}), 400
+            
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request data is required"}), 400
+
+        user_id = request.current_user.id
+        
+        # Check if user is admin (only admins can update built-in themes)
+        if not request.current_user.is_admin:
+            return jsonify({"error": "Admin privileges required to update built-in themes"}), 403
+
+        with get_db() as session:
+            # Check if this built-in theme exists as a custom theme record
+            theme = session.query(CustomTheme).filter_by(name=theme_name, is_built_in=True).first()
+            
+            if theme:
+                # Update existing built-in theme record
+                if "display_name" in data:
+                    theme.display_name = data["display_name"]
+                if "description" in data:
+                    theme.description = data["description"]
+                if "theme_data" in data:
+                    theme.theme_data = data["theme_data"]
+                if "light_theme_data" in data:
+                    theme.light_theme_data = data["light_theme_data"]
+                    
+                session.commit()
+                logger.info(f"Updated built-in theme '{theme_name}' by user {user_id}")
+                return jsonify(theme.to_dict()), 200
+            else:
+                # Create a new custom theme record for this built-in theme
+                new_theme = CustomTheme(
+                    name=theme_name,
+                    display_name=data.get("display_name", theme_name.title()),
+                    description=data.get("description", f"Updated {theme_name} theme"),
+                    created_by=user_id,
+                    is_public=True,
+                    is_built_in=True,
+                    theme_data=data.get("theme_data", {}),
+                    light_theme_data=data.get("light_theme_data", {})
+                )
+                
+                session.add(new_theme)
+                session.commit()
+                
+                logger.info(f"Created built-in theme record for '{theme_name}' by user {user_id}")
+                return jsonify(new_theme.to_dict()), 201
+
+    except Exception as e:
+        logger.error(f"Failed to update built-in theme {theme_name}: {e}")
         return jsonify({"error": str(e)}), 500

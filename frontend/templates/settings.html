@@ -606,6 +606,18 @@
                                 </div>
                             </div>
 
+                            <!-- Theme Details -->  
+                            <div class="theme-details" id="theme-details-section" style="display: none;"> 
+                                <div class="form-group">
+                                    <label for="theme-name-input">Theme Name:</label>
+                                    <input type="text" id="theme-name-input" class="form-control" placeholder="Enter theme name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="theme-description-input">Description:</label>
+                                    <textarea id="theme-description-input" class="form-control" rows="2" placeholder="Enter theme description"></textarea>
+                                </div>
+                            </div>
+
                             <!-- Color Controls -->
                             <div class="color-controls">
                                 <div class="color-groups">
@@ -4652,6 +4664,53 @@ body.light-theme .cookie-management-section {
     gap: 0.5rem;
 }
 
+/* Theme Details Section */
+.theme-details {
+    background: var(--bg-tertiary, #3a3a3a);
+    border: 1px solid var(--border-secondary, #555);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.theme-details .form-group {
+    margin-bottom: 1rem;
+}
+
+.theme-details .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.theme-details label {
+    display: block;
+    color: var(--text-primary, #fff);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.theme-details .form-control {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: var(--input-bg, #3a3a3a);
+    border: 1px solid var(--input-border, #555);
+    border-radius: 4px;
+    color: var(--input-text, #fff);
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+}
+
+.theme-details .form-control:focus {
+    outline: none;
+    border-color: var(--input-focus, #4a9eff);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+}
+
+.theme-details textarea.form-control {
+    resize: vertical;
+    min-height: 3rem;
+}
+
 .color-groups {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -5200,12 +5259,27 @@ function selectTheme(themeId) {
     if (currentTheme) {
         loadThemeForCustomization(currentTheme);
         
-        // Reset editing state unless this theme is being edited
-        if (window.editingThemeId !== themeId) {
+        // Manage button visibility based on theme type and editing state
+        const updateBtn = document.getElementById('update-theme-btn');
+        const saveBtn = document.querySelector('[onclick*="saveCustomTheme"]');
+        
+        if (window.editingThemeId === themeId) {
+            // This theme is being edited
+            if (updateBtn) {
+                updateBtn.style.display = 'inline-block';
+            }
+            if (saveBtn) {
+                saveBtn.style.display = 'none';
+            }
+        } else {
+            // Reset editing state
             window.editingThemeId = null;
-            const updateBtn = document.getElementById('update-theme-btn');
             if (updateBtn) {
                 updateBtn.style.display = 'none';
+            }
+            if (saveBtn) {
+                // Show Save as Custom button for all themes
+                saveBtn.style.display = 'inline-block';
             }
         }
         
@@ -5239,6 +5313,22 @@ async function loadThemeForCustomization(theme) {
     
     // Update theme name
     document.getElementById('customizing-theme-name').textContent = `Customizing: ${theme.display_name || theme.name}`;
+    
+    // Show/hide theme details section and populate fields
+    const themeDetailsSection = document.getElementById('theme-details-section');
+    const themeNameInput = document.getElementById('theme-name-input');
+    const themeDescriptionInput = document.getElementById('theme-description-input');
+    
+    // Show theme details for custom themes or built-in themes (except Default)
+    if (!theme.is_built_in || (theme.is_built_in && theme.name.toLowerCase() !== 'default')) {
+        themeDetailsSection.style.display = 'block';
+        themeNameInput.value = theme.display_name || theme.name;
+        themeDescriptionInput.value = theme.description || '';
+    } else {
+        themeDetailsSection.style.display = 'none';
+        themeNameInput.value = '';
+        themeDescriptionInput.value = '';
+    }
     
     // Load colors into inputs
     const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
@@ -5394,8 +5484,9 @@ async function editTheme(themeId) {
         return;
     }
     
-    if (theme.is_built_in) {
-        showError('Built-in themes cannot be edited');
+    // Prevent editing the Default theme, but allow other built-in themes
+    if (theme.is_built_in && theme.name.toLowerCase() === 'default') {
+        showError('The Default theme cannot be edited');
         return;
     }
     
@@ -5492,8 +5583,9 @@ async function updateCurrentTheme() {
         return;
     }
     
-    if (themeToUpdate.is_built_in) {
-        showError('Built-in themes cannot be updated');
+    // Prevent updating the Default theme
+    if (themeToUpdate.is_built_in && themeToUpdate.name.toLowerCase() === 'default') {
+        showError('The Default theme cannot be updated');
         return;
     }
     
@@ -5512,14 +5604,38 @@ async function updateCurrentTheme() {
             }
         });
         
+        // Get theme name and description
+        const themeName = document.getElementById('theme-name-input').value.trim();
+        const themeDescription = document.getElementById('theme-description-input').value.trim();
+        
+        // Prepare update data
+        const updateData = {
+            theme_data: themeData,
+            light_theme_data: Object.keys(lightThemeData).length > 0 ? lightThemeData : undefined
+        };
+        
+        if (themeName) {
+            updateData.display_name = themeName;
+        }
+        if (themeDescription) {
+            updateData.description = themeDescription;
+        }
+        
+        // Choose endpoint based on theme type
+        let url, method;
+        if (themeToUpdate.is_built_in) {
+            url = `/api/themes/built-in/${themeToUpdate.name}`;
+            method = 'PUT';
+        } else {
+            url = `/api/themes/${window.editingThemeId}`;
+            method = 'PUT';
+        }
+        
         // Update existing theme
-        const response = await fetch(`/api/themes/${window.editingThemeId}`, {
-            method: 'PUT',
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                theme_data: themeData,
-                light_theme_data: Object.keys(lightThemeData).length > 0 ? lightThemeData : undefined
-            })
+            body: JSON.stringify(updateData)
         });
         
         if (!response.ok) {
