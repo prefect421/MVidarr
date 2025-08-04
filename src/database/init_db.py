@@ -233,6 +233,209 @@ def create_admin_user():
         return False
 
 
+def init_built_in_themes():
+    """Initialize built-in themes in the database"""
+    from src.database.connection import get_db
+    from src.database.models import UserRole
+
+    try:
+        with get_db() as session:
+            # Get admin user for theme ownership
+            admin_user = session.query(User).filter_by(username="admin").first()
+            if not admin_user:
+                logger.warning("Admin user not found for theme initialization")
+                return True  # Don't fail initialization if admin user is missing
+
+            # Check if built-in themes already exist
+            existing_builtin_count = session.query(CustomTheme).filter_by(is_built_in=True).count()
+            
+            if existing_builtin_count > 0:
+                logger.info(f"Built-in themes already exist ({existing_builtin_count} entries)")
+                return True
+
+            # Define the new built-in themes
+            new_themes = [
+                {
+                    'name': 'lcars_new',
+                    'display_name': 'LCARS (New)',
+                    'description': 'Star Trek TNG LCARS interface with goldenrod command sections',
+                    'theme_data': {
+                        "--bg-primary": "#000000",
+                        "--bg-secondary": "#1a1a1a", 
+                        "--bg-tertiary": "#2a2a2a",
+                        "--bg-modal": "#111111",
+                        "--bg-card": "#1e1e1e",
+                        "--bg-hover": "#333333",
+                        "--sidebar-bg": "#DAA520",
+                        "--topbar-bg": "#DAA520",
+                        "--text-primary": "#ffffff",
+                        "--text-secondary": "#e0e0e0",
+                        "--text-muted": "#999999",
+                        "--text-accent": "#ff9900",
+                        "--text-inverse": "#000000",
+                        "--btn-primary-bg": "#ff9900",
+                        "--btn-primary-text": "#000000",
+                        "--btn-secondary-bg": "#99ccff",
+                        "--btn-secondary-text": "#000000",
+                        "--btn-danger-bg": "#ff6666",
+                        "--btn-danger-text": "#000000",
+                        "--border-primary": "#ff9900",
+                        "--border-focus": "#99ccff",
+                        "--border-secondary": "#666666",
+                        "--success": "#99ff99",
+                        "--warning": "#ffcc00",
+                        "--error": "#ff6666",
+                        "--info": "#99ccff",
+                        "--accent-color": "#ff9900",
+                        "--highlight-color": "#99ccff",
+                        "--muted-color": "#666666"
+                    }
+                },
+                {
+                    'name': 'punk77',
+                    'display_name': "Punk '77",
+                    'description': 'Raw punk rock aesthetic inspired by The Clash and Sex Pistols',
+                    'theme_data': {
+                        "--bg-primary": "#0d0d0d",
+                        "--bg-secondary": "#1a1a1a",
+                        "--bg-tertiary": "#262626",
+                        "--bg-modal": "#1f1f1f",
+                        "--bg-card": "#1e1e1e",
+                        "--bg-hover": "#333333",
+                        "--sidebar-bg": "#000000",
+                        "--topbar-bg": "#1a0000",
+                        "--text-primary": "#ffffff",
+                        "--text-secondary": "#e0e0e0",
+                        "--text-muted": "#999999",
+                        "--text-accent": "#ff0040",
+                        "--text-inverse": "#000000",
+                        "--btn-primary-bg": "#ff0040",
+                        "--btn-primary-text": "#ffffff",
+                        "--btn-secondary-bg": "#ffff00",
+                        "--btn-secondary-text": "#000000",
+                        "--btn-danger-bg": "#cc0000",
+                        "--btn-danger-text": "#ffffff",
+                        "--border-primary": "#ff0040",
+                        "--border-focus": "#ffff00",
+                        "--border-secondary": "#666666",
+                        "--success": "#00ff00",
+                        "--warning": "#ffff00",
+                        "--error": "#ff0000",
+                        "--info": "#ff0080",
+                        "--accent-color": "#ff0040",
+                        "--highlight-color": "#ffff00",
+                        "--muted-color": "#666666"
+                    }
+                },
+                {
+                    'name': 'tardis',
+                    'display_name': 'TARDIS',
+                    'description': 'Doctor Who TARDIS interior inspired by the Tennant era console room',
+                    'theme_data': {
+                        "--bg-primary": "#0f1419",
+                        "--bg-secondary": "#1a2332",
+                        "--bg-tertiary": "#253447",
+                        "--bg-modal": "#1e2a3a",
+                        "--bg-card": "#1c2633",
+                        "--bg-hover": "#2d3e52",
+                        "--sidebar-bg": "#002147",
+                        "--topbar-bg": "#002147",
+                        "--text-primary": "#ffffff",
+                        "--text-secondary": "#b8d4f0",
+                        "--text-muted": "#7a9cc6",
+                        "--text-accent": "#4db8ff",
+                        "--text-inverse": "#000000",
+                        "--btn-primary-bg": "#4db8ff",
+                        "--btn-primary-text": "#ffffff",
+                        "--btn-secondary-bg": "#ff8c42",
+                        "--btn-secondary-text": "#000000",
+                        "--btn-danger-bg": "#ff4757",
+                        "--btn-danger-text": "#ffffff",
+                        "--border-primary": "#4db8ff",
+                        "--border-focus": "#70c1ff",
+                        "--border-secondary": "#4a6b8a",
+                        "--success": "#26d0ce",
+                        "--warning": "#ff8c42",
+                        "--error": "#ff4757",
+                        "--info": "#4db8ff",
+                        "--accent-color": "#4db8ff",
+                        "--highlight-color": "#70c1ff",
+                        "--muted-color": "#4a6b8a"
+                    }
+                },
+                {
+                    'name': 'mtv',
+                    'display_name': 'MTV',
+                    'description': 'Early 80s MTV neon aesthetic with electric colors and bold contrasts',
+                    'theme_data': {
+                        "--bg-primary": "#0a0a0a",
+                        "--bg-secondary": "#1a1a1a",
+                        "--bg-tertiary": "#2a2a2a",
+                        "--bg-modal": "#1f1f1f",
+                        "--bg-card": "#1e1e1e",
+                        "--bg-hover": "#333333",
+                        "--sidebar-bg": "#ff1493",
+                        "--topbar-bg": "#ff1493",
+                        "--text-primary": "#ffffff",
+                        "--text-secondary": "#f0f0f0",
+                        "--text-muted": "#cccccc",
+                        "--text-accent": "#00ffff",
+                        "--text-inverse": "#000000",
+                        "--btn-primary-bg": "#00ffff",
+                        "--btn-primary-text": "#000000",
+                        "--btn-secondary-bg": "#ffff00",
+                        "--btn-secondary-text": "#000000",
+                        "--btn-danger-bg": "#ff0080",
+                        "--btn-danger-text": "#ffffff",
+                        "--border-primary": "#00ffff",
+                        "--border-focus": "#ffff00",
+                        "--border-secondary": "#666666",
+                        "--success": "#00ff00",
+                        "--warning": "#ffff00",
+                        "--error": "#ff0080",
+                        "--info": "#00ffff",
+                        "--accent-color": "#ff1493",
+                        "--highlight-color": "#00ffff",
+                        "--secondary-accent": "#ffff00",
+                        "--muted-color": "#666666"
+                    }
+                }
+            ]
+
+            # Create the themes
+            themes_created = 0
+            for theme_data in new_themes:
+                # Check if theme already exists by name
+                existing_theme = session.query(CustomTheme).filter_by(name=theme_data['name']).first()
+                if existing_theme:
+                    logger.info(f"Theme '{theme_data['name']}' already exists, skipping")
+                    continue
+
+                theme = CustomTheme(
+                    name=theme_data['name'],
+                    display_name=theme_data['display_name'],
+                    description=theme_data['description'],
+                    created_by=admin_user.id,
+                    is_public=True,
+                    is_built_in=True,
+                    theme_data=theme_data['theme_data']
+                )
+                session.add(theme)
+                themes_created += 1
+
+            if themes_created > 0:
+                session.commit()
+                logger.info(f"Created {themes_created} built-in themes")
+            else:
+                logger.info("All built-in themes already exist")
+
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to initialize built-in themes: {e}")
+        return False
+
+
 def check_database_health():
     """Check database health and connectivity"""
     try:
@@ -309,6 +512,11 @@ def initialize_database():
     # Create admin user
     if not create_admin_user():
         logger.error("Failed to create admin user")
+        return False
+
+    # Initialize built-in themes
+    if not init_built_in_themes():
+        logger.error("Failed to initialize built-in themes")
         return False
 
     # Health check
