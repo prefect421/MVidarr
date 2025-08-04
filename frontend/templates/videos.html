@@ -2176,9 +2176,15 @@ function updateSingleVideoCard(videoId) {
             }
             
             // Find the video card that needs updating
-            const videoCard = document.querySelector(`[data-video-id="${videoId}"]`).closest('.video-card');
+            const videoElement = document.querySelector(`[data-video-id="${videoId}"]`);
+            if (!videoElement) {
+                console.error(`Video element with ID ${videoId} not found for update`);
+                return;
+            }
+            
+            const videoCard = videoElement.closest('.video-card');
             if (!videoCard) {
-                console.error('Video card not found for update');
+                console.error(`Video card not found for video ID ${videoId}`);
                 return;
             }
             
