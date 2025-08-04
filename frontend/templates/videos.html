@@ -2152,7 +2152,8 @@ function refreshVideoMetadata(id) {
                 videoCard.innerHTML = originalContent;
             } else {
                 showSuccess('Metadata refreshed successfully!');
-                loadVideos(); // Refresh the entire list to show updated data
+                // Update just this video card instead of reloading entire page
+                updateSingleVideoCard(id);
             }
         })
         .catch(error => {
@@ -2162,6 +2163,73 @@ function refreshVideoMetadata(id) {
             videoCard.innerHTML = originalContent;
         });
     });
+}
+
+function updateSingleVideoCard(videoId) {
+    // Fetch updated video data from API
+    fetch(`/api/videos/${videoId}`)
+        .then(response => response.json())
+        .then(video => {
+            if (video.error) {
+                showError('Error loading updated video data');
+                return;
+            }
+            
+            // Find the video card that needs updating
+            const videoCard = document.querySelector(`[data-video-id="${videoId}"]`).closest('.video-card');
+            if (!videoCard) {
+                console.error('Video card not found for update');
+                return;
+            }
+            
+            // Preserve checkbox state
+            const checkbox = videoCard.querySelector('.video-checkbox');
+            const isChecked = checkbox ? checkbox.checked : false;
+            
+            // Generate new video card HTML (matching the template from loadVideos)
+            const newCardHTML = `
+                <div class="video-select">
+                    <input type="checkbox" class="video-checkbox" value="${video.id}" onchange="updateSelectedCount()" ${isChecked ? 'checked' : ''}>
+                </div>
+                <div class="video-thumbnail" data-video-id="${video.id}" data-action="play">
+                    <img src="/api/videos/${video.id}/thumbnail" 
+                         alt="${video.title}"
+                         onerror="this.src='/static/default-thumbnail.png'">
+                    <div class="video-overlay">
+                        <div class="video-play-btn">▶</div>
+                    </div>
+                </div>
+                <div class="video-info">
+                    <h3>${video.title}</h3>
+                    <p>Artist: ${video.artist ? video.artist.name : 'Unknown'}</p>
+                    <p>Status: <span class="status-${video.status ? video.status.toLowerCase() : 'unknown'}">${video.status || 'Unknown'}</span></p>
+                    <p>Year: ${video.year || 'Unknown'}</p>
+                    ${video.directors ? `<p>Directors: ${video.directors}</p>` : ''}
+                    ${video.producers ? `<p>Producers: ${video.producers}</p>` : ''}
+                </div>
+                <div class="video-actions">
+                    <button data-video-id="${video.id}" data-action="edit" class="btn-icon" title="Edit Video">
+                        <iconify-icon icon="tabler:edit"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="download" class="btn-icon" title="Download Video">
+                        <iconify-icon icon="tabler:download"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
+                        <iconify-icon icon="tabler:refresh"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="delete" class="btn-icon btn-danger" title="Delete Video">
+                        <iconify-icon icon="tabler:trash"></iconify-icon>
+                    </button>
+                </div>
+            `;
+            
+            // Replace the video card content
+            videoCard.innerHTML = newCardHTML;
+        })
+        .catch(error => {
+            console.error('Error updating video card:', error);
+            showError('Error updating video display');
+        });
 }
 
 function refreshAllMetadata() {
@@ -3833,6 +3901,50 @@ function bulkDeleteSelected() {
             hideBulkProgress();
             console.error('Error:', error);
             showError('Error deleting videos');
+        });
+    }
+}
+
+function bulkRefreshMetadata() {
+    const videoIds = getSelectedVideoIds();
+    if (videoIds.length === 0) {
+        showError('No videos selected');
+        return;
+    }
+    
+    const confirmed = confirm(`Refresh metadata from IMVDb for ${videoIds.length} selected video(s)? This will update year, directors, producers, and thumbnail information.`);
+    
+    if (confirmed) {
+        showBulkProgress('Refreshing metadata...');
+        
+        fetch('/api/videos/bulk/refresh-metadata', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                video_ids: videoIds
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideBulkProgress();
+            if (data.updated_count > 0) {
+                showSuccess(`Successfully refreshed metadata for ${data.updated_count} video(s)`);
+            }
+            if (data.failed_count > 0) {
+                showWarning(`Failed to refresh metadata for ${data.failed_count} video(s)`);
+            }
+            if (data.skipped_count > 0) {
+                showInfo(`Skipped ${data.skipped_count} video(s) - no IMVDb ID available`);
+            }
+            loadVideos();
+            updateSelectedCount();
+        })
+        .catch(error => {
+            hideBulkProgress();
+            console.error('Error:', error);
+            showError('Error refreshing metadata');
         });
     }
 }

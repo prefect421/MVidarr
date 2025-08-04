@@ -1162,8 +1162,8 @@ function renderThemesGrid() {
                     <button onclick="quickApplyTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-success">
                         <iconify-icon icon="tabler:check"></iconify-icon> Apply
                     </button>
-                    <button onclick="selectTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-secondary">
-                        <iconify-icon icon="tabler:edit"></iconify-icon> ${theme.is_built_in ? 'View' : 'Edit'}
+                    <button onclick="exportSingleTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-secondary">
+                        <iconify-icon icon="tabler:download"></iconify-icon> Export
                     </button>
                 </div>
             </div>
@@ -1757,6 +1757,52 @@ function exportCurrentTheme() {
             window.URL.revokeObjectURL(url);
             
             showSuccess(`Theme "${currentTheme.display_name}" exported successfully!`);
+        })
+        .catch(error => {
+            console.error('Export error:', error);
+            showError('Failed to export theme: ' + error.message);
+        });
+}
+
+// Export single theme from theme card
+function exportSingleTheme(themeId) {
+    // Find theme in the loaded themes
+    const theme = loadedThemes.find(t => (t.id || t.name) === themeId);
+    if (!theme) {
+        showError('Theme not found');
+        return;
+    }
+    
+    fetch(`/api/themes/${themeId}/export`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            // Get filename from Content-Disposition header
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = `${theme.name}_theme.json`;
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            return response.blob().then(blob => ({ blob, filename }));
+        })
+        .then(({ blob, filename }) => {
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showSuccess(`Theme "${theme.display_name}" exported successfully!`);
         })
         .catch(error => {
             console.error('Export error:', error);

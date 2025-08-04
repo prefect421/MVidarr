@@ -1,18 +1,18 @@
 {
   "version": "0.9.3",
-  "build_date": "2025-08-04T13:27:34.054126",
-  "git_commit": "2d3eac3",
+  "build_date": "2025-08-04T18:18:50.167911",
+  "git_commit": "c0ac1e6",
   "git_branch": "dev",
-  "release_name": "Development Version",
+  "release_name": "Theme System & UI Improvements Release",
   "features": [
-    "Fixed missing new color schemes (LCARS New, Punk 77, TARDIS, MTV)",
-    "Fixed theme application 500 error by creating missing settings table",
-    "Added comprehensive theme database with 6 total themes",
-    "Resolved database permission issues for theme functionality",
-    "Complete theme system implementation across all application pages",
-    "Enhanced LCARS TNG theme with goldenrod sidebar and search bar backgrounds",
-    "Universal theme support for authentication, admin, profile, and standalone pages",
-    "Improved CSS variable system for consistent theming throughout application",
-    "Based on stable 0.9.2 release with all bug fixes and enhancements"
+    "Complete theme export/import functionality - export individual themes or all themes as JSON",
+    "Replaced Edit Theme button with Export button for better UX consistency",
+    "Removed Day/Night slider and related code - simplified theme system to single variants",
+    "Added bulk refresh metadata function for multiple selected videos",
+    "Fixed single video refresh metadata to preserve page navigation and position", 
+    "Enhanced theme customization with comprehensive import validation and progress tracking",
+    "Multi-step import wizard with drag & drop file upload support",
+    "Improved video management workflow with preserved user context during updates",
+    "Based on comprehensive theme export/import system with full API integration"
   ]
 }

@@ -202,75 +202,6 @@
             font-size: 1rem;
         }
         
-        /* Theme Slider Styles */
-        .theme-slider-container {
-            display: flex !important;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        
-        .theme-slider-container:hover {
-            background-color: var(--hover-color, rgba(255, 255, 255, 0.1));
-        }
-        
-        .theme-slider-container .sidebar-text {
-            flex: 1;
-            margin: 0;
-        }
-        
-        .theme-slider {
-            width: 48px;
-            height: 24px;
-            background: var(--btn-primary-bg, #3b82f6);
-            border-radius: 12px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px var(--shadow, rgba(0, 0, 0, 0.2));
-        }
-        
-        .theme-slider.light-mode {
-            background: var(--warning, #fbbf24);
-        }
-        
-        .theme-slider-track {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            border-radius: 12px;
-        }
-        
-        .theme-slider-thumb {
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .theme-slider.light-mode .theme-slider-thumb {
-            transform: translateX(20px);
-        }
-        
-        /* Compact theme slider in user menu */
-        .sidebar-user-menu .theme-slider.light-mode .theme-slider-thumb {
-            transform: translateX(18px);
-        }
-        
-        .theme-slider-thumb iconify-icon {
-            font-size: 12px;
-            color: #374151;
-        }
         
         /* Dark theme adjustments */
 		body .main-content {
@@ -281,10 +212,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 		
-        /* Light theme adjustments */  
-        body.light-theme .theme-slider-container:hover {
-            background-color: rgba(0, 0, 0, 0.1);
-        }
         
         /* Theme section positioning */
         .sidebar-theme-section {
@@ -1380,16 +1307,6 @@
         </div>
         
         <div class="header-right">
-            <!-- Theme Toggle -->
-            <div class="header-theme-toggle" onclick="toggleDayNightMode()" style="cursor: pointer;" title="Toggle Theme">
-                <div class="theme-slider" id="headerThemeSlider" style="width: 40px; height: 20px;">
-                    <div class="theme-slider-track">
-                        <div class="theme-slider-thumb" style="width: 16px; height: 16px; top: 2px; left: 2px;">
-                            <iconify-icon icon="tabler:moon" id="headerThemeSliderIcon" style="font-size: 10px;"></iconify-icon>
-                        </div>
-                    </div>
-                </div>
-            </div>
             
             <!-- User Info Section -->
             <div class="header-user-section" id="headerUserSection" style="display: flex;">
@@ -1456,44 +1373,10 @@
             if (bauhausTheme) bauhausTheme.disabled = true;
         }
         
-        // Day/Night Mode Toggle - Enhanced for Multiple Themes
-        function toggleDayNightMode() {
-            const body = document.body;
-            const toggleSlider = document.getElementById('themeSlider');
-            const toggleIcon = document.getElementById('themeSliderIcon');
-            
-            if (body.classList.contains('light-theme')) {
-                // Switch to dark mode within current theme
-                body.classList.remove('light-theme');
-                window.currentMode = 'dark';
-                
-                // Update slider to dark mode
-                if (toggleSlider) toggleSlider.classList.remove('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
-                localStorage.setItem('mvidarr-daynight-mode', 'dark');
-            } else {
-                // Switch to light mode within current theme
-                body.classList.add('light-theme');
-                window.currentMode = 'light';
-                
-                // Update slider to light mode
-                if (toggleSlider) toggleSlider.classList.add('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
-                localStorage.setItem('mvidarr-daynight-mode', 'light');
-            }
-            
-            // Apply the current theme with new mode
-            applyCurrentTheme();
-        }
-        // Light/Dark Mode Toggle Functions (Alias for toggleDayNightMode)
-        function toggleDayNight() {
-            toggleDayNightMode();
-        }
 
         // Enhanced Theme Management System
         // Use global variables to avoid redeclaration conflicts
         window.currentTheme = window.currentTheme || 'default';
-        window.currentMode = window.currentMode || 'dark';
         
         // Load saved theme and mode on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -1502,9 +1385,6 @@
         });
         
         function loadSavedTheme() {
-            // Load saved day/night mode from localStorage
-            const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
-            window.currentMode = savedDayNightMode || 'dark';
             
             // Load saved theme using themes API
             fetch('/api/themes/current')
@@ -1573,22 +1453,11 @@
             const toggleBtn = document.getElementById('themeSlider');
             const toggleIcon = document.getElementById('themeSliderIcon');
             
-            // Apply current mode to UI elements
-            if (window.currentMode === 'light') {
-                document.body.classList.add('light-theme');
-                if (toggleBtn) toggleBtn.classList.add('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
-            } else {
-                document.body.classList.remove('light-theme');
-                if (toggleBtn) toggleBtn.classList.remove('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
-            }
         }
         
         function applyCurrentTheme() {
             // Apply theme data attributes to document
             document.documentElement.setAttribute('data-theme', window.currentTheme);
-            document.documentElement.setAttribute('data-mode', window.currentMode);
             
             // Update settings page preview if it exists
             if (typeof updateThemePreviewMode === 'function') {
@@ -2259,22 +2128,6 @@
         // Header functionality
         function initializeHeader() {
             // Synchronize header theme slider with main theme slider
-            const headerThemeSlider = document.getElementById('headerThemeSlider');
-            const headerThemeIcon = document.getElementById('headerThemeSliderIcon');
-            
-            if (headerThemeSlider && headerThemeIcon) {
-                // Update header theme slider to match current theme
-                updateHeaderThemeSlider();
-                
-                // Override the toggleDayNightMode function to update both sliders
-                const originalToggle = window.toggleDayNightMode;
-                window.toggleDayNightMode = function() {
-                    if (originalToggle) {
-                        originalToggle();
-                    }
-                    updateHeaderThemeSlider();
-                };
-            }
             
             // Header user menu dropdown functionality
             const headerUserMenu = document.getElementById('headerUserMenu');
@@ -2328,23 +2181,6 @@
             }
         }
         
-        function updateHeaderThemeSlider() {
-            const headerThemeSlider = document.getElementById('headerThemeSlider');
-            const headerThemeIcon = document.getElementById('headerThemeSliderIcon');
-            
-            if (!headerThemeSlider || !headerThemeIcon) return;
-            
-            const isLightTheme = document.body.classList.contains('light-theme');
-            const thumb = headerThemeSlider.querySelector('.theme-slider-thumb');
-            
-            if (isLightTheme) {
-                thumb.style.left = '22px';
-                headerThemeIcon.setAttribute('icon', 'tabler:sun');
-            } else {
-                thumb.style.left = '2px';
-                headerThemeIcon.setAttribute('icon', 'tabler:moon');
-            }
-        }
         
         function updateHeaderUserSection() {
             const headerUserSection = document.getElementById('headerUserSection');
