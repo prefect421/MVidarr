@@ -136,7 +136,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: var(--modal-overlay, rgba(0, 0, 0, 0.8));
     display: flex;
     justify-content: center;
     align-items: center;
@@ -201,7 +201,7 @@
     border-radius: 8px;
     margin-top: 15px;
     background: var(--bg-secondary, #2a2a2a);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px var(--shadow, rgba(0, 0, 0, 0.3));
 }
 
 .imvdb-matches-table {
@@ -212,12 +212,12 @@
 }
 
 .imvdb-matches-table th {
-    background: linear-gradient(135deg, #444 0%, #555 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--bg-tertiary, #444) 0%, var(--bg-quaternary, #555) 100%);
+    color: var(--text-primary, #fff);
     padding: 14px 12px;
     text-align: left;
     font-weight: bold;
-    border-bottom: 2px solid #666;
+    border-bottom: 2px solid var(--border-secondary, #666);
     position: sticky;
     top: 0;
     z-index: 1;
@@ -228,11 +228,11 @@
 
 .imvdb-matches-table td {
     padding: 14px 12px;
-    border-bottom: 1px solid #444;
-    border-right: 1px solid #3a3a3a;
+    border-bottom: 1px solid var(--border-primary, #444);
+    border-right: 1px solid var(--border-secondary, #3a3a3a);
     vertical-align: top;
     background: inherit;
-    color: #ddd;
+    color: var(--text-secondary, #ddd);
 }
 
 .imvdb-match-row {
@@ -327,16 +327,16 @@
 
 .match-info h4 {
     margin: 0 0 8px 0;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-size: 16px;
 }
 
 .imvdb-match-card.high .match-info h4 {
-    color: #4CAF50;
+    color: var(--success, #4CAF50);
 }
 
 .imvdb-match-card.medium .match-info h4 {
-    color: #FF9800;
+    color: var(--warning, #FF9800);
 }
 
 .imvdb-match-card.low .match-info h4 {
@@ -414,7 +414,7 @@
 }
 
 .slug-info {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-size: 11px;
     margin-top: 4px;
     opacity: 0.8;
@@ -462,12 +462,12 @@
 }
 
 .loading-placeholder {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-style: italic;
 }
 
 .success-message {
-    color: #4CAF50;
+    color: var(--success, #4CAF50);
     font-weight: bold;
 }
 

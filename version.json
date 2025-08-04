@@ -1,7 +1,7 @@
 {
   "version": "0.9.3",
-  "build_date": "2025-08-04T18:18:50.167911",
-  "git_commit": "c0ac1e6",
+  "build_date": "2025-08-04T19:06:08.614140",
+  "git_commit": "d233daa",
   "git_branch": "dev",
   "release_name": "Theme System & UI Improvements Release",
   "features": [
@@ -13,6 +13,8 @@
     "Enhanced theme customization with comprehensive import validation and progress tracking",
     "Multi-step import wizard with drag & drop file upload support",
     "Improved video management workflow with preserved user context during updates",
-    "Based on comprehensive theme export/import system with full API integration"
+    "Fixed modal hardcoded colors across Videos and Artist Detail pages for proper theming",
+    "Ensured all pages consistently use CSS theme variables instead of hardcoded colors",
+    "Comprehensive theme system implementation with complete color variable integration"
   ]
 }
