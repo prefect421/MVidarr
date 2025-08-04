@@ -11,6 +11,12 @@
             <button onclick="createNewTheme()" class="btn btn-primary">
                 <iconify-icon icon="tabler:plus"></iconify-icon> Create New Theme
             </button>
+            <button onclick="exportAllThemes()" class="btn btn-secondary">
+                <iconify-icon icon="tabler:download"></iconify-icon> Export All
+            </button>
+            <button onclick="showImportDialog()" class="btn btn-secondary">
+                <iconify-icon icon="tabler:upload"></iconify-icon> Import
+            </button>
             <button onclick="refreshThemes()" class="btn btn-secondary">
                 <iconify-icon icon="tabler:refresh"></iconify-icon> Refresh
             </button>
@@ -61,6 +67,9 @@
                     </button>
                     <button onclick="saveCurrentTheme()" class="btn btn-primary">
                         <iconify-icon icon="tabler:device-floppy"></iconify-icon> Save Theme
+                    </button>
+                    <button onclick="exportCurrentTheme()" class="btn btn-secondary">
+                        <iconify-icon icon="tabler:download"></iconify-icon> Export
                     </button>
                     <button onclick="duplicateCurrentTheme()" class="btn btn-secondary">
                         <iconify-icon icon="tabler:copy"></iconify-icon> Duplicate
@@ -295,6 +304,61 @@
         <div class="modal-footer">
             <button onclick="closeThemeModal()" class="btn btn-secondary">Cancel</button>
             <button onclick="saveThemeModal()" class="btn btn-primary">Create Theme</button>
+        </div>
+    </div>
+</div>
+
+<!-- Theme Import Modal -->
+<div id="import-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Import Themes</h3>
+            <button onclick="closeImportModal()" class="modal-close">
+                <iconify-icon icon="tabler:x"></iconify-icon>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="import-step-1" class="import-step">
+                <h4><iconify-icon icon="tabler:upload"></iconify-icon> Select Theme File</h4>
+                <p>Choose a MVidarr theme export file (.json) to import.</p>
+                
+                <div class="file-upload-area" id="file-upload-area">
+                    <input type="file" id="theme-file-input" accept=".json" style="display: none;" onchange="handleFileSelect(event)">
+                    <div class="file-upload-content" onclick="document.getElementById('theme-file-input').click()">
+                        <iconify-icon icon="tabler:cloud-upload" style="font-size: 3em; color: var(--text-secondary);"></iconify-icon>
+                        <p>Click to select a theme file or drag and drop here</p>
+                        <small>Accepts .json files only</small>
+                    </div>
+                </div>
+                
+                <div id="file-info" style="display: none; margin-top: 15px;">
+                    <h5>Selected File:</h5>
+                    <p id="file-name"></p>
+                    <p id="file-size"></p>
+                </div>
+            </div>
+            
+            <div id="import-step-2" class="import-step" style="display: none;">
+                <h4><iconify-icon icon="tabler:file-check"></iconify-icon> Validation Results</h4>
+                <div id="validation-results"></div>
+            </div>
+            
+            <div id="import-step-3" class="import-step" style="display: none;">
+                <h4><iconify-icon icon="tabler:check-circle"></iconify-icon> Import Complete</h4>
+                <div id="import-results"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeImportModal()" class="btn btn-secondary">Cancel</button>
+            <button id="validate-btn" onclick="validateImportFile()" class="btn btn-primary" style="display: none;">
+                <iconify-icon icon="tabler:file-check"></iconify-icon> Validate
+            </button>
+            <button id="import-btn" onclick="importThemes()" class="btn btn-success" style="display: none;">
+                <iconify-icon icon="tabler:upload"></iconify-icon> Import
+            </button>
+            <button id="finish-btn" onclick="finishImport()" class="btn btn-primary" style="display: none;">
+                <iconify-icon icon="tabler:check"></iconify-icon> Finish
+            </button>
         </div>
     </div>
 </div>
@@ -846,6 +910,112 @@
         flex-direction: column;
         align-items: flex-start;
     }
+}
+
+/* Import Modal Styles */
+.file-upload-area {
+    border: 2px dashed var(--border-primary);
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    background: var(--bg-secondary);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: var(--text-accent);
+    background: var(--bg-tertiary);
+}
+
+.file-upload-area.dragover {
+    border-color: var(--text-accent);
+    background: var(--bg-tertiary);
+    transform: scale(1.02);
+}
+
+.file-upload-content p {
+    margin: 10px 0 5px 0;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.file-upload-content small {
+    color: var(--text-secondary);
+}
+
+.import-step {
+    margin-bottom: 20px;
+}
+
+.import-step h4 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#file-info {
+    background: var(--bg-tertiary);
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-primary);
+}
+
+#file-info h5 {
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+}
+
+#file-info p {
+    margin: 4px 0;
+    color: var(--text-secondary);
+}
+
+.validation-item {
+    background: var(--bg-tertiary);
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border-left: 4px solid var(--border-primary);
+}
+
+.validation-item.success {
+    border-left-color: var(--success);
+}
+
+.validation-item.warning {
+    border-left-color: var(--warning);
+}
+
+.validation-item.error {
+    border-left-color: var(--error);
+}
+
+.validation-summary {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.import-results {
+    background: var(--bg-secondary);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.import-results .success {
+    color: var(--success);
+}
+
+.import-results .warning {
+    color: var(--warning);
+}
+
+.import-results .error {
+    color: var(--error);
 }
 </style>
 
@@ -1507,6 +1677,364 @@ function showError(message) {
     // You could implement a toast notification system here
     alert('Error: ' + message);
 }
+
+// Export/Import Functions
+let selectedFile = null;
+
+// Export all themes
+function exportAllThemes() {
+    fetch('/api/themes/export/all')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            // Get filename from Content-Disposition header
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = 'mvidarr_themes_export.json';
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            return response.blob().then(blob => ({ blob, filename }));
+        })
+        .then(({ blob, filename }) => {
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showSuccess('All themes exported successfully!');
+        })
+        .catch(error => {
+            console.error('Export error:', error);
+            showError('Failed to export themes: ' + error.message);
+        });
+}
+
+// Export current theme
+function exportCurrentTheme() {
+    if (!currentTheme || !currentTheme.id) {
+        showError('Please select a theme to export');
+        return;
+    }
+    
+    fetch(`/api/themes/${currentTheme.id}/export`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            // Get filename from Content-Disposition header
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = `${currentTheme.name}_theme.json`;
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            return response.blob().then(blob => ({ blob, filename }));
+        })
+        .then(({ blob, filename }) => {
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showSuccess(`Theme "${currentTheme.display_name}" exported successfully!`);
+        })
+        .catch(error => {
+            console.error('Export error:', error);
+            showError('Failed to export theme: ' + error.message);
+        });
+}
+
+// Show import dialog
+function showImportDialog() {
+    // Reset import state
+    selectedFile = null;
+    document.getElementById('import-step-1').style.display = 'block';
+    document.getElementById('import-step-2').style.display = 'none';
+    document.getElementById('import-step-3').style.display = 'none';
+    document.getElementById('file-info').style.display = 'none';
+    document.getElementById('validate-btn').style.display = 'none';
+    document.getElementById('import-btn').style.display = 'none';
+    document.getElementById('finish-btn').style.display = 'none';
+    document.getElementById('theme-file-input').value = '';
+    
+    // Show modal
+    document.getElementById('import-modal').style.display = 'flex';
+}
+
+// Close import modal
+function closeImportModal() {
+    document.getElementById('import-modal').style.display = 'none';
+    selectedFile = null;
+}
+
+// Handle file selection
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith('.json')) {
+        showError('Please select a JSON file');
+        return;
+    }
+    
+    selectedFile = file;
+    
+    // Show file info
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-size').textContent = `Size: ${(file.size / 1024).toFixed(1)} KB`;
+    document.getElementById('file-info').style.display = 'block';
+    document.getElementById('validate-btn').style.display = 'inline-block';
+}
+
+// Validate import file
+function validateImportFile() {
+    if (!selectedFile) {
+        showError('Please select a file first');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    
+    fetch('/api/themes/import/validate', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Show validation results
+        displayValidationResults(data);
+        
+        // Show step 2 and hide step 1
+        document.getElementById('import-step-1').style.display = 'none';
+        document.getElementById('import-step-2').style.display = 'block';
+        document.getElementById('validate-btn').style.display = 'none';
+        
+        if (data.valid && data.valid_themes_count > 0) {
+            document.getElementById('import-btn').style.display = 'inline-block';
+        }
+    })
+    .catch(error => {
+        console.error('Validation error:', error);
+        showError('Validation failed: ' + error.message);
+    });
+}
+
+// Display validation results
+function displayValidationResults(data) {
+    const resultsDiv = document.getElementById('validation-results');
+    let html = '';
+    
+    // Summary
+    html += `<div class="validation-summary">
+        <h5>Validation Summary</h5>
+        <p><strong>Total themes:</strong> ${data.total_themes || 0}</p>
+        <p><strong>Valid themes:</strong> ${data.valid_themes_count || 0}</p>
+        <p><strong>Invalid themes:</strong> ${data.invalid_themes_count || 0}</p>
+        <p><strong>Existing themes (will be skipped):</strong> ${data.existing_themes_count || 0}</p>
+        <p><strong>Status:</strong> ${data.message || 'Unknown'}</p>
+    </div>`;
+    
+    // Valid themes
+    if (data.valid_themes && data.valid_themes.length > 0) {
+        html += '<div class="validation-item success">';
+        html += '<h6><iconify-icon icon="tabler:check"></iconify-icon> Valid Themes</h6>';
+        data.valid_themes.forEach(theme => {
+            html += `<p>• ${theme.display_name} (${theme.name})</p>`;
+        });
+        html += '</div>';
+    }
+    
+    // Existing themes
+    if (data.existing_themes && data.existing_themes.length > 0) {
+        html += '<div class="validation-item warning">';
+        html += '<h6><iconify-icon icon="tabler:alert-triangle"></iconify-icon> Existing Themes (Will be Skipped)</h6>';
+        data.existing_themes.forEach(themeName => {
+            html += `<p>• ${themeName}</p>`;
+        });
+        html += '</div>';
+    }
+    
+    // Invalid themes
+    if (data.invalid_themes && data.invalid_themes.length > 0) {
+        html += '<div class="validation-item error">';
+        html += '<h6><iconify-icon icon="tabler:x"></iconify-icon> Invalid Themes</h6>';
+        data.invalid_themes.forEach(themeName => {
+            html += `<p>• ${themeName}</p>`;
+        });
+        html += '</div>';
+    }
+    
+    // Validation errors
+    if (data.validation_errors && data.validation_errors.length > 0) {
+        html += '<div class="validation-item error">';
+        html += '<h6><iconify-icon icon="tabler:alert-circle"></iconify-icon> Validation Errors</h6>';
+        data.validation_errors.forEach(error => {
+            html += `<p>• ${error}</p>`;
+        });
+        html += '</div>';
+    }
+    
+    resultsDiv.innerHTML = html;
+}
+
+// Import themes
+function importThemes() {
+    if (!selectedFile) {
+        showError('Please select a file first');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    
+    fetch('/api/themes/import', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Show import results
+        displayImportResults(data);
+        
+        // Show step 3 and hide step 2
+        document.getElementById('import-step-2').style.display = 'none';
+        document.getElementById('import-step-3').style.display = 'block';
+        document.getElementById('import-btn').style.display = 'none';
+        document.getElementById('finish-btn').style.display = 'inline-block';
+        
+        // Refresh themes list
+        loadThemes();
+    })
+    .catch(error => {
+        console.error('Import error:', error);
+        showError('Import failed: ' + error.message);
+    });
+}
+
+// Display import results
+function displayImportResults(data) {
+    const resultsDiv = document.getElementById('import-results');
+    let html = '';
+    
+    if (data.success) {
+        html += `<div class="import-results">
+            <h5 class="success"><iconify-icon icon="tabler:check-circle"></iconify-icon> Import Successful!</h5>
+            <p><strong>Imported:</strong> ${data.imported_count || 0} themes</p>
+            <p><strong>Skipped:</strong> ${data.skipped_count || 0} themes</p>
+            <p><strong>Errors:</strong> ${data.error_count || 0}</p>
+            <p><strong>Message:</strong> ${data.message || ''}</p>
+        `;
+        
+        if (data.imported_themes && data.imported_themes.length > 0) {
+            html += '<h6>Imported Themes:</h6><ul>';
+            data.imported_themes.forEach(themeName => {
+                html += `<li>${themeName}</li>`;
+            });
+            html += '</ul>';
+        }
+        
+        if (data.skipped_themes && data.skipped_themes.length > 0) {
+            html += '<h6>Skipped Themes:</h6><ul>';
+            data.skipped_themes.forEach(themeName => {
+                html += `<li>${themeName}</li>`;
+            });
+            html += '</ul>';
+        }
+        
+        if (data.errors && data.errors.length > 0) {
+            html += '<h6 class="error">Errors:</h6><ul>';
+            data.errors.forEach(error => {
+                html += `<li class="error">${error}</li>`;
+            });
+            html += '</ul>';
+        }
+        
+        html += '</div>';
+    } else {
+        html += `<div class="import-results">
+            <h5 class="error"><iconify-icon icon="tabler:x-circle"></iconify-icon> Import Failed</h5>
+            <p class="error">${data.error || 'Unknown error occurred'}</p>
+        </div>`;
+    }
+    
+    resultsDiv.innerHTML = html;
+}
+
+// Finish import and close modal
+function finishImport() {
+    closeImportModal();
+    showSuccess('Theme import completed successfully!');
+}
+
+// Add drag and drop functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('file-upload-area');
+    const fileInput = document.getElementById('theme-file-input');
+    
+    if (uploadArea && fileInput) {
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        // Handle dropped files
+        uploadArea.addEventListener('drop', handleDrop, false);
+    }
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function highlight(e) {
+        uploadArea.classList.add('dragover');
+    }
+    
+    function unhighlight(e) {
+        uploadArea.classList.remove('dragover');
+    }
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect({ target: fileInput });
+        }
+    }
+});
 </script>
 
 {% endblock %}

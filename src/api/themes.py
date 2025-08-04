@@ -3,6 +3,7 @@ API endpoints for theme management and customization
 """
 
 import logging
+from datetime import datetime
 from functools import wraps
 
 from flask import Blueprint, jsonify, request, session
@@ -374,10 +375,29 @@ def apply_theme():
         # Save theme preference using settings service
         try:
             from src.services.settings_service import SettingsService
-            SettingsService.set("ui_theme", theme_name)
-            logger.info(f"Applied theme '{theme_name}' for user {request.current_user.id}")
-            return jsonify({"message": f"Theme '{theme_name}' applied successfully"})
+            success = SettingsService.set("ui_theme", theme_name)
+            if success:
+                # Don't try to log with request.current_user.id as it causes SQLAlchemy session errors
+                logger.info(f"Applied theme '{theme_name}' for user {getattr(request.current_user, 'username', 'unknown')}")
+                return jsonify({"message": f"Theme '{theme_name}' applied successfully"})
+            else:
+                logger.error(f"Settings service failed to save theme preference for '{theme_name}'")
+                return jsonify({"error": "Failed to save theme preference"}), 500
         except Exception as settings_error:
+            # Check if it's the known SQLAlchemy session error but theme was actually saved
+            error_str = str(settings_error)
+            if "is not bound to a Session" in error_str:
+                logger.warning(f"SQLAlchemy session error after successful theme save: {settings_error}")
+                # Check if theme was actually saved despite the error
+                try:
+                    from src.services.settings_service import SettingsService
+                    current_theme = SettingsService.get("ui_theme", "default")
+                    if current_theme == theme_name:
+                        logger.info(f"Theme '{theme_name}' was successfully saved despite session error")
+                        return jsonify({"message": f"Theme '{theme_name}' applied successfully"})
+                except Exception:
+                    pass
+            
             logger.error(f"Error saving theme preference: {settings_error}")
             return jsonify({"error": "Failed to save theme preference"}), 500
             
@@ -500,3 +520,342 @@ def extract_built_in_theme(theme_name):
     except Exception as e:
         logger.error(f"Error extracting built-in theme {theme_name}: {e}")
         return jsonify({"error": "Failed to extract theme", "details": str(e)}), 500
+
+
+@themes_bp.route("/<int:theme_id>/export", methods=["GET"])
+@simple_auth_required
+def export_theme(theme_id):
+    """Export a theme as a JSON file"""
+    try:
+        user_id = request.current_user.id if hasattr(request.current_user, 'id') else None
+        username = getattr(request.current_user, 'username', 'unknown')
+
+        with get_db() as session:
+            theme = session.query(CustomTheme).filter_by(id=theme_id).first()
+            if not theme:
+                return jsonify({"error": "Theme not found"}), 404
+
+            # Check permissions
+            if not theme.is_public and not theme.is_built_in and theme.created_by != user_id:
+                return jsonify({"error": "Access denied"}), 403
+
+            # Create export data
+            export_data = {
+                "mvidarr_theme_export": {
+                    "version": "1.0",
+                    "exported_at": datetime.utcnow().isoformat() + "Z",
+                    "exported_by": username
+                },
+                "theme": {
+                    "name": theme.name,
+                    "display_name": theme.display_name,
+                    "description": theme.description or "",
+                    "is_public": theme.is_public,
+                    "theme_data": theme.theme_data,
+                    "light_theme_data": theme.light_theme_data
+                }
+            }
+
+            # Create response with appropriate headers for file download
+            from flask import make_response
+            import json
+            
+            response_data = json.dumps(export_data, indent=2, ensure_ascii=False)
+            response = make_response(response_data)
+            response.headers['Content-Type'] = 'application/json'
+            response.headers['Content-Disposition'] = f'attachment; filename="{theme.name}_theme.json"'
+            
+            logger.info(f"Exported theme '{theme.name}' by user {username}")
+            return response
+
+    except Exception as e:
+        logger.error(f"Error exporting theme {theme_id}: {e}")
+        return jsonify({"error": "Failed to export theme", "details": str(e)}), 500
+
+
+@themes_bp.route("/export/all", methods=["GET"])
+@simple_auth_required
+def export_all_themes():
+    """Export all accessible themes as a JSON file"""
+    try:
+        user_id = request.current_user.id if hasattr(request.current_user, 'id') else None
+        username = getattr(request.current_user, 'username', 'unknown')
+
+        with get_db() as session:
+            # Get all themes that are either public, built-in, or created by the current user
+            themes = (
+                session.query(CustomTheme)
+                .filter(
+                    or_(
+                        CustomTheme.is_public == True,
+                        CustomTheme.is_built_in == True,
+                        CustomTheme.created_by == user_id,
+                    )
+                )
+                .all()
+            )
+
+            # Create export data
+            export_data = {
+                "mvidarr_theme_export": {
+                    "version": "1.0",
+                    "exported_at": datetime.utcnow().isoformat() + "Z",
+                    "exported_by": username,
+                    "theme_count": len(themes)
+                },
+                "themes": []
+            }
+
+            for theme in themes:
+                theme_data = {
+                    "name": theme.name,
+                    "display_name": theme.display_name,
+                    "description": theme.description or "",
+                    "is_public": theme.is_public,
+                    "theme_data": theme.theme_data,
+                    "light_theme_data": theme.light_theme_data
+                }
+                export_data["themes"].append(theme_data)
+
+            # Create response with appropriate headers for file download
+            from flask import make_response
+            import json
+            
+            response_data = json.dumps(export_data, indent=2, ensure_ascii=False)
+            response = make_response(response_data)
+            response.headers['Content-Type'] = 'application/json'
+            response.headers['Content-Disposition'] = f'attachment; filename="mvidarr_themes_export.json"'
+            
+            logger.info(f"Exported {len(themes)} themes by user {username}")
+            return response
+
+    except Exception as e:
+        logger.error(f"Error exporting all themes: {e}")
+        return jsonify({"error": "Failed to export themes", "details": str(e)}), 500
+
+
+@themes_bp.route("/import", methods=["POST"])
+@simple_auth_required
+def import_themes():
+    """Import themes from a JSON file"""
+    try:
+        user_id = request.current_user.id if hasattr(request.current_user, 'id') else 1
+        username = getattr(request.current_user, 'username', 'unknown')
+
+        # Get the uploaded file or JSON data
+        if request.is_json:
+            import_data = request.get_json()
+        elif 'file' in request.files:
+            file = request.files['file']
+            if file.filename == '':
+                return jsonify({"error": "No file selected"}), 400
+            
+            if not file.filename.endswith('.json'):
+                return jsonify({"error": "File must be a JSON file"}), 400
+            
+            try:
+                import json
+                import_data = json.loads(file.read().decode('utf-8'))
+            except json.JSONDecodeError as e:
+                return jsonify({"error": f"Invalid JSON file: {str(e)}"}), 400
+        else:
+            return jsonify({"error": "No import data provided"}), 400
+
+        # Validate import data structure
+        if not isinstance(import_data, dict):
+            return jsonify({"error": "Invalid import data format"}), 400
+
+        # Check if it's a MVidarr theme export file
+        if "mvidarr_theme_export" not in import_data:
+            return jsonify({"error": "Not a valid MVidarr theme export file"}), 400
+
+        # Determine if it's a single theme or multiple themes
+        themes_to_import = []
+        if "theme" in import_data:
+            # Single theme export
+            themes_to_import = [import_data["theme"]]
+        elif "themes" in import_data:
+            # Multiple themes export
+            themes_to_import = import_data["themes"]
+        else:
+            return jsonify({"error": "No themes found in import data"}), 400
+
+        # Validate and import themes
+        imported_themes = []
+        skipped_themes = []
+        errors = []
+
+        with get_db() as session:
+            for theme_data in themes_to_import:
+                try:
+                    # Validate required fields
+                    if not all(key in theme_data for key in ["name", "display_name", "theme_data"]):
+                        errors.append(f"Theme missing required fields: {theme_data.get('name', 'Unknown')}")
+                        continue
+
+                    # Check if theme name already exists
+                    existing = session.query(CustomTheme).filter_by(name=theme_data["name"]).first()
+                    if existing:
+                        skipped_themes.append(theme_data["name"])
+                        continue
+
+                    # Validate theme_data structure
+                    if not isinstance(theme_data["theme_data"], dict):
+                        errors.append(f"Invalid theme_data for theme: {theme_data['name']}")
+                        continue
+
+                    # Create new theme
+                    new_theme = CustomTheme(
+                        name=theme_data["name"],
+                        display_name=theme_data["display_name"],
+                        description=theme_data.get("description", ""),
+                        created_by=user_id,
+                        is_public=theme_data.get("is_public", False),
+                        is_built_in=False,  # Imported themes are never built-in
+                        theme_data=theme_data["theme_data"],
+                        light_theme_data=theme_data.get("light_theme_data")
+                    )
+
+                    session.add(new_theme)
+                    imported_themes.append(theme_data["name"])
+
+                except Exception as theme_error:
+                    errors.append(f"Error importing theme {theme_data.get('name', 'Unknown')}: {str(theme_error)}")
+
+            # Commit all imported themes
+            if imported_themes:
+                session.commit()
+
+        # Prepare response
+        response_data = {
+            "success": True,
+            "imported_count": len(imported_themes),
+            "skipped_count": len(skipped_themes),
+            "error_count": len(errors),
+            "imported_themes": imported_themes,
+            "skipped_themes": skipped_themes,
+            "errors": errors
+        }
+
+        if errors:
+            response_data["message"] = f"Import completed with {len(errors)} errors"
+        elif skipped_themes:
+            response_data["message"] = f"Import completed. {len(skipped_themes)} themes skipped (already exist)"
+        else:
+            response_data["message"] = f"Successfully imported {len(imported_themes)} themes"
+
+        logger.info(f"Theme import by user {username}: {len(imported_themes)} imported, {len(skipped_themes)} skipped, {len(errors)} errors")
+        return jsonify(response_data)
+
+    except Exception as e:
+        logger.error(f"Error importing themes: {e}")
+        return jsonify({"error": "Failed to import themes", "details": str(e)}), 500
+
+
+@themes_bp.route("/import/validate", methods=["POST"])
+@simple_auth_required
+def validate_import():
+    """Validate a theme import file without actually importing"""
+    try:
+        # Get the uploaded file or JSON data
+        if request.is_json:
+            import_data = request.get_json()
+        elif 'file' in request.files:
+            file = request.files['file']
+            if file.filename == '':
+                return jsonify({"error": "No file selected"}), 400
+            
+            if not file.filename.endswith('.json'):
+                return jsonify({"error": "File must be a JSON file"}), 400
+            
+            try:
+                import json
+                import_data = json.loads(file.read().decode('utf-8'))
+            except json.JSONDecodeError as e:
+                return jsonify({"error": f"Invalid JSON file: {str(e)}"}), 400
+        else:
+            return jsonify({"error": "No import data provided"}), 400
+
+        # Validate import data structure
+        if not isinstance(import_data, dict):
+            return jsonify({"error": "Invalid import data format", "valid": False}), 400
+
+        # Check if it's a MVidarr theme export file
+        if "mvidarr_theme_export" not in import_data:
+            return jsonify({"error": "Not a valid MVidarr theme export file", "valid": False}), 400
+
+        # Determine if it's a single theme or multiple themes
+        themes_to_validate = []
+        if "theme" in import_data:
+            themes_to_validate = [import_data["theme"]]
+        elif "themes" in import_data:
+            themes_to_validate = import_data["themes"]
+        else:
+            return jsonify({"error": "No themes found in import data", "valid": False}), 400
+
+        # Validate themes
+        valid_themes = []
+        invalid_themes = []
+        existing_themes = []
+        validation_errors = []
+
+        with get_db() as session:
+            for theme_data in themes_to_validate:
+                theme_name = theme_data.get("name", "Unknown")
+                
+                try:
+                    # Validate required fields
+                    if not all(key in theme_data for key in ["name", "display_name", "theme_data"]):
+                        invalid_themes.append(theme_name)
+                        validation_errors.append(f"Theme '{theme_name}' missing required fields")
+                        continue
+
+                    # Check if theme name already exists
+                    existing = session.query(CustomTheme).filter_by(name=theme_data["name"]).first()
+                    if existing:
+                        existing_themes.append(theme_name)
+                        continue
+
+                    # Validate theme_data structure
+                    if not isinstance(theme_data["theme_data"], dict):
+                        invalid_themes.append(theme_name)
+                        validation_errors.append(f"Theme '{theme_name}' has invalid theme_data structure")
+                        continue
+
+                    # Theme is valid
+                    valid_themes.append({
+                        "name": theme_name,
+                        "display_name": theme_data["display_name"],
+                        "description": theme_data.get("description", "")
+                    })
+
+                except Exception as theme_error:
+                    invalid_themes.append(theme_name)
+                    validation_errors.append(f"Error validating theme '{theme_name}': {str(theme_error)}")
+
+        # Prepare response
+        response_data = {
+            "valid": len(validation_errors) == 0,
+            "export_info": import_data.get("mvidarr_theme_export", {}),
+            "total_themes": len(themes_to_validate),
+            "valid_themes_count": len(valid_themes),
+            "invalid_themes_count": len(invalid_themes),
+            "existing_themes_count": len(existing_themes),
+            "valid_themes": valid_themes,
+            "invalid_themes": invalid_themes,
+            "existing_themes": existing_themes,
+            "validation_errors": validation_errors
+        }
+
+        if validation_errors:
+            response_data["message"] = f"Validation failed with {len(validation_errors)} errors"
+        elif existing_themes:
+            response_data["message"] = f"Validation passed. {len(existing_themes)} themes already exist and will be skipped"
+        else:
+            response_data["message"] = f"Validation passed. All {len(valid_themes)} themes can be imported"
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        logger.error(f"Error validating import: {e}")
+        return jsonify({"error": "Failed to validate import", "details": str(e)}), 500
