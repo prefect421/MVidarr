@@ -222,7 +222,7 @@
                     </div>
                     
                     <div class="bulk-operation">
-                        <button onclick="bulkVideoDiscovery()" class="btn btn-primary">
+                        <button onclick="bulkVideoDiscovery()" class="btn btn-info">
                             🔍 Discover Videos
                         </button>
                         <p class="operation-hint">Search for new videos for all selected artists</p>
@@ -1885,7 +1885,12 @@ function bulkFolderOrganize() {
             artist_ids: artistIds
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(result => {
         hideBulkProgress();
         if (result.error) {
@@ -1897,7 +1902,7 @@ function bulkFolderOrganize() {
     .catch(error => {
         hideBulkProgress();
         console.error('Error organizing folders:', error);
-        showError('Error organizing folders');
+        showError('Error organizing folders: ' + error.message);
     });
 }
 
@@ -1919,7 +1924,14 @@ function bulkThumbnailScan() {
             artist_ids: artistIds
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json().catch(() => {
+            throw new Error('Invalid JSON response from server');
+        });
+    })
     .then(result => {
         hideBulkProgress();
         if (result.error) {
@@ -2125,7 +2137,12 @@ function bulkValidateMetadata() {
             artist_ids: artistIds
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(result => {
         hideBulkProgress();
         if (result.error) {
@@ -2142,7 +2159,7 @@ function bulkValidateMetadata() {
     .catch(error => {
         hideBulkProgress();
         console.error('Error validating metadata:', error);
-        showError('Error validating metadata');
+        showError('Error validating metadata: ' + error.message);
     });
 }
 
@@ -2286,7 +2303,7 @@ function hideBulkProgress() {
 }
 
 .advanced-search-panel {
-    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
+    background: var(--bg-primary, #1a1a1a);
     border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 25px;
@@ -2444,12 +2461,12 @@ function hideBulkProgress() {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--text-accent, #00d4ff) 0%, var(--accent-secondary, #0099cc) 100%);
+    background: var(--text-accent, #00d4ff);
     color: var(--text-primary, #fff);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, var(--accent-secondary, #0099cc) 0%, var(--accent-dark, #007799) 100%);
+    background: var(--accent-secondary, #0099cc);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px var(--accent-shadow, rgba(0, 212, 255, 0.3));
 }
@@ -2538,7 +2555,7 @@ function hideBulkProgress() {
 }
 
 .bulk-actions-toolbar {
-    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
+    background: var(--bg-secondary, #2d2d2d);
     border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 20px;
@@ -2613,9 +2630,9 @@ function hideBulkProgress() {
 }
 
 .bulk-tab.active {
-    background: var(--text-accent, #00d4ff);
-    color: var(--accent-text, #000);
-    border-color: var(--text-accent, #00d4ff);
+    background: var(--btn-secondary-bg, #666666);
+    color: var(--btn-secondary-text, #ffffff);
+    border-color: var(--btn-secondary-bg, #666666);
 }
 
 .bulk-tab:hover {
@@ -2963,7 +2980,7 @@ function hideBulkProgress() {
 }
 
 .modal-content {
-    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
+    background: var(--bg-secondary, #2d2d2d);
     margin: 5% auto;
     padding: 20px;
     border: 1px solid var(--border-primary, #444);
