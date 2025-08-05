@@ -3468,8 +3468,135 @@ function changePageSize(newSize) {
     }
 }
 
+// Main function to load videos from API
+async function loadVideos(page = 1, size = 50, resetPage = false) {
+    console.log(`Loading videos: page=${page}, size=${size}`);
+    
+    // Update pagination state
+    if (resetPage) {
+        currentPage = 1;
+    } else {
+        currentPage = page;
+    }
+    pageSize = size;
+    
+    try {
+        // Show loading state
+        const grid = document.getElementById('videos-grid');
+        if (grid) {
+            grid.innerHTML = '<div class="loading-spinner"></div>';
+        }
+        
+        // Build API URL with pagination
+        const params = new URLSearchParams({
+            page: currentPage,
+            per_page: pageSize
+        });
+        
+        // Make API request
+        const response = await fetch(`/api/videos?${params.toString()}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Videos loaded:', data);
+        
+        // Display videos
+        displayVideos(data.videos || []);
+        
+        // Update pagination
+        updatePagination(data);
+        
+        // Update selected count
+        updateSelectedCount();
+        
+    } catch (error) {
+        console.error('Error loading videos:', error);
+        const grid = document.getElementById('videos-grid');
+        if (grid) {
+            grid.innerHTML = '<div class="error-message">Error loading videos. Please try again.</div>';
+        }
+    }
+}
+
+// Function to display videos in the grid
+function displayVideos(videos) {
+    const grid = document.getElementById('videos-grid');
+    if (!grid) return;
+    
+    if (!videos || videos.length === 0) {
+        grid.innerHTML = '<div class="no-videos">No videos found.</div>';
+        return;
+    }
+    
+    grid.innerHTML = videos.map(video => `
+        <div class="video-card">
+            <div class="video-select">
+                <input type="checkbox" class="video-checkbox" value="${video.id}" onchange="updateSelectedCount()">
+            </div>
+            <div class="video-thumbnail" data-video-id="${video.id}" data-action="play">
+                <img src="/api/videos/${video.id}/thumbnail" 
+                     alt="${video.title}" onerror="this.src='/static/placeholder-video.png'">
+                <div class="play-overlay">
+                    <div class="play-button">▶</div>
+                </div>
+            </div>
+            <div class="video-info">
+                <h3 class="video-title">${video.title}</h3>
+                <p class="video-artist">${video.artist_name || 'Unknown Artist'}</p>
+                <div class="video-meta">
+                    <span class="video-status status-${video.status}">${video.status}</span>
+                    ${video.duration ? `<span class="video-duration">${formatDuration(video.duration)}</span>` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Update pagination controls
+function updatePagination(data) {
+    const pagination = data.pagination || {};
+    const totalPages = pagination.pages || 1;
+    const currentPageNum = pagination.page || 1;
+    
+    // Update pagination info
+    const paginationInfo = document.querySelector('.pagination-info');
+    if (paginationInfo) {
+        const start = ((currentPageNum - 1) * pageSize) + 1;
+        const end = Math.min(start + pageSize - 1, pagination.total || 0);
+        paginationInfo.textContent = `Showing ${start}-${end} of ${pagination.total || 0} videos`;
+    }
+    
+    // Update navigation buttons
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentPageNum <= 1;
+    }
+    
+    if (nextBtn) {
+        nextBtn.disabled = currentPageNum >= totalPages;
+    }
+    
+    // Update page input
+    const pageInput = document.getElementById('pageInput');
+    if (pageInput) {
+        pageInput.value = currentPageNum;
+        pageInput.max = totalPages;
+    }
+}
+
+// Helper function to format duration
+function formatDuration(seconds) {
+    if (!seconds) return '';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 // Override existing loadVideos calls to use pagination
-const originalLoadVideos = loadVideos;
 window.refreshVideosWithPagination = function() {
     loadVideos(currentPage, pageSize);
 };
