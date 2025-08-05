@@ -542,6 +542,14 @@
                         <iconify-icon icon="tabler:refresh" style="margin-right: 5px;"></iconify-icon>
                         Refresh Themes
                     </button>
+                    <button onclick="importThemes()" class="btn btn-info">
+                        <iconify-icon icon="tabler:upload" style="margin-right: 5px;"></iconify-icon>
+                        Import Themes
+                    </button>
+                    <button onclick="exportAllThemes()" class="btn btn-warning">
+                        <iconify-icon icon="tabler:download" style="margin-right: 5px;"></iconify-icon>
+                        Export All Themes
+                    </button>
                 </div>
 
                 <!-- Theme Tabs -->
@@ -607,6 +615,10 @@
                                         <iconify-icon icon="tabler:device-floppy"></iconify-icon>
                                         Save Current Theme
                                     </button>
+                                    <button onclick="exportCurrentTheme()" class="btn btn-outline-secondary" id="export-current-theme-btn">
+                                        <iconify-icon icon="tabler:download"></iconify-icon>
+                                        Export Theme
+                                    </button>
                                 </div>
                             </div>
 
@@ -625,13 +637,9 @@
                             <!-- Color Controls with Dark/Light tabs -->
                             <div class="color-controls">
                                 <div class="theme-mode-tabs">
-                                    <button class="theme-mode-tab active" onclick="switchThemeMode('dark')" id="dark-theme-tab">
+                                    <button class="theme-mode-tab active" id="dark-theme-tab">
                                         <iconify-icon icon="tabler:moon"></iconify-icon>
                                         Dark Theme
-                                    </button>
-                                    <button class="theme-mode-tab" onclick="switchThemeMode('light')" id="light-theme-tab">
-                                        <iconify-icon icon="tabler:sun"></iconify-icon>
-                                        Light Theme
                                     </button>
                                 </div>
                             </div>
@@ -925,34 +933,145 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            </div>
-                            
-                            <!-- Light Theme Colors -->
-                            <div class="theme-mode-content" id="light-theme-content" style="display: none;">
-                                <div class="color-controls">
-                                    <div class="color-groups">
-                                        <!-- Same structure as dark theme but for light theme colors -->
-                                        <div class="color-group">
-                                            <h5>Background Colors (Light)</h5>
-                                            <div class="color-inputs">
-                                                <div class="color-input-group">
-                                                    <label for="bg-primary-light">Primary Background (Light):</label>
-                                                    <input type="color" id="bg-primary-light" data-css-var="--bg-primary" data-mode="light">
-                                                    <span class="color-value">#ffffff</span>
-                                                </div>
-                                                <div class="color-input-group">
-                                                    <label for="bg-secondary-light">Secondary Background (Light):</label>
-                                                    <input type="color" id="bg-secondary-light" data-css-var="--bg-secondary" data-mode="light">
-                                                    <span class="color-value">#f8f9fa</span>
-                                                </div>
-                                                <!-- Add more light theme color inputs as needed -->
+
+                                    <!-- Shadows & Effects -->
+                                    <div class="color-group">
+                                        <h5>Shadows & Effects</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="shadow">Shadow Color:</label>
+                                                <input type="color" id="shadow" data-css-var="--shadow">
+                                                <span class="color-value">#000000</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="shadow-hover">Shadow Hover:</label>
+                                                <input type="color" id="shadow-hover" data-css-var="--shadow-hover">
+                                                <span class="color-value">#000000</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="border-focus-shadow">Focus Shadow:</label>
+                                                <input type="color" id="border-focus-shadow" data-css-var="--border-focus-shadow">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal & Overlay -->
+                                    <div class="color-group">
+                                        <h5>Modal & Overlay</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="modal-background">Modal Background:</label>
+                                                <input type="color" id="modal-background" data-css-var="--modalBackgroundColor">
+                                                <span class="color-value">#2d2d2d</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="modal-backdrop">Modal Backdrop:</label>
+                                                <input type="color" id="modal-backdrop" data-css-var="--modalBackdropBackgroundColor">
+                                                <span class="color-value">#000000</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="modal-overlay">Modal Overlay:</label>
+                                                <input type="color" id="modal-overlay" data-css-var="--modal-overlay">
+                                                <span class="color-value">#00000080</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="modal-close-hover">Modal Close Hover:</label>
+                                                <input type="color" id="modal-close-hover" data-css-var="--modalCloseButtonHoverColor">
+                                                <span class="color-value">#ff0000</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Extended Form Elements -->
+                                    <div class="color-group">
+                                        <h5>Extended Form Elements</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="input-hover-bg">Input Hover Background:</label>
+                                                <input type="color" id="input-hover-bg" data-css-var="--inputHoverBackgroundColor">
+                                                <span class="color-value">#3a3a3a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-selected-bg">Input Selected Background:</label>
+                                                <input type="color" id="input-selected-bg" data-css-var="--inputSelectedBackgroundColor">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-readonly-bg">Input Read-Only Background:</label>
+                                                <input type="color" id="input-readonly-bg" data-css-var="--inputReadOnlyBackgroundColor">
+                                                <span class="color-value">#1a1a1a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-error-border">Input Error Border:</label>
+                                                <input type="color" id="input-error-border" data-css-var="--inputErrorBorderColor">
+                                                <span class="color-value">#dc3545</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-warning-border">Input Warning Border:</label>
+                                                <input type="color" id="input-warning-border" data-css-var="--inputWarningBorderColor">
+                                                <span class="color-value">#ffc107</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Menu & Tooltip -->
+                                    <div class="color-group">
+                                        <h5>Menu & Tooltip</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="menu-item-color">Menu Item Color:</label>
+                                                <input type="color" id="menu-item-color" data-css-var="--menuItemColor">
+                                                <span class="color-value">#ffffff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="menu-item-hover">Menu Item Hover:</label>
+                                                <input type="color" id="menu-item-hover" data-css-var="--menuItemHoverBackgroundColor">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="popover-body-bg">Popover Body Background:</label>
+                                                <input type="color" id="popover-body-bg" data-css-var="--popoverBodyBackgroundColor">
+                                                <span class="color-value">#2d2d2d</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="popover-title-bg">Popover Title Background:</label>
+                                                <input type="color" id="popover-title-bg" data-css-var="--popoverTitleBackgroundColor">
+                                                <span class="color-value">#1a1a1a</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Utility Colors -->
+                                    <div class="color-group">
+                                        <h5>Utility Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="disabled-color">Disabled Color:</label>
+                                                <input type="color" id="disabled-color" data-css-var="--disabledColor">
+                                                <span class="color-value">#666666</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="help-text-color">Help Text Color:</label>
+                                                <input type="color" id="help-text-color" data-css-var="--helpTextColor">
+                                                <span class="color-value">#888888</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="link-hover-color">Link Hover Color:</label>
+                                                <input type="color" id="link-hover-color" data-css-var="--linkHoverColor">
+                                                <span class="color-value">#6bb6ff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="icon-button-hover">Icon Button Hover:</label>
+                                                <input type="color" id="icon-button-hover" data-css-var="--iconButtonHoverColor">
+                                                <span class="color-value">#4a9eff</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            </div>
+                            
 
                             <!-- Live Preview -->
                             <div class="theme-preview-section">
@@ -3363,23 +3482,23 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .role-badge.role-admin {
-    background-color: #dc3545;
-    color: white;
+    background-color: var(--danger, #dc3545);
+    color: var(--text-inverse, white);
 }
 
 .role-badge.role-manager {
-    background-color: #fd7e14;
-    color: white;
+    background-color: var(--warning, #fd7e14);
+    color: var(--text-inverse, white);
 }
 
 .role-badge.role-user {
-    background-color: #28a745;
-    color: white;
+    background-color: var(--success, #28a745);
+    color: var(--text-inverse, white);
 }
 
 .role-badge.role-readonly {
-    background-color: #6c757d;
-    color: white;
+    background-color: var(--secondary, #6c757d);
+    color: var(--text-inverse, white);
 }
 
 .status-badge {
@@ -3391,11 +3510,11 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .status-enabled {
-    color: #28a745;
+    color: var(--success, #28a745);
 }
 
 .status-disabled {
-    color: #dc3545;
+    color: var(--danger, #dc3545);
 }
 
 /* Cookie Management Styles */
@@ -3422,15 +3541,15 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .cookie-status .status-text.success {
-    color: #28a745;
+    color: var(--success, #28a745);
 }
 
 .cookie-status .status-text.error {
-    color: #dc3545;
+    color: var(--danger, #dc3545);
 }
 
 .cookie-status .status-text {
-    color: #6c757d;
+    color: var(--text-muted, #6c757d);
 }
 
 .cookie-upload-actions {
@@ -3446,7 +3565,7 @@ The cookie file should contain YouTube authentication data including session tok
 
 .help-text {
     font-size: 0.85rem;
-    color: #6c757d;
+    color: var(--text-muted, #6c757d);
     margin-top: 5px;
     line-height: 1.4;
 }
@@ -3480,11 +3599,11 @@ The cookie file should contain YouTube authentication data including session tok
 
 .status-item label {
     font-weight: bold;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .admin-only {
-    color: #ffc107;
+    color: var(--warning, #ffc107);
     font-size: 0.8em;
     font-weight: normal;
 }
@@ -3502,7 +3621,7 @@ The cookie file should contain YouTube authentication data including session tok
     display: flex;
     gap: 20px;
     font-size: 0.9em;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .user-stats span {
@@ -3512,7 +3631,7 @@ The cookie file should contain YouTube authentication data including session tok
 .user-list {
     max-height: 400px;
     overflow-y: auto;
-    border: 1px solid #444;
+    border: 1px solid var(--border-primary, #444);
     border-radius: 8px;
     padding: 10px;
 }
@@ -3522,21 +3641,21 @@ The cookie file should contain YouTube authentication data including session tok
     justify-content: space-between;
     align-items: center;
     padding: 15px;
-    border: 1px solid #555;
+    border: 1px solid var(--border-secondary, #555);
     border-radius: 8px;
     margin-bottom: 10px;
-    background-color: #2a2a2a;
+    background-color: var(--bg-card, #2a2a2a);
     transition: all 0.2s ease;
 }
 
 .user-item:hover {
-    background-color: #333;
-    border-color: #666;
+    background-color: var(--bg-hover, #333);
+    border-color: var(--border-tertiary, #666);
 }
 
 .user-item.inactive {
     opacity: 0.6;
-    background-color: #1a1a1a;
+    background-color: var(--bg-primary, #1a1a1a);
 }
 
 .user-item .user-info {
@@ -3558,7 +3677,7 @@ The cookie file should contain YouTube authentication data including session tok
     display: flex;
     gap: 15px;
     font-size: 0.9em;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .user-item .user-actions {
@@ -3568,13 +3687,13 @@ The cookie file should contain YouTube authentication data including session tok
 
 .no-users, .loading, .error {
     text-align: center;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     padding: 40px;
     font-style: italic;
 }
 
 .error {
-    color: #dc3545;
+    color: var(--danger, #dc3545);
 }
 
 /* Modal Styles */
@@ -3592,8 +3711,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .modal-content {
-    background-color: #2a2a2a;
-    border: 1px solid #555;
+    background-color: var(--bg-card, #2a2a2a);
+    border: 1px solid var(--border-secondary, #555);
     border-radius: 12px;
     max-width: 500px;
     width: 90%;
@@ -3611,18 +3730,18 @@ The cookie file should contain YouTube authentication data including session tok
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 1px solid #555;
+    border-bottom: 1px solid var(--border-secondary, #555);
 }
 
 .modal-header h3 {
     margin: 0;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
 }
 
 .btn-close {
     background: none;
     border: none;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     font-size: 1.5em;
     cursor: pointer;
     padding: 0;
@@ -3634,8 +3753,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .btn-close:hover {
-    color: #fff;
-    background-color: #444;
+    color: var(--text-primary, #fff);
+    background-color: var(--bg-hover, #444);
     border-radius: 50%;
 }
 
@@ -3648,7 +3767,7 @@ The cookie file should contain YouTube authentication data including session tok
     justify-content: flex-end;
     gap: 10px;
     padding: 20px;
-    border-top: 1px solid #555;
+    border-top: 1px solid var(--border-secondary, #555);
 }
 
 .sessions-list {
@@ -3662,15 +3781,15 @@ The cookie file should contain YouTube authentication data including session tok
     justify-content: space-between;
     align-items: flex-start;
     padding: 15px;
-    border: 1px solid #555;
+    border: 1px solid var(--border-secondary, #555);
     border-radius: 8px;
     margin-bottom: 10px;
-    background-color: #333;
+    background-color: var(--bg-tertiary, #333);
 }
 
 .session-item.current {
-    border-color: #00d4ff;
-    background-color: #1a3a4a;
+    border-color: var(--text-accent, #00d4ff);
+    background-color: var(--bg-accent-muted, #1a3a4a);
 }
 
 .session-info {
@@ -3684,8 +3803,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .current-session {
-    background-color: #00d4ff;
-    color: #000;
+    background-color: var(--text-accent, #00d4ff);
+    color: var(--accent-text, #000);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.8em;
@@ -3702,7 +3821,7 @@ The cookie file should contain YouTube authentication data including session tok
 .session-actions-footer {
     text-align: center;
     padding-top: 15px;
-    border-top: 1px solid #555;
+    border-top: 1px solid var(--border-secondary, #555);
 }
 
 
@@ -3754,7 +3873,7 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .settings-container h1 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 10px;
     font-size: 2.5rem;
     text-align: center;
@@ -3762,7 +3881,7 @@ The cookie file should contain YouTube authentication data including session tok
 
 .page-description {
     text-align: center;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     margin-bottom: 30px;
     font-size: 1.1rem;
 }
@@ -3796,10 +3915,10 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .settings-section h2 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 15px;
     font-size: 1.4rem;
-    border-bottom: 2px solid #00d4ff;
+    border-bottom: 2px solid var(--text-accent, #00d4ff);
     padding-bottom: 8px;
 }
 
@@ -3809,14 +3928,14 @@ The cookie file should contain YouTube authentication data including session tok
 
 .form-group label {
     display: block;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 8px;
     font-weight: 500;
 }
 
 .form-group .help-text {
     display: block;
-    color: #999;
+    color: var(--text-muted, #999);
     font-size: 12px;
     margin-top: 5px;
     font-style: italic;
@@ -3827,10 +3946,10 @@ The cookie file should contain YouTube authentication data including session tok
 .form-group textarea {
     width: 100%;
     padding: 12px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--input-bg, #333);
+    border: 2px solid var(--input-border, #444);
     border-radius: 8px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -3839,7 +3958,7 @@ The cookie file should contain YouTube authentication data including session tok
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
     box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
 }
 
@@ -3849,8 +3968,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .form-group option {
-    background: #333;
-    color: #fff;
+    background: var(--input-bg, #333);
+    color: var(--input-text, #fff);
 }
 
 .btn {
@@ -3969,8 +4088,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .stat-item {
-    background: #333;
-    border: 1px solid #555;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-secondary, #555);
     border-radius: 8px;
     padding: 15px;
     text-align: center;
@@ -3984,12 +4103,12 @@ The cookie file should contain YouTube authentication data including session tok
 .stat-value {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 5px;
 }
 
 .stat-label {
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     font-size: 0.9rem;
 }
 
@@ -4001,7 +4120,7 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .result-item {
-    background-color: #3d3d3d;
+    background-color: var(--bg-quaternary, #3d3d3d);
     padding: 0.5rem;
     border-radius: 4px;
     font-size: 0.9rem;
@@ -4010,7 +4129,7 @@ The cookie file should contain YouTube authentication data including session tok
 .thumbnail-stats {
     margin-top: 0.5rem;
     padding: 0.5rem;
-    background-color: #3d3d3d;
+    background-color: var(--bg-quaternary, #3d3d3d);
     border-radius: 4px;
     font-size: 0.9rem;
 }
@@ -4379,51 +4498,6 @@ button:disabled:hover {
 
 /* Legacy bauhaus theme preview styles removed */
 
-/* Light Theme Overrides for Settings */
-body.light-theme .btn-light {
-    background: white;
-    border: 2px solid #e1e5e9;
-    color: #333;
-}
-
-body.light-theme .btn-light:hover {
-    background: #f0f0ff;
-    border-color: #667eea;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-}
-
-body.light-theme .settings-container {
-    background: transparent;
-}
-
-body.light-theme .settings-section {
-    background: white;
-    border: 1px solid #e1e5e9;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-body.light-theme .form-group input,
-body.light-theme .form-group select,
-body.light-theme .form-group textarea {
-    background: white;
-    border: 2px solid #e1e5e9;
-    color: #333;
-    border-radius: 8px;
-}
-
-body.light-theme .form-group input:focus,
-body.light-theme .form-group select:focus,
-body.light-theme .form-group textarea:focus {
-    border-color: #667eea;
-    box-shadow: none;
-    outline: none;
-}
-
-body.light-theme .form-group label {
-    color: #333;
-}
 
 /* Readonly field styles */
 .readonly-field {
@@ -4432,49 +4506,6 @@ body.light-theme .form-group label {
     cursor: not-allowed !important;
 }
 
-body.light-theme .readonly-field {
-    background-color: #f5f5f5 !important;
-    color: #666 !important;
-    cursor: not-allowed !important;
-}
-
-/* Light theme tab styling */
-body.light-theme .settings-tabs {
-    background: var(--bg-secondary, white);
-    border-bottom: 2px solid var(--border-primary, #e1e5e9);
-    box-shadow: 0 2px 4px var(--shadow, rgba(0, 0, 0, 0.1));
-}
-
-body.light-theme .settings-tab-btn {
-    color: var(--text-muted, #666);
-}
-
-body.light-theme .settings-tab-btn:hover {
-    color: var(--text-accent, #667eea);
-    background: var(--bg-hover, #f0f0ff);
-}
-
-body.light-theme .settings-tab-btn.active {
-    color: var(--text-accent, #667eea);
-    border-bottom-color: var(--text-accent, #667eea);
-    background: var(--bg-hover, #f0f0ff);
-}
-
-/* Light theme SSL warning */
-body.light-theme .ssl-warning {
-    color: #cc7a00;
-    background: rgba(255, 193, 7, 0.1);
-    border-left: 4px solid #ffc107;
-    padding: 1rem;
-    border-radius: 4px;
-    margin-top: 1rem;
-}
-
-/* Light theme YouTube Authentication section */
-body.light-theme .cookie-management-section {
-    background: rgba(255, 165, 0, 0.1);
-    border: 1px solid #ffaa55;
-}
 
 /* Legacy theme preview styles removed - functionality moved to Themes tab */
 
@@ -5593,33 +5624,209 @@ function refreshThemes() {
         .catch(error => showError('Failed to refresh themes: ' + error.message));
 }
 
-// Switch between Dark and Light theme customization modes
-function switchThemeMode(mode) {
-    // Update tab states
-    const darkTab = document.getElementById('dark-theme-tab');
-    const lightTab = document.getElementById('light-theme-tab');
-    const darkContent = document.getElementById('dark-theme-content');
-    const lightContent = document.getElementById('light-theme-content');
-    
-    if (mode === 'dark') {
-        darkTab.classList.add('active');
-        lightTab.classList.remove('active');
-        darkContent.classList.add('active');
-        darkContent.style.display = 'block';
-        lightContent.classList.remove('active');
-        lightContent.style.display = 'none';
-    } else {
-        lightTab.classList.add('active');
-        darkTab.classList.remove('active');
-        lightContent.classList.add('active');
-        lightContent.style.display = 'block';
-        darkContent.classList.remove('active');
-        darkContent.style.display = 'none';
+// Export all themes
+async function exportAllThemes() {
+    try {
+        showInfo('Preparing theme export...');
+        
+        const response = await fetch('/api/themes/export/all', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to export themes');
+        }
+
+        // Create a blob from the response and trigger download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'mvidarr_themes_export.json';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showSuccess('All themes exported successfully!');
+    } catch (error) {
+        console.error('Export error:', error);
+        showError('Failed to export themes: ' + error.message);
     }
-    
-    // Store current mode
-    window.currentThemeMode = mode;
 }
+
+// Export current theme
+async function exportCurrentTheme() {
+    try {
+        if (!currentTheme) {
+            showError('No theme selected to export');
+            return;
+        }
+
+        // For built-in themes without database ID, we need to handle them differently
+        let themeId = currentTheme.id;
+        if (!themeId && currentTheme.name) {
+            // For built-in themes, we'll need to create a temporary export
+            showError('Built-in themes cannot be exported directly. Please save as custom theme first.');
+            return;
+        }
+
+        showInfo('Preparing theme export...');
+        
+        const response = await fetch(`/api/themes/${themeId}/export`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to export theme');
+        }
+
+        // Create a blob from the response and trigger download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${currentTheme.name}_theme.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showSuccess(`Theme "${currentTheme.display_name}" exported successfully!`);
+    } catch (error) {
+        console.error('Export error:', error);
+        showError('Failed to export theme: ' + error.message);
+    }
+}
+
+// Import themes
+function importThemes() {
+    // Create a file input element
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
+    fileInput.style.display = 'none';
+    
+    fileInput.onchange = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        try {
+            showInfo('Validating theme file...');
+            
+            // First validate the file
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const validateResponse = await fetch('/api/themes/import/validate', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!validateResponse.ok) {
+                const errorData = await validateResponse.json();
+                throw new Error(errorData.error || 'Failed to validate theme file');
+            }
+            
+            const validationResult = await validateResponse.json();
+            
+            // Show validation results to user
+            let confirmMessage = `Validation Results:\n\n`;
+            confirmMessage += `Total themes: ${validationResult.total_themes}\n`;
+            confirmMessage += `Valid themes: ${validationResult.valid_themes_count}\n`;
+            confirmMessage += `Invalid themes: ${validationResult.invalid_themes_count}\n`;
+            confirmMessage += `Existing themes (will be skipped): ${validationResult.existing_themes_count}\n`;
+            
+            if (validationResult.validation_errors.length > 0) {
+                confirmMessage += `\nErrors:\n${validationResult.validation_errors.join('\n')}\n`;
+            }
+            
+            if (validationResult.existing_themes.length > 0) {
+                confirmMessage += `\nExisting themes that will be skipped:\n${validationResult.existing_themes.join('\n')}\n`;
+            }
+            
+            if (validationResult.valid_themes_count > 0) {
+                confirmMessage += `\nValid themes to import:\n${validationResult.valid_themes.map(t => t.display_name).join('\n')}\n`;
+                confirmMessage += `\nProceed with import?`;
+                
+                if (confirm(confirmMessage)) {
+                    await performImport(file);
+                }
+            } else {
+                alert(confirmMessage + '\nNo valid themes to import.');
+            }
+            
+        } catch (error) {
+            console.error('Import validation error:', error);
+            showError('Failed to validate theme file: ' + error.message);
+        }
+        
+        // Clean up
+        document.body.removeChild(fileInput);
+    };
+    
+    document.body.appendChild(fileInput);
+    fileInput.click();
+}
+
+// Perform the actual import
+async function performImport(file) {
+    try {
+        showInfo('Importing themes...');
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('/api/themes/import', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to import themes');
+        }
+        
+        const result = await response.json();
+        
+        // Show detailed results
+        let message = result.message + '\n\n';
+        message += `Imported: ${result.imported_count} themes\n`;
+        message += `Skipped: ${result.skipped_count} themes\n`;
+        message += `Errors: ${result.error_count} themes\n`;
+        
+        if (result.imported_themes.length > 0) {
+            message += `\nImported themes:\n${result.imported_themes.join('\n')}`;
+        }
+        
+        if (result.errors.length > 0) {
+            message += `\nErrors:\n${result.errors.join('\n')}`;
+        }
+        
+        if (result.imported_count > 0) {
+            showSuccess(message);
+            // Refresh the themes list to show imported themes
+            refreshThemes();
+        } else {
+            showWarning(message);
+        }
+        
+    } catch (error) {
+        console.error('Import error:', error);
+        showError('Failed to import themes: ' + error.message);
+    }
+}
+
 
 // Save current theme (update the theme that's currently applied)
 async function saveCurrentTheme() {
@@ -5637,16 +5844,11 @@ async function saveCurrentTheme() {
     try {
         // Get current values from color inputs
         const themeData = {};
-        const lightThemeData = {};
         
         const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
         colorInputs.forEach(input => {
             const cssVar = input.dataset.cssVar;
-            if (input.dataset.mode === 'light') {
-                lightThemeData[cssVar] = input.value;
-            } else {
-                themeData[cssVar] = input.value;
-            }
+            themeData[cssVar] = input.value;
         });
 
         // Get theme name and description
@@ -5858,16 +6060,11 @@ async function updateCurrentTheme() {
     try {
         // Get current values from color inputs
         const themeData = {};
-        const lightThemeData = {};
         
         const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
         colorInputs.forEach(input => {
             const cssVar = input.dataset.cssVar;
-            if (input.dataset.mode === 'light') {
-                lightThemeData[cssVar] = input.value;
-            } else {
-                themeData[cssVar] = input.value;
-            }
+            themeData[cssVar] = input.value;
         });
         
         // Get theme name and description

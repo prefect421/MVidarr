@@ -143,8 +143,10 @@ def get_themes():
 
             # Convert custom themes to dict format safely
             custom_themes = []
-            custom_theme_names = set()  # Track which built-in themes have been customized
-            
+            custom_theme_names = (
+                set()
+            )  # Track which built-in themes have been customized
+
             for theme in themes:
                 try:
                     theme_dict = theme.to_dict()
@@ -152,19 +154,24 @@ def get_themes():
                     if theme.is_built_in:
                         custom_theme_names.add(theme.name)
                 except Exception as theme_error:
-                    logger.error(f"Error converting theme {theme.id} to dict: {theme_error}")
+                    logger.error(
+                        f"Error converting theme {theme.id} to dict: {theme_error}"
+                    )
                     continue
-            
+
             # Filter out built-in themes that have database records (avoid duplicates)
             filtered_built_in_themes = [
-                theme for theme in built_in_themes 
+                theme
+                for theme in built_in_themes
                 if theme["name"] not in custom_theme_names
             ]
-            
+
             logger.info(f"Successfully converted {len(custom_themes)} custom themes")
-            logger.info(f"Filtered {len(filtered_built_in_themes)} built-in themes (avoiding {len(custom_theme_names)} duplicates)")
-            
-            all_themes = filtered_built_in_themes + custom_themes  
+            logger.info(
+                f"Filtered {len(filtered_built_in_themes)} built-in themes (avoiding {len(custom_theme_names)} duplicates)"
+            )
+
+            all_themes = filtered_built_in_themes + custom_themes
             logger.info(f"Returning {len(all_themes)} total themes")
 
             return jsonify({"themes": all_themes, "total": len(all_themes)})
@@ -205,7 +212,7 @@ def create_theme():
                 is_public=data.get("is_public", False),
                 is_built_in=False,
                 theme_data=data["theme_data"],
-                light_theme_data=data.get("light_theme_data")
+                light_theme_data=data.get("light_theme_data"),
             )
 
             session.add(theme)
@@ -232,7 +239,11 @@ def get_theme(theme_id):
                 return jsonify({"error": "Theme not found"}), 404
 
             # Check permissions
-            if not theme.is_public and not theme.is_built_in and theme.created_by != user_id:
+            if (
+                not theme.is_public
+                and not theme.is_built_in
+                and theme.created_by != user_id
+            ):
                 return jsonify({"error": "Access denied"}), 403
 
             return jsonify(theme.to_dict())
@@ -256,7 +267,9 @@ def update_theme(theme_id):
                 return jsonify({"error": "Theme not found"}), 404
 
             # Check permissions - only creator can edit (unless admin)
-            if theme.created_by != user_id and not getattr(request.current_user, 'is_admin', False):
+            if theme.created_by != user_id and not getattr(
+                request.current_user, "is_admin", False
+            ):
                 return jsonify({"error": "Access denied"}), 403
 
             # Update theme fields if provided
@@ -293,7 +306,9 @@ def delete_theme(theme_id):
                 return jsonify({"error": "Theme not found"}), 404
 
             # Check permissions - only creator can delete (unless admin)
-            if theme.created_by != user_id and not getattr(request.current_user, 'is_admin', False):
+            if theme.created_by != user_id and not getattr(
+                request.current_user, "is_admin", False
+            ):
                 return jsonify({"error": "Access denied"}), 403
 
             # Don't allow deleting built-in themes
@@ -326,12 +341,18 @@ def duplicate_theme(theme_id):
                 return jsonify({"error": "Theme not found"}), 404
 
             # Check permissions for original theme
-            if not original_theme.is_public and not original_theme.is_built_in and original_theme.created_by != user_id:
+            if (
+                not original_theme.is_public
+                and not original_theme.is_built_in
+                and original_theme.created_by != user_id
+            ):
                 return jsonify({"error": "Access denied"}), 403
 
             # Get new theme name from request or generate one
             new_name = data.get("name", f"{original_theme.name}_copy")
-            new_display_name = data.get("display_name", f"{original_theme.display_name} (Copy)")
+            new_display_name = data.get(
+                "display_name", f"{original_theme.display_name} (Copy)"
+            )
 
             # Check if new name already exists
             existing = session.query(CustomTheme).filter_by(name=new_name).first()
@@ -344,16 +365,26 @@ def duplicate_theme(theme_id):
                 display_name=new_display_name,
                 description=data.get("description", original_theme.description),
                 created_by=user_id,
-                is_public=data.get("is_public", False), 
+                is_public=data.get("is_public", False),
                 is_built_in=False,  # Duplicates are never built-in
-                theme_data=original_theme.theme_data.copy() if original_theme.theme_data else {},
-                light_theme_data=original_theme.light_theme_data.copy() if original_theme.light_theme_data else None
+                theme_data=(
+                    original_theme.theme_data.copy()
+                    if original_theme.theme_data
+                    else {}
+                ),
+                light_theme_data=(
+                    original_theme.light_theme_data.copy()
+                    if original_theme.light_theme_data
+                    else None
+                ),
             )
 
             session.add(new_theme)
             session.commit()
 
-            logger.info(f"Duplicated theme '{original_theme.name}' as '{new_name}' by user {user_id}")
+            logger.info(
+                f"Duplicated theme '{original_theme.name}' as '{new_name}' by user {user_id}"
+            )
             return jsonify(new_theme.to_dict()), 201
 
     except Exception as e:
@@ -368,39 +399,53 @@ def apply_theme():
     try:
         data = request.get_json()
         theme_name = data.get("theme_name")
-        
+
         if not theme_name:
             return jsonify({"error": "Theme name is required"}), 400
-        
+
         # Save theme preference using settings service
         try:
             from src.services.settings_service import SettingsService
+
             success = SettingsService.set("ui_theme", theme_name)
             if success:
                 # Don't try to log with request.current_user.id as it causes SQLAlchemy session errors
-                logger.info(f"Applied theme '{theme_name}' for user {getattr(request.current_user, 'username', 'unknown')}")
-                return jsonify({"message": f"Theme '{theme_name}' applied successfully"})
+                logger.info(
+                    f"Applied theme '{theme_name}' for user {getattr(request.current_user, 'username', 'unknown')}"
+                )
+                return jsonify(
+                    {"message": f"Theme '{theme_name}' applied successfully"}
+                )
             else:
-                logger.error(f"Settings service failed to save theme preference for '{theme_name}'")
+                logger.error(
+                    f"Settings service failed to save theme preference for '{theme_name}'"
+                )
                 return jsonify({"error": "Failed to save theme preference"}), 500
         except Exception as settings_error:
             # Check if it's the known SQLAlchemy session error but theme was actually saved
             error_str = str(settings_error)
             if "is not bound to a Session" in error_str:
-                logger.warning(f"SQLAlchemy session error after successful theme save: {settings_error}")
+                logger.warning(
+                    f"SQLAlchemy session error after successful theme save: {settings_error}"
+                )
                 # Check if theme was actually saved despite the error
                 try:
                     from src.services.settings_service import SettingsService
+
                     current_theme = SettingsService.get("ui_theme", "default")
                     if current_theme == theme_name:
-                        logger.info(f"Theme '{theme_name}' was successfully saved despite session error")
-                        return jsonify({"message": f"Theme '{theme_name}' applied successfully"})
+                        logger.info(
+                            f"Theme '{theme_name}' was successfully saved despite session error"
+                        )
+                        return jsonify(
+                            {"message": f"Theme '{theme_name}' applied successfully"}
+                        )
                 except Exception:
                     pass
-            
+
             logger.error(f"Error saving theme preference: {settings_error}")
             return jsonify({"error": "Failed to save theme preference"}), 500
-            
+
     except Exception as e:
         logger.error(f"Error applying theme: {e}")
         return jsonify({"error": "Failed to apply theme", "details": str(e)}), 500
@@ -412,6 +457,7 @@ def get_current_theme():
     """Get the currently applied theme"""
     try:
         from src.services.settings_service import SettingsService
+
         current_theme = SettingsService.get("ui_theme", "default")
         return jsonify({"current_theme": current_theme})
     except Exception as e:
@@ -423,6 +469,7 @@ def get_current_theme():
 # Old LCARS themes (DS9, Voy, TNG-E) have been removed
 # Built-in themes now primarily use CSS files rather than hardcoded definitions
 
+
 @themes_bp.route("/built-in/<theme_name>/extract", methods=["POST"])
 @simple_auth_required
 def extract_built_in_theme(theme_name):
@@ -433,7 +480,7 @@ def extract_built_in_theme(theme_name):
             "default": {
                 # Default theme variables
                 "--bg-primary": "#1a1a1a",
-                "--bg-secondary": "#2d2d2d", 
+                "--bg-secondary": "#2d2d2d",
                 "--bg-tertiary": "#3a3a3a",
                 "--text-primary": "#ffffff",
                 "--text-secondary": "#cccccc",
@@ -448,6 +495,27 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#1a1a1a",
                 "--search-bar-bg": "#333333",
                 "--top-bar-bg": "#1a1a1a",
+                # Extended variables
+                "--shadow": "#000000",
+                "--shadow-hover": "#000000",
+                "--border-focus-shadow": "#4a9eff",
+                "--modalBackgroundColor": "#2d2d2d",
+                "--modalBackdropBackgroundColor": "#000000",
+                "--modal-overlay": "#00000080",
+                "--modalCloseButtonHoverColor": "#ff0000",
+                "--inputHoverBackgroundColor": "#3a3a3a",
+                "--inputSelectedBackgroundColor": "#4a9eff",
+                "--inputReadOnlyBackgroundColor": "#1a1a1a",
+                "--inputErrorBorderColor": "#dc3545",
+                "--inputWarningBorderColor": "#ffc107",
+                "--menuItemColor": "#ffffff",
+                "--menuItemHoverBackgroundColor": "#4a9eff",
+                "--popoverBodyBackgroundColor": "#2d2d2d",
+                "--popoverTitleBackgroundColor": "#1a1a1a",
+                "--disabledColor": "#666666",
+                "--helpTextColor": "#888888",
+                "--linkHoverColor": "#6bb6ff",
+                "--iconButtonHoverColor": "#4a9eff",
             },
             "cyber": {
                 # Cyber theme variables
@@ -467,6 +535,27 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#000000",
                 "--search-bar-bg": "#161b22",
                 "--top-bar-bg": "#0d1117",
+                # Extended variables
+                "--shadow": "#00fff720",
+                "--shadow-hover": "#00fff740",
+                "--border-focus-shadow": "#00fff7",
+                "--modalBackgroundColor": "#0d1117",
+                "--modalBackdropBackgroundColor": "#000000",
+                "--modal-overlay": "#00000080",
+                "--modalCloseButtonHoverColor": "#ff0000",
+                "--inputHoverBackgroundColor": "#161b22",
+                "--inputSelectedBackgroundColor": "#00fff7",
+                "--inputReadOnlyBackgroundColor": "#000000",
+                "--inputErrorBorderColor": "#ff0000",
+                "--inputWarningBorderColor": "#ffff00",
+                "--menuItemColor": "#00fff7",
+                "--menuItemHoverBackgroundColor": "#161b22",
+                "--popoverBodyBackgroundColor": "#0d1117",
+                "--popoverTitleBackgroundColor": "#000000",
+                "--disabledColor": "#444444",
+                "--helpTextColor": "#7dd3fc",
+                "--linkHoverColor": "#00fff7",
+                "--iconButtonHoverColor": "#00fff7",
             },
             "vaporwave": {
                 # VaporWave theme variables
@@ -486,6 +575,27 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#1a0d26",
                 "--search-bar-bg": "#3d2852",
                 "--top-bar-bg": "#2d1b3d",
+                # Extended variables
+                "--shadow": "#ff3cac20",
+                "--shadow-hover": "#ff3cac40",
+                "--border-focus-shadow": "#ff3cac",
+                "--modalBackgroundColor": "#2d1b3d",
+                "--modalBackdropBackgroundColor": "#1a0d26",
+                "--modal-overlay": "#00000080",
+                "--modalCloseButtonHoverColor": "#ff073a",
+                "--inputHoverBackgroundColor": "#3d2852",
+                "--inputSelectedBackgroundColor": "#ff3cac",
+                "--inputReadOnlyBackgroundColor": "#1a0d26",
+                "--inputErrorBorderColor": "#ff073a",
+                "--inputWarningBorderColor": "#ffee00",
+                "--menuItemColor": "#ff3cac",
+                "--menuItemHoverBackgroundColor": "#3d2852",
+                "--popoverBodyBackgroundColor": "#2d1b3d",
+                "--popoverTitleBackgroundColor": "#1a0d26",
+                "--disabledColor": "#666666",
+                "--helpTextColor": "#d4a5f2",
+                "--linkHoverColor": "#ff3cac",
+                "--iconButtonHoverColor": "#ff3cac",
             },
             "lcars_tng": {
                 # LCARS TNG theme variables
@@ -505,17 +615,40 @@ def extract_built_in_theme(theme_name):
                 "--sidebar-bg": "#000000",
                 "--search-bar-bg": "#333333",
                 "--top-bar-bg": "#1a1a1a",
-            }
+                # Extended variables
+                "--shadow": "#fbb03b20",
+                "--shadow-hover": "#fbb03b40",
+                "--border-focus-shadow": "#fbb03b",
+                "--modalBackgroundColor": "#1a1a1a",
+                "--modalBackdropBackgroundColor": "#000000",
+                "--modal-overlay": "#00000080",
+                "--modalCloseButtonHoverColor": "#ff0000",
+                "--inputHoverBackgroundColor": "#333333",
+                "--inputSelectedBackgroundColor": "#fbb03b",
+                "--inputReadOnlyBackgroundColor": "#000000",
+                "--inputErrorBorderColor": "#ff0000",
+                "--inputWarningBorderColor": "#ffff00",
+                "--menuItemColor": "#ffffff",
+                "--menuItemHoverBackgroundColor": "#333333",
+                "--popoverBodyBackgroundColor": "#1a1a1a",
+                "--popoverTitleBackgroundColor": "#000000",
+                "--disabledColor": "#666666",
+                "--helpTextColor": "#cccccc",
+                "--linkHoverColor": "#fbb03b",
+                "--iconButtonHoverColor": "#fbb03b",
+            },
         }
 
         if theme_name not in built_in_themes:
             return jsonify({"error": "Built-in theme not found"}), 404
 
-        return jsonify({
-            "theme_name": theme_name,
-            "variables": built_in_themes[theme_name],
-            "light_variables": {}  # Simplified - no light variants for now
-        })
+        return jsonify(
+            {
+                "theme_name": theme_name,
+                "variables": built_in_themes[theme_name],
+                "light_variables": {},  # Simplified - no light variants for now
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error extracting built-in theme {theme_name}: {e}")
@@ -527,8 +660,10 @@ def extract_built_in_theme(theme_name):
 def export_theme(theme_id):
     """Export a theme as a JSON file"""
     try:
-        user_id = request.current_user.id if hasattr(request.current_user, 'id') else None
-        username = getattr(request.current_user, 'username', 'unknown')
+        user_id = (
+            request.current_user.id if hasattr(request.current_user, "id") else None
+        )
+        username = getattr(request.current_user, "username", "unknown")
 
         with get_db() as session:
             theme = session.query(CustomTheme).filter_by(id=theme_id).first()
@@ -536,7 +671,11 @@ def export_theme(theme_id):
                 return jsonify({"error": "Theme not found"}), 404
 
             # Check permissions
-            if not theme.is_public and not theme.is_built_in and theme.created_by != user_id:
+            if (
+                not theme.is_public
+                and not theme.is_built_in
+                and theme.created_by != user_id
+            ):
                 return jsonify({"error": "Access denied"}), 403
 
             # Create export data
@@ -544,7 +683,7 @@ def export_theme(theme_id):
                 "mvidarr_theme_export": {
                     "version": "1.0",
                     "exported_at": datetime.utcnow().isoformat() + "Z",
-                    "exported_by": username
+                    "exported_by": username,
                 },
                 "theme": {
                     "name": theme.name,
@@ -552,19 +691,22 @@ def export_theme(theme_id):
                     "description": theme.description or "",
                     "is_public": theme.is_public,
                     "theme_data": theme.theme_data,
-                    "light_theme_data": theme.light_theme_data
-                }
+                    "light_theme_data": theme.light_theme_data,
+                },
             }
 
             # Create response with appropriate headers for file download
-            from flask import make_response
             import json
-            
+
+            from flask import make_response
+
             response_data = json.dumps(export_data, indent=2, ensure_ascii=False)
             response = make_response(response_data)
-            response.headers['Content-Type'] = 'application/json'
-            response.headers['Content-Disposition'] = f'attachment; filename="{theme.name}_theme.json"'
-            
+            response.headers["Content-Type"] = "application/json"
+            response.headers["Content-Disposition"] = (
+                f'attachment; filename="{theme.name}_theme.json"'
+            )
+
             logger.info(f"Exported theme '{theme.name}' by user {username}")
             return response
 
@@ -578,8 +720,10 @@ def export_theme(theme_id):
 def export_all_themes():
     """Export all accessible themes as a JSON file"""
     try:
-        user_id = request.current_user.id if hasattr(request.current_user, 'id') else None
-        username = getattr(request.current_user, 'username', 'unknown')
+        user_id = (
+            request.current_user.id if hasattr(request.current_user, "id") else None
+        )
+        username = getattr(request.current_user, "username", "unknown")
 
         with get_db() as session:
             # Get all themes that are either public, built-in, or created by the current user
@@ -601,9 +745,9 @@ def export_all_themes():
                     "version": "1.0",
                     "exported_at": datetime.utcnow().isoformat() + "Z",
                     "exported_by": username,
-                    "theme_count": len(themes)
+                    "theme_count": len(themes),
                 },
-                "themes": []
+                "themes": [],
             }
 
             for theme in themes:
@@ -613,19 +757,22 @@ def export_all_themes():
                     "description": theme.description or "",
                     "is_public": theme.is_public,
                     "theme_data": theme.theme_data,
-                    "light_theme_data": theme.light_theme_data
+                    "light_theme_data": theme.light_theme_data,
                 }
                 export_data["themes"].append(theme_data)
 
             # Create response with appropriate headers for file download
-            from flask import make_response
             import json
-            
+
+            from flask import make_response
+
             response_data = json.dumps(export_data, indent=2, ensure_ascii=False)
             response = make_response(response_data)
-            response.headers['Content-Type'] = 'application/json'
-            response.headers['Content-Disposition'] = f'attachment; filename="mvidarr_themes_export.json"'
-            
+            response.headers["Content-Type"] = "application/json"
+            response.headers["Content-Disposition"] = (
+                f'attachment; filename="mvidarr_themes_export.json"'
+            )
+
             logger.info(f"Exported {len(themes)} themes by user {username}")
             return response
 
@@ -639,23 +786,24 @@ def export_all_themes():
 def import_themes():
     """Import themes from a JSON file"""
     try:
-        user_id = request.current_user.id if hasattr(request.current_user, 'id') else 1
-        username = getattr(request.current_user, 'username', 'unknown')
+        user_id = request.current_user.id if hasattr(request.current_user, "id") else 1
+        username = getattr(request.current_user, "username", "unknown")
 
         # Get the uploaded file or JSON data
         if request.is_json:
             import_data = request.get_json()
-        elif 'file' in request.files:
-            file = request.files['file']
-            if file.filename == '':
+        elif "file" in request.files:
+            file = request.files["file"]
+            if file.filename == "":
                 return jsonify({"error": "No file selected"}), 400
-            
-            if not file.filename.endswith('.json'):
+
+            if not file.filename.endswith(".json"):
                 return jsonify({"error": "File must be a JSON file"}), 400
-            
+
             try:
                 import json
-                import_data = json.loads(file.read().decode('utf-8'))
+
+                import_data = json.loads(file.read().decode("utf-8"))
             except json.JSONDecodeError as e:
                 return jsonify({"error": f"Invalid JSON file: {str(e)}"}), 400
         else:
@@ -689,19 +837,30 @@ def import_themes():
             for theme_data in themes_to_import:
                 try:
                     # Validate required fields
-                    if not all(key in theme_data for key in ["name", "display_name", "theme_data"]):
-                        errors.append(f"Theme missing required fields: {theme_data.get('name', 'Unknown')}")
+                    if not all(
+                        key in theme_data
+                        for key in ["name", "display_name", "theme_data"]
+                    ):
+                        errors.append(
+                            f"Theme missing required fields: {theme_data.get('name', 'Unknown')}"
+                        )
                         continue
 
                     # Check if theme name already exists
-                    existing = session.query(CustomTheme).filter_by(name=theme_data["name"]).first()
+                    existing = (
+                        session.query(CustomTheme)
+                        .filter_by(name=theme_data["name"])
+                        .first()
+                    )
                     if existing:
                         skipped_themes.append(theme_data["name"])
                         continue
 
                     # Validate theme_data structure
                     if not isinstance(theme_data["theme_data"], dict):
-                        errors.append(f"Invalid theme_data for theme: {theme_data['name']}")
+                        errors.append(
+                            f"Invalid theme_data for theme: {theme_data['name']}"
+                        )
                         continue
 
                     # Create new theme
@@ -713,14 +872,16 @@ def import_themes():
                         is_public=theme_data.get("is_public", False),
                         is_built_in=False,  # Imported themes are never built-in
                         theme_data=theme_data["theme_data"],
-                        light_theme_data=theme_data.get("light_theme_data")
+                        light_theme_data=theme_data.get("light_theme_data"),
                     )
 
                     session.add(new_theme)
                     imported_themes.append(theme_data["name"])
 
                 except Exception as theme_error:
-                    errors.append(f"Error importing theme {theme_data.get('name', 'Unknown')}: {str(theme_error)}")
+                    errors.append(
+                        f"Error importing theme {theme_data.get('name', 'Unknown')}: {str(theme_error)}"
+                    )
 
             # Commit all imported themes
             if imported_themes:
@@ -734,17 +895,23 @@ def import_themes():
             "error_count": len(errors),
             "imported_themes": imported_themes,
             "skipped_themes": skipped_themes,
-            "errors": errors
+            "errors": errors,
         }
 
         if errors:
             response_data["message"] = f"Import completed with {len(errors)} errors"
         elif skipped_themes:
-            response_data["message"] = f"Import completed. {len(skipped_themes)} themes skipped (already exist)"
+            response_data["message"] = (
+                f"Import completed. {len(skipped_themes)} themes skipped (already exist)"
+            )
         else:
-            response_data["message"] = f"Successfully imported {len(imported_themes)} themes"
+            response_data["message"] = (
+                f"Successfully imported {len(imported_themes)} themes"
+            )
 
-        logger.info(f"Theme import by user {username}: {len(imported_themes)} imported, {len(skipped_themes)} skipped, {len(errors)} errors")
+        logger.info(
+            f"Theme import by user {username}: {len(imported_themes)} imported, {len(skipped_themes)} skipped, {len(errors)} errors"
+        )
         return jsonify(response_data)
 
     except Exception as e:
@@ -760,17 +927,18 @@ def validate_import():
         # Get the uploaded file or JSON data
         if request.is_json:
             import_data = request.get_json()
-        elif 'file' in request.files:
-            file = request.files['file']
-            if file.filename == '':
+        elif "file" in request.files:
+            file = request.files["file"]
+            if file.filename == "":
                 return jsonify({"error": "No file selected"}), 400
-            
-            if not file.filename.endswith('.json'):
+
+            if not file.filename.endswith(".json"):
                 return jsonify({"error": "File must be a JSON file"}), 400
-            
+
             try:
                 import json
-                import_data = json.loads(file.read().decode('utf-8'))
+
+                import_data = json.loads(file.read().decode("utf-8"))
             except json.JSONDecodeError as e:
                 return jsonify({"error": f"Invalid JSON file: {str(e)}"}), 400
         else:
@@ -782,7 +950,12 @@ def validate_import():
 
         # Check if it's a MVidarr theme export file
         if "mvidarr_theme_export" not in import_data:
-            return jsonify({"error": "Not a valid MVidarr theme export file", "valid": False}), 400
+            return (
+                jsonify(
+                    {"error": "Not a valid MVidarr theme export file", "valid": False}
+                ),
+                400,
+            )
 
         # Determine if it's a single theme or multiple themes
         themes_to_validate = []
@@ -791,7 +964,10 @@ def validate_import():
         elif "themes" in import_data:
             themes_to_validate = import_data["themes"]
         else:
-            return jsonify({"error": "No themes found in import data", "valid": False}), 400
+            return (
+                jsonify({"error": "No themes found in import data", "valid": False}),
+                400,
+            )
 
         # Validate themes
         valid_themes = []
@@ -802,16 +978,25 @@ def validate_import():
         with get_db() as session:
             for theme_data in themes_to_validate:
                 theme_name = theme_data.get("name", "Unknown")
-                
+
                 try:
                     # Validate required fields
-                    if not all(key in theme_data for key in ["name", "display_name", "theme_data"]):
+                    if not all(
+                        key in theme_data
+                        for key in ["name", "display_name", "theme_data"]
+                    ):
                         invalid_themes.append(theme_name)
-                        validation_errors.append(f"Theme '{theme_name}' missing required fields")
+                        validation_errors.append(
+                            f"Theme '{theme_name}' missing required fields"
+                        )
                         continue
 
                     # Check if theme name already exists
-                    existing = session.query(CustomTheme).filter_by(name=theme_data["name"]).first()
+                    existing = (
+                        session.query(CustomTheme)
+                        .filter_by(name=theme_data["name"])
+                        .first()
+                    )
                     if existing:
                         existing_themes.append(theme_name)
                         continue
@@ -819,19 +1004,25 @@ def validate_import():
                     # Validate theme_data structure
                     if not isinstance(theme_data["theme_data"], dict):
                         invalid_themes.append(theme_name)
-                        validation_errors.append(f"Theme '{theme_name}' has invalid theme_data structure")
+                        validation_errors.append(
+                            f"Theme '{theme_name}' has invalid theme_data structure"
+                        )
                         continue
 
                     # Theme is valid
-                    valid_themes.append({
-                        "name": theme_name,
-                        "display_name": theme_data["display_name"],
-                        "description": theme_data.get("description", "")
-                    })
+                    valid_themes.append(
+                        {
+                            "name": theme_name,
+                            "display_name": theme_data["display_name"],
+                            "description": theme_data.get("description", ""),
+                        }
+                    )
 
                 except Exception as theme_error:
                     invalid_themes.append(theme_name)
-                    validation_errors.append(f"Error validating theme '{theme_name}': {str(theme_error)}")
+                    validation_errors.append(
+                        f"Error validating theme '{theme_name}': {str(theme_error)}"
+                    )
 
         # Prepare response
         response_data = {
@@ -844,15 +1035,21 @@ def validate_import():
             "valid_themes": valid_themes,
             "invalid_themes": invalid_themes,
             "existing_themes": existing_themes,
-            "validation_errors": validation_errors
+            "validation_errors": validation_errors,
         }
 
         if validation_errors:
-            response_data["message"] = f"Validation failed with {len(validation_errors)} errors"
+            response_data["message"] = (
+                f"Validation failed with {len(validation_errors)} errors"
+            )
         elif existing_themes:
-            response_data["message"] = f"Validation passed. {len(existing_themes)} themes already exist and will be skipped"
+            response_data["message"] = (
+                f"Validation passed. {len(existing_themes)} themes already exist and will be skipped"
+            )
         else:
-            response_data["message"] = f"Validation passed. All {len(valid_themes)} themes can be imported"
+            response_data["message"] = (
+                f"Validation passed. All {len(valid_themes)} themes can be imported"
+            )
 
         return jsonify(response_data)
 
