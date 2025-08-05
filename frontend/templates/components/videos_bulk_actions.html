@@ -1,0 +1,13 @@
+<!-- Bulk Actions Panel -->
+<div id="bulkActionsPanel" class="search-panel" style="display: none;">
+    <div class="form-group">
+        <label>Bulk Actions:</label>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <span id="selectedCount">0 videos selected</span>
+            <button onclick="selectAllVideos()" class="btn btn-secondary">Select All</button>
+            <button onclick="deselectAllVideos()" class="btn btn-secondary">Deselect All</button>
+            <button onclick="bulkDownloadSelected()" class="btn btn-success">Download Selected</button>
+            <button onclick="bulkDeleteSelected()" class="btn btn-danger">Delete Selected</button>
+        </div>
+    </div>
+</div>

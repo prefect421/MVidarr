@@ -1,0 +1,54 @@
+<!-- Search Panel -->
+<div id="searchPanel" class="search-panel" style="display: none;">
+    <div class="search-form">
+        <div class="search-row">
+            <div class="search-field">
+                <label for="searchQuery">Search Query:</label>
+                <input type="text" id="searchQuery" class="form-control" placeholder="Search by title, artist, or keywords..." onkeyup="handleSearchKeyup(event)">
+            </div>
+            <div class="search-field">
+                <label for="searchArtist">Artist:</label>
+                <input type="text" id="searchArtist" class="form-control" placeholder="Artist name...">
+            </div>
+            <div class="search-field">
+                <label for="searchStatus">Status:</label>
+                <select id="searchStatus" class="form-control">
+                    <option value="">All Status</option>
+                    <option value="WANTED">Wanted</option>
+                    <option value="DOWNLOADED">Downloaded</option>
+                    <option value="ARCHIVED">Archived</option>
+                </select>
+            </div>
+            <div class="search-field">
+                <label for="searchYear">Year:</label>
+                <input type="number" id="searchYear" class="form-control" placeholder="Year..." min="1900" max="2030">
+            </div>
+        </div>
+        <div class="search-row">
+            <div class="search-field">
+                <label for="sortBy">Sort By:</label>
+                <select id="sortBy" class="form-control">
+                    <option value="title">Title</option>
+                    <option value="artist_name">Artist</option>
+                    <option value="year">Year</option>
+                    <option value="status">Status</option>
+                    <option value="date_added">Date Added</option>
+                </select>
+            </div>
+            <div class="search-field">
+                <label for="sortOrder">Order:</label>
+                <select id="sortOrder" class="form-control">
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                </select>
+            </div>
+            <div class="search-field">
+                <button onclick="performSearch()" class="btn btn-primary" style="align-self: end;">Search</button>
+            </div>
+            <div class="search-field">
+                <button onclick="clearSearch()" class="btn btn-secondary" style="align-self: end;">Clear</button>
+            </div>
+        </div>
+    </div>
+    <div id="searchResults" class="search-results-info"></div>
+</div>
