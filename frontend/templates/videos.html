@@ -1395,7 +1395,7 @@ function updateSingleVideoCard(videoId) {
                 <div class="video-thumbnail" data-video-id="${video.id}" data-action="play">
                     <img src="/api/videos/${video.id}/thumbnail" 
                          alt="${video.title}"
-                         onerror="this.src='/static/placeholder-video.png'">
+                         onerror="this.src='/static/default-thumbnail.png'">
                     <div class="video-overlay">
                         <div class="video-play-btn">▶</div>
                     </div>
@@ -2122,6 +2122,11 @@ function deleteSelectedVideos() {
 
 
 <script>
+// Global video pagination variables
+let currentPage = 1;
+let pageSize = 50;
+let searchActive = false;
+
 // Video Thumbnail Management Functions
 let currentVideoThumbnailId = null;
 
@@ -3468,7 +3473,69 @@ function changePageSize(newSize) {
     }
 }
 
-// Main function to load videos from API
+// Display videos in the grid
+function displayVideos(videos) {
+    const grid = document.getElementById('videos-grid');
+    
+    if (videos && videos.length > 0) {
+        grid.innerHTML = videos.map(video => `
+            <div class="video-card">
+                <div class="video-select">
+                    <input type="checkbox" class="video-checkbox" value="${video.id}" onchange="updateSelectedCount()">
+                </div>
+                <div class="video-thumbnail" data-video-id="${video.id}" data-action="play">
+                    <img src="/api/videos/${video.id}/thumbnail" 
+                         alt="${video.title}" onerror="this.src='/static/placeholder-video.png'">
+                    <div class="play-overlay">
+                        <div class="play-button">▶</div>
+                    </div>
+                </div>
+                <div class="video-info">
+                    <h3>${video.title}</h3>
+                    <p>Artist: ${video.artist_name || 'Unknown'}</p>
+                    <p>Status: ${video.status}</p>
+                    ${video.year ? `<p>Year: ${video.year}</p>` : ''}
+                </div>
+                <div class="video-actions">
+                    <button data-video-id="${video.id}" data-action="view" class="btn-icon" title="View Details">
+                        <i class="icon-eye"></i>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="edit" class="btn-icon" title="Edit Video">
+                        <i class="icon-edit"></i>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
+                        <i class="icon-refresh"></i>
+                    </button>
+                    ${video.status === 'WANTED' ? 
+                        `<button data-video-id="${video.id}" data-action="download" class="btn-icon" title="Download Video">
+                            <i class="icon-download"></i>
+                        </button>` : 
+                        ''}
+                    <button data-video-id="${video.id}" data-action="delete" class="btn-icon btn-danger" title="Delete Video">
+                        <i class="icon-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        grid.innerHTML = '<p>No videos found.</p>';
+    }
+}
+
+// Update pagination controls based on API response
+function updatePagination(data) {
+    // Basic pagination logic - this depends on your HTML structure
+    const totalVideos = data.total || 0;
+    const currentTotal = data.count || 0;
+    const paginationInfo = document.getElementById('videos-pagination-info');
+    if (paginationInfo) {
+        const startIndex = ((currentPage - 1) * pageSize) + 1;
+        const endIndex = Math.min(currentPage * pageSize, totalVideos);
+        paginationInfo.textContent = `Showing ${startIndex}-${endIndex} of ${totalVideos} videos`;
+    }
+}
+
+// Core video loading function with proper authentication
 async function loadVideos(page = 1, size = 50, resetPage = false) {
     console.log(`Loading videos: page=${page}, size=${size}`);
     
@@ -3484,7 +3551,7 @@ async function loadVideos(page = 1, size = 50, resetPage = false) {
         // Show loading state
         const grid = document.getElementById('videos-grid');
         if (grid) {
-            grid.innerHTML = '<div class="loading-spinner"></div>';
+            grid.innerHTML = '<div class="loading-spinner">Loading videos...</div>';
         }
         
         // Build API URL with pagination
@@ -3495,9 +3562,21 @@ async function loadVideos(page = 1, size = 50, resetPage = false) {
             order: 'asc'
         });
         
-        // Make API request
-        const response = await fetch(`/api/videos?${params.toString()}`);
+        // Make authenticated API request - credentials: 'same-origin' includes session cookies
+        const response = await fetch(`/api/videos?${params.toString()}`, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
         if (!response.ok) {
+            if (response.status === 401) {
+                // Handle authentication required
+                window.location.href = '/simple-login';
+                return;
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
@@ -3522,88 +3601,8 @@ async function loadVideos(page = 1, size = 50, resetPage = false) {
     }
 }
 
-// Function to display videos in the grid
-function displayVideos(videos) {
-    const grid = document.getElementById('videos-grid');
-    if (!grid) return;
-    
-    if (!videos || videos.length === 0) {
-        grid.innerHTML = '<div class="no-videos">No videos found.</div>';
-        return;
-    }
-    
-    grid.innerHTML = videos.map(video => `
-        <div class="video-card">
-            <div class="video-select">
-                <input type="checkbox" class="video-checkbox" value="${video.id}" onchange="updateSelectedCount()">
-            </div>
-            <div class="video-thumbnail" data-video-id="${video.id}" data-action="play">
-                <img src="/api/videos/${video.id}/thumbnail" 
-                     alt="${video.title}" onerror="this.src='/static/placeholder-video.png'">
-                <div class="play-overlay">
-                    <div class="play-button">▶</div>
-                </div>
-            </div>
-            <div class="video-info">
-                <h3 class="video-title">${video.title || 'Untitled'}</h3>
-                <p class="video-artist">${video.artist_name || 'Unknown Artist'}</p>
-                <div class="video-meta">
-                    <span class="video-status status-${(video.status || 'unknown').toLowerCase()}">${video.status || 'Unknown'}</span>
-                    ${video.duration ? `<span class="video-duration">${formatDuration(video.duration)}</span>` : ''}
-                    ${video.year ? `<span class="video-year">${video.year}</span>` : ''}
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Update pagination controls
-function updatePagination(data) {
-    const total = data.total || 0;
-    const offset = data.offset || 0;
-    const limit = data.limit || pageSize;
-    
-    // Calculate pagination values
-    const totalPages = Math.ceil(total / limit);
-    const currentPageNum = Math.floor(offset / limit) + 1;
-    
-    // Update pagination info
-    const paginationInfo = document.querySelector('.pagination-info');
-    if (paginationInfo) {
-        const start = offset + 1;
-        const end = Math.min(offset + limit, total);
-        paginationInfo.textContent = `Showing ${start}-${end} of ${total} videos`;
-    }
-    
-    // Update navigation buttons
-    const prevBtn = document.getElementById('prevPage');
-    const nextBtn = document.getElementById('nextPage');
-    
-    if (prevBtn) {
-        prevBtn.disabled = currentPageNum <= 1;
-    }
-    
-    if (nextBtn) {
-        nextBtn.disabled = currentPageNum >= totalPages;
-    }
-    
-    // Update page input
-    const pageInput = document.getElementById('pageInput');
-    if (pageInput) {
-        pageInput.value = currentPageNum;
-        pageInput.max = totalPages;
-    }
-}
-
-// Helper function to format duration
-function formatDuration(seconds) {
-    if (!seconds) return '';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
 // Override existing loadVideos calls to use pagination
+const originalLoadVideos = loadVideos;
 window.refreshVideosWithPagination = function() {
     loadVideos(currentPage, pageSize);
 };
@@ -3613,31 +3612,37 @@ function refreshVideoList() {
     loadVideos(currentPage, pageSize);
 }
 
-// Main event listener for video actions
+// Initialize videos when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Videos page loaded, initializing...');
+    loadVideos();
+});
+
+// Event delegation for video actions
 document.addEventListener('click', function(event) {
     const target = event.target.closest('[data-action]');
     if (!target) return;
     
-    const action = target.getAttribute('data-action');
-    const videoId = target.getAttribute('data-video-id');
+    const action = target.dataset.action;
+    const videoId = target.dataset.videoId;
     
     if (!videoId) return;
     
-    switch (action) {
+    switch(action) {
         case 'play':
             playVideoById(videoId);
             break;
         case 'view':
-            viewVideoDetails(videoId);
+            viewVideo(videoId);
             break;
         case 'edit':
             editVideo(videoId);
             break;
-        case 'download':
-            downloadVideo(videoId);
-            break;
         case 'refresh-metadata':
             refreshVideoMetadata(videoId);
+            break;
+        case 'download':
+            downloadVideo(videoId);
             break;
         case 'delete':
             deleteVideo(videoId);
@@ -3645,50 +3650,22 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Function to play video by ID
+// Helper function to get video data and play it
 async function playVideoById(videoId) {
     try {
-        console.log('Playing video:', videoId);
+        const response = await fetch(`/api/videos/${videoId}`, {
+            credentials: 'same-origin'
+        });
         
-        // Fetch video details
-        const response = await fetch(`/api/videos/${videoId}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const video = response.json ? await response.json() : response;
-        console.log('Video details:', video);
-        
-        // Open video modal and play
-        openVideoModal();
+        const video = await response.json();
         playVideo(video.id, video.title, video.local_path, video.video_url);
-        
     } catch (error) {
-        console.error('Error playing video:', error);
-        showError('Failed to play video: ' + error.message);
-    }
-}
-
-// Modal functions
-function openVideoModal() {
-    const modal = document.getElementById('videoModal');
-    if (modal) {
-        modal.style.display = 'block';
-        document.body.classList.add('modal-open');
-    }
-}
-
-function closeVideoModal() {
-    const modal = document.getElementById('videoModal');
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.classList.remove('modal-open');
-        
-        // Stop video playback
-        const videoPlayer = document.getElementById('videoPlayer');
-        if (videoPlayer) {
-            videoPlayer.innerHTML = '';
-        }
+        console.error('Error fetching video for playback:', error);
+        showError('Error loading video for playback');
     }
 }
 </script>
