@@ -5467,45 +5467,27 @@ async function loadThemeForCustomization(theme) {
         themeDescriptionInput.value = '';
     }
     
-    // Load colors into inputs for both dark and light modes
+    // Load colors into inputs
     const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
     colorInputs.forEach(input => {
         const cssVar = input.dataset.cssVar;
-        const mode = input.dataset.mode;
         
-        let value;
-        if (mode === 'light') {
-            // Use light theme data if available
-            value = theme.light_theme_data?.[cssVar] || input.nextElementSibling.textContent;
-        } else {
-            // Use regular theme data for dark mode
-            value = themeData?.[cssVar] || input.nextElementSibling.textContent;
-        }
+        // Use regular theme data
+        const value = themeData?.[cssVar] || input.nextElementSibling.textContent;
         
         input.value = value;
         input.nextElementSibling.textContent = value;
         
-        // Apply the color to the document for live preview (only if current mode matches)
-        if ((mode === 'light' && window.currentThemeMode === 'light') || 
-            (!mode && window.currentThemeMode !== 'light')) {
-            document.documentElement.style.setProperty(cssVar, value);
-        }
+        // Apply the color to the document for live preview
+        document.documentElement.style.setProperty(cssVar, value);
         
         // Add event listener for live updates
         input.addEventListener('input', function() {
-            // Only apply live preview if this input's mode matches current mode
-            if ((this.dataset.mode === 'light' && window.currentThemeMode === 'light') || 
-                (!this.dataset.mode && window.currentThemeMode !== 'light')) {
-                document.documentElement.style.setProperty(cssVar, this.value);
-            }
+            // Apply live preview
+            document.documentElement.style.setProperty(cssVar, this.value);
             this.nextElementSibling.textContent = this.value;
         });
     });
-    
-    // Initialize theme mode to dark if not set
-    if (!window.currentThemeMode) {
-        window.currentThemeMode = 'dark';
-    }
     
     // Show the customization panel
     document.getElementById('color-customization-panel').style.display = 'block';
@@ -5857,8 +5839,7 @@ async function saveCurrentTheme() {
         
         // Prepare update data
         const updateData = {
-            theme_data: themeData,
-            light_theme_data: Object.keys(lightThemeData).length > 0 ? lightThemeData : undefined
+            theme_data: themeData
         };
         
         if (themeName) {
@@ -6073,8 +6054,7 @@ async function updateCurrentTheme() {
         
         // Prepare update data
         const updateData = {
-            theme_data: themeData,
-            light_theme_data: Object.keys(lightThemeData).length > 0 ? lightThemeData : undefined
+            theme_data: themeData
         };
         
         if (themeName) {
