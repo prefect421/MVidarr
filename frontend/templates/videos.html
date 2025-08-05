@@ -3605,6 +3605,85 @@ window.refreshVideosWithPagination = function() {
 function refreshVideoList() {
     loadVideos(currentPage, pageSize);
 }
+
+// Main event listener for video actions
+document.addEventListener('click', function(event) {
+    const target = event.target.closest('[data-action]');
+    if (!target) return;
+    
+    const action = target.getAttribute('data-action');
+    const videoId = target.getAttribute('data-video-id');
+    
+    if (!videoId) return;
+    
+    switch (action) {
+        case 'play':
+            playVideoById(videoId);
+            break;
+        case 'view':
+            viewVideoDetails(videoId);
+            break;
+        case 'edit':
+            editVideo(videoId);
+            break;
+        case 'download':
+            downloadVideo(videoId);
+            break;
+        case 'refresh-metadata':
+            refreshVideoMetadata(videoId);
+            break;
+        case 'delete':
+            deleteVideo(videoId);
+            break;
+    }
+});
+
+// Function to play video by ID
+async function playVideoById(videoId) {
+    try {
+        console.log('Playing video:', videoId);
+        
+        // Fetch video details
+        const response = await fetch(`/api/videos/${videoId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const video = response.json ? await response.json() : response;
+        console.log('Video details:', video);
+        
+        // Open video modal and play
+        openVideoModal();
+        playVideo(video.id, video.title, video.local_path, video.url);
+        
+    } catch (error) {
+        console.error('Error playing video:', error);
+        showError('Failed to play video: ' + error.message);
+    }
+}
+
+// Modal functions
+function openVideoModal() {
+    const modal = document.getElementById('videoModal');
+    if (modal) {
+        modal.style.display = 'block';
+        document.body.classList.add('modal-open');
+    }
+}
+
+function closeVideoModal() {
+    const modal = document.getElementById('videoModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        
+        // Stop video playback
+        const videoPlayer = document.getElementById('videoPlayer');
+        if (videoPlayer) {
+            videoPlayer.innerHTML = '';
+        }
+    }
+}
 </script>
 
 <!-- Include shared Add Video modal component -->
