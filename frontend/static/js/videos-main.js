@@ -1416,21 +1416,26 @@ function updateSelectedCount() {
     const selectedCheckboxes = document.querySelectorAll('.video-checkbox:checked');
     const count = selectedCheckboxes.length;
     
-    document.getElementById('selectedCount').textContent = count;
-    document.getElementById('deleteSelectedBtn').disabled = count === 0;
+    const selectedCountEl = document.getElementById('selectedCount');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    
+    if (selectedCountEl) selectedCountEl.textContent = count;
+    if (deleteSelectedBtn) deleteSelectedBtn.disabled = count === 0;
     
     // Update select all checkbox state
     const selectAllCheckbox = document.getElementById('selectAllVideos');
     const videoCheckboxes = document.querySelectorAll('.video-checkbox');
     
-    if (count === 0) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = false;
-    } else if (count === videoCheckboxes.length) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = true;
-    } else {
-        selectAllCheckbox.indeterminate = true;
+    if (selectAllCheckbox) {
+        if (count === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (count === videoCheckboxes.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+        }
     }
 }
 

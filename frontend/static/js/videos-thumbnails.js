@@ -1312,6 +1312,16 @@ function updatePaginationControls() {
     const lastBtnTop = document.getElementById('topLastBtn');
     const lastBtnBottom = document.getElementById('bottomLastBtn');
     
+    // Debug: log which elements are null
+    if (!prevBtnTop) console.log('Missing element: topPrevBtn');
+    if (!prevBtnBottom) console.log('Missing element: bottomPrevBtn');
+    if (!nextBtnTop) console.log('Missing element: topNextBtn');
+    if (!nextBtnBottom) console.log('Missing element: bottomNextBtn');
+    if (!firstBtnTop) console.log('Missing element: topFirstBtn');
+    if (!firstBtnBottom) console.log('Missing element: bottomFirstBtn');
+    if (!lastBtnTop) console.log('Missing element: topLastBtn');
+    if (!lastBtnBottom) console.log('Missing element: bottomLastBtn');
+    
     if (prevBtnTop) prevBtnTop.disabled = !hasPrevious;
     if (prevBtnBottom) prevBtnBottom.disabled = !hasPrevious;
     if (nextBtnTop) nextBtnTop.disabled = !hasNext;
