@@ -1281,15 +1281,22 @@ function updatePaginationControls() {
     const endIndex = Math.min(currentPage * pageSize, totalVideos);
     const infoText = `Showing ${startIndex}-${endIndex} of ${totalVideos} videos`;
     
-    document.getElementById('videoCountInfo').textContent = infoText;
-    document.getElementById('videoCountInfoBottom').textContent = infoText;
+    const countInfo = document.getElementById('videoCountInfo');
+    const countInfoBottom = document.getElementById('videoCountInfoBottom');
+    if (countInfo) countInfo.textContent = infoText;
+    if (countInfoBottom) countInfoBottom.textContent = infoText;
     
     // Update page inputs
-    document.getElementById('pageInputTop').value = currentPage;
-    document.getElementById('pageInputBottom').value = currentPage;
-    document.getElementById('totalPagesTop').textContent = totalPages;
-    document.getElementById('totalPagesBottom').textContent = totalPages;
-    document.getElementById('currentPageSize').textContent = pageSize;
+    const pageInputTop = document.getElementById('pageInputTop');
+    const pageInputBottom = document.getElementById('pageInputBottom');
+    if (pageInputTop) pageInputTop.value = currentPage;
+    if (pageInputBottom) pageInputBottom.value = currentPage;
+    const totalPagesTop = document.getElementById('totalPagesTop');
+    const totalPagesBottom = document.getElementById('totalPagesBottom');
+    const currentPageSizeEl = document.getElementById('currentPageSize');
+    if (totalPagesTop) totalPagesTop.textContent = totalPages;
+    if (totalPagesBottom) totalPagesBottom.textContent = totalPages;
+    if (currentPageSizeEl) currentPageSizeEl.textContent = pageSize;
     
     // Update button states
     const hasPrevious = currentPage > 1;
@@ -1328,8 +1335,10 @@ function goToPage(page) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
         // Reset invalid input
-        document.getElementById('pageInputTop').value = currentPage;
-        document.getElementById('pageInputBottom').value = currentPage;
+        const pageInputTop = document.getElementById('pageInputTop');
+        const pageInputBottom = document.getElementById('pageInputBottom');
+        if (pageInputTop) pageInputTop.value = currentPage;
+        if (pageInputBottom) pageInputBottom.value = currentPage;
     }
 }
 

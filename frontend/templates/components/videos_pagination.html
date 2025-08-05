@@ -1,14 +1,14 @@
 <!-- Pagination Template - can be included for both top and bottom -->
 <div id="{{ pagination_id }}" class="pagination-container {{ 'bottom-pagination' if is_bottom else '' }}">
     <div class="pagination-info">
-        <span id="{{ pagination_id.replace('Pagination', 'PaginationInfo') }}">Loading...</span>
+        <span id="{{ 'videoCountInfo' if not is_bottom else 'videoCountInfoBottom' }}">Loading...</span>
     </div>
     <div class="pagination-controls">
         <button id="{{ pagination_id.replace('Pagination', 'FirstBtn') }}" onclick="loadVideos(1)" class="btn btn-secondary pagination-btn">First</button>
         <button id="{{ pagination_id.replace('Pagination', 'PrevBtn') }}" onclick="loadVideos(currentPage - 1)" class="btn btn-secondary pagination-btn">Previous</button>
         <div class="page-selector">
             <span>Page</span>
-            <input type="number" id="{{ pagination_id.replace('Pagination', 'PageInput') }}" class="page-input" min="1" onchange="goToPage(this.value)">
+            <input type="number" id="{{ 'pageInputTop' if not is_bottom else 'pageInputBottom' }}" class="page-input" min="1" onchange="goToPage(this.value)">
             <span>of <span id="{{ pagination_id.replace('Pagination', 'TotalPages') }}">1</span></span>
         </div>
         <button id="{{ pagination_id.replace('Pagination', 'NextBtn') }}" onclick="loadVideos(currentPage + 1)" class="btn btn-secondary pagination-btn">Next</button>

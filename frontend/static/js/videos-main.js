@@ -277,21 +277,27 @@ function clearSearch() {
 function applyVideoFilters() {
     console.log('Applying video filters...');
     
+    // Helper function to safely get element value
+    const getElementValue = (id) => {
+        const element = document.getElementById(id);
+        return element ? element.value : '';
+    };
+    
     // Get all filter values
     const filters = {
-        status: document.getElementById('videoStatusFilter').value,
-        quality: document.getElementById('videoQualityFilter').value,
-        has_thumbnail: document.getElementById('videoThumbnailFilter').value,
-        source: document.getElementById('videoSourceFilter').value,
-        genre: document.getElementById('videoGenreFilter').value,
-        duration_min: document.getElementById('videoDurationMin').value,
-        duration_max: document.getElementById('videoDurationMax').value,
-        date_from: document.getElementById('videoDateFrom').value,
-        date_to: document.getElementById('videoDateTo').value,
-        artist: document.getElementById('videoArtistFilter').value,
-        keywords: document.getElementById('videoKeywordsFilter').value,
-        sort_by: document.getElementById('videoSortBy').value,
-        sort_order: document.getElementById('videoSortOrder').value
+        status: getElementValue('videoStatusFilter'),
+        quality: getElementValue('videoQualityFilter'),
+        has_thumbnail: getElementValue('videoThumbnailFilter'),
+        source: getElementValue('videoSourceFilter'),
+        genre: getElementValue('videoGenreFilter'),
+        duration_min: getElementValue('videoDurationMin'),
+        duration_max: getElementValue('videoDurationMax'),
+        date_from: getElementValue('videoDateFrom'),
+        date_to: getElementValue('videoDateTo'),
+        artist: getElementValue('videoArtistFilter'),
+        keywords: getElementValue('videoKeywordsFilter'),
+        sort_by: getElementValue('videoSortBy'),
+        sort_order: getElementValue('videoSortOrder')
     };
     
     // Build query parameters
@@ -331,20 +337,26 @@ function toggleVideoAdvancedFilters() {
 }
 
 function clearAllVideoFilters() {
+    // Helper function to safely clear element value
+    const clearElementValue = (id) => {
+        const element = document.getElementById(id);
+        if (element) element.value = '';
+    };
+    
     // Clear all filter inputs
-    document.getElementById('videoStatusFilter').value = '';
-    document.getElementById('videoQualityFilter').value = '';
-    document.getElementById('videoThumbnailFilter').value = '';
-    document.getElementById('videoSourceFilter').value = '';
-    document.getElementById('videoGenreFilter').value = '';
-    document.getElementById('videoDurationMin').value = '';
-    document.getElementById('videoDurationMax').value = '';
-    document.getElementById('videoDateFrom').value = '';
-    document.getElementById('videoDateTo').value = '';
-    document.getElementById('videoArtistFilter').value = '';
-    document.getElementById('videoKeywordsFilter').value = '';
-    document.getElementById('videoSortBy').value = 'title';
-    document.getElementById('videoSortOrder').value = 'asc';
+    clearElementValue('videoStatusFilter');
+    clearElementValue('videoQualityFilter');
+    clearElementValue('videoThumbnailFilter');
+    clearElementValue('videoSourceFilter');
+    clearElementValue('videoGenreFilter');
+    clearElementValue('videoDurationMin');
+    clearElementValue('videoDurationMax');
+    clearElementValue('videoDateFrom');
+    clearElementValue('videoDateTo');
+    clearElementValue('videoArtistFilter');
+    clearElementValue('videoKeywordsFilter');
+    clearElementValue('videoSortBy');
+    clearElementValue('videoSortOrder');
     
     // Reload all videos
     searchActive = false;
@@ -384,6 +396,10 @@ function loadVideoGenreOptions() {
         .then(response => response.json())
         .then(data => {
             const genreSelect = document.getElementById('videoGenreFilter');
+            if (!genreSelect) {
+                console.log('Genre filter element not found, skipping genre loading');
+                return;
+            }
             if (data.video_genres && data.video_genres.length > 0) {
                 // Clear existing options (except the first "All Genres" option)
                 genreSelect.innerHTML = '<option value="">All Genres</option>';
