@@ -3464,7 +3464,7 @@ def bulk_refresh_metadata():
     try:
         from src.services.imvdb_service import imvdb_service
         from src.services.settings_service import settings
-        
+
         data = request.get_json()
         video_ids = data.get("video_ids", [])
 
@@ -3487,10 +3487,9 @@ def bulk_refresh_metadata():
                     video = session.query(Video).filter(Video.id == video_id).first()
 
                     if not video:
-                        failed_videos.append({
-                            "id": video_id, 
-                            "error": "Video not found"
-                        })
+                        failed_videos.append(
+                            {"id": video_id, "error": "Video not found"}
+                        )
                         continue
 
                     # Extract data we need
@@ -3499,14 +3498,18 @@ def bulk_refresh_metadata():
                     current_imvdb_id = video.imvdb_id
 
                     if not artist_name:
-                        skipped_videos.append({
-                            "id": video_id,
-                            "title": video_title,
-                            "reason": "No artist associated with video"
-                        })
+                        skipped_videos.append(
+                            {
+                                "id": video_id,
+                                "title": video_title,
+                                "reason": "No artist associated with video",
+                            }
+                        )
                         continue
 
-                    logger.info(f"Bulk refreshing metadata for video: {video_title} by {artist_name}")
+                    logger.info(
+                        f"Bulk refreshing metadata for video: {video_title} by {artist_name}"
+                    )
 
                     # Try to find best match on IMVDb
                     imvdb_data = None
@@ -3517,20 +3520,24 @@ def bulk_refresh_metadata():
 
                     # If no IMVDb ID or the lookup failed, try searching
                     if not imvdb_data:
-                        imvdb_data = imvdb_service.find_best_video_match(artist_name, video_title)
+                        imvdb_data = imvdb_service.find_best_video_match(
+                            artist_name, video_title
+                        )
 
                     if not imvdb_data:
-                        skipped_videos.append({
-                            "id": video_id,
-                            "title": video_title,
-                            "artist": artist_name,
-                            "reason": "No IMVDb match found"
-                        })
+                        skipped_videos.append(
+                            {
+                                "id": video_id,
+                                "title": video_title,
+                                "artist": artist_name,
+                                "reason": "No IMVDb match found",
+                            }
+                        )
                         continue
 
                     # Update video with new metadata
                     updated = False
-                    
+
                     if imvdb_data.get("id") and video.imvdb_id != imvdb_data["id"]:
                         video.imvdb_id = imvdb_data["id"]
                         updated = True
@@ -3539,52 +3546,69 @@ def bulk_refresh_metadata():
                         video.year = imvdb_data["year"]
                         updated = True
 
-                    if imvdb_data.get("directors") and video.directors != ", ".join(imvdb_data["directors"]):
+                    if imvdb_data.get("directors") and video.directors != ", ".join(
+                        imvdb_data["directors"]
+                    ):
                         video.directors = ", ".join(imvdb_data["directors"])
                         updated = True
 
-                    if imvdb_data.get("producers") and video.producers != ", ".join(imvdb_data["producers"]):
+                    if imvdb_data.get("producers") and video.producers != ", ".join(
+                        imvdb_data["producers"]
+                    ):
                         video.producers = ", ".join(imvdb_data["producers"])
                         updated = True
 
-                    if imvdb_data.get("thumbnail") and video.thumbnail != imvdb_data["thumbnail"]:
+                    if (
+                        imvdb_data.get("thumbnail")
+                        and video.thumbnail != imvdb_data["thumbnail"]
+                    ):
                         video.thumbnail = imvdb_data["thumbnail"]
                         updated = True
 
                     if updated:
                         video.updated_at = datetime.utcnow()
                         session.commit()
-                        
-                        updated_videos.append({
-                            "id": video.id,
-                            "title": video.title,
-                            "artist": artist_name
-                        })
-                        
-                        logger.info(f"Successfully updated metadata for: {video_title} by {artist_name}")
+
+                        updated_videos.append(
+                            {
+                                "id": video.id,
+                                "title": video.title,
+                                "artist": artist_name,
+                            }
+                        )
+
+                        logger.info(
+                            f"Successfully updated metadata for: {video_title} by {artist_name}"
+                        )
                     else:
-                        skipped_videos.append({
-                            "id": video_id,
-                            "title": video_title,
-                            "artist": artist_name,
-                            "reason": "No new metadata to update"
-                        })
+                        skipped_videos.append(
+                            {
+                                "id": video_id,
+                                "title": video_title,
+                                "artist": artist_name,
+                                "reason": "No new metadata to update",
+                            }
+                        )
 
                 except Exception as e:
-                    failed_videos.append({
-                        "id": video_id,
-                        "error": str(e)
-                    })
-                    logger.error(f"Failed to refresh metadata for video {video_id}: {e}")
+                    failed_videos.append({"id": video_id, "error": str(e)})
+                    logger.error(
+                        f"Failed to refresh metadata for video {video_id}: {e}"
+                    )
 
-        return jsonify({
-            "updated_count": len(updated_videos),
-            "failed_count": len(failed_videos),
-            "skipped_count": len(skipped_videos),
-            "updated_videos": updated_videos,
-            "failed_videos": failed_videos,
-            "skipped_videos": skipped_videos
-        }), 200
+        return (
+            jsonify(
+                {
+                    "updated_count": len(updated_videos),
+                    "failed_count": len(failed_videos),
+                    "skipped_count": len(skipped_videos),
+                    "updated_videos": updated_videos,
+                    "failed_videos": failed_videos,
+                    "skipped_videos": skipped_videos,
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         logger.error(f"Failed to bulk refresh metadata: {e}")

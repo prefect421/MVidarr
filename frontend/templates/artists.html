@@ -528,9 +528,9 @@ function loadArtists(page = 1) {
                                 <span class="stat ${artist.monitored ? 'monitored' : 'not-monitored'}" title="${artist.monitored ? 'Monitored' : 'Not Monitored'}">
                                     ${artist.monitored ? '👁️' : '❌'}
                                 </span>
-                                ${artist.auto_download ? '<span class="stat auto-download">Auto-DL</span>' : ''}
-                                ${artist.has_thumbnail ? '<span class="stat has-thumbnail">📷</span>' : ''}
-                                ${artist.has_imvdb_data ? '<span class="stat has-imvdb">🎵</span>' : ''}
+                                ${artist.auto_download ? '<span class="stat auto-download" title="Auto-Download Enabled">⬇️</span>' : ''}
+                                ${artist.has_thumbnail ? '<span class="stat has-thumbnail" title="Has Thumbnail">📷</span>' : ''}
+                                ${artist.has_imvdb_data ? '<span class="stat has-imvdb" title="Has IMVDB Data">🎵</span>' : ''}
                                 <span class="stat-actions">
                                     <button onclick="viewArtist(${artist.id})" class="btn btn-small btn-icon" title="Edit Artist">
                                         ✏️
@@ -607,7 +607,7 @@ function loadArtists(page = 1) {
                                         <span class="stat ${artist.monitored ? 'monitored' : 'not-monitored'}" title="${artist.monitored ? 'Monitored' : 'Not Monitored'}">
                                             ${artist.monitored ? '👁️' : '❌'}
                                         </span>
-                                        ${artist.auto_download ? '<span class="stat auto-download">Auto-DL</span>' : ''}
+                                        ${artist.auto_download ? '<span class="stat auto-download" title="Auto-Download Enabled">⬇️</span>' : ''}
                                         <span class="stat-actions">
                                             <button onclick="viewArtist(${artist.id})" class="btn btn-small btn-icon" title="Edit Artist">
                                                 ✏️

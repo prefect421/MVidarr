@@ -437,8 +437,8 @@
 
 /* Artist Navigation Controls */
 .artist-navigation-controls {
-    background-color: #2d2d2d;
-    border: 1px solid #444;
+    background-color: var(--bg-secondary, #2d2d2d);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 1rem;
@@ -450,7 +450,7 @@
 }
 
 .artist-navigation-controls .nav-info {
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     font-size: 0.9rem;
 }
 
@@ -466,8 +466,8 @@
 }
 
 .artist-navigation-controls .nav-buttons button:hover:not(:disabled) {
-    background-color: #00d4ff;
-    color: #000;
+    background-color: var(--text-accent, #4a9eff);
+    color: var(--text-inverse, #000);
 }
 
 .artist-navigation-controls .nav-buttons button:disabled {
@@ -4155,7 +4155,7 @@ body {
 }
 
 .artist-header {
-    background-color: #2d2d2d;
+    background-color: var(--bg-tertiary, #3a3a3a);
     border-radius: 8px;
     padding: 2rem;
     margin-bottom: 2rem;
@@ -4173,7 +4173,7 @@ body {
     flex-shrink: 0;
     border-radius: 12px;
     overflow: hidden;
-    background-color: #444;
+    background-color: var(--border-primary, #444);
 }
 
 .artist-thumbnail-large img {
@@ -4236,7 +4236,7 @@ body {
 /* Navigation Tabs */
 .artist-nav-tabs {
     display: flex;
-    background-color: #2d2d2d;
+    background-color: var(--bg-secondary, #2d2d2d);
     border-radius: 8px 8px 0 0;
     overflow: hidden;
     margin-bottom: 0;

@@ -585,13 +585,13 @@ class CustomTheme(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
-        
+
         # Handle light_theme_data gracefully in case column doesn't exist yet
         try:
             result["light_theme_data"] = self.light_theme_data
         except AttributeError:
             result["light_theme_data"] = None
-            
+
         return result
 
     def __repr__(self):
