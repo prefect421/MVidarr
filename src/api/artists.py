@@ -2732,6 +2732,111 @@ def scan_missing_thumbnails():
         return jsonify({"error": str(e)}), 500
 
 
+@artists_bp.route("/bulk-thumbnail-scan", methods=["POST"])
+def bulk_thumbnail_scan():
+    """Scan thumbnails for specific artist IDs"""
+    try:
+        data = request.get_json()
+        if not data or "artist_ids" not in data:
+            return jsonify({"error": "artist_ids required"}), 400
+
+        artist_ids = data["artist_ids"]
+        if not isinstance(artist_ids, list) or not artist_ids:
+            return jsonify({"error": "artist_ids must be a non-empty list"}), 400
+
+        # Get artist data for the specified IDs
+        artist_data_list = []
+        with get_db() as session:
+            artists = (
+                session.query(Artist.id, Artist.name)
+                .filter(Artist.id.in_(artist_ids))
+                .all()
+            )
+
+            # Convert to list of tuples to avoid session dependency
+            artist_data_list = [(artist.id, artist.name) for artist in artists]
+
+        scanned_count = len(artist_data_list)
+        found_count = 0
+
+        logger.info(f"Starting bulk thumbnail scan for {scanned_count} artists")
+
+        for artist_id, artist_name in artist_data_list:
+            try:
+                thumbnail_url = None
+                source = None
+
+                # Try IMVDb first
+                try:
+                    artist_data = imvdb_service.search_artist(artist_name)
+                    if artist_data and "image" in artist_data:
+                        image_data = artist_data["image"]
+                        if isinstance(image_data, dict):
+                            thumbnail_url = (
+                                image_data.get("o")
+                                or image_data.get("l")
+                                or image_data.get("m")
+                                or image_data.get("s")
+                            )
+                        elif isinstance(image_data, str):
+                            thumbnail_url = image_data
+
+                        if thumbnail_url:
+                            source = "IMVDb"
+                except Exception as e:
+                    logger.debug(f"IMVDb search failed for {artist_name}: {e}")
+
+                # Try Last.fm if IMVDb failed
+                if not thumbnail_url:
+                    try:
+                        artist_data = lastfm_service.search_artist(artist_name)
+                        if artist_data and "image" in artist_data:
+                            images = artist_data["image"]
+                            if isinstance(images, list):
+                                for img in reversed(images):
+                                    if img.get("#text"):
+                                        thumbnail_url = img["#text"]
+                                        source = "Last.fm"
+                                        break
+                    except Exception as e:
+                        logger.debug(f"Last.fm search failed for {artist_name}: {e}")
+
+                # Update artist if thumbnail found
+                if thumbnail_url:
+                    with get_db() as session:
+                        artist = session.query(Artist).filter_by(id=artist_id).first()
+                        if artist:
+                            artist.thumbnail_url = thumbnail_url
+                            session.commit()
+                            found_count += 1
+                            logger.info(
+                                f"Updated thumbnail for {artist_name} from {source}"
+                            )
+
+            except Exception as e:
+                logger.error(
+                    f"Error scanning thumbnail for artist {artist_id} ({artist_name}): {e}"
+                )
+                continue
+
+        logger.info(
+            f"Bulk thumbnail scan completed: {found_count}/{scanned_count} thumbnails found"
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "scanned_count": scanned_count,
+                "found_count": found_count,
+                "message": f"Found thumbnails for {found_count} out of {scanned_count} artists",
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk scan thumbnails: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @artists_bp.route("/<int:artist_id>", methods=["DELETE"])
 def delete_artist(artist_id):
     """Remove/delete individual artist"""
@@ -3416,6 +3521,154 @@ def bulk_delete_artists():
 
     except Exception as e:
         logger.error(f"Failed to bulk delete artists: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@artists_bp.route("/bulk-validate-metadata", methods=["POST"])
+def bulk_validate_metadata():
+    """Validate metadata for multiple artists"""
+    try:
+        data = request.get_json()
+        if not data or "artist_ids" not in data:
+            return jsonify({"error": "artist_ids required"}), 400
+
+        artist_ids = data["artist_ids"]
+        if not isinstance(artist_ids, list) or not artist_ids:
+            return jsonify({"error": "artist_ids must be a non-empty list"}), 400
+
+        # Check if IMVDb API key is configured
+        from src.services.settings_service import SettingsService
+
+        SettingsService.reload_cache()
+        api_key = SettingsService.get("imvdb_api_key", "")
+
+        if not api_key:
+            return (
+                jsonify(
+                    {
+                        "error": "IMVDb API key not configured",
+                        "message": "Please configure your IMVDb API key in Settings to use this feature",
+                    }
+                ),
+                400,
+            )
+
+        validation_issues = []
+        validated_count = 0
+
+        with get_db() as session:
+            artists = session.query(Artist).filter(Artist.id.in_(artist_ids)).all()
+
+            for artist in artists:
+                validated_count += 1
+                issues = []
+
+                # Check for missing IMVDb ID
+                if not artist.imvdb_id:
+                    issues.append("Missing IMVDb ID")
+
+                # Check for missing thumbnail
+                if not artist.thumbnail_url and not artist.thumbnail_path:
+                    issues.append("Missing thumbnail")
+
+                # Check for minimal metadata (can be expanded)
+                if not artist.bio or artist.bio.strip() == "":
+                    issues.append("Missing biography")
+
+                # Check if IMVDb ID is accessible (basic validation)
+                if artist.imvdb_id:
+                    try:
+                        # Quick validation - check if IMVDb ID is valid format
+                        if not str(artist.imvdb_id).isdigit():
+                            issues.append("Invalid IMVDb ID format")
+                    except Exception:
+                        issues.append("Invalid IMVDb ID")
+
+                # Add to validation issues if any problems found
+                if issues:
+                    validation_issues.append(
+                        {
+                            "artist_id": artist.id,
+                            "artist_name": artist.name,
+                            "issues": issues,
+                        }
+                    )
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "validated_count": validated_count,
+                    "validation_issues": validation_issues,
+                    "issues_count": len(validation_issues),
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk validate metadata: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@artists_bp.route("/bulk-organize-folders", methods=["POST"])
+def bulk_organize_folders():
+    """Organize folder paths for multiple artists"""
+    try:
+        data = request.get_json()
+        if not data or "artist_ids" not in data:
+            return jsonify({"error": "artist_ids required"}), 400
+
+        artist_ids = data["artist_ids"]
+        if not isinstance(artist_ids, list) or not artist_ids:
+            return jsonify({"error": "artist_ids must be a non-empty list"}), 400
+
+        organized_count = 0
+        organized_artists = []
+
+        with get_db() as session:
+            artists = session.query(Artist).filter(Artist.id.in_(artist_ids)).all()
+
+            for artist in artists:
+                old_folder_path = artist.folder_path
+
+                # Use the existing ensure_artist_folder_path function
+                new_folder_path = ensure_artist_folder_path(artist, session)
+
+                if old_folder_path != new_folder_path:
+                    organized_count += 1
+                    organized_artists.append(
+                        {
+                            "artist_id": artist.id,
+                            "artist_name": artist.name,
+                            "old_folder_path": old_folder_path,
+                            "new_folder_path": new_folder_path,
+                        }
+                    )
+                    logger.info(
+                        f"Organized folder path for {artist.name}: '{old_folder_path}' -> '{new_folder_path}'"
+                    )
+                else:
+                    # Even if no change, still count as processed
+                    organized_count += 1
+
+            # Commit all changes at once
+            session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "organized_count": organized_count,
+                    "organized_artists": organized_artists,
+                    "message": f"Successfully organized folders for {organized_count} artist(s)",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk organize folders: {e}")
         return jsonify({"error": str(e)}), 500
 
 

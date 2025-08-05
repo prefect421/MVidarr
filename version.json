@@ -1,7 +1,7 @@
 {
   "version": "0.9.3",
-  "build_date": "2025-08-04T19:06:08.614140",
-  "git_commit": "d233daa",
+  "build_date": "2025-08-05T17:16:11.088232",
+  "git_commit": "c348d2b",
   "git_branch": "dev",
   "release_name": "Theme System & UI Improvements Release",
   "features": [
@@ -15,6 +15,13 @@
     "Improved video management workflow with preserved user context during updates",
     "Fixed modal hardcoded colors across Videos and Artist Detail pages for proper theming",
     "Ensured all pages consistently use CSS theme variables instead of hardcoded colors",
-    "Comprehensive theme system implementation with complete color variable integration"
+    "Comprehensive theme system implementation with complete color variable integration",
+    "Major videos page refactoring: extracted 3,485 lines into modular components (98.7% reduction)",
+    "Modular HTML components system with reusable pagination, search, and modal components",
+    "Separated CSS (videos.css) and JavaScript (videos-main.js, videos-thumbnails.js) from templates",
+    "Updated theme backgrounds from gradients to solid colors across videos, mvtv, and settings pages",
+    "Removed deprecated themes: LCARS - TNG, LCARS (New), TARDIS, MTV from database and code",
+    "Comprehensive JavaScript error handling with null checks for DOM element access",
+    "Fixed pagination and bulk actions JavaScript compatibility with refactored HTML structure"
   ]
 }
