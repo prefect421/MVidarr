@@ -3489,8 +3489,10 @@ async function loadVideos(page = 1, size = 50, resetPage = false) {
         
         // Build API URL with pagination
         const params = new URLSearchParams({
-            page: currentPage,
-            per_page: pageSize
+            limit: pageSize,
+            offset: (currentPage - 1) * pageSize,
+            sort: 'title',
+            order: 'asc'
         });
         
         // Make API request
@@ -3543,11 +3545,12 @@ function displayVideos(videos) {
                 </div>
             </div>
             <div class="video-info">
-                <h3 class="video-title">${video.title}</h3>
+                <h3 class="video-title">${video.title || 'Untitled'}</h3>
                 <p class="video-artist">${video.artist_name || 'Unknown Artist'}</p>
                 <div class="video-meta">
-                    <span class="video-status status-${video.status}">${video.status}</span>
+                    <span class="video-status status-${(video.status || 'unknown').toLowerCase()}">${video.status || 'Unknown'}</span>
                     ${video.duration ? `<span class="video-duration">${formatDuration(video.duration)}</span>` : ''}
+                    ${video.year ? `<span class="video-year">${video.year}</span>` : ''}
                 </div>
             </div>
         </div>
@@ -3556,16 +3559,20 @@ function displayVideos(videos) {
 
 // Update pagination controls
 function updatePagination(data) {
-    const pagination = data.pagination || {};
-    const totalPages = pagination.pages || 1;
-    const currentPageNum = pagination.page || 1;
+    const total = data.total || 0;
+    const offset = data.offset || 0;
+    const limit = data.limit || pageSize;
+    
+    // Calculate pagination values
+    const totalPages = Math.ceil(total / limit);
+    const currentPageNum = Math.floor(offset / limit) + 1;
     
     // Update pagination info
     const paginationInfo = document.querySelector('.pagination-info');
     if (paginationInfo) {
-        const start = ((currentPageNum - 1) * pageSize) + 1;
-        const end = Math.min(start + pageSize - 1, pagination.total || 0);
-        paginationInfo.textContent = `Showing ${start}-${end} of ${pagination.total || 0} videos`;
+        const start = offset + 1;
+        const end = Math.min(offset + limit, total);
+        paginationInfo.textContent = `Showing ${start}-${end} of ${total} videos`;
     }
     
     // Update navigation buttons
@@ -3654,7 +3661,7 @@ async function playVideoById(videoId) {
         
         // Open video modal and play
         openVideoModal();
-        playVideo(video.id, video.title, video.local_path, video.url);
+        playVideo(video.id, video.title, video.local_path, video.video_url);
         
     } catch (error) {
         console.error('Error playing video:', error);
