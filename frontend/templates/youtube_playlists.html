@@ -608,7 +608,7 @@ window.addEventListener('click', function(event) {
 }
 
 .youtube-container h1 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 10px;
     font-size: 2.5rem;
     text-align: center;
@@ -616,7 +616,7 @@ window.addEventListener('click', function(event) {
 
 .page-description {
     text-align: center;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     margin-bottom: 30px;
     font-size: 1.1rem;
 }
@@ -629,8 +629,8 @@ window.addEventListener('click', function(event) {
 }
 
 .settings-section {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 1px solid #444;
+    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 25px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -642,15 +642,15 @@ window.addEventListener('click', function(event) {
 }
 
 .settings-section h2 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 15px;
     font-size: 1.4rem;
-    border-bottom: 2px solid #00d4ff;
+    border-bottom: 2px solid var(--text-accent, #00d4ff);
     padding-bottom: 8px;
 }
 
 .settings-section p {
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     margin-bottom: 20px;
     line-height: 1.6;
 }
@@ -661,7 +661,7 @@ window.addEventListener('click', function(event) {
 
 .form-group label {
     display: block;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 8px;
     font-weight: 500;
 }
@@ -669,23 +669,23 @@ window.addEventListener('click', function(event) {
 .form-control {
     width: 100%;
     padding: 12px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--input-bg, #333);
+    border: 2px solid var(--input-border, #444);
     border-radius: 8px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
     box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
 }
 
 .form-control option {
-    background: #333;
-    color: #fff;
+    background: var(--dropdown-bg, #333);
+    color: var(--dropdown-text, #fff);
 }
 
 .form-row {
@@ -717,45 +717,45 @@ window.addEventListener('click', function(event) {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--text-accent, #00d4ff) 0%, var(--accent-secondary, #0099cc) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #0099cc 0%, #007799 100%);
+    background: linear-gradient(135deg, var(--accent-secondary, #0099cc) 0%, var(--accent-dark, #007799) 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--success, #28a745) 0%, var(--success-dark, #1e7e34) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-success:hover {
-    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    background: linear-gradient(135deg, var(--success-dark, #1e7e34) 0%, var(--success-darker, #155724) 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .btn-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--info, #17a2b8) 0%, var(--info-dark, #117a8b) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-info:hover {
-    background: linear-gradient(135deg, #117a8b 0%, #0c5460 100%);
+    background: linear-gradient(135deg, var(--info-dark, #117a8b) 0%, var(--info-darker, #0c5460) 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--secondary, #6c757d) 0%, var(--secondary-dark, #5a6268) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #5a6268 0%, #484e53 100%);
+    background: linear-gradient(135deg, var(--secondary-dark, #5a6268) 0%, var(--secondary-darker, #484e53) 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
 }

@@ -2573,7 +2573,7 @@ function hideBulkProgress() {
 }
 
 .bulk-actions-main {
-    background: #2a2a2a;
+    background: var(--bg-secondary, #2a2a2a);
     border-radius: 6px;
     padding: 6px;
 }
@@ -2593,9 +2593,9 @@ function hideBulkProgress() {
 
 .bulk-tab {
     padding: 6px 12px;
-    background: #333;
-    border: 1px solid #444;
-    color: #ccc;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-primary, #444);
+    color: var(--text-secondary, #ccc);
     cursor: pointer;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -2613,29 +2613,29 @@ function hideBulkProgress() {
 }
 
 .bulk-tab.active {
-    background: #00d4ff;
-    color: #000;
-    border-color: #00d4ff;
+    background: var(--text-accent, #00d4ff);
+    color: var(--accent-text, #000);
+    border-color: var(--text-accent, #00d4ff);
 }
 
 .bulk-tab:hover {
-    background: #555;
-    color: #00d4ff;
-    border-color: #00d4ff;
+    background: var(--bg-hover, #555);
+    color: var(--text-accent, #00d4ff);
+    border-color: var(--text-accent, #00d4ff);
 }
 
 .bulk-actions-tabs.compact .bulk-tab:hover {
-    background: #555;
-    color: #00d4ff;
+    background: var(--bg-hover, #555);
+    color: var(--text-accent, #00d4ff);
 }
 
 .bulk-tab:hover {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
 }
 
 .bulk-tab.active {
-    color: #00d4ff;
-    border-bottom-color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
+    border-bottom-color: var(--text-accent, #00d4ff);
 }
 
 .bulk-tab-content {
@@ -2655,8 +2655,8 @@ function hideBulkProgress() {
 }
 
 .bulk-operation {
-    background: #333;
-    border: 1px solid #444;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 6px;
     padding: 10px;
     min-width: 180px;
@@ -2671,12 +2671,12 @@ function hideBulkProgress() {
 }
 
 .bulk-operation.danger {
-    border-color: #dc3545;
-    background: rgba(220, 53, 69, 0.1);
+    border-color: var(--danger, #dc3545);
+    background: var(--danger-bg, rgba(220, 53, 69, 0.1));
 }
 
 .bulk-operation label {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -2686,28 +2686,28 @@ function hideBulkProgress() {
 .bulk-operation input,
 .bulk-operation select {
     padding: 8px;
-    background: #2a2a2a;
-    border: 1px solid #444;
+    background: var(--input-bg, #2a2a2a);
+    border: 1px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
 }
 
 .bulk-operation input:focus,
 .bulk-operation select:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
     box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
 }
 
 .operation-hint {
-    color: #aaa;
+    color: var(--text-secondary, #aaa);
     font-size: 12px;
     margin-top: 5px;
 }
 
 .operation-warning {
-    color: #dc3545;
+    color: var(--danger, #dc3545);
     font-size: 12px;
     margin-top: 5px;
 }
@@ -2727,7 +2727,7 @@ function hideBulkProgress() {
 
 .bulk-progress {
     flex: 1;
-    background: #333;
+    background: var(--bg-tertiary, #333);
     border-radius: 8px;
     padding: 10px;
 }
@@ -2735,7 +2735,7 @@ function hideBulkProgress() {
 .progress-bar {
     width: 100%;
     height: 6px;
-    background: #444;
+    background: var(--bg-hover, #444);
     border-radius: 3px;
     overflow: hidden;
     margin-bottom: 5px;
@@ -2743,13 +2743,13 @@ function hideBulkProgress() {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #00d4ff, #0099cc);
+    background: linear-gradient(90deg, var(--text-accent, #00d4ff), var(--accent-secondary, #0099cc));
     width: 0%;
     transition: width 0.3s ease;
 }
 
 .progress-text {
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     font-size: 12px;
 }
 
@@ -2759,12 +2759,12 @@ function hideBulkProgress() {
     align-items: center;
     margin-bottom: 20px;
     padding: 10px;
-    background: #2a2a2a;
+    background: var(--bg-card, #2a2a2a);
     border-radius: 8px;
 }
 
 .results-summary {
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .sort-controls {
@@ -2774,16 +2774,16 @@ function hideBulkProgress() {
 
 .sort-controls select {
     padding: 6px 10px;
-    background: #333;
-    border: 1px solid #444;
+    background: var(--input-bg, #333);
+    border: 1px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 13px;
 }
 
 .sort-controls select:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
 }
 
 .artists-grid {
@@ -2798,8 +2798,8 @@ function hideBulkProgress() {
 }
 
 .artist-card {
-    background: #333;
-    border: 1px solid #444;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 15px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -2812,7 +2812,7 @@ function hideBulkProgress() {
 }
 
 .artist-card.selected {
-    border-color: #00d4ff;
+    border-color: var(--text-accent, #00d4ff);
     box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.3);
 }
 
@@ -2826,7 +2826,7 @@ function hideBulkProgress() {
 .artist-selection-overlay input[type="checkbox"] {
     width: 18px;
     height: 18px;
-    accent-color: #00d4ff;
+    accent-color: var(--text-accent, #00d4ff);
 }
 
 .artist-thumbnail {
@@ -2835,7 +2835,7 @@ function hideBulkProgress() {
     margin-bottom: 15px;
     overflow: hidden;
     border-radius: 8px;
-    background: #444;
+    background: var(--bg-hover, #444);
 }
 
 .artist-thumbnail img {
@@ -2845,7 +2845,7 @@ function hideBulkProgress() {
 }
 
 .artist-info h3 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 10px;
     font-size: 1.2rem;
 }
@@ -2858,40 +2858,40 @@ function hideBulkProgress() {
 }
 
 .stat {
-    background: #444;
+    background: var(--bg-hover, #444);
     padding: 3px 8px;
     border-radius: 12px;
     font-size: 11px;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .stat.monitored {
-    background: #28a745;
-    color: #fff;
+    background: var(--success, #28a745);
+    color: var(--text-primary, #fff);
 }
 
 .stat.not-monitored {
-    background: #dc3545;
-    color: #fff;
+    background: var(--danger, #dc3545);
+    color: var(--text-primary, #fff);
 }
 
 .stat.auto-download {
-    background: #17a2b8;
-    color: #fff;
+    background: var(--info, #17a2b8);
+    color: var(--text-primary, #fff);
 }
 
 .stat.has-thumbnail {
-    background: #ffc107;
-    color: #000;
+    background: var(--warning, #ffc107);
+    color: var(--warning-text, #000);
 }
 
 .stat.has-imvdb {
-    background: #00d4ff;
-    color: #000;
+    background: var(--text-accent, #00d4ff);
+    color: var(--accent-text, #000);
 }
 
 .last-discovery {
-    color: #aaa;
+    color: var(--text-secondary, #aaa);
     font-size: 12px;
     margin-top: 5px;
 }
@@ -2948,7 +2948,7 @@ function hideBulkProgress() {
 .error-message {
     text-align: center;
     padding: 60px 20px;
-    color: #888;
+    color: var(--text-muted, #888);
 }
 
 .modal {
@@ -2963,14 +2963,14 @@ function hideBulkProgress() {
 }
 
 .modal-content {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
     margin: 5% auto;
     padding: 20px;
-    border: 1px solid #444;
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     width: 90%;
     max-width: 600px;
-    color: #fff;
+    color: var(--text-primary, #fff);
     max-height: 80vh;
     overflow-y: auto;
 }
@@ -2980,12 +2980,12 @@ function hideBulkProgress() {
 }
 
 .modal-content h2 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 20px;
 }
 
 .close {
-    color: #aaa;
+    color: var(--text-secondary, #aaa);
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -2994,7 +2994,7 @@ function hideBulkProgress() {
 }
 
 .close:hover {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
 }
 
 .add-artist-search-section,
@@ -3004,7 +3004,7 @@ function hideBulkProgress() {
 
 .add-artist-search-section h3,
 .add-artist-manual-section h3 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 15px;
 }
 
@@ -3017,21 +3017,21 @@ function hideBulkProgress() {
 .search-container input {
     flex: 1;
     padding: 10px;
-    background: #333;
-    border: 1px solid #444;
+    background: var(--input-bg, #333);
+    border: 1px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
 }
 
 .search-container input:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
 }
 
 .search-results {
     max-height: 300px;
     overflow-y: auto;
-    background: #2a2a2a;
+    background: var(--bg-card, #2a2a2a);
     border-radius: 8px;
     padding: 15px;
 }
@@ -3042,7 +3042,7 @@ function hideBulkProgress() {
 
 .form-group label {
     display: block;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 5px;
     font-weight: 500;
 }
@@ -3051,17 +3051,17 @@ function hideBulkProgress() {
 .form-group select {
     width: 100%;
     padding: 10px;
-    background: #333;
-    border: 1px solid #444;
+    background: var(--input-bg, #333);
+    border: 1px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
     box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
 }
 
@@ -3079,11 +3079,11 @@ function hideBulkProgress() {
 .thumbnail-placeholder {
     width: 100%;
     height: 100%;
-    background-color: #444;
+    background-color: var(--bg-hover, #444);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #aaa;
+    color: var(--text-secondary, #aaa);
     font-size: 0.8rem;
     border-radius: 4px;
 }
