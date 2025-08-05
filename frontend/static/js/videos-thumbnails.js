@@ -1291,8 +1291,8 @@ function updatePaginationControls() {
     const pageInputBottom = document.getElementById('pageInputBottom');
     if (pageInputTop) pageInputTop.value = currentPage;
     if (pageInputBottom) pageInputBottom.value = currentPage;
-    const totalPagesTop = document.getElementById('totalPagesTop');
-    const totalPagesBottom = document.getElementById('totalPagesBottom');
+    const totalPagesTop = document.getElementById('topTotalPages');
+    const totalPagesBottom = document.getElementById('bottomTotalPages');
     const currentPageSizeEl = document.getElementById('currentPageSize');
     if (totalPagesTop) totalPagesTop.textContent = totalPages;
     if (totalPagesBottom) totalPagesBottom.textContent = totalPages;
@@ -1302,13 +1302,28 @@ function updatePaginationControls() {
     const hasPrevious = currentPage > 1;
     const hasNext = currentPage < totalPages;
     
-    document.getElementById('prevPageTop').disabled = !hasPrevious;
-    document.getElementById('prevPageBottom').disabled = !hasPrevious;
-    document.getElementById('nextPageTop').disabled = !hasNext;
-    document.getElementById('nextPageBottom').disabled = !hasNext;
+    // Update pagination buttons with null checks
+    const prevBtnTop = document.getElementById('topPrevBtn');
+    const prevBtnBottom = document.getElementById('bottomPrevBtn');
+    const nextBtnTop = document.getElementById('topNextBtn');
+    const nextBtnBottom = document.getElementById('bottomNextBtn');
+    const firstBtnTop = document.getElementById('topFirstBtn');
+    const firstBtnBottom = document.getElementById('bottomFirstBtn');
+    const lastBtnTop = document.getElementById('topLastBtn');
+    const lastBtnBottom = document.getElementById('bottomLastBtn');
+    
+    if (prevBtnTop) prevBtnTop.disabled = !hasPrevious;
+    if (prevBtnBottom) prevBtnBottom.disabled = !hasPrevious;
+    if (nextBtnTop) nextBtnTop.disabled = !hasNext;
+    if (nextBtnBottom) nextBtnBottom.disabled = !hasNext;
+    if (firstBtnTop) firstBtnTop.disabled = !hasPrevious;
+    if (firstBtnBottom) firstBtnBottom.disabled = !hasPrevious;
+    if (lastBtnTop) lastBtnTop.disabled = !hasNext;
+    if (lastBtnBottom) lastBtnBottom.disabled = !hasNext;
     
     // Update page size selector
-    document.getElementById('pageSizeSelect').value = pageSize;
+    const pageSizeSelect = document.getElementById('topPageSize');
+    if (pageSizeSelect) pageSizeSelect.value = pageSize;
 }
 
 function nextPage() {
