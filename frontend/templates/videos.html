@@ -3445,48 +3445,75 @@ function displayVideos(videos) {
     const grid = document.getElementById('videos-grid');
     
     if (videos && videos.length > 0) {
-        grid.innerHTML = videos.map(video => `
-            <div class="video-card">
-                <div class="video-select">
-                    <input type="checkbox" class="video-checkbox" value="${video.id}" onchange="updateSelectedCount()">
-                </div>
-                <div class="video-thumbnail" data-video-id="${video.id}" data-action="play">
-                    <img src="/api/videos/${video.id}/thumbnail" 
-                         alt="${video.title}" onerror="this.src='/static/placeholder-video.png'">
-                    <div class="play-overlay">
-                        <div class="play-button">▶</div>
+        try {
+            grid.innerHTML = videos.map(video => {
+                // Safely escape and validate video data
+                const safeVideo = {
+                    id: video.id || '',
+                    title: escapeHtml(video.title || 'Unknown Title'),
+                    artist_name: escapeHtml(video.artist_name || 'Unknown'),
+                    status: escapeHtml(video.status || 'UNKNOWN'),
+                    year: video.year || null
+                };
+                
+                return `
+                    <div class="video-card">
+                        <div class="video-select">
+                            <input type="checkbox" class="video-checkbox" value="${safeVideo.id}" onchange="updateSelectedCount()">
+                        </div>
+                        <div class="video-thumbnail" data-video-id="${safeVideo.id}" data-action="play">
+                            <img src="/api/videos/${safeVideo.id}/thumbnail" 
+                                 alt="${safeVideo.title}" onerror="this.src='/static/placeholder-video.png'">
+                            <div class="play-overlay">
+                                <div class="play-button">▶</div>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <h3>${safeVideo.title}</h3>
+                            <p>Artist: ${safeVideo.artist_name}</p>
+                            <p>Status: ${safeVideo.status}</p>
+                            ${safeVideo.year ? `<p>Year: ${safeVideo.year}</p>` : ''}
+                        </div>
+                        <div class="video-actions">
+                            <button data-video-id="${safeVideo.id}" data-action="view" class="btn-icon" title="View Details">
+                                <i class="icon-eye"></i>
+                            </button>
+                            <button data-video-id="${safeVideo.id}" data-action="edit" class="btn-icon" title="Edit Video">
+                                <i class="icon-edit"></i>
+                            </button>
+                            <button data-video-id="${safeVideo.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
+                                <i class="icon-refresh"></i>
+                            </button>
+                            ${safeVideo.status === 'WANTED' ? 
+                                `<button data-video-id="${safeVideo.id}" data-action="download" class="btn-icon" title="Download Video">
+                                    <i class="icon-download"></i>
+                                </button>` : 
+                                ''}
+                            <button data-video-id="${safeVideo.id}" data-action="delete" class="btn-icon btn-danger" title="Delete Video">
+                                <i class="icon-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="video-info">
-                    <h3>${video.title}</h3>
-                    <p>Artist: ${video.artist_name || 'Unknown'}</p>
-                    <p>Status: ${video.status}</p>
-                    ${video.year ? `<p>Year: ${video.year}</p>` : ''}
-                </div>
-                <div class="video-actions">
-                    <button data-video-id="${video.id}" data-action="view" class="btn-icon" title="View Details">
-                        <i class="icon-eye"></i>
-                    </button>
-                    <button data-video-id="${video.id}" data-action="edit" class="btn-icon" title="Edit Video">
-                        <i class="icon-edit"></i>
-                    </button>
-                    <button data-video-id="${video.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
-                        <i class="icon-refresh"></i>
-                    </button>
-                    ${video.status === 'WANTED' ? 
-                        `<button data-video-id="${video.id}" data-action="download" class="btn-icon" title="Download Video">
-                            <i class="icon-download"></i>
-                        </button>` : 
-                        ''}
-                    <button data-video-id="${video.id}" data-action="delete" class="btn-icon btn-danger" title="Delete Video">
-                        <i class="icon-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
+                `;
+            }).join('');
+        } catch (error) {
+            console.error('Error rendering videos:', error);
+            grid.innerHTML = '<div class="error-message">Error displaying videos. Please refresh the page.</div>';
+        }
     } else {
         grid.innerHTML = '<p>No videos found.</p>';
     }
+}
+
+// Helper function to escape HTML and prevent XSS
+function escapeHtml(text) {
+    if (typeof text !== 'string') {
+        return String(text || '');
+    }
+    
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Update pagination controls based on API response
@@ -3586,8 +3613,25 @@ async function loadVideos(page = 1, size = 50, resetPage = false) {
         const data = await response.json();
         console.log('Videos loaded:', data);
         
+        // Validate response data structure
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid response format from server');
+        }
+        
+        // Ensure videos is an array
+        const videos = Array.isArray(data.videos) ? data.videos : [];
+        
+        // Filter out any malformed video entries
+        const validVideos = videos.filter(video => {
+            if (!video || typeof video !== 'object') return false;
+            if (!video.id) return false;
+            return true;
+        });
+        
+        console.log(`Displaying ${validVideos.length} valid videos out of ${videos.length} total`);
+        
         // Display videos
-        displayVideos(data.videos || []);
+        displayVideos(validVideos);
         
         // Update pagination
         updatePagination(data);
@@ -3599,13 +3643,27 @@ async function loadVideos(page = 1, size = 50, resetPage = false) {
         console.error('Error loading videos:', error);
         const grid = document.getElementById('videos-grid');
         if (grid) {
-            grid.innerHTML = '<div class="error-message">Error loading videos. Please try again.</div>';
+            let errorMessage = 'Error loading videos. Please try again.';
+            
+            // Provide more specific error messages
+            if (error.message.includes('Invalid response format')) {
+                errorMessage = 'Server returned invalid data format. Please contact administrator.';
+            } else if (error.message.includes('HTTP error')) {
+                errorMessage = `Server error (${error.message}). Please try again later.`;
+            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = 'Unable to connect to server. Please check your connection.';
+            }
+            
+            grid.innerHTML = `<div class="error-message">${errorMessage}</div>`;
         }
+        
+        // Hide pagination on error
+        document.getElementById('topPagination').style.display = 'none';
+        document.getElementById('bottomPagination').style.display = 'none';
     }
 }
 
-// Override existing loadVideos calls to use pagination
-const originalLoadVideos = loadVideos;
+// Provide global function for refreshing videos with current pagination
 window.refreshVideosWithPagination = function() {
     loadVideos(currentPage, pageSize);
 };
