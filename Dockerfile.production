@@ -1,4 +1,5 @@
 # Multi-stage build for MVidarr production deployment
+# Optimized for maximum layer caching efficiency
 # Stage 1: Build environment with all tools
 # Stage 2: Runtime environment with minimal dependencies
 
@@ -7,7 +8,7 @@
 #################################
 FROM python:3.12-slim AS builder
 
-# Install build dependencies
+# Install build dependencies (cached layer - rarely changes)
 RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
@@ -18,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy and install production requirements
+# Copy and install production requirements (cached if requirements unchanged)
 COPY requirements-prod.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --prefix=/opt/python -r requirements-prod.txt
@@ -28,7 +29,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 #################################
 FROM python:3.12-slim AS runtime
 
-# Install only runtime system dependencies (no build tools)
+# Install runtime system dependencies (cached layer - rarely changes)
 RUN apt-get update && apt-get install -y \
     curl \
     ffmpeg \
@@ -41,38 +42,40 @@ RUN apt-get update && apt-get install -y \
     && apt-get autoremove -y \
     && apt-get autoclean
 
-# Create non-root user for security
+# Create non-root user (cached layer - never changes)
 RUN groupadd -r mvidarr && useradd -r -g mvidarr -u 1000 mvidarr
 
 # Set working directory
 WORKDIR /app
 
-# Copy Python packages from builder stage
+# Copy Python packages from builder stage (cached if requirements unchanged)
 COPY --from=builder /opt/python /usr/local
 
-# Create necessary directories and change ownership
+# Create directories and set base permissions (cached layer - rarely changes)
 RUN mkdir -p /app/data/downloads /app/data/musicvideos /app/data/music_videos /app/data/thumbnails /app/data/logs /app/data/cache /app/data/backups /app/data/database /app/config && \
     chown -R mvidarr:mvidarr /app/data /app/config
 
-# Copy application code with correct ownership
-COPY --chown=mvidarr:mvidarr . .
-
-# Create empty .env file with write permissions for mvidarr user
-RUN touch /app/.env && chown mvidarr:mvidarr /app/.env && chmod 664 /app/.env
-
-# Copy production configuration files
+# Copy static configuration files first (cached if config unchanged)
 COPY --chown=mvidarr:mvidarr docker-config.yml.sample /app/config/docker-config.yml
-
-# Copy and setup entrypoint script
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh && chown root:root /app/entrypoint.sh
 
-# Set environment variables for runtime
+# Set up static files in single layer (cached if static files unchanged)
+RUN chmod +x /app/entrypoint.sh && chown root:root /app/entrypoint.sh && \
+    touch /app/.env && chown mvidarr:mvidarr /app/.env && chmod 664 /app/.env
+
+# Set environment variables (cached layer - rarely changes)
 ENV PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
     PORT=5000 \
     HOST=0.0.0.0
+
+# Copy application source code LAST (invalidates cache most frequently)
+COPY --chown=mvidarr:mvidarr src/ /app/src/
+COPY --chown=mvidarr:mvidarr frontend/ /app/frontend/
+COPY --chown=mvidarr:mvidarr migrations/ /app/migrations/
+COPY --chown=mvidarr:mvidarr scripts/ /app/scripts/
+COPY --chown=mvidarr:mvidarr app.py version.json /app/
 
 # Expose the application port
 EXPOSE 5000
