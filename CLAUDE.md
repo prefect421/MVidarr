@@ -30,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Code Formatting and Testing
 
 ### Python Code Formatting
-- **Black Version**: Always use `black==24.3.0` to match the version pinned in `requirements.txt`
+- **Black Version**: Always use `black==24.3.0` to match the version pinned in `requirements-dev.txt`
 - **isort Configuration**: Use `isort --profile black` for import sorting to maintain compatibility with Black
 - **Installation**: Use `pipx install black==24.3.0` and `pipx install isort`
 - **Commands for formatting**:
@@ -165,7 +165,7 @@ All issues should be planned with the following attributes:
 - **Gunicorn 21.2.0 → 23.0.0**: Fixed HTTP request smuggling (CVE-2024-1135, CVE-2024-6827)
 - **Pillow 10.1.0 → 10.3.0**: Fixed buffer overflow vulnerability (CVE-2024-28219)
 - **Requests, urllib3, Werkzeug**: Updated to latest secure versions
-- **All Dependencies**: Comprehensive security-focused updates in requirements.txt
+- **All Dependencies**: Comprehensive security-focused updates in requirements-prod.txt (production) and requirements-dev.txt (development)
 
 ### Automated Security Monitoring Infrastructure
 - **Security Scan Workflow**: `.github/workflows/security-scan.yml`

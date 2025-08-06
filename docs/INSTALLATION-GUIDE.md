@@ -352,7 +352,11 @@ source venv/bin/activate
 pip install --upgrade pip
 
 # Install Python dependencies
-pip install -r requirements.txt
+# For production/runtime use:
+pip install -r requirements-prod.txt
+
+# For development (includes all tools):
+pip install -r requirements-dev.txt
 ```
 
 **Installation Progress:**

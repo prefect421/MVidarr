@@ -166,7 +166,7 @@ test_*.py
 # Node modules (if any)
 node_modules/
 
-# Archive files
+# Archive files and temporary content
 *.tar.gz
 *.zip
 *.rar
@@ -176,6 +176,20 @@ login.html
 settings_page.html
 temp_downloads_section_backup.html
 favicon.ico
+
+# Development and debugging files - exclude from production builds
+cleanup_themes.py
+create_new_themes_api.py
+fix_themes_apply.py
+investigate_theme_issues.py
+debug_*.py
+test_*.py
+*_test.py
+comprehensive-security-scan-*/
+
+# Development requirements - exclude from production builds
+requirements.txt
+requirements-dev.txt
 
 # Large media files
 *.mp4
