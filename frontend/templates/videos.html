@@ -3672,6 +3672,23 @@ window.refreshVideos = function() {
     loadVideos(currentPage, pageSize);
 };
 
+// Toggle search panel visibility
+function toggleSearchPanel() {
+    const searchPanel = document.getElementById('searchPanel');
+    if (searchPanel) {
+        const isVisible = searchPanel.style.display !== 'none';
+        searchPanel.style.display = isVisible ? 'none' : 'block';
+        
+        // Focus on search input when panel is shown
+        if (!isVisible) {
+            const searchInput = document.getElementById('searchQuery');
+            if (searchInput) {
+                setTimeout(() => searchInput.focus(), 100);
+            }
+        }
+    }
+}
+
 // Update other functions to use the new pagination-aware reload
 function refreshVideoList() {
     loadVideos(currentPage, pageSize);
