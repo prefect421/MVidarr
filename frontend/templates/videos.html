@@ -2125,6 +2125,7 @@ function deleteSelectedVideos() {
 // Global video pagination variables
 let currentPage = 1;
 let pageSize = 50;
+let totalPages = 1;
 let searchActive = false;
 
 // Video Thumbnail Management Functions
@@ -3397,41 +3398,7 @@ window.addEventListener('click', function(event) {
 });
 
 // Pagination Functions
-function updatePaginationControls() {
-    // Show pagination controls if we have videos
-    const showPagination = totalVideos > 0;
-    document.getElementById('topPagination').style.display = showPagination ? 'flex' : 'none';
-    document.getElementById('bottomPagination').style.display = showPagination ? 'flex' : 'none';
-    
-    if (!showPagination) return;
-    
-    // Update pagination info
-    const startIndex = ((currentPage - 1) * pageSize) + 1;
-    const endIndex = Math.min(currentPage * pageSize, totalVideos);
-    const infoText = `Showing ${startIndex}-${endIndex} of ${totalVideos} videos`;
-    
-    document.getElementById('videoCountInfo').textContent = infoText;
-    document.getElementById('videoCountInfoBottom').textContent = infoText;
-    
-    // Update page inputs
-    document.getElementById('pageInputTop').value = currentPage;
-    document.getElementById('pageInputBottom').value = currentPage;
-    document.getElementById('totalPagesTop').textContent = totalPages;
-    document.getElementById('totalPagesBottom').textContent = totalPages;
-    document.getElementById('currentPageSize').textContent = pageSize;
-    
-    // Update button states
-    const hasPrevious = currentPage > 1;
-    const hasNext = currentPage < totalPages;
-    
-    document.getElementById('prevPageTop').disabled = !hasPrevious;
-    document.getElementById('prevPageBottom').disabled = !hasPrevious;
-    document.getElementById('nextPageTop').disabled = !hasNext;
-    document.getElementById('nextPageBottom').disabled = !hasNext;
-    
-    // Update page size selector
-    document.getElementById('pageSizeSelect').value = pageSize;
-}
+// Old updatePaginationControls function removed - replaced by updatePagination
 
 function nextPage() {
     if (currentPage < totalPages) {
@@ -3524,15 +3491,51 @@ function displayVideos(videos) {
 
 // Update pagination controls based on API response
 function updatePagination(data) {
-    // Basic pagination logic - this depends on your HTML structure
     const totalVideos = data.total || 0;
     const currentTotal = data.count || 0;
-    const paginationInfo = document.getElementById('videos-pagination-info');
-    if (paginationInfo) {
-        const startIndex = ((currentPage - 1) * pageSize) + 1;
-        const endIndex = Math.min(currentPage * pageSize, totalVideos);
-        paginationInfo.textContent = `Showing ${startIndex}-${endIndex} of ${totalVideos} videos`;
-    }
+    
+    // Calculate pagination values
+    totalPages = Math.ceil(totalVideos / pageSize);
+    const startIndex = totalVideos > 0 ? ((currentPage - 1) * pageSize) + 1 : 0;
+    const endIndex = Math.min(currentPage * pageSize, totalVideos);
+    
+    // Update pagination info displays
+    const topInfo = document.getElementById('videoCountInfo');
+    const bottomInfo = document.getElementById('videoCountInfoBottom');
+    const infoText = `Showing ${startIndex}-${endIndex} of ${totalVideos} videos`;
+    
+    if (topInfo) topInfo.textContent = infoText;
+    if (bottomInfo) bottomInfo.textContent = infoText;
+    
+    // Update total pages displays
+    document.getElementById('totalPagesTop').textContent = totalPages;
+    document.getElementById('totalPagesBottom').textContent = totalPages;
+    
+    // Update page inputs
+    document.getElementById('pageInputTop').value = currentPage;
+    document.getElementById('pageInputBottom').value = currentPage;
+    document.getElementById('pageInputTop').max = totalPages;
+    document.getElementById('pageInputBottom').max = totalPages;
+    
+    // Update page size display
+    document.getElementById('currentPageSize').textContent = pageSize;
+    document.getElementById('pageSizeSelect').value = pageSize;
+    
+    // Update button states
+    const hasPrevious = currentPage > 1;
+    const hasNext = currentPage < totalPages;
+    
+    document.getElementById('prevPageTop').disabled = !hasPrevious;
+    document.getElementById('prevPageBottom').disabled = !hasPrevious;
+    document.getElementById('nextPageTop').disabled = !hasNext;
+    document.getElementById('nextPageBottom').disabled = !hasNext;
+    
+    // Show pagination controls when we have videos (even if only one page)
+    const showPagination = totalVideos > 0;
+    document.getElementById('topPagination').style.display = showPagination ? 'flex' : 'none';
+    document.getElementById('bottomPagination').style.display = showPagination ? 'flex' : 'none';
+    
+    console.log(`Pagination updated: page ${currentPage} of ${totalPages}, showing ${startIndex}-${endIndex} of ${totalVideos} videos`);
 }
 
 // Core video loading function with proper authentication
