@@ -2786,7 +2786,6 @@ def bulk_thumbnail_scan():
                 except Exception as e:
                     logger.debug(f"IMVDb search failed for {artist_name}: {e}")
 
-
                 # Update artist if thumbnail found
                 if thumbnail_url:
                     with get_db() as session:
