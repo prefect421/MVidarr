@@ -1,12 +1,16 @@
 {
-  "version": "0.9.4",
-  "build_date": "2025-08-06T14:20:30.535341",
-  "git_commit": "dcced05",
+  "version": "0.9.5-dev",
+  "build_date": "2025-08-06T19:54:20.583094",
+  "git_commit": "36b8310",
   "git_branch": "dev",
-  "release_name": "Development Preview",
+  "release_name": "Performance & User Experience Development",
   "features": [
-    "Development branch prepared for version 0.9.4",
-    "Ready for next feature development cycle",
-    "Previous features from 0.9.3 successfully deployed to production"
+    "Development branch transitioned to 0.9.5 development cycle",
+    "Focus: Performance optimization and user experience enhancements",
+    "Strategic mix of targeted performance improvements with measurable outcomes",
+    "User-facing enhancements that deliver tangible value",
+    "Database performance analysis and query optimization",
+    "API response time optimization for critical endpoints",
+    "Frontend loading performance and user experience optimization"
   ]
 }

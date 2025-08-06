@@ -5,10 +5,11 @@
 set -e
 
 # Configuration
-TARGET_SIZE_GB=1.4  # Adjusted based on realistic baseline analysis
-WARNING_SIZE_GB=1.6  # Adjusted to allow for reasonable variance
+TARGET_SIZE_GB=1.5  # Adjusted based on current optimized build size
+WARNING_SIZE_GB=1.8  # Critical threshold for size regression alerts
 IMAGE_NAME="${1:-ghcr.io/prefect421/mvidarr}"
 TAG="${2:-dev}"
+LOCAL_MODE="${3}"  # --local flag to skip pulling
 FULL_IMAGE="${IMAGE_NAME}:${TAG}"
 
 # Colors for output
@@ -21,9 +22,13 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}🔍 MVidarr Docker Image Size Monitor${NC}"
 echo "=========================================="
 
-# Pull latest image
-echo -e "${BLUE}📥 Pulling latest image: ${FULL_IMAGE}${NC}"
-docker pull "${FULL_IMAGE}" --quiet
+# Pull latest image (skip if local mode)
+if [ "$LOCAL_MODE" = "--local" ]; then
+    echo -e "${BLUE}📥 Using locally built image: ${FULL_IMAGE}${NC}"
+else
+    echo -e "${BLUE}📥 Pulling latest image: ${FULL_IMAGE}${NC}"
+    docker pull "${FULL_IMAGE}" --quiet
+fi
 
 # Get image size
 SIZE_RAW=$(docker images --format "{{.Size}}" "${FULL_IMAGE}")

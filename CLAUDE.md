@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Memories
 
 - Use gh instead of git for github actions and repository management
+- GitHub Pages: Automatic deployment via Jekyll with Minima theme, triggered by main branch pushes
 
 ## Critical Thinking and Feedback
 
@@ -303,3 +304,24 @@ semgrep --config=p/security-audit --config=p/secrets --config=p/owasp-top-ten sr
 - ✅ **Enterprise Security Operations** - Continuous monitoring and assessment
 
 **Security Posture:** MVidarr now exceeds industry security standards with enterprise-level automated security operations, continuous compliance monitoring, and comprehensive threat detection and response capabilities.
+
+## GitHub Pages Management
+
+### Automatic Updates
+- **Trigger**: Any push to main branch affecting documentation files
+- **Files Monitored**: `docs/**`, `*.md`, `_config.yml`, Jekyll pages, workflow files
+- **Deployment**: Automatic Jekyll build and deploy via GitHub Actions
+- **Theme**: Minima Jekyll theme with responsive design
+- **URL**: https://prefect421.github.io/mvidarr
+
+### Content Management
+- **Site Structure**: Jekyll-based with navigation pages (about, installation, features, documentation, releases)  
+- **Documentation Sync**: Automatically includes updated documentation from main branch
+- **Version Info**: Displays current release version and roadmap information
+- **Repository Links**: All documentation links reference GitHub repository content
+
+### Maintenance Tasks
+- Update version information in pages when new releases are published
+- Ensure documentation links remain current with repository structure
+- Monitor Pages deployment status and resolve any build failures
+- Keep release information and roadmap current with project development

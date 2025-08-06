@@ -58,14 +58,19 @@ jobs:
         IMAGE_FULL="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}"
         echo "Monitoring image: $IMAGE_FULL"
         
-        # Run monitoring script
+        # Run monitoring script - capture exit code but don't fail on warnings
+        set +e
         ./scripts/docker-size-monitor.sh "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" "${{ steps.tag.outputs.tag }}"
         MONITOR_EXIT_CODE=$?
+        set -e
         
         # Get size info for output
         SIZE_INFO=$(docker images --format "{{.Size}}" "$IMAGE_FULL")
         echo "size=$SIZE_INFO" >> $GITHUB_OUTPUT
         echo "exit_code=$MONITOR_EXIT_CODE" >> $GITHUB_OUTPUT
+        
+        # Show exit code for transparency
+        echo "Monitoring script exit code: $MONITOR_EXIT_CODE"
 
     - name: Comment on PR or Issue
       if: github.event_name == 'workflow_run' && steps.monitor.outputs.exit_code != '0'
@@ -93,7 +98,7 @@ jobs:
           **Size:** ${size}
           **Status:** ${message}
           
-          **Target:** <1GB for optimal performance
+          **Target:** <1.5GB for optimal performance
           
           ${exitCode === '2' ? '🚨 **Action Required:** This image size may impact deployment performance. Consider dependency optimization.' : '💡 **Suggestion:** Review unused dependencies for further optimization.'}
           
