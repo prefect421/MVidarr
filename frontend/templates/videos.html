@@ -603,10 +603,18 @@ function performSearch() {
     
     // Perform search
     fetch(`/api/videos/search?${params.toString()}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('🔍 Search API response:', data);
+            
             if (data.error) {
                 showError('Search error: ' + data.error);
+                resultsInfo.textContent = '';
                 return;
             }
             
@@ -615,23 +623,31 @@ function performSearch() {
             updateSearchResultsInfo(data);
         })
         .catch(error => {
-            console.error('Search error:', error);
-            showError('Error performing search');
+            console.error('❌ Search error:', error);
+            showError('Error performing search: ' + error.message);
             resultsInfo.textContent = '';
         });
 }
 
 function displaySearchResults(data) {
+    console.log('🎭 Search data received:', data);
+    
     // Use the main displayVideos function for consistency and safety
-    if (data && data.videos) {
+    if (data && data.videos && Array.isArray(data.videos)) {
+        console.log('🎭 Displaying search results:', data.videos.length, 'videos');
         displayVideos(data.videos);
         
         // Hide pagination for search results
         document.getElementById('topPagination').style.display = 'none';
         document.getElementById('bottomPagination').style.display = 'none';
     } else {
+        console.error('❌ Invalid search data structure:', data);
         const grid = document.getElementById('videos-grid');
-        grid.innerHTML = '<p>No videos found matching your search criteria.</p>';
+        if (data && data.videos && data.videos.length === 0) {
+            grid.innerHTML = '<p>No videos found matching your search criteria.</p>';
+        } else {
+            grid.innerHTML = '<p>Error displaying search results. Please try again.</p>';
+        }
     }
 }
 
