@@ -333,6 +333,7 @@
    Available database themes:
    - Cyber (Cyberpunk theme with cyan highlights)
    - VaporWave (Synthwave/Vaporwave aesthetic)
+   - TARDIS (Doctor Who TARDIS aesthetic)
    
    These themes are loaded dynamically via the themes API
    and can be updated without code changes.
