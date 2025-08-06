@@ -7032,10 +7032,11 @@ body {
 }
 
 .modal-header {
-    background: linear-gradient(135deg, var(--text-accent, #00d4ff) 0%, var(--accent-secondary, #0099cc) 100%);
+    background: var(--bg-primary, #1a1a1a);
     color: var(--text-primary, white);
     padding: 1.5rem 2rem;
     border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid var(--border-primary, #444);
     display: flex;
     justify-content: space-between;
     align-items: center;
