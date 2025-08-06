@@ -1,8 +1,8 @@
 {
   "version": "0.9.3",
-  "build_date": "2025-08-05T17:16:11.088232",
-  "git_commit": "c348d2b",
-  "git_branch": "dev",
+  "build_date": "2025-08-06T22:01:00.000000",
+  "git_commit": "92f1e4e",
+  "git_branch": "main",
   "release_name": "Theme System & UI Improvements Release",
   "features": [
     "Complete theme export/import functionality - export individual themes or all themes as JSON",
@@ -20,8 +20,11 @@
     "Modular HTML components system with reusable pagination, search, and modal components",
     "Separated CSS (videos.css) and JavaScript (videos-main.js, videos-thumbnails.js) from templates",
     "Updated theme backgrounds from gradients to solid colors across videos, mvtv, and settings pages",
-    "Removed deprecated themes: LCARS - TNG, LCARS (New), TARDIS, MTV from database and code",
-    "Comprehensive JavaScript error handling with null checks for DOM element access",
-    "Fixed pagination and bulk actions JavaScript compatibility with refactored HTML structure"
+    "Completely removed database-stored themes and migrated to API-based theme system",
+    "Added 7 built-in API-based themes: Default, Cyber, VaporWave, TARDIS, Punk 77, MTV, LCARS",
+    "Restored complete pagination functionality to videos page with proper navigation controls",
+    "Fixed all JavaScript errors on videos page including missing loadVideos function",
+    "Added comprehensive event handling and authentication for video management operations",
+    "Comprehensive JavaScript error handling with null checks for DOM element access"
   ]
 }
