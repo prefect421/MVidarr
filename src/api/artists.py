@@ -2786,20 +2786,6 @@ def bulk_thumbnail_scan():
                 except Exception as e:
                     logger.debug(f"IMVDb search failed for {artist_name}: {e}")
 
-                # Try Last.fm if IMVDb failed
-                if not thumbnail_url:
-                    try:
-                        artist_data = lastfm_service.search_artist(artist_name)
-                        if artist_data and "image" in artist_data:
-                            images = artist_data["image"]
-                            if isinstance(images, list):
-                                for img in reversed(images):
-                                    if img.get("#text"):
-                                        thumbnail_url = img["#text"]
-                                        source = "Last.fm"
-                                        break
-                    except Exception as e:
-                        logger.debug(f"Last.fm search failed for {artist_name}: {e}")
 
                 # Update artist if thumbnail found
                 if thumbnail_url:
