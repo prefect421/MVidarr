@@ -41,13 +41,13 @@ minima:
 # Exclude files from Jekyll processing
 exclude:
   - .dockerignore
-  - .env*
-  - .git*
+  - ".env*"
+  - ".git*"
   - .python-version
   - __pycache__/
-  - *.pyc
+  - "*.pyc"
   - app.py
-  - requirements*.txt
+  - "requirements*.txt"
   - src/
   - frontend/
   - scripts/
@@ -64,7 +64,7 @@ exclude:
   - .sass-cache/
   - .jekyll-cache/
   - gemfiles/
-  - Gemfile*
+  - "Gemfile*"
   - "*.gem"
   - "*.gemspec"
 
