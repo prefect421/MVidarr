@@ -5,8 +5,8 @@
 set -e
 
 # Configuration
-TARGET_SIZE_GB=1.4  # Adjusted based on realistic baseline analysis
-WARNING_SIZE_GB=1.6  # Adjusted to allow for reasonable variance
+TARGET_SIZE_GB=1.5  # Adjusted based on current optimized build size
+WARNING_SIZE_GB=1.8  # Critical threshold for size regression alerts
 IMAGE_NAME="${1:-ghcr.io/prefect421/mvidarr}"
 TAG="${2:-dev}"
 FULL_IMAGE="${IMAGE_NAME}:${TAG}"

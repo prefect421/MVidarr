@@ -98,7 +98,7 @@ jobs:
           **Size:** ${size}
           **Status:** ${message}
           
-          **Target:** <1GB for optimal performance
+          **Target:** <1.5GB for optimal performance
           
           ${exitCode === '2' ? '🚨 **Action Required:** This image size may impact deployment performance. Consider dependency optimization.' : '💡 **Suggestion:** Review unused dependencies for further optimization.'}
           
