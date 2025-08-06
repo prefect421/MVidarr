@@ -332,11 +332,7 @@
    
    Available database themes:
    - Cyber (Cyberpunk theme with cyan highlights)
-   - VaporWave (Synthwave/Vaporwave aesthetic) 
-   - LCARS - TNG (Star Trek: The Next Generation)
-   - LCARS - DS9 (Star Trek: Deep Space Nine)
-   - LCARS - Voy (Star Trek: Voyager) 
-   - LCARS - TNG-E (Star Trek: Enterprise)
+   - VaporWave (Synthwave/Vaporwave aesthetic)
    
    These themes are loaded dynamically via the themes API
    and can be updated without code changes.

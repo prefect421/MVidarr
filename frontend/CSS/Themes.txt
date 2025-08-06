@@ -70,25 +70,6 @@
   --retro-muted: #8c8c8c;         /* Muted label gray */
 }
 ```
----
-# LCARS - TNG
----
-
-### 🎨 **Dark - LCARS-Inspired Color Palette (TNG Style)**
-
-```css
-:root {
-  --lcars-bg: #000000;           /* Main background (black) */
-  --lcars-panel-light: #fbb03b;  /* LCARS orange/yellow panel */
-  --lcars-panel-dark: #ff9900;   /* Deeper orange panel */
-  --lcars-purple: #9933cc;       /* Classic LCARS purple */
-  --lcars-pink: #ff6699;         /* Pink accent panel */
-  --lcars-blue: #3399cc;         /* Blue button/accent */
-  --lcars-text: #ffffff;         /* White text */
-  --lcars-divider: #cc66ff;      /* Panel dividers or labels */
-  --lcars-highlight: #ffff66;    /* Yellow highlight */
-}
-```
 
 ---
 # LCARS - DS9
