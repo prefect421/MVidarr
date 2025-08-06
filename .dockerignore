@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 *.so
 .Python
 build/
@@ -208,3 +209,6 @@ requirements-dev.txt
 *.backup
 *.bak
 *.old
+
+# Large log files
+*.log

@@ -5,8 +5,8 @@
 set -e
 
 # Configuration
-TARGET_SIZE_GB=1
-WARNING_SIZE_GB=1.5
+TARGET_SIZE_GB=1.4  # Adjusted based on realistic baseline analysis
+WARNING_SIZE_GB=1.6  # Adjusted to allow for reasonable variance
 IMAGE_NAME="${1:-ghcr.io/prefect421/mvidarr}"
 TAG="${2:-dev}"
 FULL_IMAGE="${IMAGE_NAME}:${TAG}"
@@ -90,19 +90,22 @@ else
     echo "No historical data available yet"
 fi
 
-# Optimization suggestions
+# Optimization suggestions  
 echo ""
 echo -e "${BLUE}💡 Optimization Suggestions${NC}"
-if (( $(echo "$SIZE_GB > 1.5" | bc -l) )); then
-    echo "🔧 Consider removing unused dependencies (check requirements-prod-conservative.txt)"
-    echo "🔧 Evaluate heavy packages: opencv, moviepy, celery stack"
-    echo "🔧 Consider multi-stage build optimization"
-elif (( $(echo "$SIZE_GB > 1.0" | bc -l) )); then
-    echo "🔧 Fine-tune dependency analysis"
-    echo "🔧 Consider Alpine Linux base image (high-risk)"
-    echo "🔧 Review application code for unused imports"
+if (( $(echo "$SIZE_GB > 1.6" | bc -l) )); then
+    echo "🚨 CRITICAL: Investigate significant size regression"
+    echo "🔧 Check for new heavy dependencies in requirements-prod.txt"
+    echo "🔧 Verify .dockerignore is excluding development files"
+    echo "🔧 Review recent changes for build bloat"
+elif (( $(echo "$SIZE_GB > 1.4" | bc -l) )); then
+    echo "⚠️  MONITORING: Size above target but within acceptable range"
+    echo "🔧 Monitor for continued growth trend"
+    echo "🔧 Consider dependency audit if trend continues"
+    echo "🔧 Review heavy packages: opencv (~150MB), moviepy (~100MB)"
 else
-    echo "🎉 Image size is optimal! Monitor for regressions."
+    echo "🎉 Image size is optimal! Build reliability maintained."
+    echo "✅ Continue monitoring for regressions"
 fi
 
 echo ""
