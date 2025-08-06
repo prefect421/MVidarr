@@ -126,15 +126,41 @@ dmypy.json
 ehthumbs.db
 Thumbs.db
 
-# Project specific
+# Project specific - CRITICAL: Exclude large data directories
 data/
+data/**
+data/musicvideos/
+data/musicvideos/**
+data/music_videos/
+data/music_videos/**
+data/downloads/
+data/downloads/**
+data/thumbnails/
+data/thumbnails/**
+data/database/
+data/database/**
+data/cache/
+data/cache/**
+data/logs/
+data/logs/**
 logs/
+logs/**
 *.db
 *.sqlite
 *.sqlite3
 database/
+database/**
 .stversions/
 .stfolder/
+# Additional large directories
+music_videos/
+music_videos/**
+downloads/
+downloads/**
+thumbnails/
+thumbnails/**
+cache/
+cache/**
 
 # Docker
 Dockerfile*
@@ -163,10 +189,30 @@ test_*.py
 *.bak
 *.backup
 
+# Development and debugging files - exclude from production builds
+cleanup_themes.py
+create_new_themes_api.py
+fix_themes_apply.py
+investigate_theme_issues.py
+debug_*.py
+test_*.py
+*_test.py
+comprehensive-security-scan-*/
+
+# Development requirements - exclude from production builds
+requirements.txt
+requirements-dev.txt
+
+# Virtual environments
+venv/
+pdf_env/
+screenshot_env/
+*_env/
+
 # Node modules (if any)
 node_modules/
 
-# Archive files
+# Archive files and temporary content
 *.tar.gz
 *.zip
 *.rar
@@ -176,6 +222,17 @@ login.html
 settings_page.html
 temp_downloads_section_backup.html
 favicon.ico
+
+# Development scripts and archives
+archive/
+examples/
+scripts/archive/
+scripts/screenshots/
+scripts/testing/
+
+# Log files
+app.log
+*.log
 
 # Large media files
 *.mp4

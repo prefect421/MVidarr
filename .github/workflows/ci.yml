@@ -273,7 +273,7 @@ jobs:
     - name: Run pip-audit for dependency vulnerabilities
       run: |
         echo "🔍 Scanning Python dependencies for known vulnerabilities..."
-        pip-audit --format=json --output=pip-audit-results.json --requirement=requirements.txt || true
+        pip-audit --format=json --output=pip-audit-results.json --requirement=requirements-prod.txt || true
         
     - name: Run Safety check
       run: |
@@ -299,11 +299,11 @@ jobs:
         output: 'trivy-fs-results.sarif'
         severity: 'CRITICAL,HIGH,MEDIUM'
 
-    - name: Run Trivy requirements.txt scanner
+    - name: Run Trivy requirements scanner
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: 'fs'
-        scan-ref: 'requirements.txt'
+        scan-ref: 'requirements-prod.txt'
         format: 'json'
         output: 'trivy-deps-results.json'
 

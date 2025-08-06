@@ -22,12 +22,12 @@ RUN groupadd -r mvidarr && useradd -r -g mvidarr -u 1000 mvidarr
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first for better layer caching
-COPY requirements.txt .
+# Copy production requirements first for better layer caching
+COPY requirements-prod.txt .
 
-# Install Python dependencies
+# Install Python dependencies (production only)
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements-prod.txt
 
 # Create necessary directories and change ownership before copying files
 RUN mkdir -p /app/data/downloads /app/data/musicvideos /app/data/music_videos /app/data/thumbnails /app/data/logs /app/data/cache /app/data/backups /app/data/database /app/config && \
