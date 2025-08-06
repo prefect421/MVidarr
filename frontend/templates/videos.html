@@ -570,6 +570,16 @@ window.toggleSearchPanel = window.toggleSearchPanel || function() {
     }
 };
 
+window.handleSearchKeyup = window.handleSearchKeyup || function(event) {
+    // Handle Enter key to trigger search
+    if (event.key === 'Enter') {
+        if (typeof performSearch === 'function') {
+            performSearch();
+        }
+    }
+    // Could add more keyup handling here (like auto-search after delay)
+};
+
 function performSearch() {
     const query = document.getElementById('searchQuery').value.trim();
     const artist = document.getElementById('searchArtist').value.trim();
