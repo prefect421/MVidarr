@@ -1041,23 +1041,6 @@
                             </div>
                         </div>
                         
-                        <!-- Notification Settings Section -->
-                        <div class="settings-section">
-                            <h4 class="section-title">🔔 Notifications</h4>
-                            <div class="checkbox-grid">
-                                <div class="setting-group checkbox-group">
-                                    <label class="checkbox-container">
-                                        <input type="checkbox" id="enableNotificationsSetting" name="enable_notifications">
-                                        <span class="checkmark"></span>
-                                        <div class="checkbox-content">
-                                            <span class="checkbox-label">Enable notifications</span>
-                                            <small class="field-hint">Receive notifications for new videos or downloads</small>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <!-- Download Settings Section -->
                         <div class="settings-section">
                             <h4 class="section-title">⬇️ Download Preferences</h4>
@@ -2871,7 +2854,6 @@ function populateSettings(artist) {
     // Settings
     document.getElementById('monitoredSetting').checked = artist.monitored || false;
     document.getElementById('autoDownloadSetting').checked = artist.auto_download || false;
-    document.getElementById('enableNotificationsSetting').checked = artist.enable_notifications || false;
     document.getElementById('qualityProfileSetting').value = artist.quality_profile || 'any';
     document.getElementById('prioritySetting').value = artist.priority || 'normal';
     
