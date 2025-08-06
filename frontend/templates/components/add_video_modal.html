@@ -329,7 +329,7 @@ function searchForVideos() {
         console.log('🎬 IMVDb results:', imvdbResults.length);
         console.log('📺 YouTube results:', youtubeResults.length);
         console.log('🔍 Combined results:', [...imvdbResults, ...youtubeResults].length);
-        displaySearchResults([...imvdbResults, ...youtubeResults]);
+        displayModalSearchResults([...imvdbResults, ...youtubeResults]);
     }).catch(error => {
         console.error('❌ Error searching for videos:', error);
         resultsList.innerHTML = '<div class="error">❌ Error searching for videos. Please try again.</div>';
@@ -465,8 +465,8 @@ async function searchYouTube(searchQuery, artistName, songTitle) {
     }
 }
 
-// Display Search Results Function
-function displaySearchResults(results) {
+// Display Search Results Function for Add Video Modal
+function displayModalSearchResults(results) {
     console.log('🎭 Displaying search results:', results.length);
     
     const resultsList = document.getElementById('videoSearchResultsList');
