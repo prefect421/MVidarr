@@ -18,7 +18,19 @@
 - **📺 MvTV Continuous Player** - Cinematic mode for uninterrupted viewing
 - **🎭 Genre Management** - Automatic genre tagging and filtering
 - **🔐 User Authentication** - Role-based access control with security features
-- **🌙 Dark/Light Themes** - Multiple theme options with automatic switching
+- **🎨 Advanced Theme System** - 7 built-in themes with export/import functionality
+
+## 🆕 What's New in v0.9.3
+
+**Theme System & UI Improvements Release**
+
+- **🎨 Complete Theme Export/Import** - Export individual themes or all themes as JSON files
+- **🔧 Simplified Theme Management** - Streamlined single-variant theme system  
+- **📹 Enhanced Video Management** - Bulk refresh metadata with preserved navigation context
+- **🏗️ Major Code Refactoring** - Videos page reduced by 98.7% through modular components
+- **🎯 API-Based Themes** - 7 built-in themes: Default, Cyber, VaporWave, TARDIS, Punk 77, MTV, LCARS
+- **💻 Improved JavaScript** - Comprehensive error handling and authentication integration
+- **🎛️ Modular UI Components** - Reusable pagination, search, and modal systems
 
 ## 🚀 Quick Start
 
@@ -144,4 +156,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**MVidarr v0.9.2** - Built with ❤️ for music video enthusiasts
+**MVidarr v0.9.3** - Built with ❤️ for music video enthusiasts
