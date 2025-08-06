@@ -5,7 +5,15 @@ Database initialization and migration utilities
 from sqlalchemy import text
 
 from src.database.connection import Base, get_engine
-from src.database.models import Artist, Download, Setting, TaskQueue, User, Video
+from src.database.models import (
+    Artist,
+    CustomTheme,
+    Download,
+    Setting,
+    TaskQueue,
+    User,
+    Video,
+)
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.database")
@@ -85,6 +93,7 @@ def init_default_settings():
             "http://127.0.0.1:5000/api/spotify/callback",
             "Spotify OAuth redirect URI",
         ),
+        ("ui_theme", "default", "User interface theme selection"),
     ]
 
     try:
@@ -224,6 +233,73 @@ def create_admin_user():
         return False
 
 
+def init_built_in_themes():
+    """Initialize built-in themes in the database"""
+    from src.database.connection import get_db
+    from src.database.models import UserRole
+
+    try:
+        with get_db() as session:
+            # Get admin user for theme ownership
+            admin_user = session.query(User).filter_by(username="admin").first()
+            if not admin_user:
+                logger.warning("Admin user not found for theme initialization")
+                return True  # Don't fail initialization if admin user is missing
+
+            # Check if built-in themes already exist
+            existing_builtin_count = (
+                session.query(CustomTheme).filter_by(is_built_in=True).count()
+            )
+
+            if existing_builtin_count > 0:
+                logger.info(
+                    f"Built-in themes already exist ({existing_builtin_count} entries)"
+                )
+                return True
+
+            # Define the new built-in themes (all database themes removed)
+            new_themes = []
+
+            # Create the themes
+            themes_created = 0
+            for theme_data in new_themes:
+                # Check if theme already exists by name
+                existing_theme = (
+                    session.query(CustomTheme)
+                    .filter_by(name=theme_data["name"])
+                    .first()
+                )
+                if existing_theme:
+                    logger.info(
+                        f"Theme '{theme_data['name']}' already exists, skipping"
+                    )
+                    continue
+
+                theme = CustomTheme(
+                    name=theme_data["name"],
+                    display_name=theme_data["display_name"],
+                    description=theme_data["description"],
+                    created_by=admin_user.id,
+                    is_public=True,
+                    is_built_in=True,
+                    theme_data=theme_data["theme_data"],
+                )
+                session.add(theme)
+                themes_created += 1
+
+            if themes_created > 0:
+                session.commit()
+                logger.info(f"Created {themes_created} built-in themes")
+            else:
+                logger.info("All built-in themes already exist")
+
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to initialize built-in themes: {e}")
+        return False
+
+
 def check_database_health():
     """Check database health and connectivity"""
     try:
@@ -248,6 +324,7 @@ def check_database_health():
                 "downloads",
                 "users",
                 "task_queue",
+                "custom_themes",
             ]
             for table in tables:
                 result = connection.execute(text(f"SHOW TABLES LIKE '{table}'"))
@@ -299,6 +376,11 @@ def initialize_database():
     # Create admin user
     if not create_admin_user():
         logger.error("Failed to create admin user")
+        return False
+
+    # Initialize built-in themes
+    if not init_built_in_themes():
+        logger.error("Failed to initialize built-in themes")
         return False
 
     # Health check

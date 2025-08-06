@@ -3458,6 +3458,163 @@ def bulk_update_video_status():
         return jsonify({"error": str(e)}), 500
 
 
+@videos_bp.route("/bulk/refresh-metadata", methods=["POST"])
+def bulk_refresh_metadata():
+    """Refresh metadata from IMVDb for multiple videos"""
+    try:
+        from src.services.imvdb_service import imvdb_service
+        from src.services.settings_service import settings
+
+        data = request.get_json()
+        video_ids = data.get("video_ids", [])
+
+        if not video_ids:
+            return jsonify({"error": "No video IDs provided"}), 400
+
+        if not isinstance(video_ids, list):
+            return jsonify({"error": "video_ids must be a list"}), 400
+
+        # Force reload settings cache to ensure we have the latest API key
+        settings.reload_cache()
+
+        updated_videos = []
+        failed_videos = []
+        skipped_videos = []
+
+        with get_db() as session:
+            for video_id in video_ids:
+                try:
+                    video = session.query(Video).filter(Video.id == video_id).first()
+
+                    if not video:
+                        failed_videos.append(
+                            {"id": video_id, "error": "Video not found"}
+                        )
+                        continue
+
+                    # Extract data we need
+                    artist_name = video.artist.name if video.artist else None
+                    video_title = video.title
+                    current_imvdb_id = video.imvdb_id
+
+                    if not artist_name:
+                        skipped_videos.append(
+                            {
+                                "id": video_id,
+                                "title": video_title,
+                                "reason": "No artist associated with video",
+                            }
+                        )
+                        continue
+
+                    logger.info(
+                        f"Bulk refreshing metadata for video: {video_title} by {artist_name}"
+                    )
+
+                    # Try to find best match on IMVDb
+                    imvdb_data = None
+
+                    # If we have an existing IMVDb ID, try to get detailed info
+                    if current_imvdb_id:
+                        imvdb_data = imvdb_service.get_video_by_id(current_imvdb_id)
+
+                    # If no IMVDb ID or the lookup failed, try searching
+                    if not imvdb_data:
+                        imvdb_data = imvdb_service.find_best_video_match(
+                            artist_name, video_title
+                        )
+
+                    if not imvdb_data:
+                        skipped_videos.append(
+                            {
+                                "id": video_id,
+                                "title": video_title,
+                                "artist": artist_name,
+                                "reason": "No IMVDb match found",
+                            }
+                        )
+                        continue
+
+                    # Update video with new metadata
+                    updated = False
+
+                    if imvdb_data.get("id") and video.imvdb_id != imvdb_data["id"]:
+                        video.imvdb_id = imvdb_data["id"]
+                        updated = True
+
+                    if imvdb_data.get("year") and video.year != imvdb_data["year"]:
+                        video.year = imvdb_data["year"]
+                        updated = True
+
+                    if imvdb_data.get("directors") and video.directors != ", ".join(
+                        imvdb_data["directors"]
+                    ):
+                        video.directors = ", ".join(imvdb_data["directors"])
+                        updated = True
+
+                    if imvdb_data.get("producers") and video.producers != ", ".join(
+                        imvdb_data["producers"]
+                    ):
+                        video.producers = ", ".join(imvdb_data["producers"])
+                        updated = True
+
+                    if (
+                        imvdb_data.get("thumbnail")
+                        and video.thumbnail != imvdb_data["thumbnail"]
+                    ):
+                        video.thumbnail = imvdb_data["thumbnail"]
+                        updated = True
+
+                    if updated:
+                        video.updated_at = datetime.utcnow()
+                        session.commit()
+
+                        updated_videos.append(
+                            {
+                                "id": video.id,
+                                "title": video.title,
+                                "artist": artist_name,
+                            }
+                        )
+
+                        logger.info(
+                            f"Successfully updated metadata for: {video_title} by {artist_name}"
+                        )
+                    else:
+                        skipped_videos.append(
+                            {
+                                "id": video_id,
+                                "title": video_title,
+                                "artist": artist_name,
+                                "reason": "No new metadata to update",
+                            }
+                        )
+
+                except Exception as e:
+                    failed_videos.append({"id": video_id, "error": str(e)})
+                    logger.error(
+                        f"Failed to refresh metadata for video {video_id}: {e}"
+                    )
+
+        return (
+            jsonify(
+                {
+                    "updated_count": len(updated_videos),
+                    "failed_count": len(failed_videos),
+                    "skipped_count": len(skipped_videos),
+                    "updated_videos": updated_videos,
+                    "failed_videos": failed_videos,
+                    "skipped_videos": skipped_videos,
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk refresh metadata: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @videos_bp.route("/scan-directories", methods=["POST"])
 def scan_artist_directories():
     """Scan artist directories to find downloaded videos not tracked in database"""
@@ -3804,7 +3961,32 @@ def import_video_from_imvdb():
             # Fetch video data from IMVDb (outside session to avoid blocking)
             video_data = imvdb_service.get_video_by_id(imvdb_id)
             if not video_data:
-                return jsonify({"error": "Video not found on IMVDb"}), 404
+                # If direct fetch fails, try to find the video through search
+                # This can happen due to IMVDb API inconsistencies
+                logger.warning(
+                    f"Direct fetch failed for IMVDb ID {imvdb_id}, trying search fallback"
+                )
+
+                # Try to search for the video using artist info
+                if "title" in data and data["title"]:
+                    # Use provided title if available
+                    search_query = data["title"]
+                    if artist_name:
+                        search_query = f"{artist_name} {data['title']}"
+
+                    search_results = imvdb_service.search_videos(search_query)
+                    if search_results and search_results.get("results"):
+                        # Look for a video with matching ID in search results
+                        for result_video in search_results["results"]:
+                            if str(result_video.get("id")) == str(imvdb_id):
+                                video_data = result_video
+                                logger.info(
+                                    f"Found video via search fallback: {imvdb_id}"
+                                )
+                                break
+
+                if not video_data:
+                    return jsonify({"error": "Video not found on IMVDb"}), 404
 
             # Extract metadata using IMVDb service
             video_metadata = imvdb_service.extract_metadata(video_data)

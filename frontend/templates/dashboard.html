@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - MVidarr</title>
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='themes.css') }}" id="themes-stylesheet">
     <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
     <style>
         * {
@@ -14,8 +15,8 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            background: var(--bg-primary, #f8f9fa);
+            color: var(--text-primary, #333);
         }
         
         /* Light theme override for dashboard */
@@ -24,17 +25,17 @@
         }
         
         .header {
-            background: white;
-            border-bottom: 1px solid #e9ecef;
+            background: var(--bg-card, white);
+            border-bottom: 1px solid var(--border-primary, #e9ecef);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px var(--shadow, rgba(0,0,0,0.1));
         }
         
         .header h1 {
-            color: #495057;
+            color: var(--text-secondary, #495057);
             font-size: 1.5rem;
         }
         
@@ -51,21 +52,21 @@
         }
         
         .welcome-card {
-            background: white;
+            background: var(--bg-card, white);
             border-radius: 8px;
             padding: 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px var(--shadow, rgba(0,0,0,0.1));
             margin-bottom: 2rem;
             text-align: center;
         }
         
         .welcome-card h2 {
-            color: #495057;
+            color: var(--text-secondary, #495057);
             margin-bottom: 1rem;
         }
         
         .welcome-card p {
-            color: #6c757d;
+            color: var(--text-muted, #6c757d);
             margin-bottom: 1.5rem;
         }
         
@@ -77,17 +78,17 @@
         }
         
         .action-card {
-            background: white;
+            background: var(--bg-card, white);
             border-radius: 8px;
             padding: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px var(--shadow, rgba(0,0,0,0.1));
             text-align: center;
             transition: transform 0.3s, box-shadow 0.3s;
         }
         
         .action-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 8px var(--shadow-hover, rgba(0,0,0,0.15));
         }
         
         .action-card .icon {
@@ -96,12 +97,12 @@
         }
         
         .action-card h3 {
-            color: #495057;
+            color: var(--text-secondary, #495057);
             margin-bottom: 0.5rem;
         }
         
         .action-card p {
-            color: #6c757d;
+            color: var(--text-muted, #6c757d);
             margin-bottom: 1rem;
             font-size: 0.9rem;
         }
@@ -118,27 +119,27 @@
         }
         
         .btn-primary {
-            background: #007bff;
-            color: white;
+            background: var(--btn-primary-bg, #007bff);
+            color: var(--btn-primary-text, white);
         }
         
         .btn-primary:hover {
-            background: #0056b3;
+            background: var(--btn-primary-hover, #0056b3);
         }
         
         .btn-secondary {
-            background: #6c757d;
-            color: white;
+            background: var(--btn-secondary-bg, #6c757d);
+            color: var(--btn-secondary-text, white);
         }
         
         .btn-success {
-            background: #28a745;
+            background: var(--success, #28a745);
             color: white;
         }
         
         .btn-danger {
-            background: #dc3545;
-            color: white;
+            background: var(--btn-danger-bg, #dc3545);
+            color: var(--btn-danger-text, white);
         }
         
         .role-badge {
@@ -150,121 +151,27 @@
             text-transform: uppercase;
         }
         
-        .role-badge.admin { background: #dc3545; color: white; }
-        .role-badge.manager { background: #fd7e14; color: white; }
-        .role-badge.user { background: #007bff; color: white; }
-        .role-badge.readonly { background: #6c757d; color: white; }
+        .role-badge.admin { background: var(--btn-danger-bg, #dc3545); color: white; }
+        .role-badge.manager { background: var(--warning, #fd7e14); color: white; }
+        .role-badge.user { background: var(--btn-primary-bg, #007bff); color: white; }
+        .role-badge.readonly { background: var(--btn-secondary-bg, #6c757d); color: white; }
         
         .user-status {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
+            background: var(--bg-secondary, #f8f9fa);
+            border: 1px solid var(--border-primary, #e9ecef);
             border-radius: 6px;
             padding: 1rem;
             margin-bottom: 2rem;
         }
         
-        /* Light theme override for user status */
+        /* Simplified light theme overrides - most styling now handled by CSS variables */
         body.light-theme .user-status {
             background: transparent;
-            border: 1px solid #e1e5e9;
-        }
-        
-        /* Comprehensive light theme overrides */
-        body.light-theme .header {
-            background: rgba(255, 255, 255, 0.95);
-            border-bottom: 1px solid #e1e5e9;
-            backdrop-filter: blur(10px);
-        }
-        
-        body.light-theme .header h1 {
-            color: #667eea;
-        }
-        
-        body.light-theme .welcome-card {
-            background: white;
-            border: 1px solid #e1e5e9;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-        }
-        
-        body.light-theme .welcome-card h2 {
-            color: #667eea;
-        }
-        
-        body.light-theme .welcome-card p {
-            color: #666;
-        }
-        
-        body.light-theme .action-card {
-            background: white;
-            border: 1px solid #e1e5e9;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        body.light-theme .action-card:hover {
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
-            border-color: #667eea;
-        }
-        
-        body.light-theme .action-card h3 {
-            color: #333;
-        }
-        
-        body.light-theme .action-card p {
-            color: #666;
-        }
-        
-        body.light-theme .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-        }
-        
-        body.light-theme .btn-primary:hover {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-            transform: translateY(-1px);
-        }
-        
-        body.light-theme .btn-secondary {
-            background: white;
-            border: 2px solid #e1e5e9;
-            color: #333;
-        }
-        
-        body.light-theme .btn-secondary:hover {
-            background: #f0f0ff;
-            border-color: #667eea;
-            color: #667eea;
-        }
-        
-        body.light-theme .btn-success {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-        }
-        
-        body.light-theme .btn-danger {
-            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-        }
-        
-        body.light-theme .user-status h4 {
-            color: #333;
-        }
-        
-        body.light-theme .status-badge.active {
-            background: rgba(72, 187, 120, 0.2);
-            color: #2f855a;
-        }
-        
-        body.light-theme .status-badge.enabled {
-            background: rgba(102, 126, 234, 0.2);
-            color: #4c51bf;
-        }
-        
-        body.light-theme .status-badge.disabled {
-            background: rgba(255, 193, 7, 0.2);
-            color: #d69e2e;
         }
         
         .user-status h4 {
             margin-bottom: 0.5rem;
-            color: #495057;
+            color: var(--text-secondary, #495057);
         }
         
         .status-item {
@@ -282,18 +189,18 @@
         }
         
         .status-badge.active {
-            background: #d4edda;
-            color: #155724;
+            background: var(--success, #d4edda);
+            color: var(--text-inverse, #155724);
         }
         
         .status-badge.enabled {
-            background: #d1ecf1;
-            color: #0c5460;
+            background: var(--info, #d1ecf1);
+            color: var(--text-inverse, #0c5460);
         }
         
         .status-badge.disabled {
-            background: #fff3cd;
-            color: #856404;
+            background: var(--warning, #fff3cd);
+            color: var(--text-inverse, #856404);
         }
         
         @media (max-width: 768px) {
@@ -591,6 +498,37 @@ The cookie file should contain YouTube authentication data including session tok
         
         // Check cookie status on page load
         document.addEventListener('DOMContentLoaded', checkCookieStatus);
+        
+        // Theme management
+        window.currentTheme = window.currentTheme || 'default';
+        window.currentMode = window.currentMode || 'dark';
+        
+        function applyCurrentTheme() {
+            document.documentElement.setAttribute('data-theme', window.currentTheme);
+            document.documentElement.setAttribute('data-mode', window.currentMode);
+        }
+        
+        function loadSavedTheme() {
+            const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
+            window.currentMode = savedDayNightMode || 'dark';
+            
+            fetch('/api/settings/ui_theme')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.value) {
+                        window.currentTheme = data.value;
+                    }
+                    applyCurrentTheme();
+                })
+                .catch(error => {
+                    console.log('Theme setting not found, using default');
+                    applyCurrentTheme();
+                });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedTheme();
+        });
     </script>
 </body>
 </html>

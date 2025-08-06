@@ -1,0 +1,134 @@
+# Theme: Cyber
+---
+
+## 🌒 Dark Theme — *Cyberpunk UI Inspired*
+
+```css
+:root,
+[data-theme="dark"] {
+  --cp-bg: #0b0f14;              /* Darkest background */
+  --cp-surface: #12181f;         /* Panel background */
+  --cp-primary: #00fff7;         /* Neon teal blue */
+  --cp-accent: #ff003c;          /* Critical red accent */
+  --cp-warning: #ffcc00;         /* Cyber yellow (warning) */
+  --cp-border: #2e3947;          /* Subtle border */
+  --cp-muted: #8896a5;           /* Muted text */
+  --cp-text: #e4eaf1;            /* Main text */
+  --cp-shadow: rgba(0, 255, 247, 0.15); /* Neon glow effect */
+}
+```
+
+## ☀️ Light Theme — *Daylight Cyberpunk Variant*
+
+```css
+[data-theme="light"] {
+  --cp-bg: #f3f6fa;              /* Light UI background */
+  --cp-surface: #ffffff;         /* White card/panel */
+  --cp-primary: #007f7b;         /* Deep teal base */
+  --cp-accent: #cc0033;          /* Dark muted red */
+  --cp-warning: #e6b800;         /* Muted cyber yellow */
+  --cp-border: #ccd6e0;          /* Soft gray border */
+  --cp-muted: #687a8b;           /* Muted dark text */
+  --cp-text: #1d1f21;            /* Strong text */
+  --cp-shadow: rgba(0, 127, 123, 0.15); /* Teal shadow accent */
+}
+```
+---
+
+# VaporWave
+---
+
+## 🌅 Dark Theme - **Synthwave / Vaporwave CSS Color Palette**
+
+```css
+:root {
+  --retro-bg: #0d0221;           /* Deep purple night sky */
+  --retro-grid: #2f0f5d;         /* Dull purple grid lines */
+  --retro-sunset: #ff3c00;       /* Fiery orange sun center */
+  --retro-sunset-glow: #ff66a1;  /* Pink outer glow of sunset */
+  --retro-neon-pink: #ff3cac;    /* Classic synthwave neon pink */
+  --retro-neon-purple: #8c1eff;  /* Electric purple */
+  --retro-neon-blue: #00f0ff;    /* Glowing grid blue */
+  --retro-neon-yellow: #fff600;  /* High-contrast yellow pop */
+  --retro-text: #ffffff;         /* Bright white text */
+  --retro-muted: #808080;        /* Muted text/inactive */
+}
+```
+## 🌞 **Light Synthwave / Vaporwave CSS Color Palette**
+
+```css
+:root {
+  --retro-bg: #f8f0ff;            /* Light pastel violet sky */
+  --retro-panel: #ffe3f4;         /* Very soft pink panel */
+  --retro-sunset: #ff8855;        /* Soft orange sun center */
+  --retro-sunset-glow: #ffc6f6;   /* Pink outer glow of sunset */
+  --retro-neon-pink: #ff3cac;     /* Classic neon pink (unchanged) */
+  --retro-neon-purple: #9b5de5;   /* Bright lavender purple */
+  --retro-neon-blue: #00cfff;     /* Lightened grid blue */
+  --retro-neon-yellow: #fdfd96;   /* Light pastel yellow */
+  --retro-text: #2c003e;          /* Deep purple text on light bg */
+  --retro-muted: #8c8c8c;         /* Muted label gray */
+}
+```
+
+---
+# LCARS - DS9
+---
+### 🎨 **Dark - LCARS Security Panel Color Scheme (ArtStation-Inspired)**
+
+```css
+:root {
+  --lcars-bg: #000000;             /* Core LCARS black background */
+  --lcars-deep-orange: #c04c00;    /* Industrial orange/red */
+  --lcars-steel-blue: #2a4b6e;     /* Cold steel blue */
+  --lcars-safety-yellow: #e4d000;  /* Alert / warning yellow */
+  --lcars-dark-purple: #3a2954;    /* Subdued purple panel */
+  --lcars-light-gray: #bcbcbc;     /* Text or inactive element gray */
+  --lcars-teal-green: #3a7669;     /* Monitor green/teal accent */
+  --lcars-red-alert: #a80000;      /* Red alert or critical notice */
+  --lcars-text: #ffffff;           /* Standard white text */
+  --lcars-muted-label: #888888;    /* Dimmed labels or inactive elements */
+}
+```
+
+---
+# LCARS - Voy
+---
+
+### 🎨 **LCARS Color Scheme – Image-Inspired (Pinterest Source)**
+
+```css
+:root {
+  --lcars-black: #000000;         /* Background / Terminal black */
+  --lcars-peach: #ffb07c;         /* Soft pastel peach */
+  --lcars-orange: #ff6b1a;        /* Bright burnt orange */
+  --lcars-pink: #ff91af;          /* Bright LCARS pink */
+  --lcars-blue: #4ca4cb;          /* Soft cool blue */
+  --lcars-purple: #a682bd;        /* Lavender / light purple */
+  --lcars-beige: #f5e3c3;         /* Creamy beige / neutral background */
+  --lcars-yellow: #f7ea48;        /* Highlight yellow */
+  --lcars-text-light: #ffffff;    /* White for high contrast */
+  --lcars-text-dark: #1a1a1a;     /* Dark text on light panels */
+}
+```
+
+---
+# LCARS - TNG-E
+---
+
+### 🎨 **LCARS Dark Display Color Palette**
+
+```css
+:root {
+  --lcars-bg: #000000;           /* Primary black background */
+  --lcars-burnt-orange: #d97904; /* Burnt orange panel */
+  --lcars-dusty-rose: #cc5c6f;   /* Muted rose red panel */
+  --lcars-goldenrod: #e6b95a;    /* Soft golden panel */
+  --lcars-mauve: #a084c4;        /* Desaturated mauve-purple */
+  --lcars-slate: #4b4e6d;        /* Dark slate for panels/text */
+  --lcars-white-text: #ffffff;   /* Text on dark panels */
+  --lcars-accent-yellow: #fff275;/* Brighter highlight yellow */
+}
+```
+
+---

@@ -5,15 +5,15 @@
 }
 
 .info {
-  color: #1e90ff;
+  color: var(--infoColor, #1e90ff);
 }
 
 .debug {
-  color: #808080;
+  color: var(--debugColor, #808080);
 }
 
 .trace {
-  color: #d3d3d3;
+  color: var(--traceColor, #d3d3d3);
 }
 
 .warn {

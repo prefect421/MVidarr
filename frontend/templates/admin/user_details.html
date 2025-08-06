@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Details - Admin Dashboard - MVidarr</title>
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='themes.css') }}" id="themes-stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,8 +14,8 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            background: var(--bg-primary, #f8f9fa);
+            color: var(--text-primary, #333);
         }
         
         .header {
@@ -697,6 +698,37 @@
                 hideChangeRoleModal();
             }
         }
+        
+        // Theme management
+        window.currentTheme = window.currentTheme || 'default';
+        window.currentMode = window.currentMode || 'dark';
+        
+        function applyCurrentTheme() {
+            document.documentElement.setAttribute('data-theme', window.currentTheme);
+            document.documentElement.setAttribute('data-mode', window.currentMode);
+        }
+        
+        function loadSavedTheme() {
+            const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
+            window.currentMode = savedDayNightMode || 'dark';
+            
+            fetch('/api/settings/ui_theme')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.value) {
+                        window.currentTheme = data.value;
+                    }
+                    applyCurrentTheme();
+                })
+                .catch(error => {
+                    console.log('Theme setting not found, using default');
+                    applyCurrentTheme();
+                });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedTheme();
+        });
     </script>
 </body>
 </html>

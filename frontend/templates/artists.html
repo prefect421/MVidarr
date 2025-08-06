@@ -222,7 +222,7 @@
                     </div>
                     
                     <div class="bulk-operation">
-                        <button onclick="bulkVideoDiscovery()" class="btn btn-primary">
+                        <button onclick="bulkVideoDiscovery()" class="btn btn-info">
                             🔍 Discover Videos
                         </button>
                         <p class="operation-hint">Search for new videos for all selected artists</p>
@@ -525,12 +525,12 @@ function loadArtists(page = 1) {
                             <h3>${artist.name}</h3>
                             <div class="artist-stats">
                                 <span class="stat">Videos: ${artist.video_count || 0}</span>
-                                <span class="stat ${artist.monitored ? 'monitored' : 'not-monitored'}">
-                                    ${artist.monitored ? 'Monitored' : 'Not Monitored'}
+                                <span class="stat ${artist.monitored ? 'monitored' : 'not-monitored'}" title="${artist.monitored ? 'Monitored' : 'Not Monitored'}">
+                                    ${artist.monitored ? '👁️' : '❌'}
                                 </span>
-                                ${artist.auto_download ? '<span class="stat auto-download">Auto-DL</span>' : ''}
-                                ${artist.has_thumbnail ? '<span class="stat has-thumbnail">📷</span>' : ''}
-                                ${artist.has_imvdb_data ? '<span class="stat has-imvdb">🎵</span>' : ''}
+                                ${artist.auto_download ? '<span class="stat auto-download" title="Auto-Download Enabled">⬇️</span>' : ''}
+                                ${artist.has_thumbnail ? '<span class="stat has-thumbnail" title="Has Thumbnail">📷</span>' : ''}
+                                ${artist.has_imvdb_data ? '<span class="stat has-imvdb" title="Has IMVDB Data">🎵</span>' : ''}
                                 <span class="stat-actions">
                                     <button onclick="viewArtist(${artist.id})" class="btn btn-small btn-icon" title="Edit Artist">
                                         ✏️
@@ -604,10 +604,10 @@ function loadArtists(page = 1) {
                                     <h3>${artist.name}</h3>
                                     <div class="artist-stats">
                                         <span class="stat">Videos: N/A</span>
-                                        <span class="stat ${artist.monitored ? 'monitored' : 'not-monitored'}">
-                                            ${artist.monitored ? 'Monitored' : 'Not Monitored'}
+                                        <span class="stat ${artist.monitored ? 'monitored' : 'not-monitored'}" title="${artist.monitored ? 'Monitored' : 'Not Monitored'}">
+                                            ${artist.monitored ? '👁️' : '❌'}
                                         </span>
-                                        ${artist.auto_download ? '<span class="stat auto-download">Auto-DL</span>' : ''}
+                                        ${artist.auto_download ? '<span class="stat auto-download" title="Auto-Download Enabled">⬇️</span>' : ''}
                                         <span class="stat-actions">
                                             <button onclick="viewArtist(${artist.id})" class="btn btn-small btn-icon" title="Edit Artist">
                                                 ✏️
@@ -1384,11 +1384,11 @@ function handleThumbnailError(img) {
     placeholder.style.cssText = `
         width: 100%;
         height: 100%;
-        background-color: #444;
+        background-color: var(--bg-tertiary, #444);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #aaa;
+        color: var(--text-secondary, #aaa);
         font-size: 0.8rem;
         border-radius: 4px;
     `;
@@ -1885,7 +1885,12 @@ function bulkFolderOrganize() {
             artist_ids: artistIds
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(result => {
         hideBulkProgress();
         if (result.error) {
@@ -1897,7 +1902,7 @@ function bulkFolderOrganize() {
     .catch(error => {
         hideBulkProgress();
         console.error('Error organizing folders:', error);
-        showError('Error organizing folders');
+        showError('Error organizing folders: ' + error.message);
     });
 }
 
@@ -1919,7 +1924,14 @@ function bulkThumbnailScan() {
             artist_ids: artistIds
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json().catch(() => {
+            throw new Error('Invalid JSON response from server');
+        });
+    })
     .then(result => {
         hideBulkProgress();
         if (result.error) {
@@ -2125,7 +2137,12 @@ function bulkValidateMetadata() {
             artist_ids: artistIds
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(result => {
         hideBulkProgress();
         if (result.error) {
@@ -2142,7 +2159,7 @@ function bulkValidateMetadata() {
     .catch(error => {
         hideBulkProgress();
         console.error('Error validating metadata:', error);
-        showError('Error validating metadata');
+        showError('Error validating metadata: ' + error.message);
     });
 }
 
@@ -2268,7 +2285,7 @@ function hideBulkProgress() {
 }
 
 .artists-container h1 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 10px;
     font-size: 2.5rem;
     text-align: center;
@@ -2276,7 +2293,7 @@ function hideBulkProgress() {
 
 .page-description {
     text-align: center;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     margin-bottom: 30px;
     font-size: 1.1rem;
 }
@@ -2286,8 +2303,8 @@ function hideBulkProgress() {
 }
 
 .advanced-search-panel {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 1px solid #444;
+    background: var(--bg-secondary, #2d2d2d);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 25px;
     margin-bottom: 20px;
@@ -2314,18 +2331,18 @@ function hideBulkProgress() {
 .search-input-container input {
     width: 100%;
     padding: 12px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--input-bg, #333);
+    border: 2px solid var(--input-border, #444);
     border-radius: 8px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .search-input-container input:focus {
     outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+    border-color: var(--input-focus, #00d4ff);
+    box-shadow: 0 0 0 3px var(--accent-shadow, rgba(0, 212, 255, 0.2));
 }
 
 .search-suggestions {
@@ -2333,8 +2350,8 @@ function hideBulkProgress() {
     top: 100%;
     left: 0;
     right: 0;
-    background: #333;
-    border: 1px solid #444;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 8px;
     margin-top: 5px;
     max-height: 200px;
@@ -2349,11 +2366,11 @@ function hideBulkProgress() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid var(--border-primary, #444);
 }
 
 .suggestion-item:hover {
-    background: #404040;
+    background: var(--bg-hover, #404040);
 }
 
 .suggestion-item:last-child {
@@ -2361,16 +2378,16 @@ function hideBulkProgress() {
 }
 
 .suggestion-text {
-    color: #fff;
+    color: var(--text-primary, #fff);
 }
 
 .suggestion-type {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-size: 12px;
 }
 
 .advanced-filters {
-    background: #2a2a2a;
+    background: var(--bg-card, #2a2a2a);
     border-radius: 8px;
     padding: 20px;
     margin-top: 15px;
@@ -2393,7 +2410,7 @@ function hideBulkProgress() {
 }
 
 .filter-group label {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 5px;
     font-weight: 500;
 }
@@ -2401,10 +2418,10 @@ function hideBulkProgress() {
 .filter-group input,
 .filter-group select {
     padding: 8px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--input-bg, #333);
+    border: 2px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
     transition: border-color 0.3s ease;
 }
@@ -2412,8 +2429,8 @@ function hideBulkProgress() {
 .filter-group input:focus,
 .filter-group select:focus {
     outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+    border-color: var(--input-focus, #00d4ff);
+    box-shadow: 0 0 0 2px var(--accent-shadow, rgba(0, 212, 255, 0.2));
 }
 
 .filter-actions {
@@ -2444,69 +2461,69 @@ function hideBulkProgress() {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
-    color: #fff;
+    background: var(--text-accent, #00d4ff);
+    color: var(--text-primary, #fff);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #0099cc 0%, #007799 100%);
+    background: var(--accent-secondary, #0099cc);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+    box-shadow: 0 4px 12px var(--accent-shadow, rgba(0, 212, 255, 0.3));
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--success, #28a745) 0%, var(--success-dark, #1e7e34) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-success:hover {
-    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    background: linear-gradient(135deg, var(--success-dark, #1e7e34) 0%, var(--success-darker, #155724) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 4px 12px var(--success-shadow, rgba(40, 167, 69, 0.3));
 }
 
 .btn-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--info, #17a2b8) 0%, var(--info-dark, #117a8b) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-info:hover {
-    background: linear-gradient(135deg, #117a8b 0%, #0c5460 100%);
+    background: linear-gradient(135deg, var(--info-dark, #117a8b) 0%, var(--info-darker, #0c5460) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+    box-shadow: 0 4px 12px var(--info-shadow, rgba(23, 162, 184, 0.3));
 }
 
 .btn-warning {
-    background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
-    color: #000;
+    background: linear-gradient(135deg, var(--warning, #ffc107) 0%, var(--warning-dark, #d39e00) 100%);
+    color: var(--warning-text, #000);
 }
 
 .btn-warning:hover {
-    background: linear-gradient(135deg, #d39e00 0%, #b08800 100%);
+    background: linear-gradient(135deg, var(--warning-dark, #d39e00) 0%, var(--warning-darker, #b08800) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    box-shadow: 0 4px 12px var(--warning-shadow, rgba(255, 193, 7, 0.3));
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--secondary, #6c757d) 0%, var(--secondary-dark, #5a6268) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #5a6268 0%, #484e53 100%);
+    background: linear-gradient(135deg, var(--secondary-dark, #5a6268) 0%, var(--secondary-darker, #484e53) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    box-shadow: 0 4px 12px var(--secondary-shadow, rgba(108, 117, 125, 0.3));
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--danger, #dc3545) 0%, var(--danger-dark, #bd2130) 100%);
+    color: var(--text-primary, #fff);
 }
 
 .btn-danger:hover {
-    background: linear-gradient(135deg, #bd2130 0%, #a01e2a 100%);
+    background: linear-gradient(135deg, var(--danger-dark, #bd2130) 0%, var(--danger-darker, #a01e2a) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 12px var(--danger-shadow, rgba(220, 53, 69, 0.3));
 }
 
 .btn-small {
@@ -2522,8 +2539,8 @@ function hideBulkProgress() {
 }
 
 .filter-count {
-    background: #00d4ff;
-    color: #000;
+    background: var(--text-accent, #00d4ff);
+    color: var(--accent-text, #000);
     padding: 2px 6px;
     border-radius: 10px;
     font-size: 11px;
@@ -2533,13 +2550,13 @@ function hideBulkProgress() {
 }
 
 .btn.active {
-    background: #00d4ff !important;
-    color: #000 !important;
+    background: var(--text-accent, #00d4ff) !important;
+    color: var(--accent-text, #000) !important;
 }
 
 .bulk-actions-toolbar {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 1px solid #444;
+    background: var(--bg-secondary, #2d2d2d);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
@@ -2573,7 +2590,7 @@ function hideBulkProgress() {
 }
 
 .bulk-actions-main {
-    background: #2a2a2a;
+    background: var(--bg-secondary, #2a2a2a);
     border-radius: 6px;
     padding: 6px;
 }
@@ -2593,9 +2610,9 @@ function hideBulkProgress() {
 
 .bulk-tab {
     padding: 6px 12px;
-    background: #333;
-    border: 1px solid #444;
-    color: #ccc;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-primary, #444);
+    color: var(--text-secondary, #ccc);
     cursor: pointer;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -2613,29 +2630,29 @@ function hideBulkProgress() {
 }
 
 .bulk-tab.active {
-    background: #00d4ff;
-    color: #000;
-    border-color: #00d4ff;
+    background: var(--btn-secondary-bg, #666666);
+    color: var(--btn-secondary-text, #ffffff);
+    border-color: var(--btn-secondary-bg, #666666);
 }
 
 .bulk-tab:hover {
-    background: #555;
-    color: #00d4ff;
-    border-color: #00d4ff;
+    background: var(--bg-hover, #555);
+    color: var(--text-accent, #00d4ff);
+    border-color: var(--text-accent, #00d4ff);
 }
 
 .bulk-actions-tabs.compact .bulk-tab:hover {
-    background: #555;
-    color: #00d4ff;
+    background: var(--bg-hover, #555);
+    color: var(--text-accent, #00d4ff);
 }
 
 .bulk-tab:hover {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
 }
 
 .bulk-tab.active {
-    color: #00d4ff;
-    border-bottom-color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
+    border-bottom-color: var(--text-accent, #00d4ff);
 }
 
 .bulk-tab-content {
@@ -2655,8 +2672,8 @@ function hideBulkProgress() {
 }
 
 .bulk-operation {
-    background: #333;
-    border: 1px solid #444;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 6px;
     padding: 10px;
     min-width: 180px;
@@ -2671,12 +2688,12 @@ function hideBulkProgress() {
 }
 
 .bulk-operation.danger {
-    border-color: #dc3545;
-    background: rgba(220, 53, 69, 0.1);
+    border-color: var(--danger, #dc3545);
+    background: var(--danger-bg, rgba(220, 53, 69, 0.1));
 }
 
 .bulk-operation label {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -2686,28 +2703,28 @@ function hideBulkProgress() {
 .bulk-operation input,
 .bulk-operation select {
     padding: 8px;
-    background: #2a2a2a;
-    border: 1px solid #444;
+    background: var(--input-bg, #2a2a2a);
+    border: 1px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
 }
 
 .bulk-operation input:focus,
 .bulk-operation select:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
     box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
 }
 
 .operation-hint {
-    color: #aaa;
+    color: var(--text-secondary, #aaa);
     font-size: 12px;
     margin-top: 5px;
 }
 
 .operation-warning {
-    color: #dc3545;
+    color: var(--danger, #dc3545);
     font-size: 12px;
     margin-top: 5px;
 }
@@ -2727,7 +2744,7 @@ function hideBulkProgress() {
 
 .bulk-progress {
     flex: 1;
-    background: #333;
+    background: var(--bg-tertiary, #333);
     border-radius: 8px;
     padding: 10px;
 }
@@ -2735,7 +2752,7 @@ function hideBulkProgress() {
 .progress-bar {
     width: 100%;
     height: 6px;
-    background: #444;
+    background: var(--bg-hover, #444);
     border-radius: 3px;
     overflow: hidden;
     margin-bottom: 5px;
@@ -2743,13 +2760,13 @@ function hideBulkProgress() {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #00d4ff, #0099cc);
+    background: linear-gradient(90deg, var(--text-accent, #00d4ff), var(--accent-secondary, #0099cc));
     width: 0%;
     transition: width 0.3s ease;
 }
 
 .progress-text {
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     font-size: 12px;
 }
 
@@ -2759,12 +2776,12 @@ function hideBulkProgress() {
     align-items: center;
     margin-bottom: 20px;
     padding: 10px;
-    background: #2a2a2a;
+    background: var(--bg-card, #2a2a2a);
     border-radius: 8px;
 }
 
 .results-summary {
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .sort-controls {
@@ -2774,16 +2791,16 @@ function hideBulkProgress() {
 
 .sort-controls select {
     padding: 6px 10px;
-    background: #333;
-    border: 1px solid #444;
+    background: var(--input-bg, #333);
+    border: 1px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 13px;
 }
 
 .sort-controls select:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
 }
 
 .artists-grid {
@@ -2798,8 +2815,8 @@ function hideBulkProgress() {
 }
 
 .artist-card {
-    background: #333;
-    border: 1px solid #444;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 15px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -2812,7 +2829,7 @@ function hideBulkProgress() {
 }
 
 .artist-card.selected {
-    border-color: #00d4ff;
+    border-color: var(--text-accent, #00d4ff);
     box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.3);
 }
 
@@ -2826,7 +2843,7 @@ function hideBulkProgress() {
 .artist-selection-overlay input[type="checkbox"] {
     width: 18px;
     height: 18px;
-    accent-color: #00d4ff;
+    accent-color: var(--text-accent, #00d4ff);
 }
 
 .artist-thumbnail {
@@ -2835,7 +2852,7 @@ function hideBulkProgress() {
     margin-bottom: 15px;
     overflow: hidden;
     border-radius: 8px;
-    background: #444;
+    background: var(--bg-hover, #444);
 }
 
 .artist-thumbnail img {
@@ -2845,7 +2862,7 @@ function hideBulkProgress() {
 }
 
 .artist-info h3 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 10px;
     font-size: 1.2rem;
 }
@@ -2858,40 +2875,40 @@ function hideBulkProgress() {
 }
 
 .stat {
-    background: #444;
+    background: var(--bg-hover, #444);
     padding: 3px 8px;
     border-radius: 12px;
     font-size: 11px;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .stat.monitored {
-    background: #28a745;
-    color: #fff;
+    background: var(--success, #28a745);
+    color: var(--text-primary, #fff);
 }
 
 .stat.not-monitored {
-    background: #dc3545;
-    color: #fff;
+    background: var(--danger, #dc3545);
+    color: var(--text-primary, #fff);
 }
 
 .stat.auto-download {
-    background: #17a2b8;
-    color: #fff;
+    background: var(--info, #17a2b8);
+    color: var(--text-primary, #fff);
 }
 
 .stat.has-thumbnail {
-    background: #ffc107;
-    color: #000;
+    background: var(--warning, #ffc107);
+    color: var(--warning-text, #000);
 }
 
 .stat.has-imvdb {
-    background: #00d4ff;
-    color: #000;
+    background: var(--text-accent, #00d4ff);
+    color: var(--accent-text, #000);
 }
 
 .last-discovery {
-    color: #aaa;
+    color: var(--text-secondary, #aaa);
     font-size: 12px;
     margin-top: 5px;
 }
@@ -2940,15 +2957,15 @@ function hideBulkProgress() {
 }
 
 .pagination .btn.active {
-    background: #00d4ff !important;
-    color: #000 !important;
+    background: var(--text-accent, #00d4ff) !important;
+    color: var(--accent-text, #000) !important;
 }
 
 .no-results,
 .error-message {
     text-align: center;
     padding: 60px 20px;
-    color: #888;
+    color: var(--text-muted, #888);
 }
 
 .modal {
@@ -2963,14 +2980,14 @@ function hideBulkProgress() {
 }
 
 .modal-content {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    background: var(--bg-secondary, #2d2d2d);
     margin: 5% auto;
     padding: 20px;
-    border: 1px solid #444;
+    border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     width: 90%;
     max-width: 600px;
-    color: #fff;
+    color: var(--text-primary, #fff);
     max-height: 80vh;
     overflow-y: auto;
 }
@@ -2980,12 +2997,12 @@ function hideBulkProgress() {
 }
 
 .modal-content h2 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 20px;
 }
 
 .close {
-    color: #aaa;
+    color: var(--text-secondary, #aaa);
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -2994,7 +3011,7 @@ function hideBulkProgress() {
 }
 
 .close:hover {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
 }
 
 .add-artist-search-section,
@@ -3004,7 +3021,7 @@ function hideBulkProgress() {
 
 .add-artist-search-section h3,
 .add-artist-manual-section h3 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 15px;
 }
 
@@ -3017,21 +3034,21 @@ function hideBulkProgress() {
 .search-container input {
     flex: 1;
     padding: 10px;
-    background: #333;
-    border: 1px solid #444;
+    background: var(--input-bg, #333);
+    border: 1px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
 }
 
 .search-container input:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
 }
 
 .search-results {
     max-height: 300px;
     overflow-y: auto;
-    background: #2a2a2a;
+    background: var(--bg-card, #2a2a2a);
     border-radius: 8px;
     padding: 15px;
 }
@@ -3042,7 +3059,7 @@ function hideBulkProgress() {
 
 .form-group label {
     display: block;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 5px;
     font-weight: 500;
 }
@@ -3051,17 +3068,17 @@ function hideBulkProgress() {
 .form-group select {
     width: 100%;
     padding: 10px;
-    background: #333;
-    border: 1px solid #444;
+    background: var(--input-bg, #333);
+    border: 1px solid var(--input-border, #444);
     border-radius: 6px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
     box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
 }
 
@@ -3079,11 +3096,11 @@ function hideBulkProgress() {
 .thumbnail-placeholder {
     width: 100%;
     height: 100%;
-    background-color: #444;
+    background-color: var(--bg-hover, #444);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #aaa;
+    color: var(--text-secondary, #aaa);
     font-size: 0.8rem;
     border-radius: 4px;
 }

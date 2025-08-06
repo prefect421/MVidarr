@@ -33,6 +33,7 @@
     <meta name="apple-mobile-web-app-title" content="MVidarr">
     
     <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='main.css') }}" id="main-theme">
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='themes.css') }}" id="themes-stylesheet">
     <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
     <!-- Test if Iconify works at all -->
     <script>
@@ -68,20 +69,20 @@
         }
         
         .genre-tag {
-            background-color: #e3f2fd;
-            color: #1976d2;
+            background-color: var(--bg-tertiary, #e3f2fd);
+            color: var(--text-accent, #1976d2);
             padding: 0.25rem 0.5rem;
             border-radius: 0.5rem;
             font-size: 0.875rem;
             font-weight: 500;
-            border: 1px solid #bbdefb;
+            border: 1px solid var(--border-secondary, #bbdefb);
             transition: all 0.2s ease;
         }
         
         .genre-tag:hover {
-            background-color: #bbdefb;
+            background-color: var(--bg-hover, #bbdefb);
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px var(--shadow, rgba(0, 0, 0, 0.1));
         }
         
         /* Apply Bauhaus styling to common elements */
@@ -99,10 +100,10 @@
             position: absolute;
             top: calc(100% - 2px);  /* Small overlap to prevent gaps */
             left: 0;
-            background-color: #2d2d2d;
-            border: 1px solid #444;
+            background-color: var(--bg-secondary, #2d2d2d);
+            border: 1px solid var(--border-primary, #444);
             border-radius: 4px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 6px var(--shadow, rgba(0, 0, 0, 0.3));
             min-width: 180px;
             z-index: 1500;
             padding: 8px 0;
@@ -117,14 +118,14 @@
         .nav-dropdown-menu a {
             display: block;
             padding: 8px 16px;
-            color: #ccc;
+            color: var(--text-secondary, #ccc);
             text-decoration: none;
             transition: background-color 0.2s;
         }
         
         .nav-dropdown-menu a:hover {
-            background-color: #444;
-            color: #00d4ff;
+            background-color: var(--nav-hover, #444);
+            color: var(--nav-active, #00d4ff);
         }
         
         /* Improved hover behavior with transition delay */
@@ -157,26 +158,26 @@
         
         /* Light Theme */
         body.light-theme {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
+            background: linear-gradient(135deg, var(--light-bg-gradient-start, #667eea) 0%, var(--light-bg-gradient-end, #764ba2) 100%);
+            color: var(--light-text-primary, #333);
         }
         
         body.light-theme .navbar {
-            background-color: #aaaabb;
-            border-bottom: 1px solid #9999aa;
+            background-color: var(--light-navbar-bg, #aaaabb);
+            border-bottom: 1px solid var(--light-navbar-border, #9999aa);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         body.light-theme .nav-logo a {
-            color: #333;
+            color: var(--light-text-primary, #333);
         }
         
         body.light-theme .nav-menu li a {
-            color: #666;
+            color: var(--light-text-secondary, #666);
         }
         
         body.light-theme .nav-menu li a:hover {
-            color: #667eea;
+            color: var(--light-accent-primary, #667eea);
             background-color: rgba(102, 126, 234, 0.1);
         }
         
@@ -201,75 +202,6 @@
             font-size: 1rem;
         }
         
-        /* Theme Slider Styles */
-        .theme-slider-container {
-            display: flex !important;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        
-        .theme-slider-container:hover {
-            background-color: var(--hover-color, rgba(255, 255, 255, 0.1));
-        }
-        
-        .theme-slider-container .sidebar-text {
-            flex: 1;
-            margin: 0;
-        }
-        
-        .theme-slider {
-            width: 48px;
-            height: 24px;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            border-radius: 12px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        .theme-slider.light-mode {
-            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-        }
-        
-        .theme-slider-track {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            border-radius: 12px;
-        }
-        
-        .theme-slider-thumb {
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .theme-slider.light-mode .theme-slider-thumb {
-            transform: translateX(20px);
-        }
-        
-        /* Compact theme slider in user menu */
-        .sidebar-user-menu .theme-slider.light-mode .theme-slider-thumb {
-            transform: translateX(18px);
-        }
-        
-        .theme-slider-thumb iconify-icon {
-            font-size: 12px;
-            color: #374151;
-        }
         
         /* Dark theme adjustments */
 		body .main-content {
@@ -280,10 +212,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 		
-        /* Light theme adjustments */  
-        body.light-theme .theme-slider-container:hover {
-            background-color: rgba(0, 0, 0, 0.1);
-        }
         
         /* Theme section positioning */
         .sidebar-theme-section {
@@ -303,17 +231,17 @@
         }
         
         .sidebar-logout-item {
-            color: #ff6b6b !important;
+            color: var(--danger-light, #ff6b6b) !important;
             transition: all 0.2s ease;
         }
         
         .sidebar-logout-item:hover {
-            background-color: rgba(255, 107, 107, 0.1) !important;
-            color: #ff5252 !important;
+            background-color: var(--danger-bg, rgba(255, 107, 107, 0.1)) !important;
+            color: var(--danger-hover, #ff5252) !important;
         }
         
         .sidebar-logout-item .sidebar-icon {
-            color: #ff6b6b;
+            color: var(--danger-light, #ff6b6b);
         }
         
         /* Light theme logout styling */
@@ -322,15 +250,15 @@
         }
         
         body.light-theme .sidebar-logout-item {
-            color: #d32f2f !important;
+            color: var(--light-danger, #d32f2f) !important;
         }
         
         body.light-theme .sidebar-logout-item:hover {
-            background-color: rgba(211, 47, 47, 0.1) !important;
+            background-color: var(--light-danger-bg, rgba(211, 47, 47, 0.1)) !important;
         }
         
         body.light-theme .sidebar-logout-item .sidebar-icon {
-            color: #d32f2f;
+            color: var(--light-danger, #d32f2f);
         }
         
         /* Sidebar toggle icon styling */
@@ -350,31 +278,31 @@
         /* Theme toggle button inherits light theme sidebar item styling */
         
         body.light-theme .main-content {
-            background: rgba(255, 255, 255, 0.4);
+            background: var(--bg-primary, rgba(255, 255, 255, 0.4));
             border-radius: 12px;
             margin: 1rem;
             margin-top: calc(60px + 1rem); /* Account for fixed header height + margin */
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px var(--shadow, rgba(0,0,0,0.1));
         }
         
         body.light-theme .footer {
-            background-color: #667eea;
-            color: #fff;
+            background-color: var(--nav-active, #667eea);
+            color: var(--text-inverse, #fff);
         }
         
         /* Light theme cards and components */
         body.light-theme .artists-actions,
         body.light-theme .videos-actions {
-            background: white;
-            border: 1px solid #e1e5e9;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: var(--bg-card, white);
+            border: 1px solid var(--border-primary, #e1e5e9);
+            box-shadow: 0 2px 4px var(--shadow, rgba(0, 0, 0, 0.1));
             border-radius: 8px;
         }
         
         body.light-theme .advanced-search-panel {
-            background: white;
-            border: 1px solid #e1e5e9;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: var(--bg-card, white);
+            border: 1px solid var(--border-primary, #e1e5e9);
+            box-shadow: 0 2px 8px var(--shadow, rgba(0, 0, 0, 0.1));
         }
         
         body.light-theme .advanced-search-panel:hover {
@@ -382,54 +310,54 @@
         }
         
         body.light-theme .search-results-info {
-            background: white;
-            border: 1px solid #e1e5e9;
-            color: #333;
+            background: var(--light-card-bg, white);
+            border: 1px solid var(--light-border, #e1e5e9);
+            color: var(--light-text-primary, #333);
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         body.light-theme .pagination-container {
-            background: white;
-            border: 1px solid #e1e5e9;
+            background: var(--light-card-bg, white);
+            border: 1px solid var(--light-border, #e1e5e9);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         body.light-theme .pagination-info {
-            color: #333;
+            color: var(--light-text-primary, #333);
         }
         
         body.light-theme .artist-selection-overlay input[type="checkbox"] {
-            accent-color: #667eea;
+            accent-color: var(--light-accent-primary, #667eea);
         }
         
         body.light-theme .artist-card,
         body.light-theme .video-card {
-            background: white;
-            border: 1px solid #e1e5e9;
-            color: #333;
+            background: var(--light-card-bg, white);
+            border: 1px solid var(--light-border, #e1e5e9);
+            color: var(--light-text-primary, #333);
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         
         body.light-theme .artist-card:hover,
         body.light-theme .video-card:hover {
-            background: #f0f0ff;
-            border-color: #667eea;
+            background: var(--light-bg-hover, #f0f0ff);
+            border-color: var(--light-accent-primary, #667eea);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
             transform: translateY(-2px);
         }
         
         body.light-theme .artist-card h3,
         body.light-theme .video-card h3 {
-            color: #667eea;
+            color: var(--light-accent-primary, #667eea);
         }
         
         body.light-theme .filter-group input,
         body.light-theme .filter-group select {
-            background: #fff;
-            border: 2px solid #e1e5e9;
-            color: #333;
+            background: var(--light-input-bg, #fff);
+            border: 2px solid var(--light-input-border, #e1e5e9);
+            color: var(--light-input-text, #333);
             border-radius: 8px;
             padding: 0.75rem;
             transition: border-color 0.3s;
@@ -437,51 +365,20 @@
         
         body.light-theme .filter-group input:focus,
         body.light-theme .filter-group select:focus {
-            border-color: #667eea;
+            border-color: var(--light-accent-primary, #667eea);
             box-shadow: none;
             outline: none;
         }
         
         body.light-theme .filter-group label {
-            color: #333;
+            color: var(--light-text-primary, #333);
         }
         
-        body.light-theme .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-        }
+        /* Button styles now handled by CSS variables in themes.css */
         
-        body.light-theme .btn-primary:hover {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
-        }
+        /* Additional light theme overrides removed - now handled by CSS variables */
         
-        body.light-theme .btn-secondary {
-            background: white;
-            border: 2px solid #e1e5e9;
-            color: #333;
-            border-radius: 8px;
-        }
-        
-        body.light-theme .btn-secondary:hover {
-            background: #f0f0ff;
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.15);
-        }
-        
-        body.light-theme .genre-tag {
-            background-color: rgba(102, 126, 234, 0.1);
-            color: #667eea;
-            border: 1px solid rgba(102, 126, 234, 0.3);
-        }
-        
-        body.light-theme .genre-tag:hover {
-            background-color: rgba(102, 126, 234, 0.2);
-            color: #5a67d8;
-        }
+        /* Genre tag hover now handled by CSS variables */
         
         /* User info section styling - compact and interactive */
         .sidebar-user-info {
@@ -537,17 +434,17 @@
         }
         
         body.light-theme .sidebar-username {
-            color: #333;
+            color: var(--light-text-primary, #333);
         }
         
         body.light-theme .sidebar-user-role {
-            color: #666;
+            color: var(--light-text-secondary, #666);
         }
         
         /* Light theme sidebar */
         body.light-theme .sidebar {
-            background: #ddddff;
-            border-right: 1px solid #e1e5e9;
+            background: var(--light-sidebar-bg, #ddddff);
+            border-right: 1px solid var(--light-border-primary, #e1e5e9);
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
         
@@ -556,20 +453,20 @@
         }
         
         body.light-theme .sidebar-logo a {
-            color: #667eea;
+            color: var(--light-accent-primary, #667eea);
         }
         
         body.light-theme .sidebar-item {
-            color: #333;
+            color: var(--light-text-primary, #333);
         }
         
         body.light-theme .sidebar-item:hover {
             background-color: rgba(102, 126, 234, 0.1);
-            color: #667eea;
+            color: var(--light-accent-primary, #667eea);
         }
         
         body.light-theme .sidebar-item.active {
-            background-color: #667eea;
+            background-color: var(--light-accent-primary, #667eea);
             color: white;
         }
         
@@ -585,9 +482,9 @@
         body.light-theme input,
         body.light-theme select,
         body.light-theme textarea {
-            background: white;
-            border: 2px solid #e1e5e9;
-            color: #333;
+            background: var(--light-input-bg, white);
+            border: 2px solid var(--light-input-border, #e1e5e9);
+            color: var(--light-input-text, #333);
             border-radius: 8px;
             padding: 0.75rem;
             transition: border-color 0.3s;
@@ -596,7 +493,7 @@
         body.light-theme input:focus,
         body.light-theme select:focus,
         body.light-theme textarea:focus {
-            border-color: #667eea;
+            border-color: var(--light-accent-primary, #667eea);
             box-shadow: none;
             outline: none;
         }
@@ -624,22 +521,27 @@
         
         /* Light theme user menu */
         body.light-theme .sidebar-user-menu .sidebar-user-item {
-            color: #333;
+            color: var(--light-text-primary, #333);
         }
         
         body.light-theme .sidebar-user-menu .sidebar-user-item:hover {
             background-color: rgba(102, 126, 234, 0.1);
-            color: #667eea;
+            color: var(--light-accent-primary, #667eea);
         }
         
         /* Version display styling */
         .version-display {
-            border-top: 1px solid #333;
+            color: var(--text-muted, #888) !important;
         }
         
         body.light-theme .version-display {
-            color: #666 !important;
-            border-top-color: rgba(0, 0, 0, 0.1) !important;
+            color: var(--text-muted, #666) !important;
+        }
+        
+        .sidebar-bottom-section {
+            margin-top: auto;
+            border-top: 1px solid var(--border-primary, #444);
+            padding-top: 0.5rem;
         }
         
         /* Universal Search Styles */
@@ -669,7 +571,7 @@
             top: 50%;
             transform: translateY(-50%);
             font-size: 1.25rem;
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
             pointer-events: none;
         }
         
@@ -686,7 +588,7 @@
         
         .universal-search-input:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: var(--search-focus-border, #3b82f6);
             background: rgba(255, 255, 255, 0.1);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
@@ -697,8 +599,8 @@
         }
         
         body.light-theme .universal-search-input:focus {
-            border-color: #3b82f6;
-            background: #fff;
+            border-color: var(--light-search-focus-border, #3b82f6);
+            background: var(--light-input-bg, #fff);
         }
         
         .universal-search-clear {
@@ -708,7 +610,7 @@
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
             cursor: pointer;
             padding: 0.25rem;
             border-radius: 0.25rem;
@@ -717,7 +619,7 @@
         }
         
         .universal-search-clear:hover {
-            color: #ef4444;
+            color: var(--danger, #ef4444);
         }
         
         .universal-search-results {
@@ -748,7 +650,7 @@
             justify-content: center;
             gap: 0.5rem;
             padding: 2rem;
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
         }
         
         .spinning {
@@ -780,7 +682,7 @@
             font-weight: 600;
             font-size: 0.875rem;
             background: rgba(255, 255, 255, 0.05);
-            color: #9ca3af;
+            color: var(--text-secondary, #9ca3af);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -792,7 +694,7 @@
         .universal-search-section-count {
             margin-left: auto;
             background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
+            color: var(--search-accent, #3b82f6);
             padding: 0.125rem 0.5rem;
             border-radius: 1rem;
             font-size: 0.75rem;
@@ -831,7 +733,7 @@
         
         .universal-search-result-icon {
             font-size: 1.25rem;
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
             flex-shrink: 0;
         }
         
@@ -851,7 +753,7 @@
         
         .universal-search-result-subtitle {
             font-size: 0.875rem;
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -859,7 +761,7 @@
         
         .universal-search-result-action {
             background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
+            color: var(--search-accent, #3b82f6);
             border: none;
             padding: 0.375rem 0.75rem;
             border-radius: 0.375rem;
@@ -881,7 +783,7 @@
             justify-content: center;
             gap: 0.5rem;
             padding: 3rem 2rem;
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
             text-align: center;
         }
         
@@ -910,7 +812,7 @@
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid rgba(59, 130, 246, 0.3);
             border-radius: 0.5rem;
-            color: #3b82f6;
+            color: var(--search-accent, #3b82f6);
             font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
@@ -948,22 +850,22 @@
             left: 0;
             right: 0;
             z-index: 999;
-            background: #2d2d2d;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--top-bar-bg, #2d2d2d);
+            border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
             padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 1rem;
             transition: left 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px var(--shadow, rgba(0, 0, 0, 0.2));
             height: 60px;
         }
         
         body.light-theme .app-header {
-            background: #ddddff;
-            border-bottom-color: rgba(0, 0, 0, 0.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            background: var(--top-bar-bg, #ddddff);
+            border-bottom-color: var(--border-primary, rgba(0, 0, 0, 0.1));
+            box-shadow: 0 4px 15px var(--shadow, rgba(0, 0, 0, 0.08));
         }
         
         /* Dynamic width based on sidebar state */
@@ -1011,39 +913,39 @@
         .app-header .universal-search-input {
             padding: 0.5rem 2.5rem 0.5rem 2.5rem;
             font-size: 0.875rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: var(--search-bar-bg, rgba(255, 255, 255, 0.05));
+            border: 2px solid var(--border-secondary, rgba(255, 255, 255, 0.1));
             color: inherit;
         }
         
         .app-header .universal-search-input::placeholder {
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
         }
         
         .app-header .universal-search-input:focus {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: #3b82f6;
+            background: var(--input-bg, rgba(255, 255, 255, 0.1));
+            border-color: var(--border-focus, #3b82f6);
             color: inherit;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px var(--border-focus-shadow, rgba(59, 130, 246, 0.1));
         }
         
         .app-header .universal-search-icon {
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
         }
         
         .app-header .universal-search-clear {
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
         }
         
         .app-header .universal-search-clear:hover {
-            color: #ef4444;
+            color: var(--danger, #ef4444);
         }
         
         /* Light theme search adjustments */
         body.light-theme .app-header .universal-search-input {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.25);
-            color: white;
+            background: var(--search-bar-bg, rgba(255, 255, 255, 0.15));
+            border-color: var(--border-secondary, rgba(255, 255, 255, 0.25));
+            color: var(--text-primary, white);
         }
         
         body.light-theme .app-header .universal-search-input::placeholder {
@@ -1051,10 +953,10 @@
         }
         
         body.light-theme .app-header .universal-search-input:focus {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+            background: var(--input-bg, rgba(255, 255, 255, 0.25));
+            border-color: var(--border-focus, rgba(255, 255, 255, 0.5));
+            color: var(--text-primary, white);
+            box-shadow: 0 0 0 3px var(--border-focus-shadow, rgba(255, 255, 255, 0.1));
         }
         
         body.light-theme .app-header .universal-search-icon {
@@ -1134,7 +1036,7 @@
             height: 2rem;
             border-radius: 50%;
             background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
+            color: var(--search-accent, #3b82f6);
             border: 1px solid rgba(59, 130, 246, 0.3);
         }
         
@@ -1163,7 +1065,7 @@
         
         .header-user-role {
             font-size: 0.75rem;
-            color: #6b7280;
+            color: var(--text-muted, #6b7280);
             line-height: 1.2;
         }
         
@@ -1192,7 +1094,7 @@
         
         .header-logout-button:hover {
             background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
+            color: var(--danger, #ef4444);
             transform: translateY(-1px);
         }
         
@@ -1203,7 +1105,7 @@
         
         body.light-theme .header-logout-button:hover {
             background: rgba(239, 68, 68, 0.3);
-            color: #ef4444;
+            color: var(--danger, #ef4444);
         }
         
         .header-logout-button iconify-icon {
@@ -1326,8 +1228,8 @@
             
             <!-- Theme Toggle - Always visible at bottom of sidebar -->
             <!-- Version Display -->
-            <div class="sidebar-bottom-section" style="margin-top: auto; border-top: 1px solid #444; padding-top: 1rem;">
-                <div class="version-display" style="padding: 0.5rem 0.75rem; color: #888; font-size: 0.75rem;">
+            <div class="sidebar-bottom-section">
+                <div class="version-display" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">
                     <span id="versionInfo">Loading...</span>
                 </div>
             </div>
@@ -1405,16 +1307,6 @@
         </div>
         
         <div class="header-right">
-            <!-- Theme Toggle -->
-            <div class="header-theme-toggle" onclick="toggleDayNightMode()" style="cursor: pointer;" title="Toggle Theme">
-                <div class="theme-slider" id="headerThemeSlider" style="width: 40px; height: 20px;">
-                    <div class="theme-slider-track">
-                        <div class="theme-slider-thumb" style="width: 16px; height: 16px; top: 2px; left: 2px;">
-                            <iconify-icon icon="tabler:moon" id="headerThemeSliderIcon" style="font-size: 10px;"></iconify-icon>
-                        </div>
-                    </div>
-                </div>
-            </div>
             
             <!-- User Info Section -->
             <div class="header-user-section" id="headerUserSection" style="display: flex;">
@@ -1481,99 +1373,97 @@
             if (bauhausTheme) bauhausTheme.disabled = true;
         }
         
-        // Day/Night Mode Toggle
-        function toggleDayNightMode() {
-            const body = document.body;
-            const toggleSlider = document.getElementById('themeSlider');
-            const toggleIcon = document.getElementById('themeSliderIcon');
-            
-            if (body.classList.contains('light-theme')) {
-                // Switch to dark theme (default)
-                body.classList.remove('light-theme');
-                body.classList.remove('bauhaus-theme');
-                body.className = body.className.replace(/\btheme-\w+/g, '');
-                
-                // Remove theme.park stylesheet
-                const existingThemeLink = document.getElementById('theme-stylesheet');
-                if (existingThemeLink) {
-                    existingThemeLink.remove();
-                }
-                
-                // Enable default theme
-                const mainTheme = document.getElementById('main-theme');
-                const bauhausTheme = document.getElementById('bauhaus-theme');
-                if (mainTheme) mainTheme.disabled = false;
-                if (bauhausTheme) bauhausTheme.disabled = true;
-                
-                // Update slider to dark mode
-                if (toggleSlider) toggleSlider.classList.remove('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
-                localStorage.setItem('mvidarr-daynight-mode', 'dark');
-            } else {
-                // Switch to light theme
-                body.classList.remove('bauhaus-theme');
-                body.className = body.className.replace(/\btheme-\w+/g, '');
-                body.classList.add('light-theme');
-                
-                // Remove theme.park stylesheet
-                const existingThemeLink = document.getElementById('theme-stylesheet');
-                if (existingThemeLink) {
-                    existingThemeLink.remove();
-                }
-                
-                // Enable main theme for light mode
-                const mainTheme = document.getElementById('main-theme');
-                const bauhausTheme = document.getElementById('bauhaus-theme');
-                if (mainTheme) mainTheme.disabled = false;
-                if (bauhausTheme) bauhausTheme.disabled = true;
-                
-                // Update slider to light mode
-                if (toggleSlider) toggleSlider.classList.add('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
-                localStorage.setItem('mvidarr-daynight-mode', 'light');
-            }
-        }
-        // Light/Dark Mode Toggle Functions
-        function toggleDayNight() {
-            const body = document.body;
-            const toggleSlider = document.getElementById('themeSlider');
-            const toggleIcon = document.getElementById('themeSliderIcon');
-            
-            if (body.classList.contains('light-theme')) {
-                // Switch to dark mode (default)
-                body.classList.remove('light-theme');
-                
-                // Update slider to dark mode
-                if (toggleSlider) toggleSlider.classList.remove('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
-                localStorage.setItem('mvidarr-daynight-mode', 'dark');
-            } else {
-                // Switch to light mode
-                body.classList.add('light-theme');
-                
-                // Update slider to light mode
-                if (toggleSlider) toggleSlider.classList.add('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
-                localStorage.setItem('mvidarr-daynight-mode', 'light');
-            }
-        }
 
-        // Load saved day/night mode on page load
+        // Enhanced Theme Management System
+        // Use global variables to avoid redeclaration conflicts
+        window.currentTheme = window.currentTheme || 'default';
+        
+        // Load saved theme and mode on page load
         document.addEventListener('DOMContentLoaded', function() {
-            const savedDayNightMode = localStorage.getItem('mvidarr-daynight-mode');
+            loadSavedTheme();
+            initializeThemeSystem();
+        });
+        
+        function loadSavedTheme() {
+            
+            // Load saved theme using themes API
+            fetch('/api/themes/current')
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else if (response.status === 404) {
+                        // Theme not set yet, use default
+                        return null;
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                })
+                .then(data => {
+                    if (data && data.current_theme) {
+                        window.currentTheme = data.current_theme;
+                        loadThemeVariables(data.current_theme);
+                    } else {
+                        applyCurrentTheme();
+                    }
+                })
+                .catch(error => {
+                    console.log('Current theme not found, using default');
+                    applyCurrentTheme();
+                });
+        }
+        
+        // Load theme CSS variables
+        async function loadThemeVariables(themeId) {
+            try {
+                // First try to get it as a custom theme
+                let response = await fetch(`/api/themes/${themeId}`);
+                
+                if (response.ok) {
+                    const themeData = await response.json();
+                    if (themeData.theme_data) {
+                        Object.entries(themeData.theme_data).forEach(([cssVar, value]) => {
+                            document.documentElement.style.setProperty(cssVar, value);
+                        });
+                    }
+                } else {
+                    // Try as built-in theme
+                    response = await fetch(`/api/themes/built-in/${themeId}/extract`, {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        const extractData = await response.json();
+                        if (extractData.variables) {
+                            Object.entries(extractData.variables).forEach(([cssVar, value]) => {
+                                document.documentElement.style.setProperty(cssVar, value);
+                            });
+                        }
+                    }
+                }
+                
+                applyCurrentTheme();
+                
+            } catch (error) {
+                console.error('Failed to load theme variables:', error);
+                applyCurrentTheme();
+            }
+        }
+        
+        function initializeThemeSystem() {
             const toggleBtn = document.getElementById('themeSlider');
             const toggleIcon = document.getElementById('themeSliderIcon');
             
-            // Apply saved day/night mode
-            if (savedDayNightMode === 'light') {
-                document.body.classList.add('light-theme');
-                if (toggleBtn) toggleBtn.classList.add('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:sun');
-            } else {
-                if (toggleBtn) toggleBtn.classList.remove('light-mode');
-                if (toggleIcon) toggleIcon.setAttribute('icon', 'tabler:moon');
+        }
+        
+        function applyCurrentTheme() {
+            // Apply theme data attributes to document
+            document.documentElement.setAttribute('data-theme', window.currentTheme);
+            
+            // Update settings page preview if it exists
+            if (typeof updateThemePreviewMode === 'function') {
+                updateThemePreviewMode();
             }
-        });
+        }
         
         // User Authentication and Menu Management
         function checkUserAuthentication() {
@@ -2238,22 +2128,6 @@
         // Header functionality
         function initializeHeader() {
             // Synchronize header theme slider with main theme slider
-            const headerThemeSlider = document.getElementById('headerThemeSlider');
-            const headerThemeIcon = document.getElementById('headerThemeSliderIcon');
-            
-            if (headerThemeSlider && headerThemeIcon) {
-                // Update header theme slider to match current theme
-                updateHeaderThemeSlider();
-                
-                // Override the toggleDayNightMode function to update both sliders
-                const originalToggle = window.toggleDayNightMode;
-                window.toggleDayNightMode = function() {
-                    if (originalToggle) {
-                        originalToggle();
-                    }
-                    updateHeaderThemeSlider();
-                };
-            }
             
             // Header user menu dropdown functionality
             const headerUserMenu = document.getElementById('headerUserMenu');
@@ -2307,23 +2181,6 @@
             }
         }
         
-        function updateHeaderThemeSlider() {
-            const headerThemeSlider = document.getElementById('headerThemeSlider');
-            const headerThemeIcon = document.getElementById('headerThemeSliderIcon');
-            
-            if (!headerThemeSlider || !headerThemeIcon) return;
-            
-            const isLightTheme = document.body.classList.contains('light-theme');
-            const thumb = headerThemeSlider.querySelector('.theme-slider-thumb');
-            
-            if (isLightTheme) {
-                thumb.style.left = '22px';
-                headerThemeIcon.setAttribute('icon', 'tabler:sun');
-            } else {
-                thumb.style.left = '2px';
-                headerThemeIcon.setAttribute('icon', 'tabler:moon');
-            }
-        }
         
         function updateHeaderUserSection() {
             const headerUserSection = document.getElementById('headerUserSection');

@@ -16,8 +16,8 @@
 }
 
 .btn-clear, .btn-search {
-    background: #dc3545;
-    color: white;
+    background: var(--btn-danger-bg, #dc3545);
+    color: var(--btn-danger-text, white);
     border: none;
     padding: 6px 8px;
     border-radius: 4px;
@@ -31,41 +31,41 @@
 }
 
 .btn-search {
-    background: #007bff;
+    background: var(--btn-primary-bg, #007bff);
 }
 
 .btn-clear:hover {
-    background: #c82333;
+    background: var(--btn-danger-hover, #c82333);
 }
 
 .btn-search:hover {
-    background: #0056b3;
+    background: var(--btn-primary-hover, #0056b3);
 }
 
 .imvdb-search-results {
     max-height: 400px;
     overflow-y: auto;
     border-radius: 6px;
-    border: 1px solid #333;
-    background: #1a1a1a;
+    border: 1px solid var(--border-secondary, #333);
+    background: var(--bg-primary, #1a1a1a);
 }
 
 .imvdb-result-item {
     padding: 16px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-secondary, #333);
     cursor: pointer;
     transition: all 0.2s ease;
-    background: #222;
+    background: var(--bg-secondary, #222);
     margin-bottom: 2px;
     border-radius: 4px;
-    color: #e0e0e0;
+    color: var(--text-secondary, #e0e0e0);
 }
 
 .imvdb-result-item:hover {
-    background: #2a2a2a;
-    border-color: #00d4ff;
+    background: var(--bg-hover, #2a2a2a);
+    border-color: var(--text-accent, #00d4ff);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 212, 255, 0.1);
+    box-shadow: 0 4px 8px var(--accent-shadow, rgba(0, 212, 255, 0.1));
 }
 
 .imvdb-result-item:last-child {
@@ -80,22 +80,22 @@
 }
 
 .result-info strong {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-weight: 600;
     font-size: 1.1em;
 }
 
 .result-id {
     font-size: 0.9em;
-    color: #888;
-    background: #333;
+    color: var(--text-muted, #888);
+    background: var(--bg-tertiary, #333);
     padding: 2px 8px;
     border-radius: 12px;
     font-weight: 500;
 }
 
 .result-description {
-    color: #b0b0b0;
+    color: var(--text-secondary, #b0b0b0);
     font-size: 0.9em;
     margin-top: 4px;
     line-height: 1.4;
@@ -110,22 +110,22 @@
 }
 
 .result-number {
-    color: #666;
+    color: var(--text-muted, #666);
     font-weight: 500;
-    background: #2a2a2a;
+    background: var(--bg-hover, #2a2a2a);
     padding: 2px 6px;
     border-radius: 10px;
 }
 
 .result-link {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
 }
 
 .result-link:hover {
-    color: #00b8e6;
+    color: var(--accent-secondary, #00b8e6);
     text-decoration: underline;
 }
 
@@ -136,7 +136,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: var(--modal-overlay, rgba(0, 0, 0, 0.8));
     display: flex;
     justify-content: center;
     align-items: center;
@@ -145,7 +145,7 @@
 }
 
 .imvdb-match-modal {
-    background: #2a2a2a;
+    background: var(--bg-secondary, #2a2a2a);
     border-radius: 10px;
     max-width: 90%;
     max-height: 85vh;
@@ -161,19 +161,19 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid var(--border-primary, #444);
 }
 
 .modal-header h2 {
     margin: 0;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
 }
 
 .close-btn {
     background: none;
     border: none;
     font-size: 24px;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     cursor: pointer;
     padding: 0;
     width: 30px;
@@ -184,7 +184,7 @@
 }
 
 .close-btn:hover {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
 }
 
 .modal-body {
@@ -197,11 +197,11 @@
 .imvdb-matches-table-container {
     max-height: 60vh;
     overflow-y: auto;
-    border: 1px solid #444;
+    border: 1px solid var(--border-primary, #444);
     border-radius: 8px;
     margin-top: 15px;
-    background: #2a2a2a;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background: var(--bg-secondary, #2a2a2a);
+    box-shadow: 0 4px 8px var(--shadow, rgba(0, 0, 0, 0.3));
 }
 
 .imvdb-matches-table {
@@ -212,12 +212,12 @@
 }
 
 .imvdb-matches-table th {
-    background: linear-gradient(135deg, #444 0%, #555 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--bg-tertiary, #444) 0%, var(--bg-quaternary, #555) 100%);
+    color: var(--text-primary, #fff);
     padding: 14px 12px;
     text-align: left;
     font-weight: bold;
-    border-bottom: 2px solid #666;
+    border-bottom: 2px solid var(--border-secondary, #666);
     position: sticky;
     top: 0;
     z-index: 1;
@@ -228,11 +228,11 @@
 
 .imvdb-matches-table td {
     padding: 14px 12px;
-    border-bottom: 1px solid #444;
-    border-right: 1px solid #3a3a3a;
+    border-bottom: 1px solid var(--border-primary, #444);
+    border-right: 1px solid var(--border-secondary, #3a3a3a);
     vertical-align: top;
     background: inherit;
-    color: #ddd;
+    color: var(--text-secondary, #ddd);
 }
 
 .imvdb-match-row {
@@ -327,16 +327,16 @@
 
 .match-info h4 {
     margin: 0 0 8px 0;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-size: 16px;
 }
 
 .imvdb-match-card.high .match-info h4 {
-    color: #4CAF50;
+    color: var(--success, #4CAF50);
 }
 
 .imvdb-match-card.medium .match-info h4 {
-    color: #FF9800;
+    color: var(--warning, #FF9800);
 }
 
 .imvdb-match-card.low .match-info h4 {
@@ -414,7 +414,7 @@
 }
 
 .slug-info {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-size: 11px;
     margin-top: 4px;
     opacity: 0.8;
@@ -462,12 +462,12 @@
 }
 
 .loading-placeholder {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     font-style: italic;
 }
 
 .success-message {
-    color: #4CAF50;
+    color: var(--success, #4CAF50);
     font-weight: bold;
 }
 
@@ -2020,6 +2020,18 @@ function showVideoEditModal(video) {
                         <input type="text" id="editVideoTitle" value="${video.title}" style="width: 100%; padding: 8px; margin: 5px 0;">
                     </div>
                     <div class="form-group">
+                        <label>Artist Name:</label>
+                        <div class="artist-input-container" style="display: flex; align-items: center; position: relative;">
+                            <input type="text" id="editVideoArtist" value="${video.artist_name || ''}" style="width: 100%; padding: 8px; margin: 5px 0;">
+                            <button type="button" id="identifyArtistBtn" onclick="identifyArtistInModal()" style="margin-left: 10px; padding: 6px 12px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                🔍 Identify Artist
+                            </button>
+                            <div id="artistSuggestions" class="artist-suggestions" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; right: 0; background-color: #2d2d2d; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); z-index: 10000; max-height: 200px; overflow-y: auto;">
+                                <!-- Artist suggestions will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label>Year:</label>
                         <input type="number" id="editVideoYear" value="${video.year || ''}" style="width: 100%; padding: 8px; margin: 5px 0;">
                     </div>
@@ -2061,6 +2073,7 @@ function saveVideoChanges() {
     
     const updates = {
         title: document.getElementById('editVideoTitle').value,
+        artist_name: document.getElementById('editVideoArtist').value,
         year: parseInt(document.getElementById('editVideoYear').value) || null,
         status: document.getElementById('editVideoStatus').value
     };
@@ -2092,6 +2105,75 @@ function openVideoThumbnailManager() {
     
     // Launch thumbnail search for the current video
     searchVideoThumbnails(window.currentEditVideoId);
+}
+
+function identifyArtistInModal() {
+    const videoId = window.currentEditVideoId;
+    if (!videoId) {
+        showWarning('No video selected');
+        return;
+    }
+    
+    const button = document.getElementById('identifyArtistBtn');
+    const originalText = button.innerHTML;
+    button.innerHTML = '🔄 Identifying...';
+    button.disabled = true;
+    
+    fetch(`/api/videos/${videoId}/identify-artist`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        displayArtistSuggestionsInModal(result);
+        button.innerHTML = originalText;
+        button.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error identifying artist:', error);
+        showError('Failed to identify artist');
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function displayArtistSuggestionsInModal(data) {
+    const suggestionsDiv = document.getElementById('artistSuggestions');
+    
+    if (!data.success || !data.suggestions || data.suggestions.length === 0) {
+        suggestionsDiv.innerHTML = '<div style="padding: 10px; color: #888;">No artist suggestions found</div>';
+        suggestionsDiv.style.display = 'block';
+        return;
+    }
+    
+    let suggestionsHtml = '';
+    data.suggestions.forEach(suggestion => {
+        const confidencePercent = Math.round(suggestion.confidence * 100);
+        suggestionsHtml += `
+            <div class="artist-suggestion" onclick="selectArtistInModal('${suggestion.artist.replace(/'/g, "\\'")}', ${suggestion.artist_id})" 
+                 style="padding: 10px; border-bottom: 1px solid #555; cursor: pointer; color: white;">
+                <strong>${suggestion.artist}</strong>
+                <span style="float: right; color: #888; font-size: 0.9em;">${confidencePercent}% match</span>
+            </div>
+        `;
+    });
+    
+    suggestionsDiv.innerHTML = suggestionsHtml;
+    suggestionsDiv.style.display = 'block';
+    
+    // Hide suggestions when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', function hideOnClickOutside(event) {
+            if (!suggestionsDiv.contains(event.target) && event.target.id !== 'identifyArtistBtn') {
+                suggestionsDiv.style.display = 'none';
+                document.removeEventListener('click', hideOnClickOutside);
+            }
+        });
+    }, 100);
+}
+
+function selectArtistInModal(artistName, artistId) {
+    document.getElementById('editVideoArtist').value = artistName;
+    document.getElementById('artistSuggestions').style.display = 'none';
 }
 
 function searchVideoThumbnails(videoId) {

@@ -30,6 +30,9 @@
         <button class="settings-tab-btn" onclick="switchTab(event, 'system-tab')">
             <iconify-icon icon="tabler:tool" class="tab-icon"></iconify-icon> System
         </button>
+        <button class="settings-tab-btn" onclick="switchTab(event, 'themes-tab')">
+            <iconify-icon icon="tabler:palette" class="tab-icon"></iconify-icon> Themes
+        </button>
     </div>
 
     <!-- Tab Content -->
@@ -526,6 +529,618 @@
             </div>
         </div>
         
+            </div>
+        </div>
+
+        <!-- Themes Tab -->
+        <div id="themes-tab" class="settings-tab-panel">
+            <div class="themes-container">
+                
+                <!-- Theme Actions -->
+                <div class="theme-actions">
+                    <button onclick="refreshThemes()" class="btn btn-secondary">
+                        <iconify-icon icon="tabler:refresh" style="margin-right: 5px;"></iconify-icon>
+                        Refresh Themes
+                    </button>
+                    <button onclick="importThemes()" class="btn btn-info">
+                        <iconify-icon icon="tabler:upload" style="margin-right: 5px;"></iconify-icon>
+                        Import Themes
+                    </button>
+                    <button onclick="exportAllThemes()" class="btn btn-warning">
+                        <iconify-icon icon="tabler:download" style="margin-right: 5px;"></iconify-icon>
+                        Export All Themes
+                    </button>
+                </div>
+
+                <!-- Theme Tabs -->
+                <div class="theme-tabs">
+                    <button class="theme-tab-btn active" onclick="switchThemeTab(event, 'browse-tab')">
+                        <iconify-icon icon="tabler:grid-3x3" class="tab-icon"></iconify-icon> Browse Themes
+                    </button>
+                    <button class="theme-tab-btn" onclick="switchThemeTab(event, 'customize-tab')">
+                        <iconify-icon icon="tabler:brush" class="tab-icon"></iconify-icon> Customize
+                    </button>
+                </div>
+
+                <!-- Browse Themes Tab -->
+                <div id="browse-tab" class="theme-tab-content active">
+                    <div class="themes-grid-container">
+                        <h3>Available Themes</h3>
+                        <div id="themes-grid" class="themes-grid">
+                            <!-- Themes will be loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customize Tab -->
+                <div id="customize-tab" class="theme-tab-content">
+                    <div class="theme-customize-container">
+                        <div class="customize-header">
+                            <h3>Theme Customizer</h3>
+                            <p class="customize-description">
+                                Select a theme to customize its colors and properties. Changes are applied immediately as you make them.
+                            </p>
+                        </div>
+
+                        <!-- Theme Selection for Customization -->
+                        <div class="customize-theme-selection">
+                            <h4>Select Theme to Customize</h4>
+                            <div id="customize-theme-grid" class="customize-themes-grid">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Color Customization Panel -->
+                        <div id="color-customization-panel" class="color-panel" style="display: none;">
+                            <div class="panel-header">
+                                <h4 id="customizing-theme-name">Customizing: Theme Name</h4>
+                                <div class="panel-actions">
+                                    <button onclick="resetToDefault()" class="btn btn-secondary">
+                                        <iconify-icon icon="tabler:refresh"></iconify-icon>
+                                        Reset to Default
+                                    </button>
+                                    <button onclick="applyCurrentTheme()" class="btn btn-success">
+                                        <iconify-icon icon="tabler:check"></iconify-icon>
+                                        Apply Theme
+                                    </button>
+                                    <button onclick="saveCustomTheme()" class="btn btn-primary">
+                                        <iconify-icon icon="tabler:device-floppy"></iconify-icon>
+                                        Save as Custom
+                                    </button>
+                                    <button onclick="updateCurrentTheme()" class="btn btn-warning" id="update-theme-btn" style="display: none;">
+                                        <iconify-icon icon="tabler:refresh"></iconify-icon>
+                                        Update Theme
+                                    </button>
+                                    <button onclick="saveCurrentTheme()" class="btn btn-info" id="save-current-theme-btn">
+                                        <iconify-icon icon="tabler:device-floppy"></iconify-icon>
+                                        Save Current Theme
+                                    </button>
+                                    <button onclick="exportCurrentTheme()" class="btn btn-outline-secondary" id="export-current-theme-btn">
+                                        <iconify-icon icon="tabler:download"></iconify-icon>
+                                        Export Theme
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Theme Details -->  
+                            <div class="theme-details" id="theme-details-section" style="display: none;"> 
+                                <div class="form-group">
+                                    <label for="theme-name-input">Theme Name:</label>
+                                    <input type="text" id="theme-name-input" class="form-control" placeholder="Enter theme name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="theme-description-input">Description:</label>
+                                    <textarea id="theme-description-input" class="form-control" rows="2" placeholder="Enter theme description"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Color Controls with Dark/Light tabs -->
+                            <div class="color-controls">
+                                <div class="theme-mode-tabs">
+                                    <button class="theme-mode-tab active" id="dark-theme-tab">
+                                        <iconify-icon icon="tabler:moon"></iconify-icon>
+                                        Dark Theme
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Dark Theme Colors -->
+                            <div class="theme-mode-content active" id="dark-theme-content">
+                                <div class="color-controls">
+                                <div class="color-groups">
+                                    <!-- Background Colors -->
+                                    <div class="color-group">
+                                        <h5>Background Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="bg-primary">Primary Background:</label>
+                                                <input type="color" id="bg-primary" data-css-var="--bg-primary">
+                                                <span class="color-value">#1a1a1a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="bg-secondary">Secondary Background:</label>
+                                                <input type="color" id="bg-secondary" data-css-var="--bg-secondary">
+                                                <span class="color-value">#2d2d2d</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="bg-tertiary">Tertiary Background:</label>
+                                                <input type="color" id="bg-tertiary" data-css-var="--bg-tertiary">
+                                                <span class="color-value">#3a3a3a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="sidebar-bg">Sidebar Background:</label>
+                                                <input type="color" id="sidebar-bg" data-css-var="--sidebar-bg">
+                                                <span class="color-value">#1a1a1a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="sidebar-bg-secondary">Sidebar Secondary:</label>
+                                                <input type="color" id="sidebar-bg-secondary" data-css-var="--sidebar-bg-secondary">
+                                                <span class="color-value">#2d2d2d</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="search-bar-bg">Search Bar Background:</label>
+                                                <input type="color" id="search-bar-bg" data-css-var="--search-bar-bg">
+                                                <span class="color-value">#2d2d2d</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="bg-modal">Modal Background:</label>
+                                                <input type="color" id="bg-modal" data-css-var="--bg-modal">
+                                                <span class="color-value">#333333</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="bg-card">Card Background:</label>
+                                                <input type="color" id="bg-card" data-css-var="--bg-card">
+                                                <span class="color-value">#2a2a2a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="bg-hover">Hover Background:</label>
+                                                <input type="color" id="bg-hover" data-css-var="--bg-hover">
+                                                <span class="color-value">#404040</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="top-bar-bg">Top Bar Background:</label>
+                                                <input type="color" id="top-bar-bg" data-css-var="--top-bar-bg">
+                                                <span class="color-value">#2d2d2d</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Text Colors -->
+                                    <div class="color-group">
+                                        <h5>Text Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="text-primary">Primary Text:</label>
+                                                <input type="color" id="text-primary" data-css-var="--text-primary">
+                                                <span class="color-value">#ffffff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="text-secondary">Secondary Text:</label>
+                                                <input type="color" id="text-secondary" data-css-var="--text-secondary">
+                                                <span class="color-value">#cccccc</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="text-accent">Accent Text:</label>
+                                                <input type="color" id="text-accent" data-css-var="--text-accent">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="text-muted">Muted Text:</label>
+                                                <input type="color" id="text-muted" data-css-var="--text-muted">
+                                                <span class="color-value">#888888</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="text-inverse">Inverse Text:</label>
+                                                <input type="color" id="text-inverse" data-css-var="--text-inverse">
+                                                <span class="color-value">#000000</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Button Colors -->
+                                    <div class="color-group">
+                                        <h5>Button Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="btn-primary-bg">Primary Button Background:</label>
+                                                <input type="color" id="btn-primary-bg" data-css-var="--btn-primary-bg">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="btn-primary-text">Primary Button Text:</label>
+                                                <input type="color" id="btn-primary-text" data-css-var="--btn-primary-text">
+                                                <span class="color-value">#ffffff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="btn-primary-hover">Primary Button Hover:</label>
+                                                <input type="color" id="btn-primary-hover" data-css-var="--btn-primary-hover">
+                                                <span class="color-value">#3a8eef</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="btn-secondary-bg">Secondary Button Background:</label>
+                                                <input type="color" id="btn-secondary-bg" data-css-var="--btn-secondary-bg">
+                                                <span class="color-value">#666666</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="btn-secondary-text">Secondary Button Text:</label>
+                                                <input type="color" id="btn-secondary-text" data-css-var="--btn-secondary-text">
+                                                <span class="color-value">#ffffff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="btn-secondary-hover">Secondary Button Hover:</label>
+                                                <input type="color" id="btn-secondary-hover" data-css-var="--btn-secondary-hover">
+                                                <span class="color-value">#777777</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="btn-danger-bg">Danger Button Background:</label>
+                                                <input type="color" id="btn-danger-bg" data-css-var="--btn-danger-bg">
+                                                <span class="color-value">#dc3545</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="btn-danger-text">Danger Button Text:</label>
+                                                <input type="color" id="btn-danger-text" data-css-var="--btn-danger-text">
+                                                <span class="color-value">#ffffff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="btn-danger-hover">Danger Button Hover:</label>
+                                                <input type="color" id="btn-danger-hover" data-css-var="--btn-danger-hover">
+                                                <span class="color-value">#c82333</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Border and Accent Colors -->
+                                    <div class="color-group">
+                                        <h5>Border & Accent Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="border-primary">Primary Border:</label>
+                                                <input type="color" id="border-primary" data-css-var="--border-primary">
+                                                <span class="color-value">#444444</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="border-secondary">Secondary Border:</label>
+                                                <input type="color" id="border-secondary" data-css-var="--border-secondary">
+                                                <span class="color-value">#555555</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="border-focus">Focus Border:</label>
+                                                <input type="color" id="border-focus" data-css-var="--border-focus">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="border-hover">Hover Border:</label>
+                                                <input type="color" id="border-hover" data-css-var="--border-hover">
+                                                <span class="color-value">#666666</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status Colors -->
+                                    <div class="color-group">
+                                        <h5>Status Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="success-color">Success Color:</label>
+                                                <input type="color" id="success-color" data-css-var="--success">
+                                                <span class="color-value">#28a745</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="success-dark">Success Dark:</label>
+                                                <input type="color" id="success-dark" data-css-var="--success-dark">
+                                                <span class="color-value">#1e7e34</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="warning-color">Warning Color:</label>
+                                                <input type="color" id="warning-color" data-css-var="--warning">
+                                                <span class="color-value">#ffc107</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="warning-dark">Warning Dark:</label>
+                                                <input type="color" id="warning-dark" data-css-var="--warning-dark">
+                                                <span class="color-value">#d39e00</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="error-color">Error Color:</label>
+                                                <input type="color" id="error-color" data-css-var="--error">
+                                                <span class="color-value">#dc3545</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="error-color-alt">Error Color Alt:</label>
+                                                <input type="color" id="error-color-alt" data-css-var="--error-color">
+                                                <span class="color-value">#ff6b6b</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="info-color">Info Color:</label>
+                                                <input type="color" id="info-color" data-css-var="--info">
+                                                <span class="color-value">#17a2b8</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="info-dark">Info Dark:</label>
+                                                <input type="color" id="info-dark" data-css-var="--info-dark">
+                                                <span class="color-value">#117a8b</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Form Colors -->
+                                    <div class="color-group">
+                                        <h5>Form & Input Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="input-bg">Input Background:</label>
+                                                <input type="color" id="input-bg" data-css-var="--input-bg">
+                                                <span class="color-value">#3a3a3a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-text">Input Text:</label>
+                                                <input type="color" id="input-text" data-css-var="--input-text">
+                                                <span class="color-value">#ffffff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-border">Input Border:</label>
+                                                <input type="color" id="input-border" data-css-var="--input-border">
+                                                <span class="color-value">#555555</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-focus">Input Focus:</label>
+                                                <input type="color" id="input-focus" data-css-var="--input-focus">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Navigation Colors -->
+                                    <div class="color-group">
+                                        <h5>Navigation Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="nav-bg">Navigation Background:</label>
+                                                <input type="color" id="nav-bg" data-css-var="--nav-bg">
+                                                <span class="color-value">#1a1a1a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="nav-text">Navigation Text:</label>
+                                                <input type="color" id="nav-text" data-css-var="--nav-text">
+                                                <span class="color-value">#cccccc</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="nav-hover">Navigation Hover:</label>
+                                                <input type="color" id="nav-hover" data-css-var="--nav-hover">
+                                                <span class="color-value">#404040</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="nav-active">Navigation Active:</label>
+                                                <input type="color" id="nav-active" data-css-var="--nav-active">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal & Accent Colors -->
+                                    <div class="color-group">
+                                        <h5>Modal & Accent Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="accent-secondary">Accent Secondary:</label>
+                                                <input type="color" id="accent-secondary" data-css-var="--accent-secondary">
+                                                <span class="color-value">#0099cc</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="accent-dark">Accent Dark:</label>
+                                                <input type="color" id="accent-dark" data-css-var="--accent-dark">
+                                                <span class="color-value">#007799</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Shadows & Effects -->
+                                    <div class="color-group">
+                                        <h5>Shadows & Effects</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="shadow">Shadow Color:</label>
+                                                <input type="color" id="shadow" data-css-var="--shadow">
+                                                <span class="color-value">#000000</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="shadow-hover">Shadow Hover:</label>
+                                                <input type="color" id="shadow-hover" data-css-var="--shadow-hover">
+                                                <span class="color-value">#000000</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="border-focus-shadow">Focus Shadow:</label>
+                                                <input type="color" id="border-focus-shadow" data-css-var="--border-focus-shadow">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal & Overlay -->
+                                    <div class="color-group">
+                                        <h5>Modal & Overlay</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="modal-background">Modal Background:</label>
+                                                <input type="color" id="modal-background" data-css-var="--modalBackgroundColor">
+                                                <span class="color-value">#2d2d2d</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="modal-backdrop">Modal Backdrop:</label>
+                                                <input type="color" id="modal-backdrop" data-css-var="--modalBackdropBackgroundColor">
+                                                <span class="color-value">#000000</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="modal-overlay">Modal Overlay:</label>
+                                                <input type="color" id="modal-overlay" data-css-var="--modal-overlay">
+                                                <span class="color-value">#00000080</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="modal-close-hover">Modal Close Hover:</label>
+                                                <input type="color" id="modal-close-hover" data-css-var="--modalCloseButtonHoverColor">
+                                                <span class="color-value">#ff0000</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Extended Form Elements -->
+                                    <div class="color-group">
+                                        <h5>Extended Form Elements</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="input-hover-bg">Input Hover Background:</label>
+                                                <input type="color" id="input-hover-bg" data-css-var="--inputHoverBackgroundColor">
+                                                <span class="color-value">#3a3a3a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-selected-bg">Input Selected Background:</label>
+                                                <input type="color" id="input-selected-bg" data-css-var="--inputSelectedBackgroundColor">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-readonly-bg">Input Read-Only Background:</label>
+                                                <input type="color" id="input-readonly-bg" data-css-var="--inputReadOnlyBackgroundColor">
+                                                <span class="color-value">#1a1a1a</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-error-border">Input Error Border:</label>
+                                                <input type="color" id="input-error-border" data-css-var="--inputErrorBorderColor">
+                                                <span class="color-value">#dc3545</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="input-warning-border">Input Warning Border:</label>
+                                                <input type="color" id="input-warning-border" data-css-var="--inputWarningBorderColor">
+                                                <span class="color-value">#ffc107</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Menu & Tooltip -->
+                                    <div class="color-group">
+                                        <h5>Menu & Tooltip</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="menu-item-color">Menu Item Color:</label>
+                                                <input type="color" id="menu-item-color" data-css-var="--menuItemColor">
+                                                <span class="color-value">#ffffff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="menu-item-hover">Menu Item Hover:</label>
+                                                <input type="color" id="menu-item-hover" data-css-var="--menuItemHoverBackgroundColor">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="popover-body-bg">Popover Body Background:</label>
+                                                <input type="color" id="popover-body-bg" data-css-var="--popoverBodyBackgroundColor">
+                                                <span class="color-value">#2d2d2d</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="popover-title-bg">Popover Title Background:</label>
+                                                <input type="color" id="popover-title-bg" data-css-var="--popoverTitleBackgroundColor">
+                                                <span class="color-value">#1a1a1a</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Utility Colors -->
+                                    <div class="color-group">
+                                        <h5>Utility Colors</h5>
+                                        <div class="color-inputs">
+                                            <div class="color-input-group">
+                                                <label for="disabled-color">Disabled Color:</label>
+                                                <input type="color" id="disabled-color" data-css-var="--disabledColor">
+                                                <span class="color-value">#666666</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="help-text-color">Help Text Color:</label>
+                                                <input type="color" id="help-text-color" data-css-var="--helpTextColor">
+                                                <span class="color-value">#888888</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="link-hover-color">Link Hover Color:</label>
+                                                <input type="color" id="link-hover-color" data-css-var="--linkHoverColor">
+                                                <span class="color-value">#6bb6ff</span>
+                                            </div>
+                                            <div class="color-input-group">
+                                                <label for="icon-button-hover">Icon Button Hover:</label>
+                                                <input type="color" id="icon-button-hover" data-css-var="--iconButtonHoverColor">
+                                                <span class="color-value">#4a9eff</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                            
+
+                            <!-- Live Preview -->
+                            <div class="theme-preview-section">
+                                <h5>Live Preview</h5>
+                                <div class="preview-container">
+                                    <!-- Live Theme Preview Content -->
+                                    <div class="preview-section">
+                                        <h6>Cards & Panels</h6>
+                                        <div class="preview-cards">
+                                            <div class="preview-card">
+                                                <div class="card-header">Album Title</div>
+                                                <div class="card-content">This shows how cards look in the current theme</div>
+                                            </div>
+                                            <div class="preview-card">
+                                                <div class="card-header">Artist Name</div>
+                                                <div class="card-content">Secondary card example</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="preview-section">
+                                        <h6>Buttons & Controls</h6>
+                                        <div class="preview-buttons">
+                                            <button class="preview-btn-primary">Primary Button</button>
+                                            <button class="preview-btn-secondary">Secondary Button</button>
+                                            <button class="preview-btn-danger">Danger Button</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="preview-section">
+                                        <h6>Form Elements</h6>
+                                        <div class="preview-form">
+                                            <div class="form-group">
+                                                <label>Input Field:</label>
+                                                <input type="text" placeholder="Sample input text" class="preview-input">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Select Dropdown:</label>
+                                                <select class="preview-select">
+                                                    <option>Option 1</option>
+                                                    <option>Option 2</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="preview-section">
+                                        <h6>Navigation & Menu</h6>
+                                        <div class="preview-nav">
+                                            <div class="nav-item active">Active Item</div>
+                                            <div class="nav-item">Regular Item</div>
+                                            <div class="nav-item">Another Item</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="preview-section">
+                                        <h6>Status Messages</h6>
+                                        <div class="preview-alerts">
+                                            <div class="alert-success">✓ Success message</div>
+                                            <div class="alert-warning">⚠ Warning message</div>
+                                            <div class="alert-error">✗ Error message</div>
+                                            <div class="alert-info">ℹ Info message</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -2767,9 +3382,9 @@ The cookie file should contain YouTube authentication data including session tok
 /* Settings Tab Styles */
 .settings-tabs {
     display: flex;
-    border-bottom: 2px solid var(--border-color, #38383a);
+    border-bottom: 2px solid var(--border-primary, #38383a);
     margin-bottom: 2rem;
-    background: var(--surface-color, #2c2c2e);
+    background: var(--bg-secondary, #2c2c2e);
     border-radius: 8px 8px 0 0;
     overflow-x: auto;
 }
@@ -2791,14 +3406,14 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .settings-tab-btn:hover {
-    color: var(--text-color, #ffffff);
-    background: var(--hover-color, #3c3c3e);
+    color: var(--text-primary, #ffffff);
+    background: var(--bg-hover, #3c3c3e);
 }
 
 .settings-tab-btn.active {
-    color: var(--accent-color, #a8b9be);
-    border-bottom-color: var(--accent-color, #a8b9be);
-    background: var(--hover-color, #3c3c3e);
+    color: var(--text-accent, #a8b9be);
+    border-bottom-color: var(--text-accent, #a8b9be);
+    background: var(--bg-tertiary, #3a3a3a);
 }
 
 .tab-icon {
@@ -2832,13 +3447,13 @@ The cookie file should contain YouTube authentication data including session tok
     
     .settings-tab-btn {
         text-align: left;
-        border-bottom: 1px solid var(--border-color, #38383a);
+        border-bottom: 1px solid var(--border-primary, #38383a);
         border-right: none;
     }
     
     .settings-tab-btn.active {
-        border-bottom: 1px solid var(--border-color, #38383a);
-        border-left: 3px solid var(--accent-color, #a8b9be);
+        border-bottom: 1px solid var(--border-primary, #38383a);
+        border-left: 3px solid var(--text-accent, #a8b9be);
     }
 }
 
@@ -2867,23 +3482,23 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .role-badge.role-admin {
-    background-color: #dc3545;
-    color: white;
+    background-color: var(--danger, #dc3545);
+    color: var(--text-inverse, white);
 }
 
 .role-badge.role-manager {
-    background-color: #fd7e14;
-    color: white;
+    background-color: var(--warning, #fd7e14);
+    color: var(--text-inverse, white);
 }
 
 .role-badge.role-user {
-    background-color: #28a745;
-    color: white;
+    background-color: var(--success, #28a745);
+    color: var(--text-inverse, white);
 }
 
 .role-badge.role-readonly {
-    background-color: #6c757d;
-    color: white;
+    background-color: var(--secondary, #6c757d);
+    color: var(--text-inverse, white);
 }
 
 .status-badge {
@@ -2895,11 +3510,11 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .status-enabled {
-    color: #28a745;
+    color: var(--success, #28a745);
 }
 
 .status-disabled {
-    color: #dc3545;
+    color: var(--danger, #dc3545);
 }
 
 /* Cookie Management Styles */
@@ -2926,15 +3541,15 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .cookie-status .status-text.success {
-    color: #28a745;
+    color: var(--success, #28a745);
 }
 
 .cookie-status .status-text.error {
-    color: #dc3545;
+    color: var(--danger, #dc3545);
 }
 
 .cookie-status .status-text {
-    color: #6c757d;
+    color: var(--text-muted, #6c757d);
 }
 
 .cookie-upload-actions {
@@ -2950,7 +3565,7 @@ The cookie file should contain YouTube authentication data including session tok
 
 .help-text {
     font-size: 0.85rem;
-    color: #6c757d;
+    color: var(--text-muted, #6c757d);
     margin-top: 5px;
     line-height: 1.4;
 }
@@ -2984,11 +3599,11 @@ The cookie file should contain YouTube authentication data including session tok
 
 .status-item label {
     font-weight: bold;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .admin-only {
-    color: #ffc107;
+    color: var(--warning, #ffc107);
     font-size: 0.8em;
     font-weight: normal;
 }
@@ -3006,7 +3621,7 @@ The cookie file should contain YouTube authentication data including session tok
     display: flex;
     gap: 20px;
     font-size: 0.9em;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .user-stats span {
@@ -3016,7 +3631,7 @@ The cookie file should contain YouTube authentication data including session tok
 .user-list {
     max-height: 400px;
     overflow-y: auto;
-    border: 1px solid #444;
+    border: 1px solid var(--border-primary, #444);
     border-radius: 8px;
     padding: 10px;
 }
@@ -3026,21 +3641,21 @@ The cookie file should contain YouTube authentication data including session tok
     justify-content: space-between;
     align-items: center;
     padding: 15px;
-    border: 1px solid #555;
+    border: 1px solid var(--border-secondary, #555);
     border-radius: 8px;
     margin-bottom: 10px;
-    background-color: #2a2a2a;
+    background-color: var(--bg-card, #2a2a2a);
     transition: all 0.2s ease;
 }
 
 .user-item:hover {
-    background-color: #333;
-    border-color: #666;
+    background-color: var(--bg-hover, #333);
+    border-color: var(--border-tertiary, #666);
 }
 
 .user-item.inactive {
     opacity: 0.6;
-    background-color: #1a1a1a;
+    background-color: var(--bg-primary, #1a1a1a);
 }
 
 .user-item .user-info {
@@ -3062,7 +3677,7 @@ The cookie file should contain YouTube authentication data including session tok
     display: flex;
     gap: 15px;
     font-size: 0.9em;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
 }
 
 .user-item .user-actions {
@@ -3072,13 +3687,13 @@ The cookie file should contain YouTube authentication data including session tok
 
 .no-users, .loading, .error {
     text-align: center;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     padding: 40px;
     font-style: italic;
 }
 
 .error {
-    color: #dc3545;
+    color: var(--danger, #dc3545);
 }
 
 /* Modal Styles */
@@ -3096,8 +3711,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .modal-content {
-    background-color: #2a2a2a;
-    border: 1px solid #555;
+    background-color: var(--bg-card, #2a2a2a);
+    border: 1px solid var(--border-secondary, #555);
     border-radius: 12px;
     max-width: 500px;
     width: 90%;
@@ -3115,18 +3730,18 @@ The cookie file should contain YouTube authentication data including session tok
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 1px solid #555;
+    border-bottom: 1px solid var(--border-secondary, #555);
 }
 
 .modal-header h3 {
     margin: 0;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
 }
 
 .btn-close {
     background: none;
     border: none;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     font-size: 1.5em;
     cursor: pointer;
     padding: 0;
@@ -3138,8 +3753,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .btn-close:hover {
-    color: #fff;
-    background-color: #444;
+    color: var(--text-primary, #fff);
+    background-color: var(--bg-hover, #444);
     border-radius: 50%;
 }
 
@@ -3152,7 +3767,7 @@ The cookie file should contain YouTube authentication data including session tok
     justify-content: flex-end;
     gap: 10px;
     padding: 20px;
-    border-top: 1px solid #555;
+    border-top: 1px solid var(--border-secondary, #555);
 }
 
 .sessions-list {
@@ -3166,15 +3781,15 @@ The cookie file should contain YouTube authentication data including session tok
     justify-content: space-between;
     align-items: flex-start;
     padding: 15px;
-    border: 1px solid #555;
+    border: 1px solid var(--border-secondary, #555);
     border-radius: 8px;
     margin-bottom: 10px;
-    background-color: #333;
+    background-color: var(--bg-tertiary, #333);
 }
 
 .session-item.current {
-    border-color: #00d4ff;
-    background-color: #1a3a4a;
+    border-color: var(--text-accent, #00d4ff);
+    background-color: var(--bg-accent-muted, #1a3a4a);
 }
 
 .session-info {
@@ -3188,8 +3803,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .current-session {
-    background-color: #00d4ff;
-    color: #000;
+    background-color: var(--text-accent, #00d4ff);
+    color: var(--accent-text, #000);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.8em;
@@ -3206,7 +3821,7 @@ The cookie file should contain YouTube authentication data including session tok
 .session-actions-footer {
     text-align: center;
     padding-top: 15px;
-    border-top: 1px solid #555;
+    border-top: 1px solid var(--border-secondary, #555);
 }
 
 
@@ -3258,7 +3873,7 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .settings-container h1 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 10px;
     font-size: 2.5rem;
     text-align: center;
@@ -3266,7 +3881,7 @@ The cookie file should contain YouTube authentication data including session tok
 
 .page-description {
     text-align: center;
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     margin-bottom: 30px;
     font-size: 1.1rem;
 }
@@ -3287,7 +3902,7 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .settings-section {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    background: var(--bg-tertiary, #3a3a3a);
     border: 1px solid #444;
     border-radius: 12px;
     padding: 25px;
@@ -3300,10 +3915,10 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .settings-section h2 {
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 15px;
     font-size: 1.4rem;
-    border-bottom: 2px solid #00d4ff;
+    border-bottom: 2px solid var(--text-accent, #00d4ff);
     padding-bottom: 8px;
 }
 
@@ -3313,14 +3928,14 @@ The cookie file should contain YouTube authentication data including session tok
 
 .form-group label {
     display: block;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 8px;
     font-weight: 500;
 }
 
 .form-group .help-text {
     display: block;
-    color: #999;
+    color: var(--text-muted, #999);
     font-size: 12px;
     margin-top: 5px;
     font-style: italic;
@@ -3331,10 +3946,10 @@ The cookie file should contain YouTube authentication data including session tok
 .form-group textarea {
     width: 100%;
     padding: 12px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--input-bg, #333);
+    border: 2px solid var(--input-border, #444);
     border-radius: 8px;
-    color: #fff;
+    color: var(--input-text, #fff);
     font-size: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -3343,7 +3958,7 @@ The cookie file should contain YouTube authentication data including session tok
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: var(--input-focus, #00d4ff);
     box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
 }
 
@@ -3353,8 +3968,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .form-group option {
-    background: #333;
-    color: #fff;
+    background: var(--input-bg, #333);
+    color: var(--input-text, #fff);
 }
 
 .btn {
@@ -3473,8 +4088,8 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .stat-item {
-    background: #333;
-    border: 1px solid #555;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-secondary, #555);
     border-radius: 8px;
     padding: 15px;
     text-align: center;
@@ -3488,12 +4103,12 @@ The cookie file should contain YouTube authentication data including session tok
 .stat-value {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #00d4ff;
+    color: var(--text-accent, #00d4ff);
     margin-bottom: 5px;
 }
 
 .stat-label {
-    color: #ccc;
+    color: var(--text-secondary, #ccc);
     font-size: 0.9rem;
 }
 
@@ -3505,7 +4120,7 @@ The cookie file should contain YouTube authentication data including session tok
 }
 
 .result-item {
-    background-color: #3d3d3d;
+    background-color: var(--bg-quaternary, #3d3d3d);
     padding: 0.5rem;
     border-radius: 4px;
     font-size: 0.9rem;
@@ -3514,7 +4129,7 @@ The cookie file should contain YouTube authentication data including session tok
 .thumbnail-stats {
     margin-top: 0.5rem;
     padding: 0.5rem;
-    background-color: #3d3d3d;
+    background-color: var(--bg-quaternary, #3d3d3d);
     border-radius: 4px;
     font-size: 0.9rem;
 }
@@ -3881,62 +4496,8 @@ button:disabled:hover {
 
 
 
-.theme-preview.bauhaus-preview .preview-card .btn-primary {
-    background-color: var(--bauhaus-blue);
-    border-color: var(--bauhaus-blue);
-}
+/* Legacy bauhaus theme preview styles removed */
 
-.theme-preview.bauhaus-preview .preview-card .btn-secondary {
-    background-color: var(--bauhaus-gray-600);
-    border-color: var(--bauhaus-gray-600);
-    color: var(--bauhaus-white);
-}
-
-/* Light Theme Overrides for Settings */
-body.light-theme .btn-light {
-    background: white;
-    border: 2px solid #e1e5e9;
-    color: #333;
-}
-
-body.light-theme .btn-light:hover {
-    background: #f0f0ff;
-    border-color: #667eea;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-}
-
-body.light-theme .settings-container {
-    background: transparent;
-}
-
-body.light-theme .settings-section {
-    background: white;
-    border: 1px solid #e1e5e9;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-body.light-theme .form-group input,
-body.light-theme .form-group select,
-body.light-theme .form-group textarea {
-    background: white;
-    border: 2px solid #e1e5e9;
-    color: #333;
-    border-radius: 8px;
-}
-
-body.light-theme .form-group input:focus,
-body.light-theme .form-group select:focus,
-body.light-theme .form-group textarea:focus {
-    border-color: #667eea;
-    box-shadow: none;
-    outline: none;
-}
-
-body.light-theme .form-group label {
-    color: #333;
-}
 
 /* Readonly field styles */
 .readonly-field {
@@ -3945,48 +4506,1618 @@ body.light-theme .form-group label {
     cursor: not-allowed !important;
 }
 
-body.light-theme .readonly-field {
-    background-color: #f5f5f5 !important;
-    color: #666 !important;
-    cursor: not-allowed !important;
+
+/* Legacy theme preview styles removed - functionality moved to Themes tab */
+
+/* ============== THEMES TAB STYLES ============== */
+
+.themes-container {
+    padding: 0;
 }
 
-/* Light theme tab styling */
-body.light-theme .settings-tabs {
-    background: white;
-    border-bottom: 2px solid #e1e5e9;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.theme-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
 }
 
-body.light-theme .settings-tab-btn {
-    color: #666;
+.theme-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-primary, #444);
+    margin-bottom: 2rem;
 }
 
-body.light-theme .settings-tab-btn:hover {
-    color: #667eea;
-    background: #f0f0ff;
+.theme-tab-btn {
+    background: var(--bg-card, #2a2a2a);
+    border: none;
+    color: var(--text-secondary, #ccc);
+    padding: 1rem 2rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-body.light-theme .settings-tab-btn.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
-    background: #f0f0ff;
+.theme-tab-btn:hover {
+    color: var(--text-primary, #fff);
+    background: color-mix(in srgb, var(--text-accent, #4a9eff) 10%, transparent);
 }
 
-/* Light theme SSL warning */
-body.light-theme .ssl-warning {
-    color: #cc7a00;
-    background: rgba(255, 193, 7, 0.1);
-    border-left: 4px solid #ffc107;
-    padding: 1rem;
+.theme-tab-btn.active {
+    color: var(--text-accent, #4a9eff);
+    border-bottom-color: var(--text-accent, #4a9eff);
+    background: var(--bg-modal, #333333);
+}
+
+.theme-tab-content {
+    display: none;
+}
+
+.theme-tab-content.active {
+    display: block;
+    background: var(--bg-hover, #404040);
+}
+
+/* Themes Grid */
+.themes-grid-container h3 {
+    color: var(--text-primary, #fff);
+    margin-bottom: 1.5rem;
+}
+
+.themes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.theme-card {
+    background: var(--bg-secondary, #2d2d2d);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.theme-card:hover {
+    border-color: var(--text-accent, #4a9eff);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--text-accent, #4a9eff) 20%, transparent);
+}
+
+.theme-card.applied {
+    border-color: var(--success, #00ff00);
+    background: color-mix(in srgb, var(--success, #00ff00) 5%, var(--bg-secondary, #2d2d2d));
+}
+
+.theme-card.applied::before {
+    content: "✓ Applied";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--success, #00ff00);
+    color: var(--bg-primary, #000);
+    padding: 0.25rem 0.5rem;
     border-radius: 4px;
-    margin-top: 1rem;
+    font-size: 0.75rem;
+    font-weight: bold;
 }
 
-/* Light theme YouTube Authentication section */
-body.light-theme .cookie-management-section {
-    background: rgba(255, 165, 0, 0.1);
-    border: 1px solid #ffaa55;
+.theme-preview-mini {
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-primary, #444);
+}
+
+.preview-bg {
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.5rem;
+}
+
+.preview-accent {
+    width: 40px;
+    height: 8px;
+    border-radius: 2px;
+}
+
+.theme-info h4 {
+    color: var(--text-primary, #fff);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.theme-description {
+    color: var(--text-secondary, #ccc);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.theme-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.theme-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.theme-badge.built-in {
+    background: var(--info, #17a2b8);
+    color: var(--text-primary, #fff);
+}
+
+.theme-badge.public {
+    background: var(--success, #28a745);
+    color: var(--text-primary, #fff);
+}
+
+.theme-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Customize Theme Selection */
+.customize-theme-selection h4 {
+    color: var(--text-primary, #fff);
+    margin-bottom: 1rem;
+}
+
+.customize-themes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.customize-theme-card {
+    background: var(--bg-secondary, #2d2d2d);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.customize-theme-card:hover {
+    border-color: var(--text-accent, #4a9eff);
+}
+
+.customize-theme-card.active {
+    border-color: var(--text-accent, #4a9eff);
+    background: color-mix(in srgb, var(--text-accent, #4a9eff) 10%, var(--bg-secondary, #2d2d2d));
+}
+
+.customize-theme-card .theme-preview-mini {
+    height: 40px;
+    margin-bottom: 0.5rem;
+}
+
+.theme-name {
+    color: var(--text-primary, #fff);
+    font-size: 0.875rem;
+}
+
+/* Color Customization Panel */
+.color-panel {
+    background: var(--bg-secondary, #2d2d2d);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-primary, #444);
+}
+
+.panel-header h4 {
+    color: var(--text-primary, #fff);
+    margin: 0;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Theme Details Section */
+.theme-details {
+    background: var(--bg-tertiary, #3a3a3a);
+    border: 1px solid var(--border-secondary, #555);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.theme-details .form-group {
+    margin-bottom: 1rem;
+}
+
+.theme-details .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.theme-details label {
+    display: block;
+    color: var(--text-primary, #fff);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.theme-details .form-control {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: var(--input-bg, #3a3a3a);
+    border: 1px solid var(--input-border, #555);
+    border-radius: 4px;
+    color: var(--input-text, #fff);
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+}
+
+.theme-details .form-control:focus {
+    outline: none;
+    border-color: var(--input-focus, #4a9eff);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+}
+
+.theme-details textarea.form-control {
+    resize: vertical;
+    min-height: 3rem;
+}
+
+/* Theme Mode Tabs */
+.theme-mode-tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-primary, #444);
+}
+
+.theme-mode-tab {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    color: var(--text-secondary, #ccc);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    border-bottom: 2px solid transparent;
+}
+
+.theme-mode-tab:hover {
+    color: var(--text-primary, #fff);
+    background: var(--bg-hover, #404040);
+}
+
+.theme-mode-tab.active {
+    color: var(--text-accent, #4a9eff);
+    border-bottom-color: var(--text-accent, #4a9eff);
+}
+
+.theme-mode-tab iconify-icon {
+    font-size: 1rem;
+}
+
+.theme-mode-content {
+    display: none;
+}
+
+.theme-mode-content.active {
+    display: block;
+}
+
+.color-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.color-group h5 {
+    color: var(--text-accent, #4a9eff);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.color-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.color-input-group label {
+    color: var(--text-primary, #fff);
+    min-width: 180px;
+    font-size: 0.9rem;
+}
+
+.color-input-group input[type="color"] {
+    width: 50px;
+    height: 35px;
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.color-value {
+    color: var(--text-secondary, #ccc);
+    font-family: monospace;
+    font-size: 0.875rem;
+    min-width: 80px;
+}
+
+.theme-preview-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-primary, #444);
+}
+
+.theme-preview-section h5 {
+    color: var(--text-accent, #4a9eff);
+    margin-bottom: 1rem;
+}
+
+.preview-container {
+    background: var(--bg-tertiary, #3a3a3a);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+    padding: 1.5rem;
+    min-height: 200px;
+}
+
+.no-themes {
+    text-align: center;
+    color: var(--text-secondary, #ccc);
+    font-style: italic;
+    padding: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .themes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .customize-themes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+    
+    .color-groups {
+        grid-template-columns: 1fr;
+    }
+    
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .color-input-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .color-input-group label {
+        min-width: auto;
+    }
+}
+
+/* Live Preview Styles */
+.preview-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-primary, #444);
+}
+
+.preview-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.preview-section h6 {
+    color: var(--text-accent, #4a9eff);
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Preview Cards */
+.preview-cards {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.preview-card {
+    background: var(--cardBackgroundColor, var(--bg-card, #2a2a2a));
+    border: 1px solid var(--borderColor, var(--border-primary, #444));
+    border-radius: 6px;
+    padding: 1rem;
+    min-width: 150px;
+    flex: 1;
+    box-shadow: 0 2px 4px var(--cardShadowColor, rgba(0,0,0,0.3));
+}
+
+.preview-card .card-header {
+    color: var(--text-primary, #fff);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.preview-card .card-content {
+    color: var(--text-secondary, #ccc);
+    font-size: 0.9rem;
+}
+
+/* Preview Buttons */
+.preview-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.preview-btn-primary {
+    background: var(--btn-primary-bg, #4a9eff);
+    color: var(--btn-primary-text, #fff);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.preview-btn-primary:hover {
+    background: var(--btn-primary-hover, #3a8eef);
+}
+
+.preview-btn-secondary {
+    background: var(--btn-secondary-bg, #666);
+    color: var(--btn-secondary-text, #fff);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.preview-btn-secondary:hover {
+    background: var(--btn-secondary-hover, #777);
+}
+
+.preview-btn-danger {
+    background: var(--btn-danger-bg, #dc3545);
+    color: var(--btn-danger-text, #fff);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.preview-btn-danger:hover {
+    background: var(--btn-danger-hover, #c82333);
+}
+
+/* Preview Form Elements */
+.preview-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.preview-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.preview-form label {
+    color: var(--text-primary, #fff);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.preview-input, .preview-select {
+    background: var(--inputBackgroundColor, var(--input-bg, #3a3a3a));
+    color: var(--textColor, var(--input-text, #fff));
+    border: 1px solid var(--inputBorderColor, var(--input-border, #555));
+    border-radius: 4px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    width: 200px;
+}
+
+.preview-input:focus, .preview-select:focus {
+    outline: none;
+    border-color: var(--inputFocusBorderColor, var(--input-focus, #4a9eff));
+    box-shadow: 0 0 0 2px var(--inputFocusBoxShadowColor, rgba(74, 158, 255, 0.25));
+}
+
+/* Preview Navigation */
+.preview-nav {
+    display: flex;
+    background: var(--nav-bg, #2d2d2d);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.nav-item {
+    padding: 0.75rem 1rem;
+    color: var(--nav-text, #fff);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.9rem;
+}
+
+.nav-item:hover {
+    background: var(--nav-hover, #404040);
+}
+
+.nav-item.active {
+    background: var(--nav-active, #4a9eff);
+    color: var(--text-inverse, #000);
+}
+
+/* Preview Alerts */
+.preview-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.alert-success, .alert-warning, .alert-error, .alert-info {
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    border: 1px solid;
+}
+
+.alert-success {
+    background: var(--alertSuccessBackgroundColor, var(--bg-secondary, #2d2d2d));
+    color: var(--successColor, var(--success, #28a745));
+    border-color: var(--successColor, var(--success, #28a745));
+}
+
+.alert-warning {
+    background: var(--alertWarningBackgroundColor, var(--bg-secondary, #2d2d2d));
+    color: var(--warningColor, var(--warning, #ffc107));
+    border-color: var(--warningColor, var(--warning, #ffc107));
+}
+
+.alert-error {
+    background: var(--alertDangerBackgroundColor, var(--bg-secondary, #2d2d2d));
+    color: var(--dangerColor, var(--error, #dc3545));
+    border-color: var(--dangerColor, var(--error, #dc3545));
+}
+
+.alert-info {
+    background: var(--alertInfoBackgroundColor, var(--bg-secondary, #2d2d2d));
+    color: var(--primaryColor, var(--info, #17a2b8));
+    border-color: var(--primaryColor, var(--info, #17a2b8));
+}
+
+/* Preview Responsive */
+@media (max-width: 768px) {
+    .preview-cards, .preview-buttons {
+        flex-direction: column;
+    }
+    
+    .preview-input, .preview-select {
+        width: 100%;
+    }
+    
+    .preview-nav {
+        flex-direction: column;
+    }
 }
 </style>
+
+<script>
+// Theme management functionality
+// Use existing global variables if available, otherwise create local ones
+if (typeof window.currentTheme === 'undefined') {
+    window.currentTheme = 'default';
+}
+if (typeof window.currentMode === 'undefined') {
+    window.currentMode = 'dark';
+}
+
+// Initialize theme settings - now handled by Themes tab
+document.addEventListener('DOMContentLoaded', function() {
+    // Theme functionality moved to dedicated Themes tab
+});
+
+// Legacy theme functions removed - themes now handled in dedicated Themes tab
+
+// Theme functionality moved to dedicated Themes tab - no legacy hooks needed
+
+// ============== THEMES TAB FUNCTIONALITY ==============
+
+let allThemes = [];
+let currentTheme = null;
+
+// Initialize themes when tab is activated
+function initializeThemesTab() {
+    if (document.getElementById('themes-tab').classList.contains('active')) {
+        loadThemes();
+    }
+}
+
+// Theme tab switching functionality
+function switchThemeTab(event, tabId) {
+    // Remove active class from all theme tabs and panels
+    const tabButtons = document.querySelectorAll('.theme-tab-btn');
+    const tabPanels = document.querySelectorAll('.theme-tab-content');
+    
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabPanels.forEach(panel => panel.classList.remove('active'));
+    
+    // Add active class to clicked tab and corresponding panel
+    event.target.classList.add('active');
+    const targetPanel = document.getElementById(tabId);
+    if (targetPanel) {
+        targetPanel.classList.add('active');
+        
+        // Load customize grid if switching to customize tab
+        if (tabId === 'customize-tab') {
+            loadCustomizeThemeGrid();
+        }
+    }
+}
+
+// Load all themes from API
+async function loadThemes() {
+    try {
+        console.log('Loading themes from /api/themes...');
+        const response = await fetch('/api/themes');
+        console.log('Themes API response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Themes API error response:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Themes API response data:', data);
+        
+        if (!data.themes) {
+            throw new Error('No themes property in response');
+        }
+        
+        allThemes = data.themes;
+        console.log('Loaded themes:', allThemes.length);
+        renderThemesGrid();
+        loadCustomizeThemeGrid();
+        
+    } catch (error) {
+        console.error('Failed to load themes:', error);
+        console.error('Error stack:', error.stack);
+        showError('Failed to load themes: ' + error.message);
+    }
+}
+
+// Render themes grid
+function renderThemesGrid() {
+    const grid = document.getElementById('themes-grid');
+    
+    if (allThemes.length === 0) {
+        grid.innerHTML = '<p class="no-themes">No themes available. Check your internet connection or refresh the page.</p>';
+        return;
+    }
+
+    grid.innerHTML = allThemes.map(theme => `
+        <div class="theme-card ${theme.is_applied ? 'applied' : ''}" data-theme-id="${theme.id || theme.name}">
+            <div class="theme-preview-mini">
+                <div class="preview-bg" style="background: ${theme.theme_data?.['--bg-primary'] || '#1a1a1a'};">
+                    <div class="preview-accent" style="background: ${theme.theme_data?.['--text-accent'] || '#4a9eff'};"></div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h4 class="theme-title">${theme.display_name || theme.name}</h4>
+                <p class="theme-description">${theme.description || 'No description available'}</p>
+                <div class="theme-meta">
+                    ${theme.is_built_in ? '<span class="theme-badge built-in">Built-in</span>' : ''}
+                    ${theme.is_public ? '<span class="theme-badge public">Public</span>' : ''}
+                </div>
+            </div>
+            <div class="theme-actions">
+                <button onclick="quickApplyTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-success">
+                    Apply
+                </button>
+                <button onclick="selectTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-primary">
+                    Customize
+                </button>
+                ${!theme.is_built_in ? `
+                    <button onclick="editTheme('${theme.id || theme.name}'); event.stopPropagation();" class="btn btn-sm btn-secondary" title="Edit Theme">
+                        <iconify-icon icon="tabler:edit"></iconify-icon>
+                    </button>
+                    <button onclick="deleteTheme('${theme.id || theme.name}', '${theme.display_name}'); event.stopPropagation();" class="btn btn-sm btn-danger" title="Delete Theme">
+                        <iconify-icon icon="tabler:trash"></iconify-icon>
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Load customize theme grid
+function loadCustomizeThemeGrid() {
+    const grid = document.getElementById('customize-theme-grid');
+    if (!grid || allThemes.length === 0) return;
+    
+    grid.innerHTML = allThemes.map(theme => `
+        <div class="customize-theme-card" data-theme-id="${theme.id || theme.name}" onclick="selectTheme('${theme.id || theme.name}')">
+            <div class="theme-preview-mini">
+                <div class="preview-bg" style="background: ${theme.theme_data?.['--bg-primary'] || '#1a1a1a'};">
+                    <div class="preview-accent" style="background: ${theme.theme_data?.['--text-accent'] || '#4a9eff'};"></div>
+                </div>
+            </div>
+            <span class="theme-name">${theme.display_name || theme.name}</span>
+        </div>
+    `).join('');
+}
+
+// Quick apply theme directly from theme card
+async function quickApplyTheme(themeId) {
+    const theme = allThemes.find(theme => {
+        const themeIdentifier = theme.id || theme.name;
+        return String(themeIdentifier) === String(themeId);
+    });
+    
+    if (!theme) {
+        showError('Theme not found');
+        return;
+    }
+    
+    try {
+        let themeToApply = theme;
+        
+        // If this is a built-in theme, get its CSS variables
+        if (theme.is_built_in) {
+            const extractResponse = await fetch(`/api/themes/built-in/${theme.name}/extract`, {
+                method: 'POST'
+            });
+            if (extractResponse.ok) {
+                const extractData = await extractResponse.json();
+                themeToApply = {
+                    ...theme,
+                    theme_data: extractData.variables
+                };
+            }
+        }
+        
+        // Apply theme variables to the document
+        if (themeToApply.theme_data) {
+            Object.entries(themeToApply.theme_data).forEach(([cssVar, value]) => {
+                document.documentElement.style.setProperty(cssVar, value);
+            });
+        }
+        
+        // Save theme preference using themes API
+        const response = await fetch('/api/themes/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                theme_name: theme.id || theme.name
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to apply theme: ${response.status} - ${errorText}`);
+        }
+        
+        // Update the global theme variable
+        window.currentTheme = theme.id || theme.name;
+        document.documentElement.setAttribute('data-theme', window.currentTheme);
+        
+        // Update visual feedback on theme cards
+        document.querySelectorAll('.theme-card').forEach(card => {
+            card.classList.remove('applied');
+        });
+        const appliedCard = document.querySelector(`[data-theme-id="${themeId}"]`);
+        if (appliedCard) {
+            appliedCard.classList.add('applied');
+        }
+        
+        showSuccess(`Applied theme "${theme.display_name}" successfully!`);
+        
+    } catch (error) {
+        console.error('Failed to apply theme:', error);
+        showError('Failed to apply theme: ' + error.message);
+    }
+}
+
+// Select a theme for customization
+function selectTheme(themeId) {
+    // Remove active class from all cards
+    document.querySelectorAll('.customize-theme-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    // Add active class to selected card
+    const selectedCard = document.querySelector(`[data-theme-id="${themeId}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('active');
+    }
+    
+    // Find the theme - handle both numeric and string IDs
+    currentTheme = allThemes.find(theme => {
+        const themeIdentifier = theme.id || theme.name;
+        return String(themeIdentifier) === String(themeId);
+    });
+    
+    if (currentTheme) {
+        loadThemeForCustomization(currentTheme);
+        
+        // Manage button visibility based on theme type and editing state
+        const updateBtn = document.getElementById('update-theme-btn');
+        const saveBtn = document.querySelector('[onclick*="saveCustomTheme"]');
+        const saveCurrentBtn = document.getElementById('save-current-theme-btn');
+        
+        if (window.editingThemeId === themeId) {
+            // This theme is being edited
+            if (updateBtn) {
+                updateBtn.style.display = 'inline-block';
+            }
+            if (saveBtn) {
+                saveBtn.style.display = 'none';
+            }
+            if (saveCurrentBtn) {
+                saveCurrentBtn.style.display = 'none';
+            }
+        } else {
+            // Reset editing state
+            window.editingThemeId = null;
+            if (updateBtn) {
+                updateBtn.style.display = 'none';
+            }
+            if (saveBtn) {
+                // Show Save as Custom button for all themes
+                saveBtn.style.display = 'inline-block';
+            }
+            if (saveCurrentBtn) {
+                // Show Save Current Theme button for editable themes (not Default)
+                if (currentTheme.is_built_in && currentTheme.name.toLowerCase() === 'default') {
+                    saveCurrentBtn.style.display = 'none';
+                } else {
+                    saveCurrentBtn.style.display = 'inline-block';
+                }
+            }
+        }
+        
+        // Switch to customize tab if not already active
+        const customizeTab = document.querySelector('[onclick*="customize-tab"]');
+        if (customizeTab && !customizeTab.classList.contains('active')) {
+            switchThemeTab({target: customizeTab}, 'customize-tab');
+        }
+    }
+}
+
+// Load theme for customization
+async function loadThemeForCustomization(theme) {
+    let themeData = theme.theme_data;
+    
+    // If this is a built-in theme, extract its variables
+    if (theme.is_built_in && !themeData) {
+        try {
+            const response = await fetch(`/api/themes/built-in/${theme.name}/extract`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                const extractData = await response.json();
+                themeData = extractData.variables;
+            }
+        } catch (error) {
+            console.error('Failed to extract theme variables:', error);
+            themeData = {};
+        }
+    }
+    
+    // Update theme name
+    document.getElementById('customizing-theme-name').textContent = `Customizing: ${theme.display_name || theme.name}`;
+    
+    // Show/hide theme details section and populate fields
+    const themeDetailsSection = document.getElementById('theme-details-section');
+    const themeNameInput = document.getElementById('theme-name-input');
+    const themeDescriptionInput = document.getElementById('theme-description-input');
+    
+    // Show theme details for custom themes or built-in themes (except Default)
+    if (!theme.is_built_in || (theme.is_built_in && theme.name.toLowerCase() !== 'default')) {
+        themeDetailsSection.style.display = 'block';
+        themeNameInput.value = theme.display_name || theme.name;
+        themeDescriptionInput.value = theme.description || '';
+    } else {
+        themeDetailsSection.style.display = 'none';
+        themeNameInput.value = '';
+        themeDescriptionInput.value = '';
+    }
+    
+    // Load colors into inputs
+    const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
+    colorInputs.forEach(input => {
+        const cssVar = input.dataset.cssVar;
+        
+        // Use regular theme data
+        const value = themeData?.[cssVar] || input.nextElementSibling.textContent;
+        
+        input.value = value;
+        input.nextElementSibling.textContent = value;
+        
+        // Apply the color to the document for live preview
+        document.documentElement.style.setProperty(cssVar, value);
+        
+        // Add event listener for live updates
+        input.addEventListener('input', function() {
+            // Apply live preview
+            document.documentElement.style.setProperty(cssVar, this.value);
+            this.nextElementSibling.textContent = this.value;
+        });
+    });
+    
+    // Show the customization panel
+    document.getElementById('color-customization-panel').style.display = 'block';
+}
+
+// Apply current theme
+async function applyCurrentTheme() {
+    if (!currentTheme) {
+        showError('No theme selected');
+        return;
+    }
+    
+    try {
+        // Get current values from color inputs
+        const themeData = {};
+        const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
+        colorInputs.forEach(input => {
+            const cssVar = input.dataset.cssVar;
+            themeData[cssVar] = input.value;
+        });
+        
+        // Apply theme variables to the document
+        Object.entries(themeData).forEach(([cssVar, value]) => {
+            document.documentElement.style.setProperty(cssVar, value);
+        });
+        
+        // Save theme preference using themes API
+        const response = await fetch('/api/themes/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                theme_name: currentTheme.name  // Always use name, not ID
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to apply theme: ${response.status} - ${errorText}`);
+        }
+        
+        // Update the global theme variable
+        window.currentTheme = currentTheme.id || currentTheme.name;
+        document.documentElement.setAttribute('data-theme', window.currentTheme);
+        
+        showSuccess(`Applied theme "${currentTheme.display_name}" successfully!`);
+        
+    } catch (error) {
+        console.error('Failed to apply theme:', error);
+        showError('Failed to apply theme: ' + error.message);
+    }
+}
+
+// Reset to default colors
+async function resetToDefault() {
+    if (!currentTheme) return;
+    
+    try {
+        // Reload the original theme
+        await loadThemeForCustomization(currentTheme);
+        showSuccess('Reset to default colors');
+    } catch (error) {
+        console.error('Failed to reset theme:', error);
+        showError('Failed to reset theme: ' + error.message);
+    }
+}
+
+// Save custom theme
+async function saveCustomTheme() {
+    if (!currentTheme) {
+        showError('No theme selected');
+        return;
+    }
+    
+    const customName = prompt('Enter a name for your custom theme:', `${currentTheme.display_name || currentTheme.name} Custom`);
+    if (!customName) return;
+    
+    try {
+        // Get current values from color inputs
+        const themeData = {};
+        const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
+        colorInputs.forEach(input => {
+            const cssVar = input.dataset.cssVar;
+            themeData[cssVar] = input.value;
+        });
+        
+        // Save custom theme
+        const response = await fetch('/api/themes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: customName.toLowerCase().replace(/\s+/g, '_'),
+                display_name: customName,
+                description: `Custom theme based on ${currentTheme.display_name || currentTheme.name}`,
+                theme_data: themeData
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to save custom theme: ${response.status} - ${errorText}`);
+        }
+        
+        showSuccess(`Custom theme "${customName}" saved successfully!`);
+        loadThemes(); // Reload themes to show the new custom theme
+        
+    } catch (error) {
+        console.error('Failed to save custom theme:', error);
+        showError('Failed to save custom theme: ' + error.message);
+    }
+}
+
+// Refresh themes
+function refreshThemes() {
+    loadThemes()
+        .then(() => showSuccess('Themes refreshed successfully!'))
+        .catch(error => showError('Failed to refresh themes: ' + error.message));
+}
+
+// Export all themes
+async function exportAllThemes() {
+    try {
+        showInfo('Preparing theme export...');
+        
+        const response = await fetch('/api/themes/export/all', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to export themes');
+        }
+
+        // Create a blob from the response and trigger download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'mvidarr_themes_export.json';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showSuccess('All themes exported successfully!');
+    } catch (error) {
+        console.error('Export error:', error);
+        showError('Failed to export themes: ' + error.message);
+    }
+}
+
+// Export current theme
+async function exportCurrentTheme() {
+    try {
+        if (!currentTheme) {
+            showError('No theme selected to export');
+            return;
+        }
+
+        // For built-in themes without database ID, we need to handle them differently
+        let themeId = currentTheme.id;
+        if (!themeId && currentTheme.name) {
+            // For built-in themes, we'll need to create a temporary export
+            showError('Built-in themes cannot be exported directly. Please save as custom theme first.');
+            return;
+        }
+
+        showInfo('Preparing theme export...');
+        
+        const response = await fetch(`/api/themes/${themeId}/export`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to export theme');
+        }
+
+        // Create a blob from the response and trigger download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${currentTheme.name}_theme.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showSuccess(`Theme "${currentTheme.display_name}" exported successfully!`);
+    } catch (error) {
+        console.error('Export error:', error);
+        showError('Failed to export theme: ' + error.message);
+    }
+}
+
+// Import themes
+function importThemes() {
+    // Create a file input element
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
+    fileInput.style.display = 'none';
+    
+    fileInput.onchange = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        try {
+            showInfo('Validating theme file...');
+            
+            // First validate the file
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const validateResponse = await fetch('/api/themes/import/validate', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!validateResponse.ok) {
+                const errorData = await validateResponse.json();
+                throw new Error(errorData.error || 'Failed to validate theme file');
+            }
+            
+            const validationResult = await validateResponse.json();
+            
+            // Show validation results to user
+            let confirmMessage = `Validation Results:\n\n`;
+            confirmMessage += `Total themes: ${validationResult.total_themes}\n`;
+            confirmMessage += `Valid themes: ${validationResult.valid_themes_count}\n`;
+            confirmMessage += `Invalid themes: ${validationResult.invalid_themes_count}\n`;
+            confirmMessage += `Existing themes (will be skipped): ${validationResult.existing_themes_count}\n`;
+            
+            if (validationResult.validation_errors.length > 0) {
+                confirmMessage += `\nErrors:\n${validationResult.validation_errors.join('\n')}\n`;
+            }
+            
+            if (validationResult.existing_themes.length > 0) {
+                confirmMessage += `\nExisting themes that will be skipped:\n${validationResult.existing_themes.join('\n')}\n`;
+            }
+            
+            if (validationResult.valid_themes_count > 0) {
+                confirmMessage += `\nValid themes to import:\n${validationResult.valid_themes.map(t => t.display_name).join('\n')}\n`;
+                confirmMessage += `\nProceed with import?`;
+                
+                if (confirm(confirmMessage)) {
+                    await performImport(file);
+                }
+            } else {
+                alert(confirmMessage + '\nNo valid themes to import.');
+            }
+            
+        } catch (error) {
+            console.error('Import validation error:', error);
+            showError('Failed to validate theme file: ' + error.message);
+        }
+        
+        // Clean up
+        document.body.removeChild(fileInput);
+    };
+    
+    document.body.appendChild(fileInput);
+    fileInput.click();
+}
+
+// Perform the actual import
+async function performImport(file) {
+    try {
+        showInfo('Importing themes...');
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('/api/themes/import', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to import themes');
+        }
+        
+        const result = await response.json();
+        
+        // Show detailed results
+        let message = result.message + '\n\n';
+        message += `Imported: ${result.imported_count} themes\n`;
+        message += `Skipped: ${result.skipped_count} themes\n`;
+        message += `Errors: ${result.error_count} themes\n`;
+        
+        if (result.imported_themes.length > 0) {
+            message += `\nImported themes:\n${result.imported_themes.join('\n')}`;
+        }
+        
+        if (result.errors.length > 0) {
+            message += `\nErrors:\n${result.errors.join('\n')}`;
+        }
+        
+        if (result.imported_count > 0) {
+            showSuccess(message);
+            // Refresh the themes list to show imported themes
+            refreshThemes();
+        } else {
+            showWarning(message);
+        }
+        
+    } catch (error) {
+        console.error('Import error:', error);
+        showError('Failed to import themes: ' + error.message);
+    }
+}
+
+
+// Save current theme (update the theme that's currently applied)
+async function saveCurrentTheme() {
+    if (!currentTheme) {
+        showError('No theme selected');
+        return;
+    }
+    
+    // Check if this is the Default theme
+    if (currentTheme.is_built_in && currentTheme.name.toLowerCase() === 'default') {
+        showError('The Default theme cannot be modified. Use "Save as Custom" to create a new theme based on Default.');
+        return;
+    }
+    
+    try {
+        // Get current values from color inputs
+        const themeData = {};
+        
+        const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
+        colorInputs.forEach(input => {
+            const cssVar = input.dataset.cssVar;
+            themeData[cssVar] = input.value;
+        });
+
+        // Get theme name and description
+        const themeName = document.getElementById('theme-name-input').value.trim();
+        const themeDescription = document.getElementById('theme-description-input').value.trim();
+        
+        // Prepare update data
+        const updateData = {
+            theme_data: themeData
+        };
+        
+        if (themeName) {
+            updateData.display_name = themeName;
+        }
+        if (themeDescription) {
+            updateData.description = themeDescription;
+        }
+        
+        // Choose endpoint based on theme type
+        let url, method;
+        if (currentTheme.is_built_in) {
+            url = `/api/themes/built-in/${currentTheme.name}`;
+            method = 'PUT';
+        } else {
+            url = `/api/themes/${currentTheme.id}`;
+            method = 'PUT';
+        }
+        
+        // Update the theme
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Failed to save theme: ${response.status}`);
+        }
+        
+        const updatedTheme = await response.json();
+        showSuccess(`Theme "${updatedTheme.display_name || updatedTheme.name}" saved successfully!`);
+        
+        // Reload themes and reapply the current theme
+        await loadThemes();
+        
+        // Find and reselect the updated theme
+        // For built-in themes, prioritize database records over hardcoded definitions
+        let refreshedTheme;
+        if (currentTheme.is_built_in) {
+            // Look for the database record first (it will have an ID)
+            refreshedTheme = allThemes.find(t => t.name === currentTheme.name && t.id);
+            // Fallback to name-based lookup if no database record found
+            if (!refreshedTheme) {
+                refreshedTheme = allThemes.find(t => t.name === currentTheme.name);
+            }
+        } else {
+            // For custom themes, use ID-based lookup
+            refreshedTheme = allThemes.find(t => t.id === currentTheme.id);
+        }
+        
+        if (refreshedTheme) {
+            currentTheme = refreshedTheme;
+            loadThemeForCustomization(currentTheme);
+        } else {
+            console.error('Could not find refreshed theme after save:', currentTheme);
+        }
+        
+    } catch (error) {
+        console.error('Failed to save current theme:', error);
+        showError('Failed to save current theme: ' + error.message);
+    }
+}
+
+// Helper functions for notifications
+function showSuccess(message) {
+    console.log('Success:', message);
+    // You can implement toast notifications here if available
+}
+
+function showError(message) {
+    console.error('Error:', message);
+    // You can implement toast notifications here if available
+}
+
+// Edit theme function
+async function editTheme(themeId) {
+    const theme = allThemes.find(t => {
+        const themeIdentifier = t.id || t.name;
+        return String(themeIdentifier) === String(themeId);
+    });
+    if (!theme) {
+        showError('Theme not found');
+        return;
+    }
+    
+    // Prevent editing the Default theme, but allow other built-in themes
+    if (theme.is_built_in && theme.name.toLowerCase() === 'default') {
+        showError('The Default theme cannot be edited');
+        return;
+    }
+    
+    // Switch to customize tab and select this theme for editing
+    const customizeTab = document.querySelector('[onclick*="customize-themes-tab"]');
+    if (customizeTab) {
+        customizeTab.click();
+        
+        // Small delay to let tab switch complete
+        setTimeout(() => {
+            selectTheme(themeId);
+            // Set the current theme as being edited
+            window.editingThemeId = themeId;
+            // Show the update button and hide save button while editing
+            const updateBtn = document.getElementById('update-theme-btn');
+            if (updateBtn) {
+                updateBtn.style.display = 'inline-block';
+            }
+        }, 200);
+    }
+}
+
+// Delete theme function with confirmation
+async function deleteTheme(themeId, themeName) {
+    const theme = allThemes.find(t => {
+        const themeIdentifier = t.id || t.name;
+        return String(themeIdentifier) === String(themeId);
+    });
+    if (!theme) {
+        showError('Theme not found');
+        return;
+    }
+    
+    if (theme.is_built_in) {
+        showError('Built-in themes cannot be deleted');
+        return;
+    }
+    
+    // Show confirmation dialog
+    const message = `Are you sure you want to delete the theme "${themeName}"? This action cannot be undone.`;
+    
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(message, () => {
+            proceedDeleteTheme(themeId);
+        });
+    } else {
+        if (confirm(message)) {
+            proceedDeleteTheme(themeId);
+        }
+    }
+}
+
+// Actually perform the theme deletion
+async function proceedDeleteTheme(themeId) {
+    try {
+        const response = await fetch(`/api/themes/${themeId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            showSuccess(`Theme "${data.theme_name}" deleted successfully`);
+            
+            // Remove from allThemes array
+            const themeIndex = allThemes.findIndex(t => (t.id || t.name) === themeId);
+            if (themeIndex !== -1) {
+                allThemes.splice(themeIndex, 1);
+            }
+            
+            // Re-render the themes grid
+            renderThemesGrid();
+            loadCustomizeThemeGrid();
+            
+            // If this was the currently applied theme, we might need to handle that
+            // but the API should handle switching to a default theme
+            
+        } else {
+            showError(data.error || 'Failed to delete theme');
+        }
+    } catch (error) {
+        console.error('Error deleting theme:', error);
+        showError('Failed to delete theme: ' + error.message);
+    }
+}
+
+// Update current theme function (for editing existing themes)
+async function updateCurrentTheme() {
+    if (!currentTheme || !window.editingThemeId) {
+        showError('No theme selected for editing');
+        return;
+    }
+    
+    const themeToUpdate = allThemes.find(t => {
+        const themeIdentifier = t.id || t.name;
+        return String(themeIdentifier) === String(window.editingThemeId);
+    });
+    if (!themeToUpdate) {
+        showError('Theme to update not found');
+        return;
+    }
+    
+    // Prevent updating the Default theme
+    if (themeToUpdate.is_built_in && themeToUpdate.name.toLowerCase() === 'default') {
+        showError('The Default theme cannot be updated');
+        return;
+    }
+    
+    try {
+        // Get current values from color inputs
+        const themeData = {};
+        
+        const colorInputs = document.querySelectorAll('#color-customization-panel input[type="color"]');
+        colorInputs.forEach(input => {
+            const cssVar = input.dataset.cssVar;
+            themeData[cssVar] = input.value;
+        });
+        
+        // Get theme name and description
+        const themeName = document.getElementById('theme-name-input').value.trim();
+        const themeDescription = document.getElementById('theme-description-input').value.trim();
+        
+        // Prepare update data
+        const updateData = {
+            theme_data: themeData
+        };
+        
+        if (themeName) {
+            updateData.display_name = themeName;
+        }
+        if (themeDescription) {
+            updateData.description = themeDescription;
+        }
+        
+        // Choose endpoint based on theme type
+        let url, method;
+        if (themeToUpdate.is_built_in) {
+            url = `/api/themes/built-in/${themeToUpdate.name}`;
+            method = 'PUT';
+        } else {
+            url = `/api/themes/${window.editingThemeId}`;
+            method = 'PUT';
+        }
+        
+        // Update existing theme
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Failed to update theme: ${response.status}`);
+        }
+        
+        const updatedTheme = await response.json();
+        showSuccess(`Theme "${updatedTheme.display_name}" updated successfully!`);
+        
+        // Clear editing state
+        window.editingThemeId = null;
+        const updateBtn = document.getElementById('update-theme-btn');
+        if (updateBtn) {
+            updateBtn.style.display = 'none';
+        }
+        
+        // Reload themes to show the updated theme
+        loadThemes();
+        
+    } catch (error) {
+        console.error('Failed to update theme:', error);
+        showError('Failed to update theme: ' + error.message);
+    }
+}
+
+// Override the main switchTab function to initialize themes when themes tab is activated
+const originalSwitchTab = switchTab;
+switchTab = function(event, tabId) {
+    originalSwitchTab(event, tabId);
+    
+    if (tabId === 'themes-tab') {
+        // Small delay to ensure tab is fully activated
+        setTimeout(initializeThemesTab, 100);
+    }
+};
+
+</script>
+
 {% endblock %}

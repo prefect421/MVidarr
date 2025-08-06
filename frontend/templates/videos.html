@@ -3,649 +3,7 @@
 {% block title %}Videos - MVidarr{% endblock %}
 
 {% block content %}
-<style>
-.videos-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.videos-container h1 {
-    color: #00d4ff;
-    margin-bottom: 10px;
-    font-size: 2.5rem;
-    text-align: center;
-}
-
-.page-description {
-    text-align: center;
-    color: #ccc;
-    margin-bottom: 30px;
-    font-size: 1.1rem;
-}
-
-.videos-actions {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 1px solid #444;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 20px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.videos-actions:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
-}
-
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
-    color: #fff;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #0099cc 0%, #007799 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
-}
-
-.btn-success {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-    color: #fff;
-}
-
-.btn-success:hover {
-    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-}
-
-.btn-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
-    color: #fff;
-}
-
-.btn-info:hover {
-    background: linear-gradient(135deg, #117a8b 0%, #0c5460 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
-}
-
-.btn-warning {
-    background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
-    color: #000;
-}
-
-.btn-warning:hover {
-    background: linear-gradient(135deg, #d39e00 0%, #b08800 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-}
-
-.btn-secondary {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: #fff;
-}
-
-.btn-secondary:hover {
-    background: linear-gradient(135deg, #5a6268 0%, #484e53 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
-    color: #fff;
-}
-
-.btn-danger:hover {
-    background: linear-gradient(135deg, #bd2130 0%, #a01e2a 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-}
-
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    color: #00d4ff;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
-
-.form-control {
-    width: 100%;
-    padding: 12px;
-    background: #333;
-    border: 2px solid #444;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 14px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
-}
-
-.form-control option {
-    background: #333;
-    color: #fff;
-}
-
-.search-panel {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 1px solid #444;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 20px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.search-panel:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
-}
-
-.search-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.search-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 150px 120px;
-    gap: 15px;
-    align-items: end;
-}
-
-.search-field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.search-field label {
-    color: #00d4ff;
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-.search-field input,
-.search-field select {
-    padding: 10px 12px;
-    background: #333;
-    border: 2px solid #444;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 14px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.search-field input:focus,
-.search-field select:focus {
-    outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 2000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    margin: 5% auto;
-    padding: 0;
-    border: 1px solid #444;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
-    color: #fff;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    border-bottom: 1px solid #444;
-}
-
-.modal-header h3 {
-    margin: 0;
-    color: #ffffff;
-}
-
-.modal-close {
-    font-size: 24px;
-    cursor: pointer;
-    color: #aaa;
-    transition: color 0.3s ease;
-}
-
-.modal-close:hover {
-    color: #00d4ff;
-}
-
-.modal-body {
-    padding: 20px;
-}
-
-.form-actions {
-    margin-top: 20px;
-    text-align: right;
-}
-
-.form-actions button {
-    margin-left: 10px;
-}
-
-.loading-spinner {
-    border: 3px solid #555;
-    border-top: 3px solid #00d4ff;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 10px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Pagination Styles */
-.pagination-container {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 15px 20px;
-    margin: 20px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.pagination-info {
-    color: #ccc;
-    font-size: 0.9rem;
-}
-
-.pagination-controls {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.pagination-btn {
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    min-width: auto;
-    transition: all 0.2s ease;
-}
-
-.pagination-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: #333 !important;
-    color: #666 !important;
-}
-
-.page-selector {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #ccc;
-    font-size: 0.9rem;
-}
-
-.page-input {
-    width: 60px;
-    padding: 4px 8px;
-    background: #2a2a2a;
-    border: 1px solid #444;
-    border-radius: 4px;
-    color: #f0f0f0;
-    text-align: center;
-    font-size: 0.9rem;
-}
-
-.page-input:focus {
-    border-color: #00d4ff;
-    outline: none;
-}
-
-.page-size-selector {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #ccc;
-    font-size: 0.9rem;
-}
-
-.page-size-selector select {
-    background: #2a2a2a;
-    border: 1px solid #444;
-    border-radius: 4px;
-    color: #f0f0f0;
-    padding: 4px 8px;
-    font-size: 0.9rem;
-}
-
-.page-size-selector select:focus {
-    border-color: #00d4ff;
-    outline: none;
-}
-
-.bottom-pagination .page-size-selector {
-    display: none;
-}
-
-/* Responsive pagination */
-@media (max-width: 768px) {
-    .pagination-container {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-    
-    .pagination-controls {
-        justify-content: center;
-    }
-    
-    .pagination-info {
-        text-align: center;
-    }
-    
-    .page-size-selector {
-        justify-content: center;
-    }
-}
-
-.advanced-search-panel {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border: 1px solid #444;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 20px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.advanced-search-panel:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
-}
-
-.search-header {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.search-input-container {
-    flex: 1;
-    position: relative;
-}
-
-.search-input-container input {
-    width: 100%;
-    padding: 12px 16px;
-    background: #333;
-    border: 2px solid #444;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 14px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.search-input-container input:focus {
-    outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
-}
-
-.search-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #2d2d2d;
-    border: 1px solid #444;
-    border-radius: 0 0 8px 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    display: none;
-}
-
-.search-suggestion-item {
-    padding: 10px 16px;
-    color: #ccc;
-    cursor: pointer;
-    border-bottom: 1px solid #444;
-    transition: background-color 0.2s ease;
-}
-
-.search-suggestion-item:hover {
-    background: #00d4ff;
-    color: #000;
-}
-
-.search-suggestion-item:last-child {
-    border-bottom: none;
-}
-
-.filter-count {
-    background: #00d4ff;
-    color: #000;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: bold;
-    margin-left: 5px;
-    display: none;
-}
-
-.filter-count.active {
-    display: inline;
-}
-
-.advanced-filters {
-    border-top: 1px solid #444;
-    padding-top: 20px;
-}
-
-.filter-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.filter-group.full-width {
-    grid-column: 1 / -1;
-}
-
-.filter-group label {
-    color: #00d4ff;
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-.filter-group input,
-.filter-group select {
-    padding: 10px 12px;
-    background: #333;
-    border: 2px solid #444;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 14px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.filter-group input:focus,
-.filter-group select:focus {
-    outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
-}
-
-.filter-group select option {
-    background: #333;
-    color: #fff;
-}
-
-.filter-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #444;
-}
-
-.search-results-info {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #444;
-    color: #ccc;
-    font-size: 0.9rem;
-    text-align: center;
-}
-
-
-@media (max-width: 768px) {
-    .videos-container {
-        padding: 15px;
-    }
-    
-    .videos-container h1 {
-        font-size: 2rem;
-    }
-    
-    .videos-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .btn {
-        justify-content: center;
-        margin-bottom: 10px;
-    }
-    
-    .search-row {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .search-panel {
-        padding: 20px;
-    }
-    
-    .modal-content {
-        width: 95%;
-        margin: 10% auto;
-    }
-    
-    .search-header {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .filter-row {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .filter-actions {
-        flex-direction: column;
-    }
-    
-    .advanced-search-panel {
-        padding: 20px;
-    }
-}
-
-/* Light Theme Overrides for Videos Page */
-body.light-theme .search-panel {
-    background: white;
-    border: 1px solid #e1e5e9;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-body.light-theme .search-panel:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-}
-
-body.light-theme .search-field label {
-    color: #333;
-}
-
-body.light-theme .search-field input,
-body.light-theme .search-field select {
-    background: white;
-    border: 2px solid #e1e5e9;
-    color: #333;
-    border-radius: 8px;
-}
-
-body.light-theme .search-field input:focus,
-body.light-theme .search-field select:focus {
-    border-color: #667eea;
-    box-shadow: none;
-    outline: none;
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='videos.css') }}">
 <div class="videos-container">
     
     <div class="videos-actions">
@@ -1127,9 +485,9 @@ body.light-theme .search-field select:focus {
                         <button type="button" id="identifyArtistBtn" class="btn btn-secondary btn-small" onclick="identifyArtist()" style="margin-left: 10px;">
                             🔍 Identify Artist
                         </button>
-                    </div>
-                    <div id="artistSuggestions" class="artist-suggestions" style="display: none;">
-                        <!-- Artist suggestions will be populated here -->
+                        <div id="artistSuggestions" class="artist-suggestions" style="display: none;">
+                            <!-- Artist suggestions will be populated here -->
+                        </div>
                     </div>
                 </div>
                 
@@ -1192,172 +550,35 @@ body.light-theme .search-field select:focus {
     </div>
 </div>
 
+
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    loadVideos();
-    loadVideoGenreOptions(); // Load genre filter options
-});
-
-// Pagination state
-let currentPage = 1;
-let pageSize = 50;
-let totalVideos = 0;
-let totalPages = 1;
-
-function loadVideos(page = 1, size = pageSize, resetPage = false) {
-    if (resetPage) {
-        currentPage = 1;
-        page = 1;
-    }
-    
-    const offset = (page - 1) * size;
-    fetch(`/api/videos/?sort=title&order=asc&offset=${offset}&limit=${size}`)
-        .then(response => response.json())
-        .then(data => {
-            const grid = document.getElementById('videos-grid');
-            
-            // Update pagination state
-            currentPage = page;
-            pageSize = size;
-            totalVideos = data.total || 0;
-            totalPages = Math.ceil(totalVideos / pageSize);
-            
-            if (data.videos && data.videos.length > 0) {
-                grid.innerHTML = data.videos.map(video => `
-                    <div class="video-card">
-                        <div class="video-select">
-                            <input type="checkbox" class="video-checkbox" value="${video.id}" onchange="updateSelectedCount()">
-                        </div>
-                        <div class="video-thumbnail" data-video-id="${video.id}" data-action="play">
-                            <img src="/api/videos/${video.id}/thumbnail" 
-                                 alt="${video.title}" onerror="this.src='/static/placeholder-video.png'">
-                            <div class="play-overlay">
-                                <div class="play-button">▶</div>
-                            </div>
-                        </div>
-                        <div class="video-info">
-                            <h3>${video.title}</h3>
-                            <p>Artist: ${video.artist_name || 'Unknown'}</p>
-                            <p>Status: ${video.status}</p>
-                            ${video.year ? `<p>Year: ${video.year}</p>` : ''}
-                        </div>
-                        <div class="video-actions">
-                            <button data-video-id="${video.id}" data-action="view" class="btn-icon" title="View Details">
-                                <i class="icon-eye"></i>
-                            </button>
-                            <button data-video-id="${video.id}" data-action="edit" class="btn-icon" title="Edit Video">
-                                <i class="icon-edit"></i>
-                            </button>
-                            <button data-video-id="${video.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
-                                <i class="icon-refresh"></i>
-                            </button>
-                            ${video.status === 'WANTED' ? 
-                                `<button data-video-id="${video.id}" data-action="download" class="btn-icon" title="Download Video">
-                                    <i class="icon-download"></i>
-                                </button>` : 
-                                ''}
-                            <button data-video-id="${video.id}" data-action="delete" class="btn-icon btn-danger" title="Delete Video">
-                                <i class="icon-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                grid.innerHTML = '<p>No videos found. Add some artists to discover videos!</p>';
+// Global function definitions for immediate availability
+window.toggleSearchPanel = window.toggleSearchPanel || function() {
+    const searchPanel = document.getElementById('searchPanel');
+    if (searchPanel) {
+        const isVisible = searchPanel.style.display !== 'none';
+        searchPanel.style.display = isVisible ? 'none' : 'block';
+        
+        // Focus on search input when panel is shown
+        if (!isVisible) {
+            const searchInput = document.getElementById('searchQuery');
+            if (searchInput) {
+                setTimeout(() => searchInput.focus(), 100);
             }
-            
-            // Update pagination controls
-            updatePaginationControls();
-        })
-        .catch(error => {
-            console.error('Error loading videos:', error);
-            document.getElementById('videos-grid').innerHTML = '<p>Error loading videos.</p>';
-            // Hide pagination on error
-            document.getElementById('topPagination').style.display = 'none';
-            document.getElementById('bottomPagination').style.display = 'none';
-        });
-}
-
-// Add event delegation for video actions
-document.addEventListener('click', function(e) {
-    // Check if the clicked element or any of its parents have the data attributes
-    let element = e.target;
-    let videoId = null;
-    let action = null;
-    
-    // Walk up the DOM tree to find data attributes
-    while (element && element !== document) {
-        videoId = element.getAttribute('data-video-id');
-        action = element.getAttribute('data-action');
-        
-        if (videoId && action) break;
-        element = element.parentElement;
-    }
-    
-    if (!videoId || !action) return;
-    
-    console.log(`Video action triggered: ${action} for video ${videoId}`);
-    
-    // Find the video data from the most recent loadVideos call
-    const videoCards = document.querySelectorAll('.video-card');
-    let videoData = null;
-    
-    // Find the video card containing this element
-    let videoCard = e.target.closest('.video-card');
-    if (videoCard) {
-        const titleElement = videoCard.querySelector('h3');
-        const title = titleElement ? titleElement.textContent : '';
-        
-        // For play action, we need to get video data from API
-        if (action === 'play') {
-            fetch(`/api/videos/${videoId}`)
-                .then(response => response.json())
-                .then(video => {
-                    playVideo(video.id, video.title, video.local_path, video.video_url);
-                })
-                .catch(error => {
-                    console.error('Error getting video data:', error);
-                    // Fallback to basic data
-                    playVideo(parseInt(videoId), title, null, null);
-                });
-        } else if (action === 'view') {
-            viewVideo(parseInt(videoId));
-        } else if (action === 'edit') {
-            editVideo(parseInt(videoId));
-        } else if (action === 'refresh-metadata') {
-            refreshVideoMetadata(parseInt(videoId));
-        } else if (action === 'download') {
-            downloadVideo(parseInt(videoId));
-        } else if (action === 'delete') {
-            deleteVideo(parseInt(videoId));
         }
     }
-});
+};
 
-function refreshVideos() {
-    loadVideos();
-}
-
-// Search functionality
-let searchActive = false;
-
-function toggleSearchPanel() {
-    const panel = document.getElementById('searchPanel');
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-    } else {
-        panel.style.display = 'none';
-        if (searchActive) {
-            clearSearch();
-        }
-    }
-}
-
-function handleSearchKeyup(event) {
+window.handleSearchKeyup = window.handleSearchKeyup || function(event) {
+    // Handle Enter key to trigger search
     if (event.key === 'Enter') {
-        performSearch();
+        if (typeof performSearch === 'function') {
+            performSearch();
+        }
     }
-}
+    // Could add more keyup handling here (like auto-search after delay)
+};
 
 function performSearch() {
     const query = document.getElementById('searchQuery').value.trim();
@@ -1382,10 +603,18 @@ function performSearch() {
     
     // Perform search
     fetch(`/api/videos/search?${params.toString()}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('🔍 Search API response:', data);
+            
             if (data.error) {
                 showError('Search error: ' + data.error);
+                resultsInfo.textContent = '';
                 return;
             }
             
@@ -1394,58 +623,44 @@ function performSearch() {
             updateSearchResultsInfo(data);
         })
         .catch(error => {
-            console.error('Search error:', error);
-            showError('Error performing search');
+            console.error('❌ Search error:', error);
+            showError('Error performing search: ' + error.message);
             resultsInfo.textContent = '';
         });
 }
 
 function displaySearchResults(data) {
-    const grid = document.getElementById('videos-grid');
+    console.log('🎭 Search data received:', data);
+    console.log('🎭 Data.videos type:', typeof data?.videos, 'isArray:', Array.isArray(data?.videos));
     
-    if (data.videos && data.videos.length > 0) {
-        grid.innerHTML = data.videos.map(video => `
-            <div class="video-card">
-                <div class="video-select">
-                    <input type="checkbox" class="video-checkbox" value="${video.id}" onchange="updateSelectedCount()">
-                </div>
-                <div class="video-thumbnail" data-video-id="${video.id}" data-action="play">
-                    <img src="/api/videos/${video.id}/thumbnail" 
-                         alt="${video.title}" onerror="this.src='/static/placeholder-video.png'">
-                    <div class="play-overlay">
-                        <div class="play-button">▶</div>
-                    </div>
-                </div>
-                <div class="video-info">
-                    <h3>${video.title}</h3>
-                    <p>Artist: ${video.artist_name || 'Unknown'}</p>
-                    <p>Status: ${video.status}</p>
-                    ${video.year ? `<p>Year: ${video.year}</p>` : ''}
-                </div>
-                <div class="video-actions">
-                    <button data-video-id="${video.id}" data-action="view" class="btn-icon" title="View Details">
-                        <i class="icon-eye"></i>
-                    </button>
-                    <button data-video-id="${video.id}" data-action="edit" class="btn-icon" title="Edit Video">
-                        <i class="icon-edit"></i>
-                    </button>
-                    <button data-video-id="${video.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
-                        <i class="icon-refresh"></i>
-                    </button>
-                    ${video.status === 'WANTED' ? 
-                        `<button data-video-id="${video.id}" data-action="download" class="btn-icon" title="Download Video">
-                            <i class="icon-download"></i>
-                        </button>` : 
-                        ''}
-                    <button data-video-id="${video.id}" data-action="delete" class="btn-icon btn-danger" title="Delete Video">
-                        <i class="icon-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    } else {
-        grid.innerHTML = '<p>No videos found matching your search criteria.</p>';
+    // Defensive null checks
+    if (!data) {
+        console.error('❌ No data received');
+        const grid = document.getElementById('videos-grid');
+        grid.innerHTML = '<p>Error: No search data received.</p>';
+        return;
     }
+    
+    if (!data.videos) {
+        console.error('❌ No videos array in data:', Object.keys(data));
+        const grid = document.getElementById('videos-grid');
+        grid.innerHTML = '<p>Error: Invalid search response structure.</p>';
+        return;
+    }
+    
+    if (!Array.isArray(data.videos)) {
+        console.error('❌ data.videos is not an array:', typeof data.videos, data.videos);
+        const grid = document.getElementById('videos-grid');
+        grid.innerHTML = '<p>Error: Invalid videos data format.</p>';
+        return;
+    }
+    
+    console.log('🎭 Displaying search results:', data.videos.length, 'videos');
+    displayVideos(data.videos);
+    
+    // Hide pagination for search results
+    document.getElementById('topPagination').style.display = 'none';
+    document.getElementById('bottomPagination').style.display = 'none';
 }
 
 function updateSearchResultsInfo(data) {
@@ -2152,7 +1367,8 @@ function refreshVideoMetadata(id) {
                 videoCard.innerHTML = originalContent;
             } else {
                 showSuccess('Metadata refreshed successfully!');
-                loadVideos(); // Refresh the entire list to show updated data
+                // Update just this video card instead of reloading entire page
+                updateSingleVideoCard(id);
             }
         })
         .catch(error => {
@@ -2162,6 +1378,79 @@ function refreshVideoMetadata(id) {
             videoCard.innerHTML = originalContent;
         });
     });
+}
+
+function updateSingleVideoCard(videoId) {
+    // Fetch updated video data from API
+    fetch(`/api/videos/${videoId}`)
+        .then(response => response.json())
+        .then(video => {
+            if (video.error) {
+                showError('Error loading updated video data');
+                return;
+            }
+            
+            // Find the video card that needs updating
+            const videoElement = document.querySelector(`[data-video-id="${videoId}"]`);
+            if (!videoElement) {
+                console.error(`Video element with ID ${videoId} not found for update`);
+                return;
+            }
+            
+            const videoCard = videoElement.closest('.video-card');
+            if (!videoCard) {
+                console.error(`Video card not found for video ID ${videoId}`);
+                return;
+            }
+            
+            // Preserve checkbox state
+            const checkbox = videoCard.querySelector('.video-checkbox');
+            const isChecked = checkbox ? checkbox.checked : false;
+            
+            // Generate new video card HTML (matching the template from loadVideos)
+            const newCardHTML = `
+                <div class="video-select">
+                    <input type="checkbox" class="video-checkbox" value="${video.id}" onchange="updateSelectedCount()" ${isChecked ? 'checked' : ''}>
+                </div>
+                <div class="video-thumbnail" data-video-id="${video.id}" data-action="play">
+                    <img src="/api/videos/${video.id}/thumbnail" 
+                         alt="${video.title}"
+                         onerror="this.src='/static/default-thumbnail.png'">
+                    <div class="video-overlay">
+                        <div class="video-play-btn">▶</div>
+                    </div>
+                </div>
+                <div class="video-info">
+                    <h3>${video.title}</h3>
+                    <p>Artist: ${video.artist ? video.artist.name : 'Unknown'}</p>
+                    <p>Status: <span class="status-${video.status ? video.status.toLowerCase() : 'unknown'}">${video.status || 'Unknown'}</span></p>
+                    <p>Year: ${video.year || 'Unknown'}</p>
+                    ${video.directors ? `<p>Directors: ${video.directors}</p>` : ''}
+                    ${video.producers ? `<p>Producers: ${video.producers}</p>` : ''}
+                </div>
+                <div class="video-actions">
+                    <button data-video-id="${video.id}" data-action="edit" class="btn-icon" title="Edit Video">
+                        <iconify-icon icon="tabler:edit"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="download" class="btn-icon" title="Download Video">
+                        <iconify-icon icon="tabler:download"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
+                        <iconify-icon icon="tabler:refresh"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="delete" class="btn-icon btn-danger" title="Delete Video">
+                        <iconify-icon icon="tabler:trash"></iconify-icon>
+                    </button>
+                </div>
+            `;
+            
+            // Replace the video card content
+            videoCard.innerHTML = newCardHTML;
+        })
+        .catch(error => {
+            console.error('Error updating video card:', error);
+            showError('Error updating video display');
+        });
 }
 
 function refreshAllMetadata() {
@@ -2744,7 +2033,7 @@ function deleteSelectedVideos() {
             <div class="crop-container">
                 <div class="crop-workspace">
                     <div class="crop-canvas-container">
-                        <canvas id="cropCanvas" style="max-width: 100%; max-height: 500px; border: 2px solid #4a90e2; background: #f0f0f0;"></canvas>
+                        <canvas id="cropCanvas" style="max-width: 100%; max-height: 500px; border: 2px solid var(--search-accent, #4a90e2); background: var(--light-input-bg, #f0f0f0);"></canvas>
                         <div class="crop-overlay" id="cropOverlay">
                             <div class="crop-selection" id="cropSelection">
                                 <div class="crop-handle crop-handle-nw" data-direction="nw"></div>
@@ -2832,7 +2121,7 @@ function deleteSelectedVideos() {
             <div class="crop-preview">
                 <h4>Cropped Preview:</h4>
                 <div class="preview-container">
-                    <canvas id="cropPreviewCanvas" style="max-width: 200px; max-height: 200px; border: 1px solid #ccc; background: #f9f9f9;"></canvas>
+                    <canvas id="cropPreviewCanvas" style="max-width: 200px; max-height: 200px; border: 1px solid var(--border-secondary, #ccc); background: var(--light-bg-secondary, #f9f9f9);"></canvas>
                     <div class="preview-info">
                         <div>Preview Size: <span id="previewSize">0x0</span></div>
                         <div>Aspect Ratio: <span id="previewAspectRatio">1:1</span></div>
@@ -2853,6 +2142,12 @@ function deleteSelectedVideos() {
 
 
 <script>
+// Global video pagination variables
+let currentPage = 1;
+let pageSize = 50;
+let totalPages = 1;
+let searchActive = false;
+
 // Video Thumbnail Management Functions
 let currentVideoThumbnailId = null;
 
@@ -3837,6 +3132,50 @@ function bulkDeleteSelected() {
     }
 }
 
+function bulkRefreshMetadata() {
+    const videoIds = getSelectedVideoIds();
+    if (videoIds.length === 0) {
+        showError('No videos selected');
+        return;
+    }
+    
+    const confirmed = confirm(`Refresh metadata from IMVDb for ${videoIds.length} selected video(s)? This will update year, directors, producers, and thumbnail information.`);
+    
+    if (confirmed) {
+        showBulkProgress('Refreshing metadata...');
+        
+        fetch('/api/videos/bulk/refresh-metadata', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                video_ids: videoIds
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideBulkProgress();
+            if (data.updated_count > 0) {
+                showSuccess(`Successfully refreshed metadata for ${data.updated_count} video(s)`);
+            }
+            if (data.failed_count > 0) {
+                showWarning(`Failed to refresh metadata for ${data.failed_count} video(s)`);
+            }
+            if (data.skipped_count > 0) {
+                showInfo(`Skipped ${data.skipped_count} video(s) - no IMVDb ID available`);
+            }
+            loadVideos();
+            updateSelectedCount();
+        })
+        .catch(error => {
+            hideBulkProgress();
+            console.error('Error:', error);
+            showError('Error refreshing metadata');
+        });
+    }
+}
+
 function bulkSetStatus(status) {
     const videoIds = getSelectedVideoIds();
     if (videoIds.length === 0) {
@@ -4079,41 +3418,7 @@ window.addEventListener('click', function(event) {
 });
 
 // Pagination Functions
-function updatePaginationControls() {
-    // Show pagination controls if we have videos
-    const showPagination = totalVideos > 0;
-    document.getElementById('topPagination').style.display = showPagination ? 'flex' : 'none';
-    document.getElementById('bottomPagination').style.display = showPagination ? 'flex' : 'none';
-    
-    if (!showPagination) return;
-    
-    // Update pagination info
-    const startIndex = ((currentPage - 1) * pageSize) + 1;
-    const endIndex = Math.min(currentPage * pageSize, totalVideos);
-    const infoText = `Showing ${startIndex}-${endIndex} of ${totalVideos} videos`;
-    
-    document.getElementById('videoCountInfo').textContent = infoText;
-    document.getElementById('videoCountInfoBottom').textContent = infoText;
-    
-    // Update page inputs
-    document.getElementById('pageInputTop').value = currentPage;
-    document.getElementById('pageInputBottom').value = currentPage;
-    document.getElementById('totalPagesTop').textContent = totalPages;
-    document.getElementById('totalPagesBottom').textContent = totalPages;
-    document.getElementById('currentPageSize').textContent = pageSize;
-    
-    // Update button states
-    const hasPrevious = currentPage > 1;
-    const hasNext = currentPage < totalPages;
-    
-    document.getElementById('prevPageTop').disabled = !hasPrevious;
-    document.getElementById('prevPageBottom').disabled = !hasPrevious;
-    document.getElementById('nextPageTop').disabled = !hasNext;
-    document.getElementById('nextPageBottom').disabled = !hasNext;
-    
-    // Update page size selector
-    document.getElementById('pageSizeSelect').value = pageSize;
-}
+// Old updatePaginationControls function removed - replaced by updatePagination
 
 function nextPage() {
     if (currentPage < totalPages) {
@@ -4155,15 +3460,316 @@ function changePageSize(newSize) {
     }
 }
 
-// Override existing loadVideos calls to use pagination
-const originalLoadVideos = loadVideos;
+// Display videos in the grid
+function displayVideos(videos) {
+    const grid = document.getElementById('videos-grid');
+    
+    if (videos && videos.length > 0) {
+        try {
+            grid.innerHTML = videos.map(video => {
+                // Safely escape and validate video data
+                const safeVideo = {
+                    id: video.id || '',
+                    title: escapeHtml(video.title || 'Unknown Title'),
+                    artist_name: escapeHtml(video.artist_name || 'Unknown'),
+                    status: escapeHtml(video.status || 'UNKNOWN'),
+                    year: video.year || null
+                };
+                
+                return `
+                    <div class="video-card">
+                        <div class="video-select">
+                            <input type="checkbox" class="video-checkbox" value="${safeVideo.id}" onchange="updateSelectedCount()">
+                        </div>
+                        <div class="video-thumbnail" data-video-id="${safeVideo.id}" data-action="play">
+                            <img src="/api/videos/${safeVideo.id}/thumbnail" 
+                                 alt="${safeVideo.title}" onerror="this.src='/static/placeholder-video.png'">
+                            <div class="play-overlay">
+                                <div class="play-button">▶</div>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <h3>${safeVideo.title}</h3>
+                            <p>Artist: ${safeVideo.artist_name}</p>
+                            <p>Status: ${safeVideo.status}</p>
+                            ${safeVideo.year ? `<p>Year: ${safeVideo.year}</p>` : ''}
+                        </div>
+                        <div class="video-actions">
+                            <button data-video-id="${safeVideo.id}" data-action="view" class="btn-icon" title="View Details">
+                                <i class="icon-eye"></i>
+                            </button>
+                            <button data-video-id="${safeVideo.id}" data-action="edit" class="btn-icon" title="Edit Video">
+                                <i class="icon-edit"></i>
+                            </button>
+                            <button data-video-id="${safeVideo.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
+                                <i class="icon-refresh"></i>
+                            </button>
+                            ${safeVideo.status === 'WANTED' ? 
+                                `<button data-video-id="${safeVideo.id}" data-action="download" class="btn-icon" title="Download Video">
+                                    <i class="icon-download"></i>
+                                </button>` : 
+                                ''}
+                            <button data-video-id="${safeVideo.id}" data-action="delete" class="btn-icon btn-danger" title="Delete Video">
+                                <i class="icon-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error('Error rendering videos:', error);
+            grid.innerHTML = '<div class="error-message">Error displaying videos. Please refresh the page.</div>';
+        }
+    } else {
+        grid.innerHTML = '<p>No videos found.</p>';
+    }
+}
+
+// Helper function to escape HTML and prevent XSS
+function escapeHtml(text) {
+    if (typeof text !== 'string') {
+        return String(text || '');
+    }
+    
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Update pagination controls based on API response
+function updatePagination(data) {
+    const totalVideos = data.total || 0;
+    const currentTotal = data.count || 0;
+    
+    // Calculate pagination values
+    totalPages = Math.ceil(totalVideos / pageSize);
+    const startIndex = totalVideos > 0 ? ((currentPage - 1) * pageSize) + 1 : 0;
+    const endIndex = Math.min(currentPage * pageSize, totalVideos);
+    
+    // Update pagination info displays
+    const topInfo = document.getElementById('videoCountInfo');
+    const bottomInfo = document.getElementById('videoCountInfoBottom');
+    const infoText = `Showing ${startIndex}-${endIndex} of ${totalVideos} videos`;
+    
+    if (topInfo) topInfo.textContent = infoText;
+    if (bottomInfo) bottomInfo.textContent = infoText;
+    
+    // Update total pages displays
+    document.getElementById('totalPagesTop').textContent = totalPages;
+    document.getElementById('totalPagesBottom').textContent = totalPages;
+    
+    // Update page inputs
+    document.getElementById('pageInputTop').value = currentPage;
+    document.getElementById('pageInputBottom').value = currentPage;
+    document.getElementById('pageInputTop').max = totalPages;
+    document.getElementById('pageInputBottom').max = totalPages;
+    
+    // Update page size display
+    document.getElementById('currentPageSize').textContent = pageSize;
+    document.getElementById('pageSizeSelect').value = pageSize;
+    
+    // Update button states
+    const hasPrevious = currentPage > 1;
+    const hasNext = currentPage < totalPages;
+    
+    document.getElementById('prevPageTop').disabled = !hasPrevious;
+    document.getElementById('prevPageBottom').disabled = !hasPrevious;
+    document.getElementById('nextPageTop').disabled = !hasNext;
+    document.getElementById('nextPageBottom').disabled = !hasNext;
+    
+    // Show pagination controls when we have videos (even if only one page)
+    const showPagination = totalVideos > 0;
+    document.getElementById('topPagination').style.display = showPagination ? 'flex' : 'none';
+    document.getElementById('bottomPagination').style.display = showPagination ? 'flex' : 'none';
+    
+    console.log(`Pagination updated: page ${currentPage} of ${totalPages}, showing ${startIndex}-${endIndex} of ${totalVideos} videos`);
+}
+
+// Core video loading function with proper authentication
+async function loadVideos(page = 1, size = 50, resetPage = false) {
+    console.log(`Loading videos: page=${page}, size=${size}`);
+    
+    // Update pagination state
+    if (resetPage) {
+        currentPage = 1;
+    } else {
+        currentPage = page;
+    }
+    pageSize = size;
+    
+    try {
+        // Show loading state
+        const grid = document.getElementById('videos-grid');
+        if (grid) {
+            grid.innerHTML = '<div class="loading-spinner">Loading videos...</div>';
+        }
+        
+        // Build API URL with pagination
+        const params = new URLSearchParams({
+            limit: pageSize,
+            offset: (currentPage - 1) * pageSize,
+            sort: 'title',
+            order: 'asc'
+        });
+        
+        // Make authenticated API request - credentials: 'same-origin' includes session cookies
+        const response = await fetch(`/api/videos?${params.toString()}`, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                // Handle authentication required
+                window.location.href = '/simple-login';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Videos loaded:', data);
+        
+        // Validate response data structure
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid response format from server');
+        }
+        
+        // Ensure videos is an array
+        const videos = Array.isArray(data.videos) ? data.videos : [];
+        
+        // Filter out any malformed video entries
+        const validVideos = videos.filter(video => {
+            if (!video || typeof video !== 'object') return false;
+            if (!video.id) return false;
+            return true;
+        });
+        
+        console.log(`Displaying ${validVideos.length} valid videos out of ${videos.length} total`);
+        
+        // Display videos
+        displayVideos(validVideos);
+        
+        // Update pagination
+        updatePagination(data);
+        
+        // Update selected count
+        updateSelectedCount();
+        
+    } catch (error) {
+        console.error('Error loading videos:', error);
+        const grid = document.getElementById('videos-grid');
+        if (grid) {
+            let errorMessage = 'Error loading videos. Please try again.';
+            
+            // Provide more specific error messages
+            if (error.message.includes('Invalid response format')) {
+                errorMessage = 'Server returned invalid data format. Please contact administrator.';
+            } else if (error.message.includes('HTTP error')) {
+                errorMessage = `Server error (${error.message}). Please try again later.`;
+            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = 'Unable to connect to server. Please check your connection.';
+            }
+            
+            grid.innerHTML = `<div class="error-message">${errorMessage}</div>`;
+        }
+        
+        // Hide pagination on error
+        document.getElementById('topPagination').style.display = 'none';
+        document.getElementById('bottomPagination').style.display = 'none';
+    }
+}
+
+// Provide global function for refreshing videos with current pagination
 window.refreshVideosWithPagination = function() {
     loadVideos(currentPage, pageSize);
+};
+
+// Backward compatibility function for existing refresh buttons
+window.refreshVideos = function() {
+    loadVideos(currentPage, pageSize);
+};
+
+// Toggle search panel visibility - make globally accessible
+window.toggleSearchPanel = function() {
+    const searchPanel = document.getElementById('searchPanel');
+    if (searchPanel) {
+        const isVisible = searchPanel.style.display !== 'none';
+        searchPanel.style.display = isVisible ? 'none' : 'block';
+        
+        // Focus on search input when panel is shown
+        if (!isVisible) {
+            const searchInput = document.getElementById('searchQuery');
+            if (searchInput) {
+                setTimeout(() => searchInput.focus(), 100);
+            }
+        }
+    }
 };
 
 // Update other functions to use the new pagination-aware reload
 function refreshVideoList() {
     loadVideos(currentPage, pageSize);
+}
+
+// Initialize videos when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Videos page loaded, initializing...');
+    loadVideos();
+});
+
+// Event delegation for video actions
+document.addEventListener('click', function(event) {
+    const target = event.target.closest('[data-action]');
+    if (!target) return;
+    
+    const action = target.dataset.action;
+    const videoId = target.dataset.videoId;
+    
+    if (!videoId) return;
+    
+    switch(action) {
+        case 'play':
+            playVideoById(videoId);
+            break;
+        case 'view':
+            viewVideo(videoId);
+            break;
+        case 'edit':
+            editVideo(videoId);
+            break;
+        case 'refresh-metadata':
+            refreshVideoMetadata(videoId);
+            break;
+        case 'download':
+            downloadVideo(videoId);
+            break;
+        case 'delete':
+            deleteVideo(videoId);
+            break;
+    }
+});
+
+// Helper function to get video data and play it
+async function playVideoById(videoId) {
+    try {
+        const response = await fetch(`/api/videos/${videoId}`, {
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const video = await response.json();
+        playVideo(video.id, video.title, video.local_path, video.video_url);
+    } catch (error) {
+        console.error('Error fetching video for playback:', error);
+        showError('Error loading video for playback');
+    }
 }
 </script>
 

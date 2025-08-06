@@ -48,6 +48,12 @@ def settings():
     return render_template("settings.html")
 
 
+@frontend_bp.route("/themes")
+def themes():
+    """Theme customizer page"""
+    return render_template("themes.html")
+
+
 @frontend_bp.route("/discover")
 def discover():
     """Discover page for searching IMVDb and YouTube"""
