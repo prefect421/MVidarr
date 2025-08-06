@@ -631,24 +631,36 @@ function performSearch() {
 
 function displaySearchResults(data) {
     console.log('🎭 Search data received:', data);
+    console.log('🎭 Data.videos type:', typeof data?.videos, 'isArray:', Array.isArray(data?.videos));
     
-    // Use the main displayVideos function for consistency and safety
-    if (data && data.videos && Array.isArray(data.videos)) {
-        console.log('🎭 Displaying search results:', data.videos.length, 'videos');
-        displayVideos(data.videos);
-        
-        // Hide pagination for search results
-        document.getElementById('topPagination').style.display = 'none';
-        document.getElementById('bottomPagination').style.display = 'none';
-    } else {
-        console.error('❌ Invalid search data structure:', data);
+    // Defensive null checks
+    if (!data) {
+        console.error('❌ No data received');
         const grid = document.getElementById('videos-grid');
-        if (data && data.videos && data.videos.length === 0) {
-            grid.innerHTML = '<p>No videos found matching your search criteria.</p>';
-        } else {
-            grid.innerHTML = '<p>Error displaying search results. Please try again.</p>';
-        }
+        grid.innerHTML = '<p>Error: No search data received.</p>';
+        return;
     }
+    
+    if (!data.videos) {
+        console.error('❌ No videos array in data:', Object.keys(data));
+        const grid = document.getElementById('videos-grid');
+        grid.innerHTML = '<p>Error: Invalid search response structure.</p>';
+        return;
+    }
+    
+    if (!Array.isArray(data.videos)) {
+        console.error('❌ data.videos is not an array:', typeof data.videos, data.videos);
+        const grid = document.getElementById('videos-grid');
+        grid.innerHTML = '<p>Error: Invalid videos data format.</p>';
+        return;
+    }
+    
+    console.log('🎭 Displaying search results:', data.videos.length, 'videos');
+    displayVideos(data.videos);
+    
+    // Hide pagination for search results
+    document.getElementById('topPagination').style.display = 'none';
+    document.getElementById('bottomPagination').style.display = 'none';
 }
 
 function updateSearchResultsInfo(data) {
