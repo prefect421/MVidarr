@@ -1,30 +1,12 @@
 {
-  "version": "0.9.3",
-  "build_date": "2025-08-06T22:01:00.000000",
-  "git_commit": "92f1e4e",
-  "git_branch": "main",
-  "release_name": "Theme System & UI Improvements Release",
+  "version": "0.9.4",
+  "build_date": "2025-08-06T14:20:30.535341",
+  "git_commit": "dcced05",
+  "git_branch": "dev",
+  "release_name": "Development Preview",
   "features": [
-    "Complete theme export/import functionality - export individual themes or all themes as JSON",
-    "Replaced Edit Theme button with Export button for better UX consistency",
-    "Removed Day/Night slider and related code - simplified theme system to single variants",
-    "Added bulk refresh metadata function for multiple selected videos",
-    "Fixed single video refresh metadata to preserve page navigation and position", 
-    "Enhanced theme customization with comprehensive import validation and progress tracking",
-    "Multi-step import wizard with drag & drop file upload support",
-    "Improved video management workflow with preserved user context during updates",
-    "Fixed modal hardcoded colors across Videos and Artist Detail pages for proper theming",
-    "Ensured all pages consistently use CSS theme variables instead of hardcoded colors",
-    "Comprehensive theme system implementation with complete color variable integration",
-    "Major videos page refactoring: extracted 3,485 lines into modular components (98.7% reduction)",
-    "Modular HTML components system with reusable pagination, search, and modal components",
-    "Separated CSS (videos.css) and JavaScript (videos-main.js, videos-thumbnails.js) from templates",
-    "Updated theme backgrounds from gradients to solid colors across videos, mvtv, and settings pages",
-    "Completely removed database-stored themes and migrated to API-based theme system",
-    "Added 7 built-in API-based themes: Default, Cyber, VaporWave, TARDIS, Punk 77, MTV, LCARS",
-    "Restored complete pagination functionality to videos page with proper navigation controls",
-    "Fixed all JavaScript errors on videos page including missing loadVideos function",
-    "Added comprehensive event handling and authentication for video management operations",
-    "Comprehensive JavaScript error handling with null checks for DOM element access"
+    "Development branch prepared for version 0.9.4",
+    "Ready for next feature development cycle",
+    "Previous features from 0.9.3 successfully deployed to production"
   ]
 }
