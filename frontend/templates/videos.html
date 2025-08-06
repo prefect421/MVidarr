@@ -3667,6 +3667,11 @@ window.refreshVideosWithPagination = function() {
     loadVideos(currentPage, pageSize);
 };
 
+// Backward compatibility function for existing refresh buttons
+window.refreshVideos = function() {
+    loadVideos(currentPage, pageSize);
+};
+
 // Update other functions to use the new pagination-aware reload
 function refreshVideoList() {
     loadVideos(currentPage, pageSize);
