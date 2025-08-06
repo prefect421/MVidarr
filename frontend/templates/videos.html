@@ -553,6 +553,23 @@
 
 
 <script>
+// Global function definitions for immediate availability
+window.toggleSearchPanel = window.toggleSearchPanel || function() {
+    const searchPanel = document.getElementById('searchPanel');
+    if (searchPanel) {
+        const isVisible = searchPanel.style.display !== 'none';
+        searchPanel.style.display = isVisible ? 'none' : 'block';
+        
+        // Focus on search input when panel is shown
+        if (!isVisible) {
+            const searchInput = document.getElementById('searchQuery');
+            if (searchInput) {
+                setTimeout(() => searchInput.focus(), 100);
+            }
+        }
+    }
+};
+
 function performSearch() {
     const query = document.getElementById('searchQuery').value.trim();
     const artist = document.getElementById('searchArtist').value.trim();
@@ -3672,8 +3689,8 @@ window.refreshVideos = function() {
     loadVideos(currentPage, pageSize);
 };
 
-// Toggle search panel visibility
-function toggleSearchPanel() {
+// Toggle search panel visibility - make globally accessible
+window.toggleSearchPanel = function() {
     const searchPanel = document.getElementById('searchPanel');
     if (searchPanel) {
         const isVisible = searchPanel.style.display !== 'none';
@@ -3687,7 +3704,7 @@ function toggleSearchPanel() {
             }
         }
     }
-}
+};
 
 // Update other functions to use the new pagination-aware reload
 function refreshVideoList() {
