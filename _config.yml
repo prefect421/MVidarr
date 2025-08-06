@@ -54,9 +54,9 @@ exclude:
   - migrations/
   - data/
   - logs/
-  - *.log
-  - docker-compose*.yml
-  - Dockerfile*
+  - "*.log"
+  - "docker-compose*.yml"
+  - "Dockerfile*"
   - entrypoint.sh
   - version.json
   - node_modules/
