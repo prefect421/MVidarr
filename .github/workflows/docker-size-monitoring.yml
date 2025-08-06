@@ -1,0 +1,133 @@
+name: Docker Image Size Monitoring
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image"]
+    types:
+      - completed
+  schedule:
+    # Run daily at 6 AM UTC to track size trends
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to monitor'
+        required: false
+        default: 'dev'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: prefect421/mvidarr
+
+jobs:
+  monitor-size:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Determine image tag
+      id: tag
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          TAG="${{ github.event.inputs.image_tag }}"
+        elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          TAG="latest"
+        else
+          TAG="dev"
+        fi
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+    - name: Monitor Docker image size
+      id: monitor
+      run: |
+        IMAGE_FULL="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}"
+        echo "Monitoring image: $IMAGE_FULL"
+        
+        # Run monitoring script
+        ./scripts/docker-size-monitor.sh "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" "${{ steps.tag.outputs.tag }}"
+        MONITOR_EXIT_CODE=$?
+        
+        # Get size info for output
+        SIZE_INFO=$(docker images --format "{{.Size}}" "$IMAGE_FULL")
+        echo "size=$SIZE_INFO" >> $GITHUB_OUTPUT
+        echo "exit_code=$MONITOR_EXIT_CODE" >> $GITHUB_OUTPUT
+
+    - name: Comment on PR or Issue
+      if: github.event_name == 'workflow_run' && steps.monitor.outputs.exit_code != '0'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const exitCode = '${{ steps.monitor.outputs.exit_code }}';
+          const size = '${{ steps.monitor.outputs.size }}';
+          const tag = '${{ steps.tag.outputs.tag }}';
+          
+          let emoji, status, message;
+          if (exitCode === '1') {
+            emoji = '⚠️';
+            status = 'WARNING';
+            message = 'Image size is above target but acceptable';
+          } else if (exitCode === '2') {
+            emoji = '❌';
+            status = 'CRITICAL';
+            message = 'Image size exceeds warning threshold - optimization needed';
+          }
+          
+          const body = `${emoji} **Docker Image Size ${status}**
+          
+          **Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${tag}\`
+          **Size:** ${size}
+          **Status:** ${message}
+          
+          **Target:** <1GB for optimal performance
+          
+          ${exitCode === '2' ? '🚨 **Action Required:** This image size may impact deployment performance. Consider dependency optimization.' : '💡 **Suggestion:** Review unused dependencies for further optimization.'}
+          
+          See the [size monitoring workflow](https://github.com/${{ github.repository }}/actions/workflows/docker-size-monitoring.yml) for detailed analysis.`;
+          
+          // Find related PR or create issue
+          const { data: prs } = await github.rest.pulls.list({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            head: `${context.repo.owner}:${context.ref.replace('refs/heads/', '')}`
+          });
+          
+          if (prs.length > 0) {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prs[0].number,
+              body: body
+            });
+          }
+
+    - name: Upload size history
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: docker-size-history-${{ steps.tag.outputs.tag }}
+        path: /tmp/mvidarr-size-history.txt
+        retention-days: 90
+
+    - name: Fail if critical size threshold exceeded
+      if: steps.monitor.outputs.exit_code == '2'
+      run: |
+        echo "❌ Docker image size exceeds critical threshold"
+        echo "Current size: ${{ steps.monitor.outputs.size }}"
+        echo "This may impact deployment performance and resource usage"
+        exit 1
