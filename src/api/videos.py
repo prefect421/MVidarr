@@ -382,9 +382,16 @@ def search_videos():
 
                 # Apply most selective filters first
                 if filters["status"]:
-                    videos_query = videos_query.filter(
-                        Video.status == filters["status"]
-                    )
+                    try:
+                        # Convert string to VideoStatus enum
+                        status_enum = VideoStatus(filters["status"])
+                        videos_query = videos_query.filter(Video.status == status_enum)
+                    except ValueError:
+                        # Invalid status value, skip filter
+                        logger.warning(
+                            f"Invalid video status filter: {filters['status']}"
+                        )
+                        pass
                 if filters["source"]:
                     if filters["source"] == "youtube":
                         videos_query = videos_query.filter(Video.youtube_id.isnot(None))

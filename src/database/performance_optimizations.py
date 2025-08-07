@@ -7,7 +7,10 @@ from sqlalchemy import Index, text
 from sqlalchemy.dialects import mysql, postgresql, sqlite
 
 from src.database.connection import engine
-from src.database.models import Artist, Video
+from src.database.models import Artist, Video, VideoStatus
+from src.utils.logger import get_logger
+
+logger = get_logger("mvidarr.database.performance")
 
 
 class DatabasePerformanceOptimizer:
@@ -228,7 +231,14 @@ class DatabasePerformanceOptimizer:
 
         # Status filter (usually very selective)
         if filters.get("status"):
-            query = query.filter(Video.status == filters["status"])
+            try:
+                # Convert string to VideoStatus enum
+                status_enum = VideoStatus(filters["status"])
+                query = query.filter(Video.status == status_enum)
+            except ValueError:
+                # Invalid status value, skip filter
+                logger.warning(f"Invalid video status filter: {filters['status']}")
+                pass
 
         # Source filter (often selective)
         if filters.get("source"):
