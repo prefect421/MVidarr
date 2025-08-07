@@ -157,7 +157,7 @@
 }
 
 .search-panel {
-    background: linear-gradient(135deg, var(--bg-primary, #1a1a1a) 0%, var(--bg-secondary, #2d2d2d) 100%);
+    background: var(--bg-primary, #1a1a1a);
     border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     padding: 25px;
@@ -398,7 +398,7 @@
 }
 
 .advanced-search-panel {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    background: #1a1a1a;
     border: 1px solid #444;
     border-radius: 12px;
     padding: 25px;
