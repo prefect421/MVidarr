@@ -28,7 +28,7 @@ This guide will take you through every aspect of MVidarr, from initial setup to 
 After installation, navigate to `http://localhost:5000` in your web browser.
 
 ![Initial Login](screenshots/initial-login.png)
-*First time access - the system will guide you through initial setup*
+*Initial login interface - shows the login form with username/password fields*
 
 ### Step 1: Welcome Screen
 ![Welcome Screen](screenshots/welcome-screen.png)
@@ -41,7 +41,7 @@ The welcome screen provides:
 
 ### Step 2: API Configuration
 ![API Setup](screenshots/api-setup.png)
-*Configure your external service API keys for optimal functionality*
+*API configuration section showing IMVDb and YouTube API key input fields with status indicators*
 
 **Required Setup:**
 1. **IMVDb API Key**
@@ -96,12 +96,13 @@ The welcome screen provides:
 
 ### Main Dashboard
 ![Dashboard Main](screenshots/dashboard-main.png)
-*Your command center - everything important at a glance*
+*Dashboard overview showing statistics cards, quick actions, and navigation menu*
 
 The dashboard provides instant access to:
 
 #### 📊 **Statistics Cards**
 ![Stats Cards](screenshots/stats-cards.png)
+*Statistics cards showing key metrics: Artists count, Videos count, Downloads status, and Storage usage*
 - **Artists**: Total tracked artists
 - **Videos**: Total videos in library
 - **Downloads**: Active and queued downloads
