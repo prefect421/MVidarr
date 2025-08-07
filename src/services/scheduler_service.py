@@ -169,6 +169,113 @@ class SchedulerService:
                         )
                         schedule.every().hour.do(self._run_scheduled_download)
 
+            # Set up video discovery scheduling if enabled
+            discovery_enabled = SettingsService.get_bool(
+                "auto_discovery_schedule_enabled", True
+            )
+            if discovery_enabled:
+                # Get discovery schedule settings
+                discovery_schedule_time = SettingsService.get(
+                    "auto_discovery_schedule_time", "06:00"
+                )
+                discovery_schedule_days = SettingsService.get(
+                    "auto_discovery_schedule_days", "daily"
+                )
+
+                logger.info(
+                    f"Setting up scheduled video discovery for {discovery_schedule_days} at {discovery_schedule_time}"
+                )
+
+                # Parse discovery time
+                try:
+                    disc_hour, disc_minute = map(
+                        int, discovery_schedule_time.split(":")
+                    )
+                except (ValueError, IndexError):
+                    logger.error(
+                        f"Invalid discovery schedule time format: {discovery_schedule_time}. Using default 06:00"
+                    )
+                    disc_hour, disc_minute = 6, 0
+
+                # Schedule discovery based on frequency
+                if discovery_schedule_days == "daily":
+                    schedule.every().day.at(f"{disc_hour:02d}:{disc_minute:02d}").do(
+                        self._run_scheduled_discovery
+                    )
+                    logger.info(
+                        f"Scheduled daily video discovery at {disc_hour:02d}:{disc_minute:02d}"
+                    )
+
+                elif discovery_schedule_days == "weekly":
+                    # Default to Saturday for weekly discovery (different from Sunday downloads)
+                    schedule.every().saturday.at(
+                        f"{disc_hour:02d}:{disc_minute:02d}"
+                    ).do(self._run_scheduled_discovery)
+                    logger.info(
+                        f"Scheduled weekly video discovery on Saturday at {disc_hour:02d}:{disc_minute:02d}"
+                    )
+
+                elif discovery_schedule_days == "twice_daily":
+                    # Morning and evening discovery
+                    schedule.every().day.at(f"{disc_hour:02d}:{disc_minute:02d}").do(
+                        self._run_scheduled_discovery
+                    )
+                    # Evening run 12 hours later
+                    evening_hour = (disc_hour + 12) % 24
+                    schedule.every().day.at(f"{evening_hour:02d}:{disc_minute:02d}").do(
+                        self._run_scheduled_discovery
+                    )
+                    logger.info(
+                        f"Scheduled twice-daily video discovery at {disc_hour:02d}:{disc_minute:02d} and {evening_hour:02d}:{disc_minute:02d}"
+                    )
+
+                else:
+                    # Handle specific days for discovery
+                    days_map = {
+                        "monday": schedule.every().monday,
+                        "tuesday": schedule.every().tuesday,
+                        "wednesday": schedule.every().wednesday,
+                        "thursday": schedule.every().thursday,
+                        "friday": schedule.every().friday,
+                        "saturday": schedule.every().saturday,
+                        "sunday": schedule.every().sunday,
+                    }
+
+                    if "," in discovery_schedule_days:
+                        selected_days = [
+                            day.strip().lower()
+                            for day in discovery_schedule_days.split(",")
+                        ]
+                        for day in selected_days:
+                            if day in days_map:
+                                days_map[day].at(
+                                    f"{disc_hour:02d}:{disc_minute:02d}"
+                                ).do(self._run_scheduled_discovery)
+                                logger.info(
+                                    f"Scheduled video discovery on {day.capitalize()} at {disc_hour:02d}:{disc_minute:02d}"
+                                )
+                            else:
+                                logger.warning(f"Invalid discovery day name: {day}")
+                    else:
+                        # Single day
+                        day = discovery_schedule_days.strip().lower()
+                        if day in days_map:
+                            days_map[day].at(f"{disc_hour:02d}:{disc_minute:02d}").do(
+                                self._run_scheduled_discovery
+                            )
+                            logger.info(
+                                f"Scheduled video discovery on {day.capitalize()} at {disc_hour:02d}:{disc_minute:02d}"
+                            )
+                        else:
+                            logger.error(
+                                f"Invalid discovery schedule days: {discovery_schedule_days}. Defaulting to daily"
+                            )
+                            schedule.every().day.at("06:00").do(
+                                self._run_scheduled_discovery
+                            )
+            else:
+                logger.info("Scheduled video discovery is disabled")
+
         except Exception as e:
             logger.error(f"Failed to set up scheduled jobs: {e}")
 
@@ -203,8 +310,15 @@ class SchedulerService:
         """Check if schedule settings have changed and reload if necessary"""
         try:
             # Check if schedule settings have changed and reload if necessary
-            # Also check for new wanted videos for hourly downloads
-            if SettingsService.get_bool("auto_download_schedule_enabled", True):
+            # Also check for new wanted videos and monitored artists periodically
+            download_enabled = SettingsService.get_bool(
+                "auto_download_schedule_enabled", True
+            )
+            discovery_enabled = SettingsService.get_bool(
+                "auto_discovery_schedule_enabled", True
+            )
+
+            if download_enabled:
                 current_schedule_days = SettingsService.get(
                     "auto_download_schedule_days", "hourly"
                 )
@@ -217,7 +331,16 @@ class SchedulerService:
                             f"Hourly scheduler: {wanted_count} videos currently marked as WANTED"
                         )
 
-                # Settings might have changed, reload the schedule
+            if discovery_enabled:
+                # Log monitored artist count periodically for discovery
+                monitored_count = self._get_monitored_artist_count()
+                if monitored_count > 0:
+                    logger.debug(
+                        f"Discovery scheduler: {monitored_count} artists currently monitored for video discovery"
+                    )
+
+            # Settings might have changed, reload the schedule
+            if download_enabled or discovery_enabled:
                 self.reload_schedule()
         except Exception as e:
             logger.error(f"Error checking settings changes: {e}")
@@ -287,6 +410,69 @@ class SchedulerService:
             logger.error(f"Error running scheduled download: {e}")
             # Continue running even if one download fails
 
+    def _run_scheduled_discovery(self):
+        """Execute the scheduled discovery of new videos for monitored artists"""
+        try:
+            discovery_frequency = SettingsService.get(
+                "auto_discovery_schedule_days", "daily"
+            )
+            logger.info(f"Starting {discovery_frequency} scheduled video discovery...")
+
+            # Get maximum videos per artist setting
+            max_videos_per_artist = SettingsService.get_int(
+                "auto_discovery_max_videos_per_artist", 5
+            )
+
+            # Check if there are monitored artists first
+            monitored_count = self._get_monitored_artist_count()
+            if monitored_count == 0:
+                logger.info("No monitored artists found for video discovery")
+                return
+
+            logger.info(
+                f"Discovery check: Found {monitored_count} monitored artists, attempting to discover up to {max_videos_per_artist} videos per artist"
+            )
+
+            # Import here to avoid circular imports
+            from src.services.video_discovery_service import video_discovery_service
+
+            # Run the discovery function
+            result = video_discovery_service.discover_videos_for_all_artists(
+                limit_per_artist=max_videos_per_artist
+            )
+
+            if result.get("success"):
+                total_artists = result.get("total_artists", 0)
+                processed_artists = result.get("processed_artists", 0)
+                total_discovered = result.get("total_discovered", 0)
+                total_stored = result.get("total_stored", 0)
+
+                logger.info(
+                    f"{discovery_frequency.capitalize()} discovery completed: {processed_artists}/{total_artists} artists processed, {total_discovered} videos discovered, {total_stored} videos stored"
+                )
+
+                # Log summary
+                if total_stored > 0:
+                    logger.info(
+                        f"Successfully discovered and stored {total_stored} new videos"
+                    )
+                if total_discovered > total_stored:
+                    logger.info(
+                        f"{total_discovered - total_stored} videos were duplicates and not stored"
+                    )
+                if processed_artists == 0:
+                    logger.info(
+                        "No artists needed discovery (too recent or no monitored artists)"
+                    )
+
+            else:
+                error = result.get("error", "Unknown error")
+                logger.error(f"Scheduled discovery failed: {error}")
+
+        except Exception as e:
+            logger.error(f"Error running scheduled discovery: {e}")
+            # Continue running even if discovery fails
+
     def _get_wanted_video_count(self) -> int:
         """Get the current count of wanted videos"""
         try:
@@ -302,6 +488,19 @@ class SchedulerService:
                 return count
         except Exception as e:
             logger.error(f"Error getting wanted video count: {e}")
+            return 0
+
+    def _get_monitored_artist_count(self) -> int:
+        """Get the current count of monitored artists"""
+        try:
+            from src.database.connection import get_db
+            from src.database.models import Artist
+
+            with get_db() as session:
+                count = session.query(Artist).filter(Artist.monitored == True).count()
+                return count
+        except Exception as e:
+            logger.error(f"Error getting monitored artist count: {e}")
             return 0
 
     def get_next_run_time(self) -> Optional[datetime]:
@@ -323,27 +522,73 @@ class SchedulerService:
     def get_schedule_info(self) -> Dict[str, Any]:
         """Get information about current schedule"""
         try:
-            enabled = SettingsService.get_bool("auto_download_schedule_enabled", False)
+            download_enabled = SettingsService.get_bool(
+                "auto_download_schedule_enabled", True
+            )
+            discovery_enabled = SettingsService.get_bool(
+                "auto_discovery_schedule_enabled", True
+            )
 
-            if not enabled:
-                return {"enabled": False, "next_run": None, "schedule": "Disabled"}
+            if not download_enabled and not discovery_enabled:
+                return {
+                    "enabled": False,
+                    "next_run": None,
+                    "schedule": "Both downloads and discovery disabled",
+                }
 
-            schedule_time = SettingsService.get("auto_download_schedule_time", "02:00")
-            schedule_days = SettingsService.get("auto_download_schedule_days", "daily")
-            max_videos = SettingsService.get_int("auto_download_max_videos", 50)
             next_run = self.get_next_run_time()
-
-            return {
-                "enabled": True,
-                "schedule_time": schedule_time,
-                "schedule_days": schedule_days,
-                "max_videos": max_videos,
+            info = {
+                "enabled": download_enabled or discovery_enabled,
                 "next_run": next_run.isoformat() if next_run else None,
                 "next_run_human": (
                     next_run.strftime("%Y-%m-%d %H:%M:%S") if next_run else None
                 ),
                 "job_count": len(schedule.jobs),
             }
+
+            # Add download schedule info if enabled
+            if download_enabled:
+                download_schedule_time = SettingsService.get(
+                    "auto_download_schedule_time", "02:00"
+                )
+                download_schedule_days = SettingsService.get(
+                    "auto_download_schedule_days", "hourly"
+                )
+                max_videos = SettingsService.get_int("auto_download_max_videos", 10)
+
+                info["downloads"] = {
+                    "enabled": True,
+                    "schedule_time": download_schedule_time,
+                    "schedule_days": download_schedule_days,
+                    "max_videos": max_videos,
+                }
+            else:
+                info["downloads"] = {"enabled": False}
+
+            # Add discovery schedule info if enabled
+            if discovery_enabled:
+                discovery_schedule_time = SettingsService.get(
+                    "auto_discovery_schedule_time", "06:00"
+                )
+                discovery_schedule_days = SettingsService.get(
+                    "auto_discovery_schedule_days", "daily"
+                )
+                max_videos_per_artist = SettingsService.get_int(
+                    "auto_discovery_max_videos_per_artist", 5
+                )
+                monitored_count = self._get_monitored_artist_count()
+
+                info["discovery"] = {
+                    "enabled": True,
+                    "schedule_time": discovery_schedule_time,
+                    "schedule_days": discovery_schedule_days,
+                    "max_videos_per_artist": max_videos_per_artist,
+                    "monitored_artists": monitored_count,
+                }
+            else:
+                info["discovery"] = {"enabled": False}
+
+            return info
 
         except Exception as e:
             logger.error(f"Error getting schedule info: {e}")

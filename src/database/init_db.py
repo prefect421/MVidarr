@@ -86,6 +86,26 @@ def init_default_settings():
             "10",
             "Maximum videos to download per scheduled run (optimized for hourly downloads)",
         ),
+        (
+            "auto_discovery_schedule_enabled",
+            "true",
+            "Enable scheduled automatic video discovery for monitored artists",
+        ),
+        (
+            "auto_discovery_schedule_time",
+            "06:00",
+            "Time to run automatic video discovery (HH:MM format)",
+        ),
+        (
+            "auto_discovery_schedule_days",
+            "daily",
+            "Discovery schedule frequency: daily, weekly, twice_daily, or specific days",
+        ),
+        (
+            "auto_discovery_max_videos_per_artist",
+            "5",
+            "Maximum new videos to discover per artist per scheduled run",
+        ),
         ("spotify_client_id", "", "Spotify application client ID"),
         ("spotify_client_secret", "", "Spotify application client secret"),
         (
