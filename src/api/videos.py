@@ -359,6 +359,13 @@ def search_videos():
         offset = request.args.get("offset", 0, type=int)
 
         with get_db() as session:
+            # Determine if we need Artist join - used by both optimizer and fallback
+            need_artist_join = (
+                filters["query"]
+                or filters["artist_name"]
+                or filters["sort_by"] in ["artist_name", "artist"]
+            )
+            
             # Use optimized query builder
             try:
                 from src.database.performance_optimizations import (
@@ -370,13 +377,7 @@ def search_videos():
             except ImportError:
                 # Fallback to basic optimized query if optimizer not available
                 videos_query = session.query(Video)
-
-                # Only join Artist if needed for filtering or sorting
-                need_artist_join = (
-                    filters["query"]
-                    or filters["artist_name"]
-                    or filters["sort_by"] in ["artist_name", "artist"]
-                )
+                
                 if need_artist_join:
                     videos_query = videos_query.join(Artist)
 
