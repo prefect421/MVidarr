@@ -13,7 +13,7 @@ Comprehensive documentation and guides for MVidarr users, administrators, and de
 ## 📖 User Documentation
 
 ### Getting Started
-- **[Installation Guide](/mvidarr/installation/)** - Complete setup instructions for all environments
+- **[Installation Guide](https://github.com/prefect421/mvidarr/blob/main/docs/INSTALLATION-GUIDE.md)** - Complete setup instructions for all environments
 - **[User Guide](https://github.com/prefect421/mvidarr/blob/main/docs/USER-GUIDE.md)** - Feature documentation and tutorials
 - **[Docker Optimization Guide](https://github.com/prefect421/mvidarr/blob/main/docs/DOCKER_OPTIMIZATION_GUIDE.md)** - Container optimization and monitoring
 
