@@ -112,6 +112,29 @@ class SchedulerService:
                 schedule.every().hour.do(self._run_scheduled_download)
                 logger.info("Scheduled hourly downloads (every hour)")
 
+            elif schedule_days.startswith("every_") and schedule_days.endswith(
+                "_hours"
+            ):
+                # Handle "every_X_hours" format (e.g., "every_2_hours", "every_6_hours")
+                try:
+                    hours_str = schedule_days.replace("every_", "").replace(
+                        "_hours", ""
+                    )
+                    hours = int(hours_str)
+                    if 1 <= hours <= 24:
+                        schedule.every(hours).hours.do(self._run_scheduled_download)
+                        logger.info(f"Scheduled downloads every {hours} hours")
+                    else:
+                        logger.error(
+                            f"Invalid hours value: {hours}. Must be 1-24. Defaulting to hourly"
+                        )
+                        schedule.every().hour.do(self._run_scheduled_download)
+                except (ValueError, IndexError):
+                    logger.error(
+                        f"Invalid schedule format: {schedule_days}. Defaulting to hourly"
+                    )
+                    schedule.every().hour.do(self._run_scheduled_download)
+
             elif schedule_days == "daily":
                 schedule.every().day.at(f"{hour:02d}:{minute:02d}").do(
                     self._run_scheduled_download

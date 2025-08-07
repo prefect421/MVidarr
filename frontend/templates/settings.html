@@ -369,6 +369,8 @@
 
         <div class="settings-section">
             <h2>Scheduled Downloads</h2>
+            <p class="section-description">Automatically download videos marked as WANTED at regular intervals</p>
+            
             <div class="form-group">
                 <label for="auto_download_schedule_enabled">Enable Scheduled Downloads:</label>
                 <select id="auto_download_schedule_enabled" name="auto_download_schedule_enabled">
@@ -376,33 +378,73 @@
                     <option value="true">Enabled</option>
                 </select>
             </div>
+            
             <div class="form-group">
-                <label for="auto_download_schedule_time">Schedule Time:</label>
-                <input type="time" id="auto_download_schedule_time" name="auto_download_schedule_time" title="Time to run automatic downloads (24-hour format)">
-            </div>
-            <div class="form-group">
-                <label for="auto_download_schedule_days">Schedule Frequency:</label>
+                <label for="auto_download_schedule_days">Download Frequency:</label>
                 <select id="auto_download_schedule_days" name="auto_download_schedule_days">
+                    <option value="hourly">Every Hour</option>
+                    <option value="every_2_hours">Every 2 Hours</option>
+                    <option value="every_4_hours">Every 4 Hours</option>
+                    <option value="every_6_hours">Every 6 Hours</option>
+                    <option value="every_8_hours">Every 8 Hours</option>
+                    <option value="every_12_hours">Every 12 Hours</option>
                     <option value="daily">Daily</option>
-                    <option value="weekly">Weekly (Sunday)</option>
-                    <option value="monday">Monday Only</option>
-                    <option value="tuesday">Tuesday Only</option>
-                    <option value="wednesday">Wednesday Only</option>
-                    <option value="thursday">Thursday Only</option>
-                    <option value="friday">Friday Only</option>
-                    <option value="saturday">Saturday Only</option>
-                    <option value="sunday">Sunday Only</option>
-                    <option value="monday,wednesday,friday">Mon, Wed, Fri</option>
-                    <option value="tuesday,thursday">Tue, Thu</option>
-                    <option value="saturday,sunday">Weekends</option>
+                    <option value="weekly">Weekly</option>
                 </select>
             </div>
+            
+            <div class="form-group" id="download_time_group">
+                <label for="auto_download_schedule_time">Schedule Time:</label>
+                <input type="time" id="auto_download_schedule_time" name="auto_download_schedule_time" title="Time to run downloads (only applies to daily/weekly)">
+                <small class="form-hint">Only used for daily and weekly schedules</small>
+            </div>
+            
             <div class="form-group">
                 <label for="auto_download_max_videos">Max Videos per Run:</label>
-                <input type="number" id="auto_download_max_videos" name="auto_download_max_videos" min="1" max="500" title="Maximum number of videos to download per scheduled run">
+                <input type="number" id="auto_download_max_videos" name="auto_download_max_videos" min="1" max="500" value="10" title="Maximum number of videos to download per scheduled run">
             </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>Video Discovery</h2>
+            <p class="section-description">Automatically discover new videos for monitored artists using IMVDb</p>
+            
             <div class="form-group">
-                <label>Scheduler Status:</label>
+                <label for="auto_discovery_schedule_enabled">Enable Video Discovery:</label>
+                <select id="auto_discovery_schedule_enabled" name="auto_discovery_schedule_enabled">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="auto_discovery_schedule_days">Discovery Frequency:</label>
+                <select id="auto_discovery_schedule_days" name="auto_discovery_schedule_days">
+                    <option value="daily">Daily</option>
+                    <option value="twice_daily">Twice Daily (12 hours apart)</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="auto_discovery_schedule_time">Discovery Time:</label>
+                <input type="time" id="auto_discovery_schedule_time" name="auto_discovery_schedule_time" value="06:00" title="Time to run video discovery">
+            </div>
+            
+            <div class="form-group">
+                <label for="auto_discovery_max_videos_per_artist">Max Videos per Artist:</label>
+                <input type="number" id="auto_discovery_max_videos_per_artist" name="auto_discovery_max_videos_per_artist" min="1" max="50" value="5" title="Maximum new videos to discover per artist per run">
+            </div>
+            
+            <div class="discovery-info">
+                <p><strong>Note:</strong> Video discovery searches for new videos for artists marked as "monitored" and adds them with WANTED status for automatic download.</p>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>Scheduler Status & Control</h2>
+            <div class="form-group">
+                <label>Current Status:</label>
                 <div id="scheduler-status">
                     <span id="scheduler-loading">Loading...</span>
                 </div>
@@ -1266,9 +1308,32 @@ document.addEventListener('DOMContentLoaded', function() {
         authToggle.addEventListener('change', updateUserCredentialsSection);
     }
     
+    // Set up scheduled downloads frequency change listener
+    const downloadFrequency = document.getElementById('auto_download_schedule_days');
+    if (downloadFrequency) {
+        downloadFrequency.addEventListener('change', updateDownloadTimeVisibility);
+        // Initialize visibility on page load
+        updateDownloadTimeVisibility();
+    }
+    
     // Initialize tab from URL hash
     initializeTab();
 });
+
+function updateDownloadTimeVisibility() {
+    const downloadFrequency = document.getElementById('auto_download_schedule_days');
+    const timeGroup = document.getElementById('download_time_group');
+    
+    if (downloadFrequency && timeGroup) {
+        const frequency = downloadFrequency.value;
+        // Show time field only for daily and weekly schedules
+        if (frequency === 'daily' || frequency === 'weekly') {
+            timeGroup.style.display = 'block';
+        } else {
+            timeGroup.style.display = 'none';
+        }
+    }
+}
 
 function saveSettings() {
     const settingsData = {};
@@ -3568,6 +3633,36 @@ The cookie file should contain YouTube authentication data including session tok
     color: var(--text-muted, #6c757d);
     margin-top: 5px;
     line-height: 1.4;
+}
+
+/* New section styles */
+.section-description {
+    font-size: 0.9rem;
+    color: var(--text-muted, #999);
+    margin-bottom: 20px;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.form-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted, #999);
+    margin-top: 4px;
+    font-style: italic;
+}
+
+.discovery-info {
+    background: var(--card-bg, #2a2a2a);
+    border: 1px solid var(--border-color, #444);
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 15px;
+}
+
+.discovery-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted, #ccc);
 }
 
 /* SSL Warning Section */
