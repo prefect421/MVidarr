@@ -46,7 +46,7 @@ Comprehensive documentation and guides for MVidarr users, administrators, and de
 - **[Documentation Summary](https://github.com/prefect421/mvidarr/blob/main/docs/DOCUMENTATION-SUMMARY.md)** - Complete documentation overview
 
 ### Release Information
-- **[Release Notes](releases/)** - Detailed release information
+- **[Release Notes](/mvidarr/releases/)** - Detailed release information
 - **[Final Project Status](https://github.com/prefect421/mvidarr/blob/main/docs/FINAL_PROJECT_STATUS.md)** - Complete feature status
 
 ## 🛠️ Troubleshooting
