@@ -114,12 +114,12 @@
             <div class="filter-row">
                 <div class="filter-group">
                     <label for="videoArtistFilter">Artist:</label>
-                    <input type="text" id="videoArtistFilter" placeholder="Filter by artist name..." onchange="applyVideoFilters()">
+                    <input type="text" id="videoArtistFilter" placeholder="Filter by artist name..." oninput="debounceVideoFilters()">
                 </div>
                 
                 <div class="filter-group">
                     <label for="videoKeywordsFilter">Keywords (comma-separated):</label>
-                    <input type="text" id="videoKeywordsFilter" placeholder="Enter keywords..." onchange="applyVideoFilters()">
+                    <input type="text" id="videoKeywordsFilter" placeholder="Enter keywords..." oninput="debounceVideoFilters()">
                 </div>
                 
                 <div class="filter-group">
@@ -623,8 +623,7 @@ function performSearch() {
             updateSearchResultsInfo(data);
         })
         .catch(error => {
-            console.error('❌ Search error:', error);
-            showError('Error performing search: ' + error.message);
+            showEnhancedError(error, 'performing search');
             resultsInfo.textContent = '';
         });
 }
@@ -683,6 +682,121 @@ function clearSearch() {
     loadVideos();
 }
 
+// Enhanced error handling with categorization and actionable guidance
+function showEnhancedError(error, context = '') {
+    const errorInfo = categorizeError(error, context);
+    showToast(errorInfo.message, 'error');
+    
+    // Log detailed error for debugging
+    console.error(`[${errorInfo.category}] ${context}:`, error);
+    
+    // Show additional guidance if available
+    if (errorInfo.guidance) {
+        setTimeout(() => {
+            showToast(errorInfo.guidance, 'info');
+        }, 2000);
+    }
+}
+
+function categorizeError(error, context) {
+    const errorMessage = error.message || error.toString();
+    const errorName = error.name || 'Error';
+    
+    // Network errors
+    if (errorName === 'TypeError' && errorMessage.includes('fetch')) {
+        return {
+            category: 'Network',
+            message: '🌐 Connection failed. Please check your internet connection.',
+            guidance: 'Try refreshing the page or check if the server is running.'
+        };
+    }
+    
+    if (errorMessage.includes('HTTP error') || errorMessage.includes('status')) {
+        const statusMatch = errorMessage.match(/(\d{3})/);
+        const status = statusMatch ? statusMatch[1] : 'unknown';
+        
+        switch (status) {
+            case '404':
+                return {
+                    category: 'NotFound',
+                    message: '📄 Resource not found. The video or data may have been moved or deleted.',
+                    guidance: 'Try refreshing the page or check if the video still exists.'
+                };
+            case '500':
+                return {
+                    category: 'ServerError',
+                    message: '🔧 Server error occurred. This is likely temporary.',
+                    guidance: 'Please try again in a moment. If it persists, contact support.'
+                };
+            case '403':
+                return {
+                    category: 'Permission',
+                    message: '🔒 Access denied. You may not have permission for this action.',
+                    guidance: 'Check your user role or try logging out and back in.'
+                };
+            default:
+                return {
+                    category: 'ServerError',
+                    message: `🚫 Server responded with error (${status}). Please try again.`,
+                    guidance: 'If this continues, the issue may be temporary.'
+                };
+        }
+    }
+    
+    // File system errors
+    if (errorMessage.includes('local_path') || errorMessage.includes('file not found')) {
+        return {
+            category: 'FileSystem',
+            message: '📁 Video file not found. The file may have been moved or deleted.',
+            guidance: 'Try reorganizing files or check the Downloads page for file status.'
+        };
+    }
+    
+    // Validation errors
+    if (context.includes('validation') || errorMessage.includes('invalid') || errorMessage.includes('required')) {
+        return {
+            category: 'Validation',
+            message: '⚠️ Invalid input provided. Please check your entries.',
+            guidance: 'Make sure all required fields are filled and formats are correct.'
+        };
+    }
+    
+    // Timeout errors
+    if (errorMessage.includes('timeout') || errorMessage.includes('abort')) {
+        return {
+            category: 'Timeout',
+            message: '⏱️ Operation timed out. The server may be busy.',
+            guidance: 'Try again with smaller batches or during off-peak hours.'
+        };
+    }
+    
+    // Parsing errors
+    if (errorMessage.includes('JSON') || errorMessage.includes('parse') || errorMessage.includes('Invalid response format')) {
+        return {
+            category: 'DataFormat',
+            message: '📊 Invalid data format received from server.',
+            guidance: 'This may indicate a server issue. Please refresh and try again.'
+        };
+    }
+    
+    // Generic fallback
+    return {
+        category: 'Generic',
+        message: `❌ An error occurred${context ? ` while ${context}` : ''}. Please try again.`,
+        guidance: 'If the problem persists, try refreshing the page or contact support.'
+    };
+}
+
+// Debouncing utility for performance optimization
+let filterDebounceTimer = null;
+
+function debounceVideoFilters() {
+    clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = setTimeout(() => {
+        applyVideoFilters();
+    }, 300); // 300ms delay
+}
+
 // Video filtering functions - previously missing
 function applyVideoFilters() {
     console.log('Applying video filters...');
@@ -722,8 +836,7 @@ function applyVideoFilters() {
             updateVideoFilterCount();
         })
         .catch(error => {
-            console.error('Error filtering videos:', error);
-            showError('Error filtering videos');
+            showEnhancedError(error, 'filtering videos');
         });
 }
 
@@ -812,9 +925,254 @@ function loadVideoGenreOptions() {
         });
 }
 
+// Search Presets Management
 function saveVideoSearchPreset() {
-    showInfo('Video search preset functionality coming soon!');
+    const currentFilters = {
+        status: document.getElementById('videoStatusFilter').value,
+        quality: document.getElementById('videoQualityFilter').value,
+        has_thumbnail: document.getElementById('videoThumbnailFilter').value,
+        source: document.getElementById('videoSourceFilter').value,
+        genre: document.getElementById('videoGenreFilter').value,
+        duration_min: document.getElementById('videoDurationMin').value,
+        duration_max: document.getElementById('videoDurationMax').value,
+        date_from: document.getElementById('videoDateFrom').value,
+        date_to: document.getElementById('videoDateTo').value,
+        artist: document.getElementById('videoArtistFilter').value,
+        keywords: document.getElementById('videoKeywordsFilter').value,
+        sort_by: document.getElementById('videoSortBy').value,
+        sort_order: document.getElementById('videoSortOrder').value
+    };
+    
+    // Check if any filters are active
+    const hasActiveFilters = Object.values(currentFilters).some(value => value && value.trim() !== '');
+    
+    if (!hasActiveFilters) {
+        showToast('No active filters to save as preset', 'warning');
+        return;
+    }
+    
+    // Prompt for preset name
+    const presetName = prompt('Enter a name for this search preset:');
+    
+    if (!presetName || !presetName.trim()) {
+        showToast('Preset name is required', 'warning');
+        return;
+    }
+    
+    try {
+        // Get existing presets from localStorage
+        const existingPresets = JSON.parse(localStorage.getItem('videoSearchPresets') || '{}');
+        
+        // Add new preset
+        existingPresets[presetName.trim()] = {
+            filters: currentFilters,
+            created: new Date().toISOString(),
+            description: generatePresetDescription(currentFilters)
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('videoSearchPresets', JSON.stringify(existingPresets));
+        
+        showToast(`Search preset "${presetName}" saved successfully!`, 'success');
+        updateSearchPresetsUI();
+        
+    } catch (error) {
+        console.error('Error saving search preset:', error);
+        showToast('Error saving search preset', 'error');
+    }
 }
+
+function generatePresetDescription(filters) {
+    const activeFilters = [];
+    
+    if (filters.status) activeFilters.push(`Status: ${filters.status}`);
+    if (filters.quality) activeFilters.push(`Quality: ${filters.quality}`);
+    if (filters.genre) activeFilters.push(`Genre: ${filters.genre}`);
+    if (filters.artist) activeFilters.push(`Artist: ${filters.artist}`);
+    if (filters.keywords) activeFilters.push(`Keywords: ${filters.keywords}`);
+    if (filters.source) activeFilters.push(`Source: ${filters.source}`);
+    if (filters.duration_min || filters.duration_max) {
+        const durationText = `Duration: ${filters.duration_min || '0'} - ${filters.duration_max || '∞'} mins`;
+        activeFilters.push(durationText);
+    }
+    if (filters.date_from || filters.date_to) {
+        const dateText = `Date: ${filters.date_from || 'Any'} to ${filters.date_to || 'Any'}`;
+        activeFilters.push(dateText);
+    }
+    
+    return activeFilters.length > 0 ? activeFilters.join(', ') : 'Custom filter preset';
+}
+
+function loadVideoSearchPreset(presetName) {
+    try {
+        const presets = JSON.parse(localStorage.getItem('videoSearchPresets') || '{}');
+        const preset = presets[presetName];
+        
+        if (!preset) {
+            showToast('Search preset not found', 'error');
+            return;
+        }
+        
+        // Apply all filter values
+        const filters = preset.filters;
+        
+        document.getElementById('videoStatusFilter').value = filters.status || '';
+        document.getElementById('videoQualityFilter').value = filters.quality || '';
+        document.getElementById('videoThumbnailFilter').value = filters.has_thumbnail || '';
+        document.getElementById('videoSourceFilter').value = filters.source || '';
+        document.getElementById('videoGenreFilter').value = filters.genre || '';
+        document.getElementById('videoDurationMin').value = filters.duration_min || '';
+        document.getElementById('videoDurationMax').value = filters.duration_max || '';
+        document.getElementById('videoDateFrom').value = filters.date_from || '';
+        document.getElementById('videoDateTo').value = filters.date_to || '';
+        document.getElementById('videoArtistFilter').value = filters.artist || '';
+        document.getElementById('videoKeywordsFilter').value = filters.keywords || '';
+        document.getElementById('videoSortBy').value = filters.sort_by || 'title';
+        document.getElementById('videoSortOrder').value = filters.sort_order || 'asc';
+        
+        // Apply the filters
+        applyVideoFilters();
+        
+        showToast(`Search preset "${presetName}" loaded successfully!`, 'success');
+        
+    } catch (error) {
+        console.error('Error loading search preset:', error);
+        showToast('Error loading search preset', 'error');
+    }
+}
+
+function deleteVideoSearchPreset(presetName) {
+    if (!confirm(`Are you sure you want to delete the preset "${presetName}"?`)) {
+        return;
+    }
+    
+    try {
+        const presets = JSON.parse(localStorage.getItem('videoSearchPresets') || '{}');
+        delete presets[presetName];
+        localStorage.setItem('videoSearchPresets', JSON.stringify(presets));
+        
+        showToast(`Search preset "${presetName}" deleted`, 'success');
+        updateSearchPresetsUI();
+        
+    } catch (error) {
+        console.error('Error deleting search preset:', error);
+        showToast('Error deleting search preset', 'error');
+    }
+}
+
+function updateSearchPresetsUI() {
+    // Create presets dropdown if it doesn't exist
+    let presetsContainer = document.getElementById('searchPresetsContainer');
+    
+    if (!presetsContainer) {
+        // Add presets container to the filter actions area
+        const filterActions = document.querySelector('.filter-actions');
+        if (filterActions) {
+            presetsContainer = document.createElement('div');
+            presetsContainer.id = 'searchPresetsContainer';
+            presetsContainer.className = 'search-presets-container';
+            presetsContainer.style.marginLeft = '10px';
+            presetsContainer.style.display = 'inline-block';
+            
+            filterActions.appendChild(presetsContainer);
+        }
+    }
+    
+    if (!presetsContainer) return;
+    
+    try {
+        const presets = JSON.parse(localStorage.getItem('videoSearchPresets') || '{}');
+        const presetNames = Object.keys(presets);
+        
+        if (presetNames.length === 0) {
+            presetsContainer.innerHTML = '';
+            return;
+        }
+        
+        presetsContainer.innerHTML = `
+            <select id="searchPresetSelect" class="form-control" style="width: auto; display: inline-block; margin-right: 5px;">
+                <option value="">Select Preset...</option>
+                ${presetNames.map(name => `
+                    <option value="${name}" title="${presets[name].description}">
+                        ${name} (${new Date(presets[name].created).toLocaleDateString()})
+                    </option>
+                `).join('')}
+            </select>
+            <button onclick="loadSelectedPreset()" class="btn btn-primary btn-sm" title="Load selected preset">
+                📁 Load
+            </button>
+            <button onclick="deleteSelectedPreset()" class="btn btn-danger btn-sm" title="Delete selected preset">
+                🗑️ Delete
+            </button>
+            <button onclick="exportSearchPresets()" class="btn btn-info btn-sm" title="Export all presets">
+                📤 Export
+            </button>
+        `;
+        
+    } catch (error) {
+        console.error('Error updating search presets UI:', error);
+    }
+}
+
+function loadSelectedPreset() {
+    const select = document.getElementById('searchPresetSelect');
+    if (!select || !select.value) {
+        showToast('Please select a preset to load', 'warning');
+        return;
+    }
+    
+    loadVideoSearchPreset(select.value);
+}
+
+function deleteSelectedPreset() {
+    const select = document.getElementById('searchPresetSelect');
+    if (!select || !select.value) {
+        showToast('Please select a preset to delete', 'warning');
+        return;
+    }
+    
+    deleteVideoSearchPreset(select.value);
+}
+
+function exportSearchPresets() {
+    try {
+        const presets = JSON.parse(localStorage.getItem('videoSearchPresets') || '{}');
+        const presetNames = Object.keys(presets);
+        
+        if (presetNames.length === 0) {
+            showToast('No search presets to export', 'warning');
+            return;
+        }
+        
+        const exportData = {
+            version: '1.0',
+            exported: new Date().toISOString(),
+            presets: presets
+        };
+        
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `mvidarr-search-presets-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast(`Exported ${presetNames.length} search presets`, 'success');
+        
+    } catch (error) {
+        console.error('Error exporting search presets:', error);
+        showToast('Error exporting search presets', 'error');
+    }
+}
+
+// Initialize search presets UI when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Delay to ensure other elements are loaded
+    setTimeout(updateSearchPresetsUI, 1000);
+});
 
 function exportVideoSearchResults() {
     showInfo('Video search results export functionality coming soon!');
@@ -3030,26 +3388,116 @@ function getSelectedVideoIds() {
     return Array.from(selectedCheckboxes).map(checkbox => parseInt(checkbox.value));
 }
 
-function showBulkProgress(text) {
+// Enhanced bulk progress tracking
+let bulkOperationState = {
+    total: 0,
+    completed: 0,
+    failed: 0,
+    currentOperation: '',
+    startTime: null,
+    details: []
+};
+
+function showBulkProgress(text, total = 0) {
     const progressDiv = document.getElementById('bulkProgress');
     const progressText = document.getElementById('bulkProgressText');
     const progressFill = document.getElementById('bulkProgressFill');
     
-    progressText.textContent = text;
+    // Initialize operation state
+    bulkOperationState = {
+        total: total,
+        completed: 0,
+        failed: 0,
+        currentOperation: text,
+        startTime: new Date(),
+        details: []
+    };
+    
+    const displayText = text + (total > 0 ? ` (0/${total})` : ' - Preparing...');
+    progressText.innerHTML = `
+        <div class="progress-main">${displayText}</div>
+        <div class="progress-details" id="bulkProgressDetails" style="font-size: 12px; opacity: 0.8; margin-top: 4px;"></div>
+    `;
     progressFill.style.width = '0%';
     progressDiv.style.display = 'block';
 }
 
-function updateBulkProgress(percentage, text) {
+function updateBulkProgress(percentage, text, details = null) {
     const progressText = document.getElementById('bulkProgressText');
     const progressFill = document.getElementById('bulkProgressFill');
+    const progressDetails = document.getElementById('bulkProgressDetails');
     
-    if (text) progressText.textContent = text;
-    progressFill.style.width = percentage + '%';
+    // Legacy support for simple percentage updates
+    if (typeof percentage === 'number') {
+        progressFill.style.width = percentage + '%';
+        if (text) {
+            progressText.querySelector('.progress-main').textContent = text;
+        }
+        return;
+    }
+    
+    // Enhanced progress update with detailed tracking
+    const { completed = 0, failed = 0, total = 0, currentItem = '', operation = '' } = percentage;
+    
+    bulkOperationState.completed = completed;
+    bulkOperationState.failed = failed;
+    if (total > 0) bulkOperationState.total = total;
+    if (details) bulkOperationState.details.push(details);
+    
+    const processed = completed + failed;
+    const progressPercentage = bulkOperationState.total > 0 ? Math.round((processed / bulkOperationState.total) * 100) : 0;
+    
+    // Update progress bar
+    progressFill.style.width = `${progressPercentage}%`;
+    
+    // Build status text
+    let statusText = operation || bulkOperationState.currentOperation;
+    if (bulkOperationState.total > 0) {
+        statusText += ` (${processed}/${bulkOperationState.total})`;
+        if (failed > 0) {
+            statusText += ` - ${failed} failed`;
+        }
+    }
+    
+    // Update main progress text
+    progressText.querySelector('.progress-main').textContent = statusText;
+    
+    // Update details
+    if (progressDetails) {
+        let detailText = '';
+        
+        if (currentItem) {
+            detailText += `Current: ${currentItem}`;
+        }
+        
+        // Add time estimate for operations with progress
+        if (bulkOperationState.total > 0 && processed > 0 && processed < bulkOperationState.total) {
+            const elapsed = (new Date() - bulkOperationState.startTime) / 1000;
+            const rate = processed / elapsed;
+            const remaining = bulkOperationState.total - processed;
+            const estimate = Math.ceil(remaining / rate);
+            
+            if (estimate > 5) {
+                detailText += detailText ? ` • ~${estimate}s remaining` : `~${estimate}s remaining`;
+            }
+        }
+        
+        // Show success rate for completed operations
+        if (processed > 0 && detailText) {
+            const successRate = Math.round((completed / processed) * 100);
+            detailText += ` • ${successRate}% success rate`;
+        }
+        
+        progressDetails.textContent = detailText;
+    }
 }
 
 function hideBulkProgress() {
-    document.getElementById('bulkProgress').style.display = 'none';
+    const progressDiv = document.getElementById('bulkProgress');
+    progressDiv.style.display = 'none';
+    
+    // Reset state
+    bulkOperationState = { total: 0, completed: 0, failed: 0, currentOperation: '', startTime: null, details: [] };
 }
 
 // Bulk Actions Functions
@@ -3060,7 +3508,7 @@ function bulkDownloadSelected() {
         return;
     }
     
-    showBulkProgress('Initiating downloads...');
+    showBulkProgress('Initiating downloads...', videoIds.length);
     
     fetch('/api/videos/bulk/download', {
         method: 'POST',
@@ -3101,7 +3549,7 @@ function bulkDeleteSelected() {
     const confirmed = confirm(`Are you sure you want to delete ${videoIds.length} selected video(s)?\n\nThis action cannot be undone.`);
     
     if (confirmed) {
-        showBulkProgress('Deleting videos...');
+        showBulkProgress('Deleting videos...', videoIds.length);
         
         fetch('/api/videos/bulk/delete', {
             method: 'POST',
@@ -3660,21 +4108,17 @@ async function loadVideos(page = 1, size = 50, resetPage = false) {
         updateSelectedCount();
         
     } catch (error) {
-        console.error('Error loading videos:', error);
+        showEnhancedError(error, 'loading videos');
         const grid = document.getElementById('videos-grid');
         if (grid) {
-            let errorMessage = 'Error loading videos. Please try again.';
-            
-            // Provide more specific error messages
-            if (error.message.includes('Invalid response format')) {
-                errorMessage = 'Server returned invalid data format. Please contact administrator.';
-            } else if (error.message.includes('HTTP error')) {
-                errorMessage = `Server error (${error.message}). Please try again later.`;
-            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                errorMessage = 'Unable to connect to server. Please check your connection.';
-            }
-            
-            grid.innerHTML = `<div class="error-message">${errorMessage}</div>`;
+            const errorInfo = categorizeError(error, 'loading videos');
+            grid.innerHTML = `
+                <div class="error-message">
+                    <div class="error-title">${errorInfo.message}</div>
+                    ${errorInfo.guidance ? `<div class="error-guidance">${errorInfo.guidance}</div>` : ''}
+                    <button onclick="loadVideos()" class="btn btn-primary retry-btn">🔄 Retry</button>
+                </div>
+            `;
         }
         
         // Hide pagination on error
