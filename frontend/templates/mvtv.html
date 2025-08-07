@@ -727,7 +727,17 @@ class MvTVPlayer {
         try {
             const filters = this.getFilters();
             const params = new URLSearchParams(filters);
-            params.set('limit', '1000'); // Load many videos for continuous playback
+            
+            // Check if specific artist or genre filters are applied
+            const hasSpecificFilters = filters.artist || filters.genre;
+            
+            if (hasSpecificFilters) {
+                // When specific filters are applied, load more videos to show all matches
+                params.set('limit', '1000');
+            } else {
+                // When no specific filters, limit to 500 for better performance and random selection
+                params.set('limit', '500');
+            }
             
             const response = await fetch(`/api/videos/search?${params.toString()}`);
             const data = await response.json();
@@ -741,6 +751,11 @@ class MvTVPlayer {
                 if (this.playlist.length === 0) {
                     this.showError('No downloaded videos found. Please download some videos first.');
                     return;
+                }
+                
+                // If no specific filters were applied, randomize the playlist order
+                if (!hasSpecificFilters) {
+                    this.shuffleArray(this.playlist);
                 }
                 
                 this.updateQueue();
@@ -760,6 +775,14 @@ class MvTVPlayer {
             artist: document.getElementById('artistFilter').value,
             quality: document.getElementById('qualityFilter').value
         };
+    }
+    
+    shuffleArray(array) {
+        // Fisher-Yates shuffle algorithm for random array ordering
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
     }
     
     loadVideo(index) {
