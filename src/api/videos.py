@@ -402,10 +402,13 @@ def search_videos():
                         Video.quality == filters["quality"]
                     )
                 if filters["query"]:
+                    from sqlalchemy import or_
                     if need_artist_join:
                         videos_query = videos_query.filter(
-                            Video.title.contains(filters["query"])
-                            | Artist.name.contains(filters["query"])
+                            or_(
+                                Video.title.contains(filters["query"]),
+                                Artist.name.contains(filters["query"])
+                            )
                         )
                     else:
                         videos_query = videos_query.filter(
