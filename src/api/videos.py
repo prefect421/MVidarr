@@ -402,14 +402,15 @@ def search_videos():
                         Video.quality == filters["quality"]
                     )
                 if filters["query"]:
-                    videos_query = videos_query.filter(
-                        Video.title.contains(filters["query"])
-                        | (
-                            Artist.name.contains(filters["query"])
-                            if need_artist_join
-                            else False
+                    if need_artist_join:
+                        videos_query = videos_query.filter(
+                            Video.title.contains(filters["query"])
+                            | Artist.name.contains(filters["query"])
                         )
-                    )
+                    else:
+                        videos_query = videos_query.filter(
+                            Video.title.contains(filters["query"])
+                        )
 
             # Apply sorting with performance consideration
             sort_by = filters["sort_by"]

@@ -269,45 +269,46 @@ class DatabasePerformanceOptimizer:
 
             if self.dialect_name == "mysql":
                 # Use MySQL full-text search
-                query = query.filter(
-                    or_(
-                        func.match(Video.title).against(search_term),
-                        (
-                            func.match(Artist.name).against(search_term)
-                            if need_artist_join
-                            else False
-                        ),
+                if need_artist_join:
+                    query = query.filter(
+                        or_(
+                            func.match(Video.title).against(search_term),
+                            func.match(Artist.name).against(search_term),
+                        )
                     )
-                )
+                else:
+                    query = query.filter(func.match(Video.title).against(search_term))
             elif self.dialect_name == "postgresql":
                 # Use PostgreSQL text search
-                query = query.filter(
-                    or_(
-                        func.to_tsvector("english", Video.title).match(
-                            func.plainto_tsquery("english", search_term)
-                        ),
-                        (
+                if need_artist_join:
+                    query = query.filter(
+                        or_(
+                            func.to_tsvector("english", Video.title).match(
+                                func.plainto_tsquery("english", search_term)
+                            ),
                             func.to_tsvector("english", Artist.name).match(
                                 func.plainto_tsquery("english", search_term)
-                            )
-                            if need_artist_join
-                            else False
-                        ),
+                            ),
+                        )
                     )
-                )
+                else:
+                    query = query.filter(
+                        func.to_tsvector("english", Video.title).match(
+                            func.plainto_tsquery("english", search_term)
+                        )
+                    )
             else:
                 # Fallback for SQLite - use case-insensitive LIKE with indexes
                 search_lower = search_term.lower()
-                query = query.filter(
-                    or_(
-                        func.lower(Video.title).contains(search_lower),
-                        (
-                            func.lower(Artist.name).contains(search_lower)
-                            if need_artist_join
-                            else False
-                        ),
+                if need_artist_join:
+                    query = query.filter(
+                        or_(
+                            func.lower(Video.title).contains(search_lower),
+                            func.lower(Artist.name).contains(search_lower),
+                        )
                     )
-                )
+                else:
+                    query = query.filter(func.lower(Video.title).contains(search_lower))
 
         # Artist name filter (separate from general search)
         if filters.get("artist_name"):
