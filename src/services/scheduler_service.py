@@ -83,13 +83,13 @@ class SchedulerService:
         """Set up scheduled jobs based on current settings"""
         try:
             # Check if scheduled downloads are enabled
-            if not SettingsService.get_bool("auto_download_schedule_enabled", False):
+            if not SettingsService.get_bool("auto_download_schedule_enabled", True):
                 logger.info("Scheduled downloads are disabled")
                 return
 
             # Get schedule settings
             schedule_time = SettingsService.get("auto_download_schedule_time", "02:00")
-            schedule_days = SettingsService.get("auto_download_schedule_days", "daily")
+            schedule_days = SettingsService.get("auto_download_schedule_days", "hourly")
 
             logger.info(
                 f"Setting up scheduled downloads for {schedule_days} at {schedule_time}"
@@ -107,7 +107,12 @@ class SchedulerService:
                 hour, minute = 2, 0
 
             # Schedule based on frequency
-            if schedule_days == "daily":
+            if schedule_days == "hourly":
+                # Schedule hourly downloads - ignore the time setting for hourly
+                schedule.every().hour.do(self._run_scheduled_download)
+                logger.info("Scheduled hourly downloads (every hour)")
+
+            elif schedule_days == "daily":
                 schedule.every().day.at(f"{hour:02d}:{minute:02d}").do(
                     self._run_scheduled_download
                 )
@@ -160,11 +165,9 @@ class SchedulerService:
                         )
                     else:
                         logger.error(
-                            f"Invalid schedule days: {schedule_days}. Defaulting to daily"
+                            f"Invalid schedule days: {schedule_days}. Defaulting to hourly"
                         )
-                        schedule.every().day.at(f"{hour:02d}:{minute:02d}").do(
-                            self._run_scheduled_download
-                        )
+                        schedule.every().hour.do(self._run_scheduled_download)
 
         except Exception as e:
             logger.error(f"Failed to set up scheduled jobs: {e}")
@@ -199,9 +202,21 @@ class SchedulerService:
     def _check_settings_changes(self):
         """Check if schedule settings have changed and reload if necessary"""
         try:
-            # This is a simple check - in a more complex system you might track
-            # setting modification timestamps
-            if SettingsService.get_bool("auto_download_schedule_enabled", False):
+            # Check if schedule settings have changed and reload if necessary
+            # Also check for new wanted videos for hourly downloads
+            if SettingsService.get_bool("auto_download_schedule_enabled", True):
+                current_schedule_days = SettingsService.get(
+                    "auto_download_schedule_days", "hourly"
+                )
+
+                # For hourly downloads, log wanted video count periodically
+                if current_schedule_days == "hourly":
+                    wanted_count = self._get_wanted_video_count()
+                    if wanted_count > 0:
+                        logger.info(
+                            f"Hourly scheduler: {wanted_count} videos currently marked as WANTED"
+                        )
+
                 # Settings might have changed, reload the schedule
                 self.reload_schedule()
         except Exception as e:
@@ -210,10 +225,31 @@ class SchedulerService:
     def _run_scheduled_download(self):
         """Execute the scheduled download of wanted videos"""
         try:
-            logger.info("Starting scheduled download of wanted videos...")
+            schedule_frequency = SettingsService.get(
+                "auto_download_schedule_days", "hourly"
+            )
+            logger.info(
+                f"Starting {schedule_frequency} scheduled download of wanted videos..."
+            )
 
-            # Get maximum videos setting
-            max_videos = SettingsService.get_int("auto_download_max_videos", 50)
+            # Get maximum videos setting - default varies by frequency
+            default_max = 10 if schedule_frequency == "hourly" else 50
+            max_videos = SettingsService.get_int(
+                "auto_download_max_videos", default_max
+            )
+
+            # For hourly downloads, check if there are wanted videos first
+            if schedule_frequency == "hourly":
+                wanted_count = self._get_wanted_video_count()
+                if wanted_count == 0:
+                    logger.debug(
+                        "Hourly check: No wanted videos found, skipping download attempt"
+                    )
+                    return
+                else:
+                    logger.info(
+                        f"Hourly check: Found {wanted_count} wanted videos, attempting to download up to {max_videos}"
+                    )
 
             # Import here to avoid circular imports
             from src.api.videos import download_all_wanted_videos_internal
@@ -227,7 +263,7 @@ class SchedulerService:
                 total_wanted = result.get("total_wanted", 0)
 
                 logger.info(
-                    f"Scheduled download completed: {success_count} queued, {failed_count} failed, {total_wanted} total wanted videos"
+                    f"{schedule_frequency.capitalize()} download completed: {success_count} queued, {failed_count} failed, {total_wanted} total wanted videos"
                 )
 
                 # Log summary
@@ -238,7 +274,10 @@ class SchedulerService:
                 if failed_count > 0:
                     logger.warning(f"{failed_count} videos failed to queue")
                 if total_wanted == 0:
-                    logger.info("No wanted videos found to download")
+                    if schedule_frequency == "hourly":
+                        logger.debug("Hourly check completed: No wanted videos found")
+                    else:
+                        logger.info("No wanted videos found to download")
 
             else:
                 error = result.get("error", "Unknown error")
@@ -246,6 +285,24 @@ class SchedulerService:
 
         except Exception as e:
             logger.error(f"Error running scheduled download: {e}")
+            # Continue running even if one download fails
+
+    def _get_wanted_video_count(self) -> int:
+        """Get the current count of wanted videos"""
+        try:
+            from src.database.connection import get_db
+            from src.database.models import Video, VideoStatus
+
+            with get_db() as session:
+                count = (
+                    session.query(Video)
+                    .filter(Video.status == VideoStatus.WANTED)
+                    .count()
+                )
+                return count
+        except Exception as e:
+            logger.error(f"Error getting wanted video count: {e}")
+            return 0
 
     def get_next_run_time(self) -> Optional[datetime]:
         """Get the next scheduled run time"""
