@@ -1,16 +1,16 @@
 {
-  "version": "0.9.5-dev",
-  "build_date": "2025-08-06T19:54:20.583094",
-  "git_commit": "36b8310",
-  "git_branch": "dev",
-  "release_name": "Performance & User Experience Development",
+  "version": "0.9.4",
+  "build_date": "2025-08-07T13:40:42.105141",
+  "git_commit": "4c677ff",
+  "git_branch": "main",
+  "release_name": "Docker Optimization & Build Reliability",
   "features": [
-    "Development branch transitioned to 0.9.5 development cycle",
-    "Focus: Performance optimization and user experience enhancements",
-    "Strategic mix of targeted performance improvements with measurable outcomes",
-    "User-facing enhancements that deliver tangible value",
-    "Database performance analysis and query optimization",
-    "API response time optimization for critical endpoints",
-    "Frontend loading performance and user experience optimization"
+    "Docker build optimization with consistent 8-minute build times",
+    "Container size optimization to 1.41GB production images",
+    "Comprehensive Docker build monitoring and validation infrastructure",
+    "100% build success rate with automated size monitoring",
+    "Enhanced CI/CD workflows with automated Docker monitoring",
+    "Multi-stage Docker builds with optimized caching strategies",
+    "Automated health checks and performance tracking"
   ]
 }
