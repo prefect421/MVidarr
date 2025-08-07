@@ -167,7 +167,46 @@ class YtDlpService:
                 "error_message": None,
                 "file_path": None,
                 "file_size": None,
+                "db_download_id": None,  # Track corresponding database ID
             }
+
+            # Create database record for persistent history
+            try:
+                from src.database.models import Artist as ArtistModel
+                from src.database.models import Download
+
+                with get_db() as session:
+                    # Find or create artist
+                    artist_obj = (
+                        session.query(ArtistModel).filter_by(name=artist).first()
+                    )
+                    if not artist_obj:
+                        artist_obj = ArtistModel(name=artist)
+                        session.add(artist_obj)
+                        session.flush()  # Get the ID
+
+                    # Create database download record
+                    db_download = Download(
+                        artist_id=artist_obj.id,
+                        video_id=video_id,
+                        title=title,
+                        original_url=url,
+                        quality=quality,
+                        status="pending",
+                        progress=0,
+                    )
+                    session.add(db_download)
+                    session.commit()
+
+                    # Store the database ID in the download entry
+                    download_entry["db_download_id"] = db_download.id
+                    logger.info(
+                        f"Created database download record with ID {db_download.id}"
+                    )
+
+            except Exception as db_error:
+                logger.warning(f"Failed to create database download record: {db_error}")
+                # Continue with in-memory tracking even if database fails
 
             # Add to queue
             self.download_queue.append(download_entry)
@@ -200,6 +239,9 @@ class YtDlpService:
         try:
             download_entry["status"] = "downloading"
             download_entry["started_at"] = datetime.utcnow().isoformat()
+
+            # Update database status to downloading
+            self._update_database_download_status(download_entry, "downloading")
 
             # Build yt-dlp command - use just the song name as requested
             output_template = os.path.join(
@@ -333,10 +375,16 @@ class YtDlpService:
                                 f"Download {download_id} completed successfully with no cookies"
                             )
 
-                        # Sync to database
+                        # Sync to database (both Video and Download models)
                         self._update_video_status_in_database(
                             video_id,
                             "DOWNLOADED",
+                            download_entry.get("file_path"),
+                            download_entry.get("file_size"),
+                        )
+                        self._update_database_download_status(
+                            download_entry,
+                            "completed",
                             download_entry.get("file_path"),
                             download_entry.get("file_size"),
                         )
@@ -380,10 +428,17 @@ class YtDlpService:
             if not success:
                 # All attempts failed
                 download_entry["status"] = "failed"
-                self._update_video_status_in_database(video_id, "FAILED")
                 download_entry["completed_at"] = datetime.utcnow().isoformat()
                 download_entry["error_message"] = (
                     f"All download attempts failed. Last error: {last_error}"
+                )
+                self._update_video_status_in_database(video_id, "FAILED")
+                self._update_database_download_status(
+                    download_entry,
+                    "failed",
+                    None,
+                    None,
+                    download_entry["error_message"],
                 )
                 logger.error(
                     f"Download {download_id} failed after all attempts: {last_error}"
@@ -391,9 +446,12 @@ class YtDlpService:
 
         except Exception as e:
             download_entry["status"] = "failed"
-            self._update_video_status_in_database(video_id, "FAILED")
             download_entry["completed_at"] = datetime.utcnow().isoformat()
             download_entry["error_message"] = str(e)
+            self._update_video_status_in_database(video_id, "FAILED")
+            self._update_database_download_status(
+                download_entry, "failed", None, None, str(e)
+            )
             logger.error(f"Download {download_id} exception: {e}")
 
         finally:
@@ -436,20 +494,136 @@ class YtDlpService:
         except Exception as e:
             logger.error(f"Failed to update video {video_id} status in database: {e}")
 
+    def _update_database_download_status(
+        self,
+        download_entry: dict,
+        status: str,
+        file_path: str = None,
+        file_size: int = None,
+        error_message: str = None,
+    ):
+        """Update download status in database"""
+        db_download_id = download_entry.get("db_download_id")
+        if not db_download_id:
+            return
+
+        try:
+            from src.database.models import Download
+
+            with get_db() as session:
+                db_download = (
+                    session.query(Download)
+                    .filter(Download.id == db_download_id)
+                    .first()
+                )
+                if db_download:
+                    db_download.status = status
+                    db_download.progress = download_entry.get("progress", 0)
+                    db_download.updated_at = datetime.utcnow()
+
+                    if file_path:
+                        db_download.file_path = file_path
+                    if file_size:
+                        db_download.file_size = file_size
+                    if error_message:
+                        db_download.error_message = error_message
+
+                    session.commit()
+                    logger.info(
+                        f"Updated database download {db_download_id} status to {status}"
+                    )
+                else:
+                    logger.warning(f"Database download {db_download_id} not found")
+        except Exception as e:
+            logger.error(f"Failed to update database download {db_download_id}: {e}")
+
     def get_queue(self) -> Dict:
         """Get current download queue status"""
         queue_items = list(self.active_downloads.values())
         return {"queue": queue_items, "count": len(queue_items)}
 
     def get_history(self, limit: int = 50) -> Dict:
-        """Get download history"""
-        recent_history = (
-            self.download_history[-limit:] if limit > 0 else self.download_history
-        )
-        return {
-            "history": list(reversed(recent_history)),  # Most recent first
-            "count": len(recent_history),
-        }
+        """Get download history from both in-memory and database sources"""
+        try:
+            # Get in-memory history
+            memory_history = list(self.download_history)
+
+            # Get database history
+            database_history = []
+            try:
+                from src.database.models import Artist, Download, Video
+
+                with get_db() as session:
+                    # Query database downloads with artist and video info
+                    db_downloads = (
+                        session.query(Download, Artist.name, Video.title)
+                        .join(Artist, Download.artist_id == Artist.id)
+                        .outerjoin(Video, Download.video_id == Video.id)
+                        .order_by(Download.created_at.desc())
+                        .limit(limit * 2)  # Get more to account for merging
+                        .all()
+                    )
+
+                    for download, artist_name, video_title in db_downloads:
+                        # Convert database download to ytdlp_service format
+                        db_entry = {
+                            "id": f"db_{download.id}",  # Prefix to avoid ID conflicts
+                            "artist": artist_name,
+                            "title": video_title or download.title,
+                            "url": download.original_url,
+                            "quality": download.quality or "best",
+                            "video_id": download.video_id,
+                            "download_subtitles": False,
+                            "status": download.status,
+                            "progress": download.progress,
+                            "output_dir": (
+                                os.path.dirname(download.file_path)
+                                if download.file_path
+                                else None
+                            ),
+                            "created_at": download.created_at.isoformat(),
+                            "started_at": download.created_at.isoformat(),
+                            "completed_at": (
+                                download.updated_at.isoformat()
+                                if download.status in ["completed", "failed"]
+                                else None
+                            ),
+                            "error_message": download.error_message,
+                            "file_path": download.file_path,
+                            "file_size": download.file_size,
+                        }
+                        database_history.append(db_entry)
+
+            except Exception as db_error:
+                logger.warning(f"Failed to get database download history: {db_error}")
+                # Continue with just in-memory history if database fails
+
+            # Combine and sort by creation time
+            all_history = memory_history + database_history
+
+            # Sort by created_at timestamp (most recent first)
+            all_history.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+
+            # Apply limit
+            recent_history = all_history[:limit] if limit > 0 else all_history
+
+            return {
+                "history": recent_history,
+                "count": len(recent_history),
+                "memory_count": len(memory_history),
+                "database_count": len(database_history),
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting download history: {e}")
+            # Fallback to original in-memory only behavior
+            recent_history = (
+                self.download_history[-limit:] if limit > 0 else self.download_history
+            )
+            return {
+                "history": list(reversed(recent_history)),
+                "count": len(recent_history),
+            }
 
     def stop_download(self, download_id: int) -> Dict:
         """Stop a download (not easily implemented with subprocess, return success for UI)"""
