@@ -56,46 +56,99 @@ def ensure_artist_folder_path(artist, session=None):
 
 @artists_bp.route("/", methods=["GET"])
 def get_artists():
-    """Get all tracked artists with search and filtering"""
+    """Get all tracked artists with search and filtering - OPTIMIZED"""
+    import time
+
+    start_time = time.time()
+
     try:
         with get_db() as session:
-            # Build query with video count subquery
-            video_count_subquery = (
-                session.query(
-                    Video.artist_id, func.count(Video.id).label("video_count")
+            # Use optimized query builder if available
+            try:
+                from src.database.performance_optimizations import (
+                    DatabasePerformanceOptimizer,
                 )
-                .group_by(Video.artist_id)
-                .subquery()
-            )
 
-            query = (
-                session.query(Artist)
-                .outerjoin(
-                    video_count_subquery, Artist.id == video_count_subquery.c.artist_id
+                optimizer = DatabasePerformanceOptimizer()
+                query = optimizer.get_optimized_artist_video_counts(
+                    session, monitored_only=False
                 )
-                .add_columns(
-                    func.coalesce(video_count_subquery.c.video_count, 0).label(
-                        "video_count"
+
+                # Convert to the expected format (Artist, video_count)
+                results_raw = query.all()
+
+            except ImportError:
+                logger.warning(
+                    "Performance optimizer not available, using fallback query"
+                )
+                # Fallback to optimized subquery approach
+                video_count_subquery = (
+                    session.query(
+                        Video.artist_id, func.count(Video.id).label("video_count")
+                    )
+                    .filter(Video.status.in_(["DOWNLOADED", "WANTED", "DOWNLOADING"]))
+                    .group_by(Video.artist_id)
+                    .subquery()
+                )
+
+                query = (
+                    session.query(Artist)
+                    .outerjoin(
+                        video_count_subquery,
+                        Artist.id == video_count_subquery.c.artist_id,
+                    )
+                    .add_columns(
+                        func.coalesce(video_count_subquery.c.video_count, 0).label(
+                            "video_count"
+                        )
                     )
                 )
-            )
+                results_raw = None
 
-            # Search functionality
+            # Apply filters to the query
             search_term = request.args.get("search", "").strip()
-            if search_term:
-                query = query.filter(Artist.name.ilike(f"%{search_term}%"))
-
-            # Filter by monitoring status
             monitored = request.args.get("monitored")
-            if monitored is not None:
-                monitored_bool = monitored.lower() in ["true", "1", "yes"]
-                query = query.filter(Artist.monitored == monitored_bool)
-
-            # Filter by auto-download
             auto_download = request.args.get("auto_download")
-            if auto_download is not None:
-                auto_download_bool = auto_download.lower() in ["true", "1", "yes"]
-                query = query.filter(Artist.auto_download == auto_download_bool)
+
+            # If using optimized query, we need to handle filters differently
+            if results_raw is not None:
+                # Apply filters to the results in memory (still efficient for reasonable dataset sizes)
+                filtered_results = results_raw
+
+                if search_term:
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if search_term.lower() in r[0].name.lower()
+                    ]
+
+                if monitored is not None:
+                    monitored_bool = monitored.lower() in ["true", "1", "yes"]
+                    filtered_results = [
+                        r for r in filtered_results if r[0].monitored == monitored_bool
+                    ]
+
+                if auto_download is not None:
+                    auto_download_bool = auto_download.lower() in ["true", "1", "yes"]
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if r[0].auto_download == auto_download_bool
+                    ]
+
+                results_raw = filtered_results
+            else:
+                # Apply filters to the query (fallback mode)
+                if search_term:
+                    query = query.filter(Artist.name.ilike(f"%{search_term}%"))
+
+                if monitored is not None:
+                    monitored_bool = monitored.lower() in ["true", "1", "yes"]
+                    query = query.filter(Artist.monitored == monitored_bool)
+
+                if auto_download is not None:
+                    auto_download_bool = auto_download.lower() in ["true", "1", "yes"]
+                    query = query.filter(Artist.auto_download == auto_download_bool)
 
             # Sorting
             sort_by = request.args.get("sort", "name")
@@ -118,12 +171,58 @@ def get_artists():
             else:
                 query = query.order_by(sort_column.asc())
 
-            # Pagination
+            # Handle sorting and pagination
             page = int(request.args.get("page", 1))
             per_page = int(request.args.get("per_page", 50))
+            sort_by = request.args.get("sort", "name")
+            sort_order = request.args.get("order", "asc")
 
-            total_count = query.count()
-            results = query.offset((page - 1) * per_page).limit(per_page).all()
+            if results_raw is not None:
+                # Handle sorting and pagination in memory for optimized query
+                if sort_by == "name":
+                    results_raw.sort(
+                        key=lambda x: x[0].name.lower(),
+                        reverse=(sort_order.lower() == "desc"),
+                    )
+                elif sort_by == "video_count":
+                    results_raw.sort(
+                        key=lambda x: x[1], reverse=(sort_order.lower() == "desc")
+                    )
+                elif sort_by == "created_at":
+                    results_raw.sort(
+                        key=lambda x: x[0].created_at,
+                        reverse=(sort_order.lower() == "desc"),
+                    )
+                elif sort_by == "updated_at":
+                    results_raw.sort(
+                        key=lambda x: x[0].updated_at,
+                        reverse=(sort_order.lower() == "desc"),
+                    )
+
+                total_count = len(results_raw)
+                start_idx = (page - 1) * per_page
+                end_idx = start_idx + per_page
+                results = results_raw[start_idx:end_idx]
+            else:
+                # Handle sorting and pagination in database (fallback mode)
+                if sort_by == "name":
+                    sort_column = Artist.name
+                elif sort_by == "created_at":
+                    sort_column = Artist.created_at
+                elif sort_by == "updated_at":
+                    sort_column = Artist.updated_at
+                elif sort_by == "video_count":
+                    sort_column = func.coalesce(video_count_subquery.c.video_count, 0)
+                else:
+                    sort_column = Artist.name
+
+                if sort_order.lower() == "desc":
+                    query = query.order_by(sort_column.desc())
+                else:
+                    query = query.order_by(sort_column.asc())
+
+                total_count = query.count()
+                results = query.offset((page - 1) * per_page).limit(per_page).all()
 
             artists_list = []
             for result in results:
@@ -149,6 +248,12 @@ def get_artists():
                     }
                 )
 
+            # Add performance monitoring
+            query_time = time.time() - start_time
+            logger.info(
+                f"Artists query completed in {query_time:.3f}s (total: {total_count}, page: {page})"
+            )
+
             return (
                 jsonify(
                     {
@@ -158,6 +263,7 @@ def get_artists():
                         "page": page,
                         "per_page": per_page,
                         "pages": (total_count + per_page - 1) // per_page,
+                        "query_time": query_time,
                     }
                 ),
                 200,
