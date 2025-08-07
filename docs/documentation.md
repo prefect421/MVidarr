@@ -4,6 +4,8 @@ title: Documentation
 permalink: /documentation/
 ---
 
+<!-- Force rebuild -->
+
 # Documentation
 
 Comprehensive documentation and guides for MVidarr users, administrators, and developers.
