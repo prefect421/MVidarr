@@ -435,19 +435,14 @@ def search_videos():
             else:
                 videos_query = videos_query.order_by(sort_column.asc())
 
-            # Optimized count query - avoid expensive count() on complex queries
+            # Get total count using standard method - more reliable than complex subqueries
             count_start = time.time()
             try:
-                # Use a subquery for count to avoid re-executing complex joins
-                from sqlalchemy import func
-
-                count_query = session.query(func.count()).select_from(
-                    videos_query.statement.alias()
-                )
-                total_count = count_query.scalar()
-            except:
-                # Fallback to regular count if subquery fails
                 total_count = videos_query.count()
+                logger.debug(f"Count query completed successfully: {total_count} results")
+            except Exception as count_error:
+                logger.error(f"Count query failed: {count_error}")
+                total_count = 0
             count_time = time.time() - count_start
 
             # Apply pagination
@@ -510,7 +505,10 @@ def search_videos():
             )
 
     except Exception as e:
+        import traceback
         logger.error(f"Failed to search videos: {e}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        logger.error(f"Search filters were: {filters}")
         return jsonify({"error": str(e)}), 500
 
 

@@ -233,12 +233,20 @@ class DatabasePerformanceOptimizer:
         if filters.get("status"):
             try:
                 # Convert string to VideoStatus enum
+                logger.debug(f"Converting status filter '{filters['status']}' to VideoStatus enum")
                 status_enum = VideoStatus(filters["status"])
                 query = query.filter(Video.status == status_enum)
-            except ValueError:
+                logger.debug(f"Successfully applied status filter: {status_enum}")
+            except ValueError as ve:
                 # Invalid status value, skip filter
-                logger.warning(f"Invalid video status filter: {filters['status']}")
+                logger.error(f"Invalid video status filter: {filters['status']}, error: {ve}")
+                logger.error(f"Valid VideoStatus values: {[status.value for status in VideoStatus]}")
                 pass
+            except Exception as e:
+                # Catch any other errors during status filtering
+                logger.error(f"Unexpected error during status filtering: {e}")
+                logger.error(f"Status filter value: {filters['status']}")
+                raise
 
         # Source filter (often selective)
         if filters.get("source"):
