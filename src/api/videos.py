@@ -3382,7 +3382,8 @@ def download_all_wanted_videos():
         return jsonify({"error": str(e)}), 500
 
 
-@videos_bp.route("/bulk/status", methods=["PUT"])
+@videos_bp.route("/bulk/status", methods=["POST"])
+@monitor_performance("api.videos.bulk_status_update")
 def bulk_update_video_status():
     """Update status for multiple videos"""
     try:
