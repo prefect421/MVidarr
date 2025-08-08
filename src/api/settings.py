@@ -340,12 +340,38 @@ def restart_systemd_service():
 
 
 @settings_bp.route("/scheduler/status", methods=["GET"])
+@monitor_performance("api.settings.scheduler_status")
 def get_scheduler_status():
     """Get current scheduler status and configuration"""
     try:
         from src.services.scheduler_service import scheduler_service
 
         schedule_info = scheduler_service.get_schedule_info()
+        
+        # Add diagnostic information to help troubleshoot issues
+        diagnostic_info = {
+            "wanted_videos_count": 0,
+            "settings_accessible": True,
+            "issues_detected": []
+        }
+        
+        try:
+            # Check if we can count wanted videos
+            wanted_count = scheduler_service._get_wanted_video_count()
+            diagnostic_info["wanted_videos_count"] = wanted_count
+            
+            if wanted_count == 0:
+                diagnostic_info["issues_detected"].append("No videos marked as WANTED")
+        except Exception as e:
+            diagnostic_info["issues_detected"].append(f"Cannot access wanted videos: {str(e)}")
+        
+        try:
+            # Check if settings are accessible
+            from src.services.settings_service import SettingsService
+            test_setting = SettingsService.get_bool("auto_download_schedule_enabled", True)
+        except Exception as e:
+            diagnostic_info["settings_accessible"] = False
+            diagnostic_info["issues_detected"].append(f"Cannot access settings: {str(e)}")
 
         return (
             jsonify(
@@ -353,6 +379,7 @@ def get_scheduler_status():
                     "scheduler": {
                         "running": scheduler_service.running,
                         "schedule_info": schedule_info,
+                        "diagnostics": diagnostic_info,
                     }
                 }
             ),

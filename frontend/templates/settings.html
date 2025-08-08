@@ -1922,10 +1922,10 @@ function refreshSchedulerStatus() {
                     </div>
                     ${scheduleInfo.enabled ? `
                     <div class="status-item">
-                        <strong>Schedule:</strong> ${scheduleInfo.schedule_days} at ${scheduleInfo.schedule_time}
+                        <strong>Schedule:</strong> ${scheduleInfo.downloads?.schedule_days || 'Not configured'} at ${scheduleInfo.downloads?.schedule_time || 'Not configured'}
                     </div>
                     <div class="status-item">
-                        <strong>Max Videos:</strong> ${scheduleInfo.max_videos}
+                        <strong>Max Videos:</strong> ${scheduleInfo.downloads?.max_videos || 'Not configured'}
                     </div>
                     <div class="status-item">
                         <strong>Next Run:</strong> ${nextRun}
@@ -1933,6 +1933,19 @@ function refreshSchedulerStatus() {
                     <div class="status-item">
                         <strong>Active Jobs:</strong> ${scheduleInfo.job_count || 0}
                     </div>
+                    ${scheduler.diagnostics ? `
+                    <div class="status-item">
+                        <strong>Wanted Videos:</strong> ${scheduler.diagnostics.wanted_videos_count}
+                    </div>
+                    ${scheduler.diagnostics.issues_detected && scheduler.diagnostics.issues_detected.length > 0 ? `
+                    <div class="status-item warning">
+                        <strong>Issues Detected:</strong>
+                        <ul>
+                            ${scheduler.diagnostics.issues_detected.map(issue => `<li>${issue}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    ` : ''}
                     ` : `
                     <div class="status-item warning">
                         <strong>Note:</strong> Scheduling is disabled. Enable it in settings to schedule downloads.
@@ -1951,7 +1964,7 @@ function refreshSchedulerStatus() {
                     </div>
                     ${scheduleInfo.enabled ? `
                     <div class="status-item">
-                        <strong>Configured Schedule:</strong> ${scheduleInfo.schedule_days} at ${scheduleInfo.schedule_time}
+                        <strong>Configured Schedule:</strong> ${scheduleInfo.downloads?.schedule_days || 'Not configured'} at ${scheduleInfo.downloads?.schedule_time || 'Not configured'}
                     </div>
                     <div class="status-item warning">
                         <strong>Note:</strong> Scheduler service needs to be started to run scheduled downloads
