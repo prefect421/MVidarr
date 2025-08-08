@@ -6,12 +6,14 @@ from flask import Blueprint, jsonify, request
 
 from src.services.settings_service import settings
 from src.utils.logger import get_logger
+from src.utils.performance_monitor import monitor_performance
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 logger = get_logger("mvidarr.api.settings")
 
 
 @settings_bp.route("/", methods=["GET"])
+@monitor_performance("api.settings.get_all")
 def get_all_settings():
     """Get all application settings"""
     try:

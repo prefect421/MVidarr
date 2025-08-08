@@ -20,6 +20,7 @@ from src.services.thumbnail_service import thumbnail_service
 from src.services.wikipedia_service import wikipedia_service
 from src.services.youtube_search_service import youtube_search_service
 from src.utils.logger import get_logger
+from src.utils.performance_monitor import monitor_performance
 
 artists_bp = Blueprint("artists", __name__, url_prefix="/artists")
 logger = get_logger("mvidarr.api.artists")
@@ -55,6 +56,7 @@ def ensure_artist_folder_path(artist, session=None):
 
 
 @artists_bp.route("/", methods=["GET"])
+@monitor_performance("api.artists.list")
 def get_artists():
     """Get all tracked artists with search and filtering - OPTIMIZED"""
     import time
@@ -275,6 +277,7 @@ def get_artists():
 
 
 @artists_bp.route("/search/advanced", methods=["GET"])
+@monitor_performance("api.artists.advanced_search")
 def advanced_search():
     """Advanced artist search with comprehensive filters and analytics - OPTIMIZED"""
     try:

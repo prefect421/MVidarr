@@ -17,6 +17,7 @@ from flask import Flask, g, redirect, request, session, url_for
 # Import all existing API blueprints
 from src.api.artists import artists_bp
 from src.api.health import health_bp
+from src.api.performance import performance_bp
 from src.api.settings import settings_bp
 from src.api.simple_auth import register_simple_auth_routes
 from src.api.videos import videos_bp
@@ -66,6 +67,7 @@ def create_app():
     app.register_blueprint(videos_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(health_bp)
+    app.register_blueprint(performance_bp)
 
     # Import and register main routes
     from src.api.routes import register_routes

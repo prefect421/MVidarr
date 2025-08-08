@@ -18,6 +18,7 @@ from src.database.models import Artist, Download, Video, VideoStatus
 from src.services.imvdb_service import imvdb_service
 from src.services.video_indexing_service import VideoIndexingService
 from src.utils.logger import get_logger
+from src.utils.performance_monitor import monitor_performance
 
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 logger = get_logger("mvidarr.api.videos")
@@ -243,6 +244,7 @@ def _trigger_video_download(video_id):
 
 
 @videos_bp.route("/", methods=["GET"])
+@monitor_performance("api.videos.list")
 def get_videos():
     """Get all videos with optional sorting and pagination"""
     try:
@@ -327,6 +329,7 @@ def get_videos():
 
 
 @videos_bp.route("/search", methods=["GET"])
+@monitor_performance("api.videos.search")
 def search_videos():
     """Search videos with multiple filters - OPTIMIZED VERSION"""
     import time
@@ -5286,6 +5289,7 @@ def update_video_safe(video_id):
 
 
 @videos_bp.route("/universal-search", methods=["GET"])
+@monitor_performance("api.videos.universal_search")
 def universal_search():
     """
     Universal search endpoint that searches across videos, artists, and external sources
