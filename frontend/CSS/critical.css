@@ -1,0 +1,219 @@
+/**
+ * Critical CSS - Above the fold styles
+ * Loaded inline for fastest rendering
+ */
+
+/* CSS Custom Properties for Performance */
+:root {
+    --sidebar-width: 250px;
+    --header-height: 60px;
+    --transition-speed: 0.3s;
+    
+    /* Color system */
+    --bg-primary: #1e293b;
+    --bg-secondary: #334155;
+    --bg-tertiary: #475569;
+    --text-primary: #ffffff;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --border-primary: rgba(255, 255, 255, 0.1);
+    --border-secondary: rgba(255, 255, 255, 0.05);
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Performance optimizations */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Critical layout components */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid var(--border-primary);
+    z-index: 1000;
+    transition: transform var(--transition-speed) ease, width var(--transition-speed) ease;
+    will-change: transform, width;
+}
+
+.sidebar.collapsed {
+    width: 60px;
+    --sidebar-width: 60px;
+}
+
+.sidebar.mobile-hidden {
+    transform: translateX(-100%);
+}
+
+.app-header {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    right: 0;
+    height: var(--header-height);
+    background: rgba(45, 45, 45, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-primary);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    transition: left var(--transition-speed) ease;
+    will-change: left;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    margin-top: var(--header-height);
+    padding: 1rem;
+    min-height: calc(100vh - var(--header-height));
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin: 1rem;
+    margin-top: calc(var(--header-height) + 1rem);
+    margin-left: calc(var(--sidebar-width) + 1rem);
+    transition: margin-left var(--transition-speed) ease;
+    will-change: margin-left;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1024px) {
+    .app-header {
+        left: 0;
+    }
+    
+    .main-content {
+        margin-left: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+    }
+    
+    .sidebar-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .app-header {
+        flex-wrap: wrap;
+        height: auto;
+        min-height: var(--header-height);
+        padding: 0.5rem;
+    }
+    
+    .main-content {
+        margin-top: calc(var(--header-height) + 1rem);
+    }
+}
+
+/* Loading states for better perceived performance */
+.loading-skeleton {
+    background: linear-gradient(90deg, 
+        rgba(255,255,255,0.1) 0%, 
+        rgba(255,255,255,0.2) 50%, 
+        rgba(255,255,255,0.1) 100%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Performance optimizations for icons */
+iconify-icon {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: inherit;
+    will-change: transform;
+}
+
+/* Iconify fallback styles */
+.iconify-failed iconify-icon::before {
+    content: "•";
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    text-align: center;
+}
+
+.iconify-failed iconify-icon[icon*="dashboard"]::before { content: "⊞"; }
+.iconify-failed iconify-icon[icon*="users"]::before { content: "👥"; }
+.iconify-failed iconify-icon[icon*="video"]::before { content: "📹"; }
+.iconify-failed iconify-icon[icon*="device-tv"]::before { content: "📺"; }
+.iconify-failed iconify-icon[icon*="settings"]::before { content: "⚙"; }
+.iconify-failed iconify-icon[icon*="search"]::before { content: "🔍"; }
+.iconify-failed iconify-icon[icon*="user-circle"]::before { content: "👤"; }
+.iconify-failed iconify-icon[icon*="logout"]::before { content: "🚪"; }
+.iconify-failed iconify-icon[icon*="menu"]::before { content: "☰"; }
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Improve text rendering */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    html {
+        scroll-behavior: auto;
+    }
+}
