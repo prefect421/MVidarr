@@ -3469,6 +3469,103 @@ def bulk_update_video_status():
         return jsonify({"error": str(e)}), 500
 
 
+@videos_bp.route("/bulk/edit", methods=["POST"])
+@monitor_performance("api.videos.bulk_edit")
+def bulk_edit_videos():
+    """Apply bulk edits to multiple videos"""
+    try:
+        data = request.get_json()
+        if not data or "video_ids" not in data or "updates" not in data:
+            return jsonify({"error": "video_ids array and updates object are required"}), 400
+
+        video_ids = data["video_ids"]
+        updates = data["updates"]
+
+        if not isinstance(video_ids, list) or len(video_ids) == 0:
+            return jsonify({"error": "video_ids must be a non-empty array"}), 400
+
+        if not isinstance(updates, dict) or len(updates) == 0:
+            return jsonify({"error": "updates must be a non-empty object"}), 400
+
+        updated_count = 0
+        failed_count = 0
+        errors = []
+
+        with get_db() as session:
+            for video_id in video_ids:
+                try:
+                    video = session.query(Video).filter(Video.id == video_id).first()
+                    if not video:
+                        failed_count += 1
+                        errors.append(f"Video {video_id} not found")
+                        continue
+
+                    # Apply updates
+                    for field, value in updates.items():
+                        if field == "artist_name":
+                            # Handle artist name change - find or create artist
+                            if value and value.strip():
+                                artist = session.query(Artist).filter_by(name=value.strip()).first()
+                                if not artist:
+                                    artist = Artist(name=value.strip())
+                                    session.add(artist)
+                                    session.flush()  # Get the ID
+                                video.artist_id = artist.id
+                        elif field == "status":
+                            # Validate status
+                            valid_statuses = ["WANTED", "DOWNLOADING", "DOWNLOADED", "FAILED", "IGNORED"]
+                            if value in valid_statuses:
+                                video.status = value
+                            else:
+                                errors.append(f"Invalid status '{value}' for video {video_id}")
+                                continue
+                        elif field == "priority":
+                            # Validate priority
+                            valid_priorities = ["LOW", "NORMAL", "HIGH", "URGENT"]
+                            if value in valid_priorities:
+                                video.priority = value
+                            else:
+                                errors.append(f"Invalid priority '{value}' for video {video_id}")
+                                continue
+                        elif field == "year":
+                            # Validate year
+                            if isinstance(value, int) and 1900 <= value <= 2030:
+                                video.year = value
+                            else:
+                                errors.append(f"Invalid year '{value}' for video {video_id}")
+                                continue
+                        else:
+                            # Direct field assignment for other supported fields
+                            if hasattr(video, field):
+                                setattr(video, field, value)
+                            else:
+                                errors.append(f"Unknown field '{field}' for video {video_id}")
+                                continue
+
+                    updated_count += 1
+
+                except Exception as video_error:
+                    failed_count += 1
+                    errors.append(f"Error updating video {video_id}: {str(video_error)}")
+                    logger.error(f"Error updating video {video_id}: {video_error}")
+
+            # Commit all changes
+            session.commit()
+
+        logger.info(f"Bulk edit completed: {updated_count} updated, {failed_count} failed")
+
+        return jsonify({
+            "success": True,
+            "updated_count": updated_count,
+            "failed_count": failed_count,
+            "errors": errors if errors else None
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Failed to bulk edit videos: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @videos_bp.route("/bulk/refresh-metadata", methods=["POST"])
 def bulk_refresh_metadata():
     """Refresh metadata from IMVDb for multiple videos"""
