@@ -125,10 +125,15 @@ def get_performance_report() -> Dict[str, Any]:
     
     if not all_stats:
         return {
-            "summary": "No API performance data available",
-            "total_endpoints": 0,
-            "slow_endpoints": 0,
-            "endpoints": []
+            "summary": {
+                "message": "No API performance data available",
+                "total_endpoints_monitored": 0,
+                "total_requests_processed": 0,
+                "slow_endpoints_count": 0
+            },
+            "slow_endpoints": [],
+            "all_endpoints": [],
+            "generated_at": datetime.now().isoformat()
         }
     
     # Calculate summary statistics
