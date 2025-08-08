@@ -255,12 +255,25 @@ def get_videos():
         offset = request.args.get("offset", 0, type=int)
 
         with get_db() as session:
-            query = session.query(Video).join(
-                Artist, Video.artist_id == Artist.id, isouter=True
-            )
-
-            # Get total count before applying limit/offset
-            total_count = query.count()
+            # Always need artist data for response, but optimize how we get it
+            need_artist_join_for_sort = sort_by == "artist_name"
+            
+            if need_artist_join_for_sort:
+                # Need JOIN for sorting by artist name
+                query = session.query(Video).join(
+                    Artist, Video.artist_id == Artist.id, isouter=True
+                )
+                # Count on joined query when needed for sorting
+                total_count = query.count()
+            else:
+                # For counting and basic querying, use base Video table (much faster)
+                base_query = session.query(Video)
+                total_count = base_query.count()
+                
+                # For data retrieval, use eager loading to prevent N+1 queries
+                # This is more efficient than JOIN when we're not sorting by artist
+                from sqlalchemy.orm import joinedload
+                query = session.query(Video).options(joinedload(Video.artist))
 
             # Apply sorting
             if sort_by == "title":
