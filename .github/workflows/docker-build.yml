@@ -70,3 +70,42 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+    - name: Monitor Docker Image Size
+      if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
+      run: |
+        # Get image size information
+        IMAGE_TAG="${{ github.ref == 'refs/heads/dev' && format('{0}/{1}:dev', env.REGISTRY, env.IMAGE_NAME) || format('{0}/{1}:latest', env.REGISTRY, env.IMAGE_NAME) }}"
+        
+        echo "📊 Docker Image Size Analysis"
+        echo "================================"
+        
+        # Pull the image to get accurate size info
+        docker pull "$IMAGE_TAG"
+        
+        # Get image size
+        IMAGE_SIZE=$(docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" "$IMAGE_TAG" | tail -n +2)
+        echo "🐳 Image: $IMAGE_SIZE"
+        
+        # Get detailed layer information
+        echo ""
+        echo "📋 Layer Information:"
+        docker history --human --format "table {{.CreatedBy}}\t{{.Size}}" "$IMAGE_TAG" | head -10
+        
+        # Check if image size exceeds thresholds
+        SIZE_BYTES=$(docker inspect "$IMAGE_TAG" --format='{{.Size}}')
+        SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
+        
+        echo ""
+        echo "📈 Size Analysis:"
+        echo "- Size in MB: ${SIZE_MB}"
+        
+        if [ "$SIZE_MB" -gt 1000 ]; then
+          echo "⚠️ WARNING: Image size (${SIZE_MB}MB) exceeds 1GB threshold"
+          echo "Consider optimizing the Dockerfile to reduce image size"
+        elif [ "$SIZE_MB" -gt 500 ]; then
+          echo "⚠️ NOTICE: Image size (${SIZE_MB}MB) is above 500MB"
+          echo "Monitor for further size increases"
+        else
+          echo "✅ Image size (${SIZE_MB}MB) is within acceptable limits"
+        fi
