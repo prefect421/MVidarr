@@ -4,6 +4,8 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='videos.css') }}">
+<link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='ui-enhancements.css') }}">
+<link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='virtualization.css') }}">
 <div class="videos-container">
     
     <div class="videos-actions">
@@ -4219,5 +4221,11 @@ async function playVideoById(videoId) {
 
 <!-- Include shared Add Video modal component -->
 {% include 'components/add_video_modal.html' %}
+
+<!-- UI Enhancement Scripts -->
+<script src="{{ url_for('frontend.js_files', filename='ui-enhancements.js') }}"></script>
+<script src="{{ url_for('frontend.js_files', filename='video-management-enhanced.js') }}"></script>
+<script src="{{ url_for('frontend.js_files', filename='virtualization-engine.js') }}"></script>
+<script src="{{ url_for('frontend.js_files', filename='video-virtualization-integration.js') }}"></script>
 
 {% endblock %}

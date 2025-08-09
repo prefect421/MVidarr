@@ -1,16 +1,20 @@
 {
-  "version": "0.9.5-dev",
-  "build_date": "2025-08-06T19:54:20.583094",
-  "git_commit": "36b8310",
+  "version": "0.9.2",
+  "build_date": "2025-08-09T15:27:18.815665",
+  "git_commit": "d87ce2e",
   "git_branch": "dev",
-  "release_name": "Performance & User Experience Development",
+  "release_name": "Current Development",
   "features": [
-    "Development branch transitioned to 0.9.5 development cycle",
-    "Focus: Performance optimization and user experience enhancements",
-    "Strategic mix of targeted performance improvements with measurable outcomes",
-    "User-facing enhancements that deliver tangible value",
-    "Database performance analysis and query optimization",
-    "API response time optimization for critical endpoints",
-    "Frontend loading performance and user experience optimization"
+    "Complete video management system with advanced search and filtering",
+    "Artist monitoring and automatic video discovery",
+    "Bulk video operations and status management",
+    "MeTube integration for video downloads",
+    "Comprehensive scheduler system for automated downloads",
+    "Advanced authentication with OAuth support",
+    "Real-time video queue management",
+    "Dynamic theming system with built-in and custom themes",
+    "Performance optimization with database indexing",
+    "Enhanced UI with virtualization for large video collections",
+    "Comprehensive frontend performance optimizations"
   ]
 }
