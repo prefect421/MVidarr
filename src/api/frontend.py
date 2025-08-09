@@ -109,3 +109,10 @@ def css_files(filename):
     """Serve CSS files"""
     css_dir = Path(__file__).parent.parent.parent / "frontend" / "CSS"
     return send_from_directory(css_dir, filename)
+
+
+@frontend_bp.route("/js/<path:filename>")
+def js_files(filename):
+    """Serve JavaScript files"""
+    js_dir = Path(__file__).parent.parent.parent / "frontend" / "static" / "js"
+    return send_from_directory(js_dir, filename)
