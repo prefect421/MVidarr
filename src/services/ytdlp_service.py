@@ -660,11 +660,26 @@ class YtDlpService:
         return {"success": False, "error": "Download not found or not retryable"}
 
     def clear_history(self) -> Dict:
-        """Clear download history"""
-        count = len(self.download_history)
+        """Clear download history from both memory and database"""
+        memory_count = len(self.download_history)
         self.download_history.clear()
-
-        return {"success": True, "deleted_count": count}
+        
+        # Also clear database records
+        db_count = 0
+        try:
+            from src.database.models import Download
+            db = get_db()
+            db_count = db.query(Download).count()
+            db.query(Download).delete()
+            db.commit()
+            db.close()
+            logger.info(f"Cleared {db_count} download records from database")
+        except Exception as e:
+            logger.error(f"Failed to clear download history from database: {e}")
+            # Still return success for memory clearing even if DB fails
+        
+        total_count = max(memory_count, db_count)
+        return {"success": True, "deleted_count": total_count}
 
     def clear_stuck_downloads(self, minutes: int = 10) -> Dict:
         """Clear downloads stuck at 0% for more than specified minutes"""
