@@ -7,7 +7,7 @@ from sqlalchemy import Index, text
 from sqlalchemy.dialects import mysql, postgresql, sqlite
 
 from src.database.connection import engine
-from src.database.models import Artist, Video, VideoStatus
+from src.database.models import Artist, Download, Video, VideoStatus
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.database.performance")
@@ -233,14 +233,20 @@ class DatabasePerformanceOptimizer:
         if filters.get("status"):
             try:
                 # Convert string to VideoStatus enum
-                logger.debug(f"Converting status filter '{filters['status']}' to VideoStatus enum")
+                logger.debug(
+                    f"Converting status filter '{filters['status']}' to VideoStatus enum"
+                )
                 status_enum = VideoStatus(filters["status"])
                 query = query.filter(Video.status == status_enum)
                 logger.debug(f"Successfully applied status filter: {status_enum}")
             except ValueError as ve:
                 # Invalid status value, skip filter
-                logger.error(f"Invalid video status filter: {filters['status']}, error: {ve}")
-                logger.error(f"Valid VideoStatus values: {[status.value for status in VideoStatus]}")
+                logger.error(
+                    f"Invalid video status filter: {filters['status']}, error: {ve}"
+                )
+                logger.error(
+                    f"Valid VideoStatus values: {[status.value for status in VideoStatus]}"
+                )
                 pass
             except Exception as e:
                 # Catch any other errors during status filtering

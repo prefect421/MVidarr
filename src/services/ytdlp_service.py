@@ -600,26 +600,33 @@ class YtDlpService:
 
             # Combine and deduplicate histories
             all_history = memory_history + database_history
-            
+
             # Deduplicate based on URL and creation time (keep most recent)
             seen_downloads = {}
             deduplicated_history = []
-            
+
             for entry in all_history:
                 # Create a unique key based on URL and title
                 key = f"{entry.get('url', '')}_{entry.get('title', '')}"
-                created_at = entry.get('created_at', '')
-                
+                created_at = entry.get("created_at", "")
+
                 # Keep the entry with the latest created_at for each unique download
-                if key not in seen_downloads or created_at > seen_downloads[key]['created_at']:
+                if (
+                    key not in seen_downloads
+                    or created_at > seen_downloads[key]["created_at"]
+                ):
                     seen_downloads[key] = entry
-            
+
             # Convert back to list and sort by creation time (most recent first)
             deduplicated_history = list(seen_downloads.values())
-            deduplicated_history.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            deduplicated_history.sort(
+                key=lambda x: x.get("created_at", ""), reverse=True
+            )
 
             # Apply limit
-            recent_history = deduplicated_history[:limit] if limit > 0 else deduplicated_history
+            recent_history = (
+                deduplicated_history[:limit] if limit > 0 else deduplicated_history
+            )
 
             return {
                 "history": recent_history,
@@ -677,11 +684,12 @@ class YtDlpService:
         """Clear download history from both memory and database"""
         memory_count = len(self.download_history)
         self.download_history.clear()
-        
+
         # Also clear database records
         db_count = 0
         try:
             from src.database.models import Download
+
             with get_db() as session:
                 db_count = session.query(Download).count()
                 session.query(Download).delete()
@@ -690,22 +698,24 @@ class YtDlpService:
         except Exception as e:
             logger.error(f"Failed to clear download history from database: {e}")
             # Still return success for memory clearing even if DB fails
-        
+
         # Also clear download queue to prevent re-adding completed downloads
         cleared_queue_count = len(self.download_queue)
         self.download_queue.clear()
-        
+
         total_count = memory_count + db_count
-        logger.info(f"Clear history summary - Memory: {memory_count}, Database: {db_count}, Queue: {cleared_queue_count}")
-        
+        logger.info(
+            f"Clear history summary - Memory: {memory_count}, Database: {db_count}, Queue: {cleared_queue_count}"
+        )
+
         return {
-            "success": True, 
+            "success": True,
             "deleted_count": total_count,
             "details": {
                 "memory": memory_count,
                 "database": db_count,
-                "queue_cleared": cleared_queue_count
-            }
+                "queue_cleared": cleared_queue_count,
+            },
         }
 
     def clear_stuck_downloads(self, minutes: int = 10) -> Dict:

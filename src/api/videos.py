@@ -9,7 +9,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-from flask import Blueprint, Response, jsonify, request, send_file
+from flask import Blueprint, Response, jsonify, render_template, request, send_file
 from sqlalchemy import and_, func, or_
 from sqlalchemy.exc import IntegrityError
 
@@ -257,7 +257,7 @@ def get_videos():
         with get_db() as session:
             # Always need artist data for response, but optimize how we get it
             need_artist_join_for_sort = sort_by == "artist_name"
-            
+
             if need_artist_join_for_sort:
                 # Need JOIN for sorting by artist name
                 query = session.query(Video).join(
@@ -269,10 +269,11 @@ def get_videos():
                 # For counting and basic querying, use base Video table (much faster)
                 base_query = session.query(Video)
                 total_count = base_query.count()
-                
+
                 # For data retrieval, use eager loading to prevent N+1 queries
                 # This is more efficient than JOIN when we're not sorting by artist
                 from sqlalchemy.orm import joinedload
+
                 query = session.query(Video).options(joinedload(Video.artist))
 
             # Apply sorting
@@ -381,7 +382,7 @@ def search_videos():
                 or filters["artist_name"]
                 or filters["sort_by"] in ["artist_name", "artist"]
             )
-            
+
             # Use optimized query builder
             try:
                 from src.database.performance_optimizations import (
@@ -393,7 +394,7 @@ def search_videos():
             except ImportError:
                 # Fallback to basic optimized query if optimizer not available
                 videos_query = session.query(Video)
-                
+
                 if need_artist_join:
                     videos_query = videos_query.join(Artist)
 
@@ -420,11 +421,12 @@ def search_videos():
                     )
                 if filters["query"]:
                     from sqlalchemy import or_
+
                     if need_artist_join:
                         videos_query = videos_query.filter(
                             or_(
                                 Video.title.contains(filters["query"]),
-                                Artist.name.contains(filters["query"])
+                                Artist.name.contains(filters["query"]),
                             )
                         )
                     else:
@@ -456,7 +458,9 @@ def search_videos():
             count_start = time.time()
             try:
                 total_count = videos_query.count()
-                logger.debug(f"Count query completed successfully: {total_count} results")
+                logger.debug(
+                    f"Count query completed successfully: {total_count} results"
+                )
             except Exception as count_error:
                 logger.error(f"Count query failed: {count_error}")
                 total_count = 0
@@ -523,6 +527,7 @@ def search_videos():
 
     except Exception as e:
         import traceback
+
         logger.error(f"Failed to search videos: {e}")
         logger.error(f"Full traceback: {traceback.format_exc()}")
         logger.error(f"Search filters were: {filters}")
@@ -3476,7 +3481,10 @@ def bulk_edit_videos():
     try:
         data = request.get_json()
         if not data or "video_ids" not in data or "updates" not in data:
-            return jsonify({"error": "video_ids array and updates object are required"}), 400
+            return (
+                jsonify({"error": "video_ids array and updates object are required"}),
+                400,
+            )
 
         video_ids = data["video_ids"]
         updates = data["updates"]
@@ -3505,7 +3513,11 @@ def bulk_edit_videos():
                         if field == "artist_name":
                             # Handle artist name change - find or create artist
                             if value and value.strip():
-                                artist = session.query(Artist).filter_by(name=value.strip()).first()
+                                artist = (
+                                    session.query(Artist)
+                                    .filter_by(name=value.strip())
+                                    .first()
+                                )
                                 if not artist:
                                     artist = Artist(name=value.strip())
                                     session.add(artist)
@@ -3513,11 +3525,19 @@ def bulk_edit_videos():
                                 video.artist_id = artist.id
                         elif field == "status":
                             # Validate status
-                            valid_statuses = ["WANTED", "DOWNLOADING", "DOWNLOADED", "FAILED", "IGNORED"]
+                            valid_statuses = [
+                                "WANTED",
+                                "DOWNLOADING",
+                                "DOWNLOADED",
+                                "FAILED",
+                                "IGNORED",
+                            ]
                             if value in valid_statuses:
                                 video.status = value
                             else:
-                                errors.append(f"Invalid status '{value}' for video {video_id}")
+                                errors.append(
+                                    f"Invalid status '{value}' for video {video_id}"
+                                )
                                 continue
                         elif field == "priority":
                             # Validate priority
@@ -3525,41 +3545,56 @@ def bulk_edit_videos():
                             if value in valid_priorities:
                                 video.priority = value
                             else:
-                                errors.append(f"Invalid priority '{value}' for video {video_id}")
+                                errors.append(
+                                    f"Invalid priority '{value}' for video {video_id}"
+                                )
                                 continue
                         elif field == "year":
                             # Validate year
                             if isinstance(value, int) and 1900 <= value <= 2030:
                                 video.year = value
                             else:
-                                errors.append(f"Invalid year '{value}' for video {video_id}")
+                                errors.append(
+                                    f"Invalid year '{value}' for video {video_id}"
+                                )
                                 continue
                         else:
                             # Direct field assignment for other supported fields
                             if hasattr(video, field):
                                 setattr(video, field, value)
                             else:
-                                errors.append(f"Unknown field '{field}' for video {video_id}")
+                                errors.append(
+                                    f"Unknown field '{field}' for video {video_id}"
+                                )
                                 continue
 
                     updated_count += 1
 
                 except Exception as video_error:
                     failed_count += 1
-                    errors.append(f"Error updating video {video_id}: {str(video_error)}")
+                    errors.append(
+                        f"Error updating video {video_id}: {str(video_error)}"
+                    )
                     logger.error(f"Error updating video {video_id}: {video_error}")
 
             # Commit all changes
             session.commit()
 
-        logger.info(f"Bulk edit completed: {updated_count} updated, {failed_count} failed")
+        logger.info(
+            f"Bulk edit completed: {updated_count} updated, {failed_count} failed"
+        )
 
-        return jsonify({
-            "success": True,
-            "updated_count": updated_count,
-            "failed_count": failed_count,
-            "errors": errors if errors else None
-        }), 200
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "updated_count": updated_count,
+                    "failed_count": failed_count,
+                    "errors": errors if errors else None,
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         logger.error(f"Failed to bulk edit videos: {e}")
