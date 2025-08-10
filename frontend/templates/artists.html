@@ -6,22 +6,22 @@
 <div class="artists-container">
     
     <div class="artists-actions">
-        <div class="advanced-search-panel">
+        <div class="advanced-search-panel" role="search" aria-label="Artist search and filters">
             <div class="search-header">
                 <div class="search-input-container">
-                    <input type="text" id="searchInput" placeholder="Search artists, keywords, or biography..." onkeyup="handleSearchInput(event)">
-                    <div class="search-suggestions" id="searchSuggestions"></div>
+                    <input type="text" id="searchInput" placeholder="Search artists, keywords, or biography..." onkeyup="handleSearchInput(event)" aria-label="Search artists" aria-describedby="searchSuggestions" autocomplete="off">
+                    <div class="search-suggestions" id="searchSuggestions" role="listbox" aria-label="Search suggestions"></div>
                 </div>
-                <button onclick="toggleAdvancedFilters()" class="btn btn-secondary" id="filtersToggle">
-                    <span>Filters</span> <span id="filterCount" class="filter-count"></span>
+                <button onclick="toggleAdvancedFilters()" class="btn btn-secondary" id="filtersToggle" aria-label="Toggle advanced filters" aria-expanded="false" aria-controls="advancedFilters">
+                    <span>Filters</span> <span id="filterCount" class="filter-count" aria-live="polite"></span>
                 </button>
             </div>
             
-            <div class="advanced-filters" id="advancedFilters" style="display: none;">
+            <div class="advanced-filters" id="advancedFilters" style="display: none;" role="group" aria-label="Advanced artist filters">
                 <div class="filter-row">
                     <div class="filter-group">
                         <label for="monitoredFilter">Status:</label>
-                        <select id="monitoredFilter" onchange="applyFilters()">
+                        <select id="monitoredFilter" onchange="applyFilters()" aria-label="Filter by monitoring status">
                             <option value="">All Artists</option>
                             <option value="true">Monitored Only</option>
                             <option value="false">Not Monitored</option>
@@ -30,7 +30,7 @@
                     
                     <div class="filter-group">
                         <label for="autoDownloadFilter">Auto-download:</label>
-                        <select id="autoDownloadFilter" onchange="applyFilters()">
+                        <select id="autoDownloadFilter" onchange="applyFilters()" aria-label="Filter by auto-download setting">
                             <option value="">Any</option>
                             <option value="true">Enabled</option>
                             <option value="false">Disabled</option>
@@ -67,12 +67,12 @@
                 <div class="filter-row">
                     <div class="filter-group">
                         <label for="minVideos">Min Videos:</label>
-                        <input type="number" id="minVideos" min="0" placeholder="0" onchange="applyFilters()">
+                        <input type="number" id="minVideos" min="0" placeholder="0" onchange="applyFilters()" aria-label="Minimum number of videos">
                     </div>
                     
                     <div class="filter-group">
                         <label for="maxVideos">Max Videos:</label>
-                        <input type="number" id="maxVideos" min="0" placeholder="∞" onchange="applyFilters()">
+                        <input type="number" id="maxVideos" min="0" placeholder="∞" onchange="applyFilters()" aria-label="Maximum number of videos">
                     </div>
                     
                     <div class="filter-group">
@@ -93,9 +93,9 @@
                     </div>
                 </div>
                 
-                <div class="filter-actions">
-                    <button onclick="clearAllFilters()" class="btn btn-secondary">Clear All</button>
-                    <button onclick="saveSearchPreset()" class="btn btn-secondary">Save Preset</button>
+                <div class="filter-actions" role="toolbar" aria-label="Filter actions">
+                    <button onclick="clearAllFilters()" class="btn btn-secondary" aria-label="Clear all active filters">Clear All</button>
+                    <button onclick="saveSearchPreset()" class="btn btn-secondary" aria-label="Save current search as preset">Save Preset</button>
                 </div>
             </div>
         </div>

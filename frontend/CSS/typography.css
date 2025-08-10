@@ -1,0 +1,330 @@
+/* ========================================
+   MVidarr Typography System
+   Consistent, accessible typography using theme variables
+======================================== */
+
+/* Base Typography Settings */
+html {
+    font-size: 16px; /* Base font size for rem calculations */
+    line-height: var(--line-height-normal);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+                 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 
+                 'Segoe UI Emoji', 'Segoe UI Symbol';
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Heading Scale with Consistent Hierarchy */
+h1, .text-h1 {
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    margin-top: 0;
+    margin-bottom: var(--space-6);
+    color: var(--text-primary);
+}
+
+h2, .text-h2 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    margin-top: var(--space-8);
+    margin-bottom: var(--space-4);
+    color: var(--text-primary);
+}
+
+h3, .text-h3 {
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-3);
+    color: var(--text-primary);
+}
+
+h4, .text-h4 {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-tight);
+    margin-top: var(--space-5);
+    margin-bottom: var(--space-2);
+    color: var(--text-primary);
+}
+
+h5, .text-h5 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-2);
+    color: var(--text-primary);
+}
+
+h6, .text-h6 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-2);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Display Text for Hero Elements */
+.text-display {
+    font-size: var(--font-size-display);
+    font-weight: var(--font-weight-extrabold);
+    line-height: var(--line-height-tight);
+    margin-top: 0;
+    margin-bottom: var(--space-8);
+    color: var(--text-primary);
+}
+
+/* Body Text Variants */
+p, .text-base {
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    margin-top: 0;
+    margin-bottom: var(--space-4);
+    color: var(--text-primary);
+}
+
+.text-large {
+    font-size: calc(var(--font-size-base) * 1.125); /* 18px */
+    line-height: var(--line-height-relaxed);
+}
+
+.text-small, small {
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    color: var(--text-secondary);
+}
+
+.text-xs {
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    color: var(--text-muted);
+}
+
+/* Text Color Utilities */
+.text-primary {
+    color: var(--text-primary);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-accent {
+    color: var(--text-accent);
+}
+
+.text-success {
+    color: var(--success);
+}
+
+.text-warning {
+    color: var(--warning);
+}
+
+.text-error {
+    color: var(--error);
+}
+
+.text-info {
+    color: var(--info);
+}
+
+/* Font Weight Utilities */
+.font-light {
+    font-weight: var(--font-weight-light);
+}
+
+.font-normal {
+    font-weight: var(--font-weight-normal);
+}
+
+.font-medium {
+    font-weight: var(--font-weight-medium);
+}
+
+.font-semibold {
+    font-weight: var(--font-weight-semibold);
+}
+
+.font-bold {
+    font-weight: var(--font-weight-bold);
+}
+
+.font-extrabold {
+    font-weight: var(--font-weight-extrabold);
+}
+
+/* Text Alignment */
+.text-left {
+    text-align: left;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Text Decoration */
+.text-underline {
+    text-decoration: underline;
+}
+
+.text-no-underline {
+    text-decoration: none;
+}
+
+/* Line Height Utilities */
+.leading-tight {
+    line-height: var(--line-height-tight);
+}
+
+.leading-normal {
+    line-height: var(--line-height-normal);
+}
+
+.leading-relaxed {
+    line-height: var(--line-height-relaxed);
+}
+
+/* Links */
+a, .link {
+    color: var(--text-accent);
+    text-decoration: underline;
+    transition: color var(--transition-fast);
+}
+
+a:hover, .link:hover {
+    color: var(--text-accent);
+    opacity: 0.8;
+}
+
+a:focus, .link:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+/* Code and Monospace */
+code, pre, .text-mono {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', 
+                 Consolas, 'Courier New', monospace;
+}
+
+code {
+    font-size: 0.875em;
+    color: var(--text-accent);
+    background-color: var(--bg-tertiary);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+pre {
+    background-color: var(--bg-tertiary);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+}
+
+pre code {
+    background-color: transparent;
+    padding: 0;
+    color: var(--text-primary);
+}
+
+/* Lists */
+ul, ol {
+    margin-top: 0;
+    margin-bottom: var(--space-4);
+    padding-left: var(--space-6);
+}
+
+li {
+    margin-bottom: var(--space-1);
+}
+
+/* Blockquotes */
+blockquote {
+    margin: var(--space-6) 0;
+    padding-left: var(--space-4);
+    border-left: 4px solid var(--border-focus);
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+/* Horizontal Rules */
+hr {
+    border: 0;
+    height: 1px;
+    background-color: var(--border-primary);
+    margin: var(--space-8) 0;
+}
+
+/* Selection */
+::selection {
+    background-color: var(--text-accent);
+    color: var(--bg-primary);
+}
+
+::-moz-selection {
+    background-color: var(--text-accent);
+    color: var(--bg-primary);
+}
+
+/* Responsive Typography Adjustments */
+@media (max-width: 768px) {
+    html {
+        font-size: 14px; /* Slightly smaller base on mobile */
+    }
+    
+    h1, .text-h1 {
+        margin-bottom: var(--space-4);
+    }
+    
+    h2, .text-h2 {
+        margin-top: var(--space-6);
+        margin-bottom: var(--space-3);
+    }
+    
+    .text-display {
+        margin-bottom: var(--space-6);
+    }
+}
+
+/* Print Styles */
+@media print {
+    * {
+        color: black !important;
+        background: white !important;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+    }
+    
+    p, blockquote, ul, ol {
+        orphans: 3;
+        widows: 3;
+    }
+}

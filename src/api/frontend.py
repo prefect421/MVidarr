@@ -112,6 +112,13 @@ def lidarr():
     return render_template("lidarr.html")
 
 
+@frontend_bp.route("/loading-demo")
+@auth_required
+def loading_demo():
+    """Loading states and feedback system demo page"""
+    return render_template("loading-demo.html")
+
+
 @frontend_bp.route("/static/<path:filename>")
 def static_files(filename):
     """Serve static files"""

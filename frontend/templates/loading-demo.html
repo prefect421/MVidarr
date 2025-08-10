@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Loading & Feedback Demo - MVidarr{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2rem;">
+    <div class="page-header">
+        <h1 class="text-h1">Loading States & Feedback System Demo</h1>
+        <p class="text-secondary">Interactive demonstration of the unified loading and feedback system</p>
+    </div>
+
+    <!-- Loading States Section -->
+    <section class="demo-section" style="margin-bottom: 3rem;">
+        <h2 class="text-h2">Loading States</h2>
+        
+        <div class="demo-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 2rem 0;">
+            
+            <!-- Spinner Demo -->
+            <div class="demo-card" style="padding: 2rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                <h3>Spinner Loading</h3>
+                <div id="spinner-demo" style="min-height: 100px; background-color: var(--bg-secondary); border-radius: var(--radius-sm); margin: 1rem 0;"></div>
+                <button onclick="demoSpinnerLoading()" class="btn btn-primary">Show Spinner</button>
+                <button onclick="LoadingManager.hideLoading('#spinner-demo')" class="btn btn-secondary">Hide Loading</button>
+            </div>
+
+            <!-- Skeleton Demo -->
+            <div class="demo-card" style="padding: 2rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                <h3>Skeleton Loading</h3>
+                <div id="skeleton-demo" style="min-height: 100px; background-color: var(--bg-secondary); border-radius: var(--radius-sm); margin: 1rem 0;">
+                    <div style="padding: 1rem;">
+                        <h4>Sample Content</h4>
+                        <p>This content will be replaced with skeleton loading animation.</p>
+                        <p>Multiple lines of text to demonstrate the skeleton effect.</p>
+                    </div>
+                </div>
+                <button onclick="demoSkeletonLoading()" class="btn btn-primary">Show Skeleton</button>
+                <button onclick="restoreSkeletonContent()" class="btn btn-secondary">Restore Content</button>
+            </div>
+
+            <!-- Overlay Demo -->
+            <div class="demo-card" style="padding: 2rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                <h3>Overlay Loading</h3>
+                <div id="overlay-demo" style="min-height: 100px; background-color: var(--bg-secondary); border-radius: var(--radius-sm); margin: 1rem 0; padding: 1rem;">
+                    <h4>Content Behind Overlay</h4>
+                    <p>This content will be covered by a loading overlay.</p>
+                </div>
+                <button onclick="demoOverlayLoading()" class="btn btn-primary">Show Overlay</button>
+                <button onclick="LoadingManager.hideLoading('#overlay-demo')" class="btn btn-secondary">Hide Overlay</button>
+            </div>
+
+            <!-- Button Loading Demo -->
+            <div class="demo-card" style="padding: 2rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                <h3>Button Loading</h3>
+                <div style="margin: 1rem 0;">
+                    <button id="loading-btn" onclick="demoButtonLoading(this)" class="btn btn-primary">Click to Load</button>
+                    <button onclick="resetLoadingButton()" class="btn btn-secondary" style="margin-left: 1rem;">Reset Button</button>
+                </div>
+                <p class="text-sm text-secondary">Button becomes disabled and shows loading spinner</p>
+            </div>
+
+            <!-- Progress Demo -->
+            <div class="demo-card" style="padding: 2rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                <h3>Progress Loading</h3>
+                <div id="progress-demo" style="min-height: 100px; background-color: var(--bg-secondary); border-radius: var(--radius-sm); margin: 1rem 0;"></div>
+                <button onclick="demoProgressLoading()" class="btn btn-primary">Show Progress</button>
+                <button onclick="LoadingManager.hideLoading('#progress-demo')" class="btn btn-secondary">Hide Progress</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Toast Notifications Section -->
+    <section class="demo-section" style="margin-bottom: 3rem;">
+        <h2 class="text-h2">Toast Notifications</h2>
+        
+        <div class="demo-buttons" style="display: flex; flex-wrap: wrap; gap: 1rem; margin: 2rem 0;">
+            <button onclick="demoSuccessToast()" class="btn btn-success">Success Toast</button>
+            <button onclick="demoErrorToast()" class="btn btn-danger">Error Toast</button>
+            <button onclick="demoWarningToast()" class="btn btn-warning">Warning Toast</button>
+            <button onclick="demoInfoToast()" class="btn btn-info">Info Toast</button>
+            <button onclick="demoPersistentToast()" class="btn btn-secondary">Persistent Toast</button>
+        </div>
+    </section>
+
+    <!-- State Messages Section -->
+    <section class="demo-section" style="margin-bottom: 3rem;">
+        <h2 class="text-h2">State Messages</h2>
+        
+        <div id="state-message-demo" style="min-height: 60px; margin: 1rem 0;"></div>
+        
+        <div class="demo-buttons" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+            <button onclick="demoStateMessage('success')" class="btn btn-success">Success Message</button>
+            <button onclick="demoStateMessage('error')" class="btn btn-danger">Error Message</button>
+            <button onclick="demoStateMessage('warning')" class="btn btn-warning">Warning Message</button>
+            <button onclick="demoStateMessage('info')" class="btn btn-info">Info Message</button>
+        </div>
+    </section>
+
+    <!-- Empty States Section -->
+    <section class="demo-section" style="margin-bottom: 3rem;">
+        <h2 class="text-h2">Empty States</h2>
+        
+        <div id="empty-state-demo" style="min-height: 200px; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin: 1rem 0;"></div>
+        
+        <div class="demo-buttons" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+            <button onclick="demoEmptyState()" class="btn btn-primary">Show Empty State</button>
+            <button onclick="demoEmptyStateWithAction()" class="btn btn-secondary">Empty State with Action</button>
+            <button onclick="clearEmptyState()" class="btn btn-tertiary">Clear</button>
+        </div>
+    </section>
+
+    <!-- Form Validation Section -->
+    <section class="demo-section" style="margin-bottom: 3rem;">
+        <h2 class="text-h2">Form Validation States</h2>
+        
+        <form style="max-width: 400px;">
+            <div class="form-field">
+                <label for="demo-input-success" class="form-label">Success Field:</label>
+                <input type="text" id="demo-input-success" class="form-input" value="Valid input">
+                <button type="button" onclick="setFieldSuccess()" class="btn btn-sm btn-success" style="margin-top: 0.5rem;">Set Success</button>
+            </div>
+            
+            <div class="form-field">
+                <label for="demo-input-error" class="form-label">Error Field:</label>
+                <input type="text" id="demo-input-error" class="form-input" value="Invalid input">
+                <button type="button" onclick="setFieldError()" class="btn btn-sm btn-danger" style="margin-top: 0.5rem;">Set Error</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script>
+// Demo Functions
+function demoSpinnerLoading() {
+    LoadingManager.showLoading('#spinner-demo', { 
+        type: 'spinner', 
+        message: 'Loading data...',
+        size: 'large' 
+    });
+}
+
+function demoSkeletonLoading() {
+    LoadingManager.showLoading('#skeleton-demo', { type: 'skeleton' });
+}
+
+function restoreSkeletonContent() {
+    const element = document.getElementById('skeleton-demo');
+    LoadingManager.hideLoading(element);
+    if (element.hasAttribute('data-original-content')) {
+        element.innerHTML = element.getAttribute('data-original-content');
+        element.removeAttribute('data-original-content');
+    } else {
+        element.innerHTML = `
+            <div style="padding: 1rem;">
+                <h4>Sample Content</h4>
+                <p>This content will be replaced with skeleton loading animation.</p>
+                <p>Multiple lines of text to demonstrate the skeleton effect.</p>
+            </div>
+        `;
+    }
+}
+
+function demoOverlayLoading() {
+    LoadingManager.showLoading('#overlay-demo', { 
+        type: 'overlay', 
+        message: 'Processing request...' 
+    });
+}
+
+function demoButtonLoading(button) {
+    LoadingManager.showLoading(button, { type: 'button' });
+    
+    // Simulate async operation
+    setTimeout(() => {
+        LoadingManager.hideLoading(button);
+        LoadingManager.showSuccess('Operation completed successfully!');
+    }, 3000);
+}
+
+function resetLoadingButton() {
+    const button = document.getElementById('loading-btn');
+    LoadingManager.hideLoading(button);
+}
+
+function demoProgressLoading() {
+    LoadingManager.showLoading('#progress-demo', { 
+        type: 'progress', 
+        message: 'Uploading files...' 
+    });
+}
+
+function demoSuccessToast() {
+    LoadingManager.showSuccess('Operation completed successfully!', {
+        title: 'Success',
+        duration: 4000
+    });
+}
+
+function demoErrorToast() {
+    LoadingManager.showError('Something went wrong. Please try again.', {
+        title: 'Error Occurred',
+        duration: 6000
+    });
+}
+
+function demoWarningToast() {
+    LoadingManager.showWarning('This action may have consequences.', {
+        title: 'Warning',
+        duration: 5000
+    });
+}
+
+function demoInfoToast() {
+    LoadingManager.showInfo('Here is some helpful information.', {
+        title: 'Information',
+        duration: 4000
+    });
+}
+
+function demoPersistentToast() {
+    LoadingManager.showInfo('This message will stay until you close it.', {
+        title: 'Persistent Message',
+        persistent: true,
+        closable: true
+    });
+}
+
+function demoStateMessage(type) {
+    const messages = {
+        success: 'Changes saved successfully!',
+        error: 'Failed to save changes. Please try again.',
+        warning: 'Some fields may need attention.',
+        info: 'Additional information is available.'
+    };
+    
+    LoadingManager.showStateMessage('#state-message-demo', messages[type], type);
+}
+
+function demoEmptyState() {
+    LoadingManager.showEmptyState('#empty-state-demo', {
+        icon: '📭',
+        title: 'No items found',
+        description: 'There are no items to display at the moment.'
+    });
+}
+
+function demoEmptyStateWithAction() {
+    LoadingManager.showEmptyState('#empty-state-demo', {
+        icon: '🎵',
+        title: 'No videos found',
+        description: 'Start building your music video collection.',
+        actionText: 'Add Video',
+        actionHandler: () => {
+            LoadingManager.showSuccess('Add video dialog would open here!');
+        }
+    });
+}
+
+function clearEmptyState() {
+    document.getElementById('empty-state-demo').innerHTML = '';
+}
+
+function setFieldSuccess() {
+    const field = document.getElementById('demo-input-success');
+    LoadingManager.setFieldState(field, 'success', 'This field looks good!');
+}
+
+function setFieldError() {
+    const field = document.getElementById('demo-input-error');
+    LoadingManager.setFieldState(field, 'error', 'This field has an error.');
+}
+</script>
+{% endblock %}

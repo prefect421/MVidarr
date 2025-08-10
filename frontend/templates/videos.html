@@ -14,40 +14,76 @@
 -->
 <div class="videos-container">
     
-    <div class="videos-actions">
-        <button onclick="refreshVideos()" class="btn btn-primary">Refresh</button>
-        <button onclick="toggleSearchPanel()" class="btn btn-secondary">Search</button>
-        <button onclick="showAddVideoModal()" class="btn btn-primary">Add Video</button>
-        <button onclick="refreshThumbnails()" class="btn btn-secondary">Find Thumbnails</button>
-        <button onclick="refreshAllMetadata()" class="btn btn-secondary">Refresh All Metadata</button>
+    <!-- Page Header with Improved Visual Hierarchy -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="text-h1">Video Collection</h1>
+            <p class="text-secondary">Manage your music video library</p>
+        </div>
         
-        <div class="bulk-actions" style="margin-left: 20px; display: inline-block;">
-            <label>
-                <input type="checkbox" id="selectAllVideos" onchange="toggleSelectAll()"> Select All (<span id="selectedCount">0</span>)
-            </label>
-            <button onclick="toggleBulkActionsPanel()" class="btn btn-secondary" id="bulkActionsToggle">
-                🔧 Bulk Actions
+        <!-- Primary Actions - Most Important Operations -->
+        <div class="action-group action-group-primary" role="toolbar" aria-label="Primary video actions">
+            <button onclick="showAddVideoModal()" class="btn btn-primary" aria-label="Add new video to collection">
+                <iconify-icon icon="tabler:plus" aria-hidden="true"></iconify-icon>
+                Add Video
+            </button>
+            <button onclick="toggleSearchPanel()" class="btn btn-secondary" aria-label="Toggle search and filter panel" aria-expanded="false" aria-controls="videoSearchPanel">
+                <iconify-icon icon="tabler:search" aria-hidden="true"></iconify-icon>
+                Search & Filter
             </button>
         </div>
     </div>
     
+    <!-- Secondary Actions - Less Frequent Operations -->
+    <div class="secondary-actions">
+        <div class="action-group action-group-secondary" role="group" aria-label="Secondary video actions">
+            <div class="btn-group" role="toolbar" aria-label="Video maintenance actions">
+                <button onclick="refreshVideos()" class="btn btn-tertiary btn-sm" title="Refresh video list" aria-label="Refresh video list">
+                    <iconify-icon icon="tabler:refresh" aria-hidden="true"></iconify-icon>
+                    Refresh
+                </button>
+                <button onclick="refreshThumbnails()" class="btn btn-tertiary btn-sm" title="Find missing thumbnails" aria-label="Find and update missing thumbnails">
+                    <iconify-icon icon="tabler:photo" aria-hidden="true"></iconify-icon>
+                    Thumbnails
+                </button>
+                <button onclick="refreshAllMetadata()" class="btn btn-tertiary btn-sm" title="Update video metadata" aria-label="Update all video metadata">
+                    <iconify-icon icon="tabler:database-refresh" aria-hidden="true"></iconify-icon>
+                    Metadata
+                </button>
+            </div>
+            
+            <!-- Selection Controls -->
+            <div class="selection-controls" role="group" aria-label="Video selection controls">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="selectAllVideos" onchange="toggleSelectAll()" aria-label="Select all videos" aria-describedby="selectedCount">
+                    <span class="checkmark"></span>
+                    Select All (<span id="selectedCount" aria-live="polite">0</span>)
+                </label>
+                <button onclick="toggleBulkActionsPanel()" class="btn btn-ghost btn-sm" id="bulkActionsToggle" aria-label="Toggle bulk actions panel" aria-expanded="false" aria-controls="bulkActionsPanel">
+                    <iconify-icon icon="tabler:settings" aria-hidden="true"></iconify-icon>
+                    Bulk Actions
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Advanced Search Panel -->
-    <div class="advanced-search-panel" id="videoSearchPanel" style="display: none;">
+    <div class="advanced-search-panel" id="videoSearchPanel" style="display: none;" role="search" aria-label="Video search and filters">
         <div class="search-header">
             <div class="search-input-container">
-                <input type="text" id="videoSearchInput" placeholder="Search videos, titles, artists, or descriptions..." onkeyup="handleVideoSearchInput(event)">
-                <div class="search-suggestions" id="videoSearchSuggestions"></div>
+                <input type="text" id="videoSearchInput" placeholder="Search videos, titles, artists, or descriptions..." onkeyup="handleVideoSearchInput(event)" aria-label="Search videos" aria-describedby="videoSearchSuggestions" autocomplete="off">
+                <div class="search-suggestions" id="videoSearchSuggestions" role="listbox" aria-label="Search suggestions"></div>
             </div>
-            <button onclick="toggleVideoAdvancedFilters()" class="btn btn-secondary" id="videoFiltersToggle">
-                <span>Filters</span> <span id="videoFilterCount" class="filter-count"></span>
+            <button onclick="toggleVideoAdvancedFilters()" class="btn btn-secondary" id="videoFiltersToggle" aria-label="Toggle advanced filters" aria-expanded="false" aria-controls="videoAdvancedFilters">
+                <span>Filters</span> <span id="videoFilterCount" class="filter-count" aria-live="polite"></span>
             </button>
         </div>
         
-        <div class="advanced-filters" id="videoAdvancedFilters" style="display: none;">
+        <div class="advanced-filters" id="videoAdvancedFilters" style="display: none;" role="group" aria-label="Advanced search filters">
             <div class="filter-row">
                 <div class="filter-group">
                     <label for="videoStatusFilter">Status:</label>
-                    <select id="videoStatusFilter" onchange="applyVideoFilters()">
+                    <select id="videoStatusFilter" onchange="applyVideoFilters()" aria-label="Filter by video status">
                         <option value="">All Videos</option>
                         <option value="WANTED">Wanted</option>
                         <option value="DOWNLOADED">Downloaded</option>
@@ -58,7 +94,7 @@
                 
                 <div class="filter-group">
                     <label for="videoQualityFilter">Quality:</label>
-                    <select id="videoQualityFilter" onchange="applyVideoFilters()">
+                    <select id="videoQualityFilter" onchange="applyVideoFilters()" aria-label="Filter by video quality">
                         <option value="">Any Quality</option>
                         <option value="360p">360p</option>
                         <option value="480p">480p</option>
@@ -151,67 +187,67 @@
                 </div>
             </div>
             
-            <div class="filter-actions">
-                <button onclick="clearAllVideoFilters()" class="btn btn-secondary">Clear All</button>
-                <button onclick="saveVideoSearchPreset()" class="btn btn-secondary">Save Preset</button>
-                <button onclick="exportVideoSearchResults()" class="btn btn-info">Export Results</button>
+            <div class="filter-actions" role="toolbar" aria-label="Filter actions">
+                <button onclick="clearAllVideoFilters()" class="btn btn-secondary" aria-label="Clear all active filters">Clear All</button>
+                <button onclick="saveVideoSearchPreset()" class="btn btn-secondary" aria-label="Save current search as preset">Save Preset</button>
+                <button onclick="exportVideoSearchResults()" class="btn btn-info" aria-label="Export search results to file">Export Results</button>
             </div>
         </div>
         
-        <div class="search-results-info" id="videoResultsInfo">
+        <div class="search-results-info" id="videoResultsInfo" role="status" aria-live="polite">
             <span id="videoResultsCount">Loading videos...</span>
         </div>
     </div>
     
     <!-- Enhanced Bulk Actions Panel -->
-    <div id="bulkActionsPanel" class="bulk-actions-panel" style="display: none;">
+    <div id="bulkActionsPanel" class="bulk-actions-panel" style="display: none;" role="dialog" aria-labelledby="bulkActionsTitle" aria-hidden="true">
         <div class="bulk-actions-header">
-            <h3>🔧 Bulk Operations</h3>
-            <span class="bulk-actions-close" onclick="closeBulkActionsPanel()">&times;</span>
+            <h3 id="bulkActionsTitle">🔧 Bulk Operations</h3>
+            <button class="bulk-actions-close" onclick="closeBulkActionsPanel()" aria-label="Close bulk actions panel">&times;</button>
         </div>
         <div class="bulk-actions-content">
-            <div class="bulk-actions-tabs">
-                <button class="tab-button active" onclick="switchBulkTab('actions')">Actions</button>
-                <button class="tab-button" onclick="switchBulkTab('edit')">Edit</button>
-                <button class="tab-button" onclick="switchBulkTab('organize')">Organize</button>
-                <button class="tab-button" onclick="switchBulkTab('quality')">Quality</button>
+            <div class="bulk-actions-tabs" role="tablist" aria-label="Bulk operation categories">
+                <button class="tab-button active" onclick="switchBulkTab('actions')" role="tab" aria-selected="true" aria-controls="bulkActionsTab" id="actionsTabBtn">Actions</button>
+                <button class="tab-button" onclick="switchBulkTab('edit')" role="tab" aria-selected="false" aria-controls="bulkEditTab" id="editTabBtn">Edit</button>
+                <button class="tab-button" onclick="switchBulkTab('organize')" role="tab" aria-selected="false" aria-controls="bulkOrganizeTab" id="organizeTabBtn">Organize</button>
+                <button class="tab-button" onclick="switchBulkTab('quality')" role="tab" aria-selected="false" aria-controls="bulkQualityTab" id="qualityTabBtn">Quality</button>
             </div>
             
             <div class="bulk-actions-tab-content">
                 <!-- Actions Tab -->
-                <div id="bulkActionsTab" class="tab-content active">
-                    <div class="bulk-action-group">
-                        <h4>Download Actions</h4>
-                        <button onclick="bulkDownloadSelected()" class="btn btn-primary bulk-btn" id="bulkDownloadBtn" disabled>
+                <div id="bulkActionsTab" class="tab-content active" role="tabpanel" aria-labelledby="actionsTabBtn">
+                    <div class="bulk-action-group" role="group" aria-labelledby="downloadActionsHeading">
+                        <h4 id="downloadActionsHeading">Download Actions</h4>
+                        <button onclick="bulkDownloadSelected()" class="btn btn-primary bulk-btn" id="bulkDownloadBtn" disabled aria-label="Download all selected videos">
                             📥 Download Selected
                         </button>
-                        <button onclick="bulkRetryFailed()" class="btn btn-warning bulk-btn" id="bulkRetryBtn" disabled>
+                        <button onclick="bulkRetryFailed()" class="btn btn-warning bulk-btn" id="bulkRetryBtn" disabled aria-label="Retry all failed downloads">
                             🔄 Retry Failed Downloads
                         </button>
-                        <button onclick="bulkPauseDownloads()" class="btn btn-secondary bulk-btn" id="bulkPauseBtn" disabled>
+                        <button onclick="bulkPauseDownloads()" class="btn btn-secondary bulk-btn" id="bulkPauseBtn" disabled aria-label="Pause all active downloads">
                             ⏸️ Pause Downloads
                         </button>
                     </div>
                     
-                    <div class="bulk-action-group">
-                        <h4>Status Actions</h4>
-                        <button onclick="bulkSetStatus('WANTED')" class="btn btn-info bulk-btn" id="bulkWantedBtn" disabled>
+                    <div class="bulk-action-group" role="group" aria-labelledby="statusActionsHeading">
+                        <h4 id="statusActionsHeading">Status Actions</h4>
+                        <button onclick="bulkSetStatus('WANTED')" class="btn btn-info bulk-btn" id="bulkWantedBtn" disabled aria-label="Mark selected videos as wanted">
                             ⭐ Mark as Wanted
                         </button>
-                        <button onclick="bulkSetStatus('IGNORED')" class="btn btn-secondary bulk-btn" id="bulkIgnoreBtn" disabled>
+                        <button onclick="bulkSetStatus('IGNORED')" class="btn btn-secondary bulk-btn" id="bulkIgnoreBtn" disabled aria-label="Mark selected videos as ignored">
                             🚫 Mark as Ignored
                         </button>
-                        <button onclick="bulkSetStatus('FAILED')" class="btn btn-warning bulk-btn" id="bulkFailedBtn" disabled>
+                        <button onclick="bulkSetStatus('FAILED')" class="btn btn-warning bulk-btn" id="bulkFailedBtn" disabled aria-label="Mark selected videos as failed">
                             ❌ Mark as Failed
                         </button>
                     </div>
                     
-                    <div class="bulk-action-group">
-                        <h4>Dangerous Actions</h4>
-                        <button onclick="bulkDeleteSelected()" class="btn btn-danger bulk-btn" id="bulkDeleteBtn" disabled>
+                    <div class="bulk-action-group" role="group" aria-labelledby="dangerousActionsHeading">
+                        <h4 id="dangerousActionsHeading">Dangerous Actions</h4>
+                        <button onclick="bulkDeleteSelected()" class="btn btn-danger bulk-btn" id="bulkDeleteBtn" disabled aria-label="Permanently delete selected videos">
                             🗑️ Delete Selected
                         </button>
-                        <button onclick="bulkRemoveFiles()" class="btn btn-danger bulk-btn" id="bulkRemoveFilesBtn" disabled>
+                        <button onclick="bulkRemoveFiles()" class="btn btn-danger bulk-btn" id="bulkRemoveFilesBtn" disabled aria-label="Remove files but keep database entries">
                             💥 Remove Files Only
                         </button>
                     </div>

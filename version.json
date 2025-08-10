@@ -1,19 +1,27 @@
 {
   "version": "0.9.3",
-  "build_date": "2025-08-09T16:59:32.540752",
-  "git_commit": "09f9e98",
+  "build_date": "2025-08-10T01:45:13.025096",
+  "git_commit": "0c629aa",
   "git_branch": "dev",
   "release_name": "Current Development",
   "features": [
-    "Complete video management system with advanced search and filtering",
-    "Artist monitoring and automatic video discovery",
-    "Bulk video operations and status management",
-    "MeTube integration for video downloads",
-    "Comprehensive scheduler system for automated downloads",
-    "Advanced authentication with OAuth support",
-    "Real-time video queue management",
-    "Dynamic theming system with built-in and custom themes",
-    "Performance optimization with database indexing",
-    "Fixed videos page loading issue and performance enhancement conflicts"
+    "Advanced Artist Management with multi-criteria search and bulk operations",
+    "Comprehensive Video Discovery with dual-source integration (IMVDb + YouTube)",
+    "Professional Thumbnail Management with multi-source search and cropping",
+    "Intelligent Organization with automatic folder creation and cleanup",
+    "Advanced Search System with real-time suggestions and filtering",
+    "Bulk Operations with multi-select editing and batch processing",
+    "Video Streaming with built-in player and transcoding",
+    "System Health monitoring with comprehensive diagnostics",
+    "Database-Driven Settings with complete configuration management",
+    "Download Management with queue visualization and progress tracking",
+    "Multi-User Authentication with role-based access control",
+    "Advanced Security with password policies and audit logging",
+    "Modern UI with left sidebar navigation and theme system",
+    "MvTV Continuous Player with cinematic mode",
+    "Two-Factor Authentication with TOTP support",
+    "Fixed Video Search Results Display with improved CSS and field mapping",
+    "Robust CI/CD Integration with comprehensive testing and deployment",
+    "Enhanced Database Initialization with secure admin user creation"
   ]
-} < /dev/null
+}

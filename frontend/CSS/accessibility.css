@@ -1,0 +1,383 @@
+/* ========================================
+   MVidarr Accessibility Enhancements
+   WCAG AA compliant styles and utilities
+======================================== */
+
+/* Skip Navigation Link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: var(--space-4);
+    z-index: 9999;
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+    top: var(--space-4);
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+/* Enhanced Focus Indicators */
+*:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    transition: outline var(--transition-fast);
+}
+
+/* Remove focus outline for mouse users, keep for keyboard users */
+body:not(.using-keyboard) *:focus {
+    outline: none;
+}
+
+body.using-keyboard *:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+/* Improved Button Focus */
+.btn:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--border-focus-shadow);
+}
+
+/* Custom Checkbox with Better Accessibility */
+.checkbox-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.checkbox-custom {
+    position: relative;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-color: var(--bg-tertiary);
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.checkbox-input:focus + .checkbox-custom {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.checkbox-input:checked + .checkbox-custom {
+    background-color: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
+}
+
+.checkbox-input:checked + .checkbox-custom::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-input:indeterminate + .checkbox-custom {
+    background-color: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
+}
+
+.checkbox-input:indeterminate + .checkbox-custom::after {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 8px;
+    width: 12px;
+    height: 2px;
+    background-color: white;
+    transform: none;
+}
+
+/* Enhanced Form Labels */
+.form-label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.form-label.required::after {
+    content: " *";
+    color: var(--error);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Form Field Groups */
+.form-field {
+    margin-bottom: var(--space-4);
+}
+
+.form-field-error {
+    border-color: var(--error);
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+.form-field-error:focus {
+    outline-color: var(--error);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.form-error-message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-top: var(--space-1);
+    font-size: var(--font-size-sm);
+    color: var(--error);
+}
+
+.form-error-message::before {
+    content: "⚠";
+    font-weight: var(--font-weight-bold);
+}
+
+.form-help-text {
+    margin-top: var(--space-1);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+/* Screen Reader Only Text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Live Regions for Dynamic Content */
+.live-region {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Enhanced Link Styles */
+a:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+/* Button States */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn[aria-pressed="true"] {
+    background-color: var(--btn-secondary-darker);
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Modal Accessibility */
+.modal-overlay[aria-hidden="true"] {
+    display: none;
+}
+
+.modal-container[role="dialog"] {
+    outline: none;
+}
+
+.modal-container:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: -2px;
+}
+
+/* Table Accessibility */
+.table-wrapper {
+    overflow-x: auto;
+    margin: var(--space-4) 0;
+}
+
+table[role="table"] {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th[role="columnheader"] {
+    background-color: var(--bg-secondary);
+    padding: var(--space-3);
+    text-align: left;
+    font-weight: var(--font-weight-semibold);
+    border-bottom: 2px solid var(--border-primary);
+}
+
+td[role="cell"] {
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+/* Loading States with Better Announcements */
+.loading-content[aria-busy="true"] {
+    position: relative;
+}
+
+.loading-content[aria-busy="true"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: inherit;
+    z-index: 1;
+}
+
+.loading-indicator[aria-label] {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+/* Progress Bars */
+.progress-bar[role="progressbar"] {
+    width: 100%;
+    height: 8px;
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--btn-primary-bg);
+    transition: width var(--transition-normal);
+    border-radius: inherit;
+}
+
+/* Alert Messages */
+.alert[role="alert"] {
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+    border-left-color: var(--success);
+}
+
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    border-left-color: var(--warning);
+}
+
+.alert-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    border-left-color: var(--error);
+}
+
+.alert-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--info);
+    border-left-color: var(--info);
+}
+
+/* High Contrast Mode Adjustments */
+@media (prefers-contrast: high) {
+    .btn {
+        border-width: 2px;
+    }
+    
+    .checkbox-custom {
+        border-width: 3px;
+    }
+    
+    *:focus {
+        outline-width: 3px;
+    }
+    
+    .form-field-error {
+        border-width: 3px;
+    }
+}
+
+/* Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    .loading-spinner {
+        animation: none;
+        border-top-color: transparent;
+        background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+    }
+}
+
+/* Large Text Preferences */
+@media (prefers-font-size: large) {
+    :root {
+        font-size: 18px;
+    }
+}
+
+/* Color Scheme Preferences */
+@media (prefers-color-scheme: light) {
+    :root {
+        color-scheme: light;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .btn {
+        min-height: 44px; /* Minimum touch target size */
+        min-width: 44px;
+    }
+    
+    .checkbox-custom {
+        width: 24px;
+        height: 24px;
+    }
+    
+    /* Larger hover targets for touch */
+    a, button, input, select, textarea {
+        min-height: 44px;
+    }
+}
