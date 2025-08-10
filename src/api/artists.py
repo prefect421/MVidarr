@@ -16,6 +16,7 @@ from src.database.connection import get_db
 from src.database.models import Artist, Download, Video, VideoStatus
 from src.services.imvdb_service import imvdb_service
 from src.services.search_optimization_service import search_optimization_service
+from src.services.settings_service import SettingsService
 from src.services.thumbnail_service import thumbnail_service
 from src.services.wikipedia_service import wikipedia_service
 from src.services.youtube_search_service import youtube_search_service
@@ -3622,21 +3623,35 @@ def bulk_delete_artists():
 def bulk_validate_metadata():
     """Validate metadata for multiple artists"""
     try:
+        logger.info("Starting bulk metadata validation")
+
+        # Validate request data
         data = request.get_json()
-        if not data or "artist_ids" not in data:
+        if not data:
+            logger.warning("No JSON data received in request")
+            return jsonify({"error": "No data provided"}), 400
+
+        if "artist_ids" not in data:
+            logger.warning("Missing artist_ids in request data")
             return jsonify({"error": "artist_ids required"}), 400
 
         artist_ids = data["artist_ids"]
         if not isinstance(artist_ids, list) or not artist_ids:
+            logger.warning(f"Invalid artist_ids provided: {artist_ids}")
             return jsonify({"error": "artist_ids must be a non-empty list"}), 400
 
-        # Check if IMVDb API key is configured
-        from src.services.settings_service import SettingsService
+        logger.info(f"Processing validation for {len(artist_ids)} artists")
 
-        SettingsService.reload_cache()
-        api_key = SettingsService.get("imvdb_api_key", "")
+        # Check if IMVDb API key is configured
+        try:
+            SettingsService.reload_cache()
+            api_key = SettingsService.get("imvdb_api_key", "")
+        except Exception as e:
+            logger.error(f"Failed to load settings: {e}")
+            return jsonify({"error": "Failed to load configuration"}), 500
 
         if not api_key:
+            logger.warning("IMVDb API key not configured")
             return (
                 jsonify(
                     {
@@ -3650,43 +3665,56 @@ def bulk_validate_metadata():
         validation_issues = []
         validated_count = 0
 
-        with get_db() as session:
-            artists = session.query(Artist).filter(Artist.id.in_(artist_ids)).all()
+        try:
+            with get_db() as session:
+                logger.info("Database session opened successfully")
 
-            for artist in artists:
-                validated_count += 1
-                issues = []
+                # Fetch artists from database
+                artists = session.query(Artist).filter(Artist.id.in_(artist_ids)).all()
+                logger.info(f"Found {len(artists)} artists in database")
 
-                # Check for missing IMVDb ID
-                if not artist.imvdb_id:
-                    issues.append("Missing IMVDb ID")
+                for artist in artists:
+                    validated_count += 1
+                    issues = []
 
-                # Check for missing thumbnail
-                if not artist.thumbnail_url and not artist.thumbnail_path:
-                    issues.append("Missing thumbnail")
+                    # Check for missing IMVDb ID
+                    if not artist.imvdb_id:
+                        issues.append("Missing IMVDb ID")
 
-                # Check for minimal metadata (can be expanded)
-                if not artist.bio or artist.bio.strip() == "":
-                    issues.append("Missing biography")
+                    # Check for missing thumbnail
+                    if not artist.thumbnail_url and not artist.thumbnail_path:
+                        issues.append("Missing thumbnail")
 
-                # Check if IMVDb ID is accessible (basic validation)
-                if artist.imvdb_id:
-                    try:
-                        # Quick validation - check if IMVDb ID is valid format
-                        if not str(artist.imvdb_id).isdigit():
-                            issues.append("Invalid IMVDb ID format")
-                    except Exception:
-                        issues.append("Invalid IMVDb ID")
+                    # Check for minimal metadata (can be expanded)
+                    if not artist.bio or artist.bio.strip() == "":
+                        issues.append("Missing biography")
 
-                # Add to validation issues if any problems found
-                if issues:
-                    validation_issues.append(
-                        {
-                            "artist_id": artist.id,
-                            "artist_name": artist.name,
-                            "issues": issues,
-                        }
-                    )
+                    # Check if IMVDb ID is accessible (basic validation)
+                    if artist.imvdb_id:
+                        try:
+                            # Quick validation - check if IMVDb ID is valid format
+                            if not str(artist.imvdb_id).isdigit():
+                                issues.append("Invalid IMVDb ID format")
+                        except Exception:
+                            issues.append("Invalid IMVDb ID")
+
+                    # Add to validation issues if any problems found
+                    if issues:
+                        validation_issues.append(
+                            {
+                                "artist_id": artist.id,
+                                "artist_name": artist.name,
+                                "issues": issues,
+                            }
+                        )
+
+        except Exception as e:
+            logger.error(f"Database error during validation: {e}")
+            return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+        logger.info(
+            f"Validation complete: {validated_count} artists validated, {len(validation_issues)} issues found"
+        )
 
         return (
             jsonify(
@@ -3701,7 +3729,7 @@ def bulk_validate_metadata():
         )
 
     except Exception as e:
-        logger.error(f"Failed to bulk validate metadata: {e}")
+        logger.error(f"Failed to bulk validate metadata: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
 
@@ -3779,8 +3807,6 @@ def bulk_imvdb_link():
             return jsonify({"error": "artist_ids must be a non-empty list"}), 400
 
         # Check if IMVDb API key is configured
-        from src.services.settings_service import SettingsService
-
         SettingsService.reload_cache()
         api_key = SettingsService.get("imvdb_api_key", "")
 
@@ -3814,7 +3840,7 @@ def bulk_imvdb_link():
                         # Use the first match
                         match = imvdb_data[0]
                         artist.imvdb_id = match.get("id")
-                        
+
                         # Update additional metadata if available
                         if match.get("url"):
                             artist.imvdb_url = match["url"]

@@ -2288,31 +2288,43 @@ def refresh_video_metadata(video_id):
                 new_imvdb_id = metadata.get("imvdb_id")
                 if new_imvdb_id and new_imvdb_id != current_imvdb_id:
                     # Check if this IMVDb ID already exists in another video
-                    existing_video = session.query(Video).filter(
-                        Video.imvdb_id == new_imvdb_id,
-                        Video.id != video_id
-                    ).first()
-                    
+                    existing_video = (
+                        session.query(Video)
+                        .filter(Video.imvdb_id == new_imvdb_id, Video.id != video_id)
+                        .first()
+                    )
+
                     if existing_video:
-                        logger.warning(f"IMVDb ID {new_imvdb_id} already exists for video '{existing_video.title}' (ID: {existing_video.id}). Duplicate detected.")
+                        logger.warning(
+                            f"IMVDb ID {new_imvdb_id} already exists for video '{existing_video.title}' (ID: {existing_video.id}). Duplicate detected."
+                        )
                         # Return a special response indicating duplicate found
-                        return jsonify({
-                            "error": "duplicate_imvdb_id",
-                            "message": f"A video with IMVDb ID {new_imvdb_id} already exists",
-                            "duplicate_video": {
-                                "id": existing_video.id,
-                                "title": existing_video.title,
-                                "artist": existing_video.artist.name if existing_video.artist else "Unknown",
-                                "url": existing_video.url or ""
-                            },
-                            "current_video": {
-                                "id": video_id,
-                                "title": video_title,
-                                "artist": artist_name,
-                            },
-                            "suggested_action": "merge",
-                            "merge_endpoint": f"/api/videos/{video_id}/merge/{existing_video.id}"
-                        }), 409  # Conflict status code
+                        return (
+                            jsonify(
+                                {
+                                    "error": "duplicate_imvdb_id",
+                                    "message": f"A video with IMVDb ID {new_imvdb_id} already exists",
+                                    "duplicate_video": {
+                                        "id": existing_video.id,
+                                        "title": existing_video.title,
+                                        "artist": (
+                                            existing_video.artist.name
+                                            if existing_video.artist
+                                            else "Unknown"
+                                        ),
+                                        "url": existing_video.url or "",
+                                    },
+                                    "current_video": {
+                                        "id": video_id,
+                                        "title": video_title,
+                                        "artist": artist_name,
+                                    },
+                                    "suggested_action": "merge",
+                                    "merge_endpoint": f"/api/videos/{video_id}/merge/{existing_video.id}",
+                                }
+                            ),
+                            409,
+                        )  # Conflict status code
                     else:
                         video.imvdb_id = new_imvdb_id
                 if metadata.get("year"):
@@ -2785,17 +2797,23 @@ def refresh_all_metadata():
                                         imvdb_data
                                     )
 
-                                    # Update video with new metadata  
+                                    # Update video with new metadata
                                     new_imvdb_id = metadata.get("imvdb_id")
                                     if new_imvdb_id:
                                         # Check for duplicates
-                                        existing_video = update_session.query(Video).filter(
-                                            Video.imvdb_id == new_imvdb_id,
-                                            Video.id != video_id
-                                        ).first()
-                                        
+                                        existing_video = (
+                                            update_session.query(Video)
+                                            .filter(
+                                                Video.imvdb_id == new_imvdb_id,
+                                                Video.id != video_id,
+                                            )
+                                            .first()
+                                        )
+
                                         if existing_video:
-                                            logger.warning(f"Bulk refresh: IMVDb ID {new_imvdb_id} already exists for video '{existing_video.title}' (ID: {existing_video.id}). Skipping this video.")
+                                            logger.warning(
+                                                f"Bulk refresh: IMVDb ID {new_imvdb_id} already exists for video '{existing_video.title}' (ID: {existing_video.id}). Skipping this video."
+                                            )
                                             continue  # Skip this video in bulk refresh
                                         else:
                                             video.imvdb_id = new_imvdb_id
@@ -3897,7 +3915,7 @@ def bulk_upgrade_quality():
 
         video_ids = data["video_ids"]
         target_quality = data.get("target_quality", "1080p")
-        
+
         if not isinstance(video_ids, list) or not video_ids:
             return jsonify({"error": "video_ids must be a non-empty list"}), 400
 
@@ -3911,7 +3929,7 @@ def bulk_upgrade_quality():
             for video in videos:
                 try:
                     current_quality = video.quality or "Unknown"
-                    
+
                     # Skip if already at target quality or higher
                     if current_quality == target_quality:
                         skipped_videos.append(
@@ -3929,7 +3947,7 @@ def bulk_upgrade_quality():
                     if video.status in ["DOWNLOADED", "UNWANTED"]:
                         video.status = VideoStatus.WANTED
                         video.quality = target_quality
-                        
+
                         upgraded_videos.append(
                             {
                                 "video_id": video.id,
@@ -3939,7 +3957,7 @@ def bulk_upgrade_quality():
                                 "status": "Marked for re-download",
                             }
                         )
-                        
+
                         logger.info(
                             f"Marked video {video.title} for quality upgrade: {current_quality} -> {target_quality}"
                         )
@@ -3996,7 +4014,7 @@ def bulk_transcode():
         video_ids = data["video_ids"]
         target_format = data.get("target_format", "mp4")
         target_codec = data.get("target_codec", "h264")
-        
+
         if not isinstance(video_ids, list) or not video_ids:
             return jsonify({"error": "video_ids must be a non-empty list"}), 400
 
@@ -4021,8 +4039,10 @@ def bulk_transcode():
                         continue
 
                     # Check current format
-                    current_format = os.path.splitext(video.file_path)[1].lower().lstrip('.')
-                    
+                    current_format = (
+                        os.path.splitext(video.file_path)[1].lower().lstrip(".")
+                    )
+
                     if current_format == target_format.lower():
                         skipped_videos.append(
                             {
@@ -4036,7 +4056,7 @@ def bulk_transcode():
                     # For now, we'll just mark the transcode request
                     # In a full implementation, this would queue the video for transcoding
                     # using ffmpeg or similar tools
-                    
+
                     transcode_info = {
                         "video_id": video.id,
                         "title": video.title,
@@ -4046,13 +4066,13 @@ def bulk_transcode():
                         "status": "Queued for transcoding",
                         "original_path": video.file_path,
                     }
-                    
+
                     # Update video metadata to reflect pending transcode
                     video.transcoding_status = "pending"
                     video.target_format = target_format
-                    
+
                     transcoded_videos.append(transcode_info)
-                    
+
                     logger.info(
                         f"Queued video {video.title} for transcoding: {current_format} -> {target_format}"
                     )
