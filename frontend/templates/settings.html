@@ -3,35 +3,56 @@
 {% block title %}Settings - MVidarr{% endblock %}
 
 {% block content %}
-<div class="settings-container">
-    
-    <div class="settings-actions">
-        <button onclick="saveSettings()" class="btn btn-primary">Save Settings</button>
-        <button onclick="restartApp()" class="btn btn-warning">Restart Application</button>
+<div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="text-h1">Settings</h1>
+            <p class="text-secondary">Configure MVidarr application settings and preferences</p>
+        </div>
+        <div class="action-group" role="group" aria-label="Settings actions">
+            <button onclick="saveSettings()" class="btn btn-primary" aria-label="Save current settings">
+                <iconify-icon icon="mdi:content-save" aria-hidden="true"></iconify-icon>
+                Save Settings
+            </button>
+            <button onclick="restartApp()" class="btn btn-warning" aria-label="Restart application to apply changes">
+                <iconify-icon icon="mdi:restart" aria-hidden="true"></iconify-icon>
+                Restart Application
+            </button>
+        </div>
     </div>
 
+    <div class="settings-container">
+
     <!-- Settings Tabs -->
-    <div class="settings-tabs">
-        <button class="settings-tab-btn active" onclick="switchTab(event, 'general-tab')">
-            <iconify-icon icon="tabler:settings" class="tab-icon"></iconify-icon> General
+    <div class="settings-tabs" role="tablist" aria-label="Settings categories">
+        <button class="settings-tab-btn active" onclick="switchTab(event, 'general-tab')" 
+                role="tab" aria-selected="true" aria-controls="general-tab" id="tab-general">
+            <iconify-icon icon="mdi:cog" class="tab-icon" aria-hidden="true"></iconify-icon> General
         </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'security-tab')">
-            <iconify-icon icon="tabler:lock" class="tab-icon"></iconify-icon> Security
+        <button class="settings-tab-btn" onclick="switchTab(event, 'security-tab')"
+                role="tab" aria-selected="false" aria-controls="security-tab" id="tab-security">
+            <iconify-icon icon="mdi:shield-lock" class="tab-icon" aria-hidden="true"></iconify-icon> Security
         </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'services-tab')">
-            <iconify-icon icon="tabler:link" class="tab-icon"></iconify-icon> Services
+        <button class="settings-tab-btn" onclick="switchTab(event, 'services-tab')"
+                role="tab" aria-selected="false" aria-controls="services-tab" id="tab-services">
+            <iconify-icon icon="mdi:link" class="tab-icon" aria-hidden="true"></iconify-icon> Services
         </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'downloads-tab')">
-            <iconify-icon icon="tabler:download" class="tab-icon"></iconify-icon> Downloads
+        <button class="settings-tab-btn" onclick="switchTab(event, 'downloads-tab')"
+                role="tab" aria-selected="false" aria-controls="downloads-tab" id="tab-downloads">
+            <iconify-icon icon="mdi:download" class="tab-icon" aria-hidden="true"></iconify-icon> Downloads
         </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'database-tab')">
-            <iconify-icon icon="tabler:database" class="tab-icon"></iconify-icon> Database
+        <button class="settings-tab-btn" onclick="switchTab(event, 'database-tab')"
+                role="tab" aria-selected="false" aria-controls="database-tab" id="tab-database">
+            <iconify-icon icon="mdi:database" class="tab-icon" aria-hidden="true"></iconify-icon> Database
         </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'system-tab')">
-            <iconify-icon icon="tabler:tool" class="tab-icon"></iconify-icon> System
+        <button class="settings-tab-btn" onclick="switchTab(event, 'system-tab')"
+                role="tab" aria-selected="false" aria-controls="system-tab" id="tab-system">
+            <iconify-icon icon="mdi:tools" class="tab-icon" aria-hidden="true"></iconify-icon> System
         </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'themes-tab')">
-            <iconify-icon icon="tabler:palette" class="tab-icon"></iconify-icon> Themes
+        <button class="settings-tab-btn" onclick="switchTab(event, 'themes-tab')"
+                role="tab" aria-selected="false" aria-controls="themes-tab" id="tab-themes">
+            <iconify-icon icon="mdi:palette" class="tab-icon" aria-hidden="true"></iconify-icon> Themes
         </button>
     </div>
 
@@ -39,7 +60,7 @@
     <div class="settings-tab-content">
 
         <!-- General Tab -->
-        <div id="general-tab" class="settings-tab-panel active">
+        <div id="general-tab" class="settings-tab-panel active" role="tabpanel" aria-labelledby="tab-general">
             <div class="settings-sections">
         <div class="settings-section">
             <h2>Application</h2>
@@ -455,6 +476,14 @@
                 <button onclick="stopScheduler()" class="btn btn-warning">Stop Scheduler</button>
                 <button onclick="reloadScheduler()" class="btn btn-secondary">Reload Schedule</button>
                 <button onclick="refreshSchedulerStatus()" class="btn btn-light">Refresh Status</button>
+            </div>
+            
+            <!-- Enhanced Scheduler Actions (shown when enhanced scheduler is active) -->
+            <div id="enhanced-scheduler-actions" class="scheduler-actions" style="display: none;">
+                <button onclick="triggerEnhancedDownload()" class="btn btn-primary">🔽 Trigger Download</button>
+                <button onclick="triggerEnhancedDiscovery()" class="btn btn-info">🔍 Trigger Discovery</button>
+                <button onclick="viewEnhancedSchedulerHealth()" class="btn btn-success">🏥 Health Check</button>
+                <button onclick="viewEnhancedSchedulerConfig()" class="btn btn-secondary">⚙️ View Config</button>
             </div>
         </div>
         
@@ -1193,7 +1222,9 @@
     <div class="settings-actions bottom-actions">
         <button onclick="saveSettings()" class="btn btn-primary">Save Settings</button>
     </div>
-</div>
+</div> <!-- Close settings-container -->
+
+</div> <!-- Close container -->
 
 <script>
 
@@ -1902,89 +1933,186 @@ function refreshSchedulerStatus() {
         }
     }
     
-    fetch('/api/settings/scheduler/status')
-    .then(response => response.json())
-    .then(data => {
-        const statusDiv = document.getElementById('scheduler-status');
-        const scheduler = data.scheduler;
-        
-        const scheduleInfo = scheduler.schedule_info;
-        const nextRun = scheduleInfo.next_run_human ? scheduleInfo.next_run_human : 'Not scheduled';
-        
-        if (scheduler.running) {
-            statusDiv.innerHTML = `
-                <div class="status-info">
-                    <div class="status-item running">
-                        <strong>Service Status:</strong> Running
-                    </div>
-                    <div class="status-item">
-                        <strong>Scheduling Enabled:</strong> ${scheduleInfo.enabled ? 'Yes' : 'No'}
-                    </div>
-                    ${scheduleInfo.enabled ? `
-                    <div class="status-item">
-                        <strong>Schedule:</strong> ${scheduleInfo.downloads?.schedule_days || 'Not configured'} at ${scheduleInfo.downloads?.schedule_time || 'Not configured'}
-                    </div>
-                    <div class="status-item">
-                        <strong>Max Videos:</strong> ${scheduleInfo.downloads?.max_videos || 'Not configured'}
-                    </div>
-                    <div class="status-item">
-                        <strong>Next Run:</strong> ${nextRun}
-                    </div>
-                    <div class="status-item">
-                        <strong>Active Jobs:</strong> ${scheduleInfo.job_count || 0}
-                    </div>
-                    ${scheduler.diagnostics ? `
-                    <div class="status-item">
-                        <strong>Wanted Videos:</strong> ${scheduler.diagnostics.wanted_videos_count}
-                    </div>
-                    ${scheduler.diagnostics.issues_detected && scheduler.diagnostics.issues_detected.length > 0 ? `
-                    <div class="status-item warning">
-                        <strong>Issues Detected:</strong>
-                        <ul>
-                            ${scheduler.diagnostics.issues_detected.map(issue => `<li>${issue}</li>`).join('')}
-                        </ul>
-                    </div>
-                    ` : ''}
-                    ` : ''}
-                    ` : `
-                    <div class="status-item warning">
-                        <strong>Note:</strong> Scheduling is disabled. Enable it in settings to schedule downloads.
-                    </div>
-                    `}
-                </div>
-            `;
+    // First try to check if enhanced scheduler is available
+    fetch('/api/enhanced-scheduler/status')
+    .then(response => {
+        if (response.ok) {
+            return response.json().then(data => ({ enhanced: true, data: data }));
         } else {
-            statusDiv.innerHTML = `
-                <div class="status-info">
-                    <div class="status-item ${scheduleInfo.enabled ? 'warning' : 'stopped'}">
-                        <strong>Service Status:</strong> ${scheduleInfo.enabled ? 'Scheduled (Service Stopped)' : 'Not Scheduled'}
-                    </div>
-                    <div class="status-item">
-                        <strong>Scheduling Enabled:</strong> ${scheduleInfo.enabled ? 'Yes' : 'No'}
-                    </div>
-                    ${scheduleInfo.enabled ? `
-                    <div class="status-item">
-                        <strong>Configured Schedule:</strong> ${scheduleInfo.downloads?.schedule_days || 'Not configured'} at ${scheduleInfo.downloads?.schedule_time || 'Not configured'}
-                    </div>
-                    <div class="status-item warning">
-                        <strong>Note:</strong> Scheduler service needs to be started to run scheduled downloads
-                    </div>
-                    ` : `
-                    <div class="status-item">
-                        <strong>Note:</strong> Enable scheduling in settings to schedule automatic downloads
-                    </div>
-                    `}
-                </div>
-            `;
+            // Enhanced scheduler not available, try standard scheduler
+            return fetch('/api/settings/scheduler/status')
+                .then(response => response.json())
+                .then(data => ({ enhanced: false, data: data }));
+        }
+    })
+    .then(result => {
+        const statusDiv = document.getElementById('scheduler-status');
+        
+        if (result.enhanced) {
+            // Display enhanced scheduler status
+            displayEnhancedSchedulerStatus(statusDiv, result.data);
+        } else {
+            // Display standard scheduler status
+            displayStandardSchedulerStatus(statusDiv, result.data);
         }
     })
     .catch(error => {
         console.error('Error getting scheduler status:', error);
         const statusDiv = document.getElementById('scheduler-status');
         if (statusDiv) {
-            statusDiv.innerHTML = '<span class="error">Error loading status</span>';
+            statusDiv.innerHTML = '<span class="error">Error loading scheduler status</span>';
         }
     });
+}
+
+function displayEnhancedSchedulerStatus(statusDiv, data) {
+    const envConfig = data.environment_config || {};
+    const scheduledJobs = data.scheduled_jobs || [];
+    const lastRunTimes = data.last_run_times || {};
+    
+    // Show enhanced scheduler actions
+    const standardActions = document.getElementById('scheduler-actions') || document.querySelector('.scheduler-actions');
+    const enhancedActions = document.getElementById('enhanced-scheduler-actions');
+    if (standardActions) standardActions.style.display = 'none';
+    if (enhancedActions) enhancedActions.style.display = 'flex';
+    
+    // Enhanced scheduler specific display
+    statusDiv.innerHTML = `
+        <div class="status-info">
+            <div class="status-item enhanced">
+                <strong>Scheduler Type:</strong> 🐳 Enhanced Docker-Native Scheduler
+            </div>
+            <div class="status-item ${data.running ? 'running' : 'stopped'}">
+                <strong>Service Status:</strong> ${data.running ? 'Running' : 'Stopped'} ${data.thread_alive ? '(Thread Active)' : '(Thread Inactive)'}
+            </div>
+            <div class="status-item">
+                <strong>Active Jobs:</strong> ${data.jobs_count || 0}
+            </div>
+            ${data.running ? `
+                <div class="status-item">
+                    <strong>Environment Config:</strong> 
+                    <div class="env-config">
+                        <div>Download Enabled: ${envConfig.auto_download_enabled ? 'Yes' : 'No'}</div>
+                        <div>Schedule: ${envConfig.auto_download_schedule} at ${envConfig.auto_download_time}</div>
+                        <div>Max Downloads/Run: ${envConfig.max_downloads_per_run}</div>
+                        <div>Discovery Enabled: ${envConfig.auto_discovery_enabled ? 'Yes' : 'No'}</div>
+                        <div>Health Checks: ${envConfig.scheduler_health_check ? 'Enabled' : 'Disabled'}</div>
+                    </div>
+                </div>
+                ${scheduledJobs.length > 0 ? `
+                <div class="status-item">
+                    <strong>Scheduled Jobs:</strong>
+                    <div class="job-list">
+                        ${scheduledJobs.map(job => `
+                            <div class="job-item">
+                                ${job.job_func} - Next: ${job.next_run ? new Date(job.next_run).toLocaleString() : 'Not scheduled'}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                ${Object.keys(lastRunTimes).length > 0 ? `
+                <div class="status-item">
+                    <strong>Last Run Times:</strong>
+                    <div class="last-runs">
+                        ${Object.entries(lastRunTimes).map(([task, time]) => `
+                            <div>${task}: ${new Date(time).toLocaleString()}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            ` : `
+                <div class="status-item warning">
+                    <strong>Note:</strong> Enhanced scheduler is not running. Use environment variables or database settings to configure.
+                </div>
+            `}
+        </div>
+    `;
+}
+
+function displayStandardSchedulerStatus(statusDiv, data) {
+    const scheduler = data.scheduler;
+    const scheduleInfo = scheduler.schedule_info;
+    const nextRun = scheduleInfo.next_run_human ? scheduleInfo.next_run_human : 'Not scheduled';
+    
+    // Show standard scheduler actions
+    const standardActions = document.getElementById('scheduler-actions') || document.querySelector('.scheduler-actions');
+    const enhancedActions = document.getElementById('enhanced-scheduler-actions');
+    if (standardActions) standardActions.style.display = 'flex';
+    if (enhancedActions) enhancedActions.style.display = 'none';
+    
+    if (scheduler.running) {
+        statusDiv.innerHTML = `
+            <div class="status-info">
+                <div class="status-item standard">
+                    <strong>Scheduler Type:</strong> 📊 Standard Scheduler
+                </div>
+                <div class="status-item running">
+                    <strong>Service Status:</strong> Running
+                </div>
+                <div class="status-item">
+                    <strong>Scheduling Enabled:</strong> ${scheduleInfo.enabled ? 'Yes' : 'No'}
+                </div>
+                ${scheduleInfo.enabled ? `
+                <div class="status-item">
+                    <strong>Schedule:</strong> ${scheduleInfo.downloads?.schedule_days || 'Not configured'} at ${scheduleInfo.downloads?.schedule_time || 'Not configured'}
+                </div>
+                <div class="status-item">
+                    <strong>Max Videos:</strong> ${scheduleInfo.downloads?.max_videos || 'Not configured'}
+                </div>
+                <div class="status-item">
+                    <strong>Next Run:</strong> ${nextRun}
+                </div>
+                <div class="status-item">
+                    <strong>Active Jobs:</strong> ${scheduleInfo.job_count || 0}
+                </div>
+                ${scheduler.diagnostics ? `
+                <div class="status-item">
+                    <strong>Wanted Videos:</strong> ${scheduler.diagnostics.wanted_videos_count}
+                </div>
+                ${scheduler.diagnostics.issues_detected && scheduler.diagnostics.issues_detected.length > 0 ? `
+                <div class="status-item warning">
+                    <strong>Issues Detected:</strong>
+                    <ul>
+                        ${scheduler.diagnostics.issues_detected.map(issue => `<li>${issue}</li>`).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+                ` : ''}
+                ` : `
+                <div class="status-item warning">
+                    <strong>Note:</strong> Scheduling is disabled. Enable it in settings to schedule downloads.
+                </div>
+                `}
+            </div>
+        `;
+    } else {
+        statusDiv.innerHTML = `
+            <div class="status-info">
+                <div class="status-item standard">
+                    <strong>Scheduler Type:</strong> 📊 Standard Scheduler
+                </div>
+                <div class="status-item ${scheduleInfo.enabled ? 'warning' : 'stopped'}">
+                    <strong>Service Status:</strong> ${scheduleInfo.enabled ? 'Scheduled (Service Stopped)' : 'Not Scheduled'}
+                </div>
+                <div class="status-item">
+                    <strong>Scheduling Enabled:</strong> ${scheduleInfo.enabled ? 'Yes' : 'No'}
+                </div>
+                ${scheduleInfo.enabled ? `
+                <div class="status-item">
+                    <strong>Configured Schedule:</strong> ${scheduleInfo.downloads?.schedule_days || 'Not configured'} at ${scheduleInfo.downloads?.schedule_time || 'Not configured'}
+                </div>
+                <div class="status-item warning">
+                    <strong>Note:</strong> Scheduler service needs to be started to run scheduled downloads
+                </div>
+                ` : `
+                <div class="status-item">
+                    <strong>Note:</strong> Enable scheduling in settings to schedule automatic downloads
+                </div>
+                `}
+            </div>
+        `;
+    }
 }
 
 function startScheduler() {
@@ -2097,6 +2225,123 @@ function testScheduledDownload() {
         console.error('Error running test download:', error);
         showError('Error running test download: ' + error.message);
         refreshSchedulerStatus();
+    });
+}
+
+// Enhanced Scheduler Functions
+function triggerEnhancedDownload() {
+    const statusDiv = document.getElementById('scheduler-status');
+    if (statusDiv) {
+        statusDiv.innerHTML = '<span class="status-loading">🔽 Triggering enhanced download...</span>';
+    }
+    
+    fetch('/api/enhanced-scheduler/trigger/download', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const result = data.result;
+            const message = `Download triggered successfully!<br>
+                           Downloaded: ${result.downloaded || 0} videos<br>
+                           Total Found: ${result.total_found || 0} videos<br>
+                           Duration: ${result.duration_seconds ? result.duration_seconds.toFixed(1) + 's' : 'Unknown'}`;
+            showSuccess(message);
+        } else {
+            showError('Enhanced download trigger failed: ' + data.message);
+        }
+        refreshSchedulerStatus();
+    })
+    .catch(error => {
+        console.error('Error triggering enhanced download:', error);
+        showError('Error triggering enhanced download: ' + error.message);
+        refreshSchedulerStatus();
+    });
+}
+
+function triggerEnhancedDiscovery() {
+    const statusDiv = document.getElementById('scheduler-status');
+    if (statusDiv) {
+        statusDiv.innerHTML = '<span class="status-loading">🔍 Triggering enhanced discovery...</span>';
+    }
+    
+    fetch('/api/enhanced-scheduler/trigger/discovery', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const result = data.result;
+            const message = `Discovery triggered successfully!<br>
+                           Result: ${JSON.stringify(result, null, 2)}`;
+            showSuccess(message);
+        } else {
+            showError('Enhanced discovery trigger failed: ' + data.message);
+        }
+        refreshSchedulerStatus();
+    })
+    .catch(error => {
+        console.error('Error triggering enhanced discovery:', error);
+        showError('Error triggering enhanced discovery: ' + error.message);
+        refreshSchedulerStatus();
+    });
+}
+
+function viewEnhancedSchedulerHealth() {
+    fetch('/api/enhanced-scheduler/health')
+    .then(response => response.json())
+    .then(data => {
+        const healthStatus = data.status === 'healthy' ? '✅ Healthy' : '❌ Unhealthy';
+        const details = data.details || {};
+        const message = `
+            <div><strong>Health Status:</strong> ${healthStatus}</div>
+            <div><strong>Timestamp:</strong> ${data.timestamp ? new Date(data.timestamp).toLocaleString() : 'Unknown'}</div>
+            <div><strong>Scheduler Running:</strong> ${details.scheduler_running ? 'Yes' : 'No'}</div>
+            <div><strong>Thread Alive:</strong> ${details.thread_alive ? 'Yes' : 'No'}</div>
+            <div><strong>Jobs Count:</strong> ${details.jobs_count || 0}</div>
+            ${details.last_download ? `<div><strong>Last Download:</strong> ${new Date(details.last_download).toLocaleString()}</div>` : ''}
+            ${details.last_discovery ? `<div><strong>Last Discovery:</strong> ${new Date(details.last_discovery).toLocaleString()}</div>` : ''}
+        `;
+        
+        if (data.status === 'healthy') {
+            showSuccess('Enhanced Scheduler Health Check:<br>' + message);
+        } else {
+            showError('Enhanced Scheduler Health Check:<br>' + message);
+        }
+    })
+    .catch(error => {
+        console.error('Error checking enhanced scheduler health:', error);
+        showError('Error checking enhanced scheduler health: ' + error.message);
+    });
+}
+
+function viewEnhancedSchedulerConfig() {
+    fetch('/api/enhanced-scheduler/config')
+    .then(response => response.json())
+    .then(data => {
+        const envConfig = data.environment_config || {};
+        const schedulerInfo = data.scheduler_info || {};
+        const message = `
+            <div><strong>Environment Configuration:</strong></div>
+            <div style="margin-left: 20px;">
+                <div>Auto Download Enabled: ${envConfig.auto_download_enabled ? 'Yes' : 'No'}</div>
+                <div>Download Schedule: ${envConfig.auto_download_schedule} at ${envConfig.auto_download_time}</div>
+                <div>Max Downloads/Run: ${envConfig.max_downloads_per_run}</div>
+                <div>Auto Discovery Enabled: ${envConfig.auto_discovery_enabled ? 'Yes' : 'No'}</div>
+                <div>Discovery Schedule: ${envConfig.auto_discovery_schedule} at ${envConfig.auto_discovery_time}</div>
+                <div>Health Checks: ${envConfig.scheduler_health_check ? 'Enabled' : 'Disabled'}</div>
+                <div>Log Level: ${envConfig.scheduler_log_level}</div>
+            </div>
+            <div><strong>Scheduler Info:</strong></div>
+            <div style="margin-left: 20px;">
+                <div>Jobs Count: ${schedulerInfo.jobs_count || 0}</div>
+            </div>
+        `;
+        showInfo('Enhanced Scheduler Configuration:<br>' + message);
+    })
+    .catch(error => {
+        console.error('Error getting enhanced scheduler config:', error);
+        showError('Error getting enhanced scheduler config: ' + error.message);
     });
 }
 
@@ -5252,6 +5497,32 @@ button:disabled:hover {
     .preview-nav {
         flex-direction: column;
     }
+}
+
+/* Enhanced Scheduler Status Styles */
+.status-item.enhanced {
+    color: #00d4ff;
+    font-weight: bold;
+}
+.status-item.standard {
+    color: #4a9eff;
+    font-weight: bold;
+}
+.env-config, .job-list, .last-runs {
+    margin-left: 10px;
+    margin-top: 5px;
+    font-size: 0.9em;
+}
+.env-config > div, .job-list > div, .last-runs > div {
+    margin-bottom: 2px;
+    color: var(--text-secondary, #ccc);
+}
+.job-item {
+    padding: 2px 0;
+    border-bottom: 1px solid var(--border-primary, #444);
+}
+.job-item:last-child {
+    border-bottom: none;
 }
 </style>
 

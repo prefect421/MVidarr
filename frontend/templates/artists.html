@@ -3,21 +3,67 @@
 {% block title %}Artists - MVidarr{% endblock %}
 
 {% block content %}
-<div class="artists-container">
-    
-    <div class="artists-actions">
-        <div class="advanced-search-panel" role="search" aria-label="Artist search and filters">
-            <div class="search-header">
-                <div class="search-input-container">
-                    <input type="text" id="searchInput" placeholder="Search artists, keywords, or biography..." onkeyup="handleSearchInput(event)" aria-label="Search artists" aria-describedby="searchSuggestions" autocomplete="off">
-                    <div class="search-suggestions" id="searchSuggestions" role="listbox" aria-label="Search suggestions"></div>
-                </div>
-                <button onclick="toggleAdvancedFilters()" class="btn btn-secondary" id="filtersToggle" aria-label="Toggle advanced filters" aria-expanded="false" aria-controls="advancedFilters">
-                    <span>Filters</span> <span id="filterCount" class="filter-count" aria-live="polite"></span>
+<div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="text-h1">Artists</h1>
+            <p class="text-secondary">Manage your music artist collection and discover new content</p>
+        </div>
+        <div class="action-group" role="group" aria-label="Primary artist actions">
+            <button onclick="showAddArtistModal()" class="btn btn-primary" aria-label="Add new artist">
+                <iconify-icon icon="mdi:plus" aria-hidden="true"></iconify-icon>
+                Add Artist
+            </button>
+            <button onclick="toggleArtistSearchPanel()" class="btn btn-secondary" aria-label="Toggle search and filter panel" aria-expanded="false" aria-controls="artistSearchPanel">
+                <iconify-icon icon="mdi:magnify" aria-hidden="true"></iconify-icon>
+                Search & Filter
+            </button>
+        </div>
+    </div>
+
+    <!-- Secondary Actions -->
+    <div class="secondary-actions">
+        <div class="action-group action-group-secondary" role="group" aria-label="Secondary artist actions">
+            <div class="btn-group" role="toolbar" aria-label="Artist maintenance actions">
+                <button onclick="refreshArtists()" class="btn btn-secondary btn-sm" title="Refresh artist list" aria-label="Refresh artist list">
+                    <iconify-icon icon="mdi:refresh" aria-hidden="true"></iconify-icon>
+                    Refresh
+                </button>
+                <button onclick="scanMissingThumbnails()" class="btn btn-secondary btn-sm" title="Find missing thumbnails" aria-label="Scan for missing thumbnails">
+                    <iconify-icon icon="mdi:image-search" aria-hidden="true"></iconify-icon>
+                    Thumbnails
                 </button>
             </div>
-            
-            <div class="advanced-filters" id="advancedFilters" style="display: none;" role="group" aria-label="Advanced artist filters">
+
+            <!-- Selection Controls -->
+            <div class="selection-controls" role="group" aria-label="Artist selection controls">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="selectAllArtists" onchange="window.toggleSelectAll()" aria-label="Select all artists" aria-describedby="selectedArtistsCount">
+                    <span class="checkmark"></span>
+                    Select All (<span id="selectedArtistsCount" aria-live="polite">0</span>)
+                </label>
+                <button onclick="toggleBulkArtistActionsPanel()" class="btn btn-ghost btn-sm" id="bulkArtistActionsToggle" aria-label="Toggle bulk actions panel" aria-expanded="false" aria-controls="bulkActionsPanel">
+                    <iconify-icon icon="mdi:cog" aria-hidden="true"></iconify-icon>
+                    Bulk Actions
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Search Panel -->
+    <div class="advanced-search-panel" id="artistSearchPanel" style="display: none;" role="search" aria-label="Artist search and filters">
+        <div class="search-header">
+            <div class="search-input-container">
+                <input type="text" id="searchInput" placeholder="Search artists, keywords, or biography..." onkeyup="handleSearchInput(event)" aria-label="Search artists" aria-describedby="searchSuggestions" autocomplete="off">
+                <div class="search-suggestions" id="searchSuggestions" role="listbox" aria-label="Search suggestions"></div>
+            </div>
+            <button onclick="toggleAdvancedFilters()" class="btn btn-secondary" id="filtersToggle" aria-label="Toggle advanced filters" aria-expanded="false" aria-controls="advancedFilters">
+                <span>Filters</span> <span id="filterCount" class="filter-count" aria-live="polite"></span>
+            </button>
+        </div>
+        
+        <div class="advanced-filters" id="advancedFilters" style="display: none;" role="group" aria-label="Advanced artist filters">
                 <div class="filter-row">
                     <div class="filter-group">
                         <label for="monitoredFilter">Status:</label>
@@ -99,16 +145,9 @@
                 </div>
             </div>
         </div>
-        
-        <div class="action-buttons">
-            <button onclick="showAddArtistModal()" class="btn btn-primary">Add Artist</button>
-            <button onclick="scanMissingThumbnails()" class="btn btn-info">Scan Missing Thumbnails</button>
-            <div class="selection-info">
-                <span id="selectedArtistsCount">0 artists selected</span>
-            </div>
-            <button onclick="refreshArtists()" class="btn btn-secondary">Refresh</button>
-        </div>
     </div>
+
+    <div class="container">
     
     <!-- Enhanced Bulk Actions Toolbar -->
     <div class="bulk-actions-toolbar enhanced" id="bulkActionsToolbar" style="display: none;">
@@ -1966,7 +2005,19 @@ function bulkVideoDiscovery() {
             artist_ids: artistIds
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text().then(text => {
+                throw new Error(`Expected JSON but received: ${text.substring(0, 200)}...`);
+            });
+        }
+    })
     .then(result => {
         hideBulkProgress();
         if (result.error) {
@@ -1978,7 +2029,7 @@ function bulkVideoDiscovery() {
     .catch(error => {
         hideBulkProgress();
         console.error('Error discovering videos:', error);
-        showError('Error discovering videos');
+        showError('Error discovering videos: ' + error.message);
     });
 }
 
@@ -2000,7 +2051,19 @@ function bulkRefreshMetadata() {
             artist_ids: artistIds
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text().then(text => {
+                throw new Error(`Expected JSON but received: ${text.substring(0, 200)}...`);
+            });
+        }
+    })
     .then(result => {
         hideBulkProgress();
         if (result.error) {
@@ -2013,7 +2076,7 @@ function bulkRefreshMetadata() {
     .catch(error => {
         hideBulkProgress();
         console.error('Error refreshing metadata:', error);
-        showError('Error refreshing metadata');
+        showError('Error refreshing metadata: ' + error.message);
     });
 }
 
@@ -2102,7 +2165,22 @@ function bulkIMVDbLink() {
             artist_ids: artistIds
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('IMVDb linking feature is not available (endpoint not found)');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text().then(text => {
+                throw new Error(`Expected JSON but received: ${text.substring(0, 200)}...`);
+            });
+        }
+    })
     .then(result => {
         hideBulkProgress();
         if (result.error) {
@@ -2115,7 +2193,7 @@ function bulkIMVDbLink() {
     .catch(error => {
         hideBulkProgress();
         console.error('Error linking to IMVDb:', error);
-        showError('Error linking to IMVDb');
+        showError('Error linking to IMVDb: ' + error.message);
     });
 }
 
@@ -2139,9 +2217,19 @@ function bulkValidateMetadata() {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            if (response.status === 404) {
+                throw new Error('Metadata validation feature is not available (endpoint not found)');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text().then(text => {
+                throw new Error(`Expected JSON but received: ${text.substring(0, 200)}...`);
+            });
+        }
     })
     .then(result => {
         hideBulkProgress();
@@ -2276,6 +2364,8 @@ function hideBulkProgress() {
 
 // Enhanced Selection UI Updates
 </script>
+
+</div> <!-- Close container -->
 
 <style>
 .artists-container {
@@ -3178,4 +3268,91 @@ function hideBulkProgress() {
     }
 }
 </style>
+
+<script>
+// Define global functions early for backward compatibility
+window.toggleBulkActionsPanel = function() {
+    const panel = document.getElementById('bulkActionsToolbar');
+    const button = document.getElementById('bulkArtistActionsToggle');
+    
+    if (panel && (panel.style.display === 'none' || panel.style.display === '')) {
+        panel.style.display = 'block';
+        if (button) button.setAttribute('aria-expanded', 'true');
+    } else if (panel) {
+        panel.style.display = 'none';
+        if (button) button.setAttribute('aria-expanded', 'false');
+    }
+};
+
+window.toggleSelectAll = function() {
+    const checkbox = document.getElementById('selectAllArtists');
+    const artistCheckboxes = document.querySelectorAll('.artist-checkbox');
+    
+    if (checkbox) {
+        artistCheckboxes.forEach(cb => {
+            cb.checked = checkbox.checked;
+        });
+        
+        if (window.updateSelectedCount) {
+            window.updateSelectedCount();
+        }
+    }
+};
+
+window.updateSelectedCount = function() {
+    const selectedCheckboxes = document.querySelectorAll('.artist-checkbox:checked');
+    const count = selectedCheckboxes.length;
+    
+    // Update count displays
+    const countElements = document.querySelectorAll('#selectedArtistsCount, #selectedCount');
+    countElements.forEach(element => {
+        if (element) {
+            element.textContent = count;
+        }
+    });
+    
+    // Update select all checkbox state
+    const selectAllCheckbox = document.getElementById('selectAllArtists');
+    const artistCheckboxes = document.querySelectorAll('.artist-checkbox');
+    
+    if (selectAllCheckbox && artistCheckboxes.length > 0) {
+        if (count === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (count === artistCheckboxes.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+};
+
+// Toggle Artist Search Panel
+function toggleArtistSearchPanel() {
+    const panel = document.getElementById('artistSearchPanel');
+    const button = document.querySelector('button[aria-controls="artistSearchPanel"]');
+    
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+        button.setAttribute('aria-expanded', 'true');
+    } else {
+        panel.style.display = 'none';
+        button.setAttribute('aria-expanded', 'false');
+    }
+}
+
+// Artist-specific function aliases for consistency
+function toggleSelectAllArtists() {
+    if (window.toggleSelectAll) {
+        return window.toggleSelectAll();
+    }
+}
+
+function toggleBulkArtistActionsPanel() {
+    if (window.toggleBulkActionsPanel) {
+        return window.toggleBulkActionsPanel();
+    }
+}
+</script>
 {% endblock %}

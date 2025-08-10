@@ -8,11 +8,9 @@
     color: var(--text-accent, #00d4ff);
     margin-bottom: 10px;
     font-size: 2.5rem;
-    text-align: center;
 }
 
 .page-description {
-    text-align: center;
     color: var(--text-secondary, #ccc);
     margin-bottom: 30px;
     font-size: 1.1rem;

@@ -4,20 +4,16 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='videos.css') }}">
-<!-- Performance CSS files disabled due to conflicts -->
-<!--
-<!-- Performance Enhancement CSS - DISABLED: Causing loading issues -->
-<!-- 
+<!-- Performance Enhancement CSS - DISABLED: Causing loading issues
 <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='ui-enhancements.css') }}">
 <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='virtualization.css') }}">
--->
 -->
 <div class="videos-container">
     
     <!-- Page Header with Improved Visual Hierarchy -->
     <div class="page-header">
         <div class="page-title-section">
-            <h1 class="text-h1">Video Collection</h1>
+            <h1 class="text-h1">Videos</h1>
             <p class="text-secondary">Manage your music video library</p>
         </div>
         
@@ -38,15 +34,15 @@
     <div class="secondary-actions">
         <div class="action-group action-group-secondary" role="group" aria-label="Secondary video actions">
             <div class="btn-group" role="toolbar" aria-label="Video maintenance actions">
-                <button onclick="refreshVideos()" class="btn btn-tertiary btn-sm" title="Refresh video list" aria-label="Refresh video list">
+                <button onclick="refreshVideos()" class="btn btn-secondary btn-sm" title="Refresh video list" aria-label="Refresh video list">
                     <iconify-icon icon="tabler:refresh" aria-hidden="true"></iconify-icon>
                     Refresh
                 </button>
-                <button onclick="refreshThumbnails()" class="btn btn-tertiary btn-sm" title="Find missing thumbnails" aria-label="Find and update missing thumbnails">
+                <button onclick="refreshThumbnails()" class="btn btn-secondary btn-sm" title="Find missing thumbnails" aria-label="Find and update missing thumbnails">
                     <iconify-icon icon="tabler:photo" aria-hidden="true"></iconify-icon>
                     Thumbnails
                 </button>
-                <button onclick="refreshAllMetadata()" class="btn btn-tertiary btn-sm" title="Update video metadata" aria-label="Update all video metadata">
+                <button onclick="refreshAllMetadata()" class="btn btn-secondary btn-sm" title="Update video metadata" aria-label="Update all video metadata">
                     <iconify-icon icon="tabler:database-refresh" aria-hidden="true"></iconify-icon>
                     Metadata
                 </button>
@@ -1539,7 +1535,7 @@ function closeVideoModal() {
 
 
 // Close modal when clicking outside of it
-window.onclick = function(event) {
+window.addEventListener('click', function(event) {
     const videoModal = document.getElementById('videoModal');
     const editModal = document.getElementById('editVideoModal');
     
@@ -1550,7 +1546,7 @@ window.onclick = function(event) {
     if (event.target === editModal) {
         closeEditVideoModal();
     }
-}
+});
 
 function downloadVideo(id) {
     // Removed download confirmation popup - direct download
@@ -1757,9 +1753,20 @@ function refreshVideoMetadata(id) {
         fetch(`/api/videos/${id}/refresh-metadata`, {
             method: 'POST'
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 409) {
+                // Handle duplicate IMVDb ID
+                return response.json().then(result => {
+                    showDuplicateVideoDialog(result, originalContent, videoCard);
+                    return null; // Skip normal processing
+                });
+            }
+            return response.json();
+        })
         .then(result => {
-            if (result.error) {
+            if (!result) return; // Skip if duplicate was handled
+            
+            if (result.error && result.error !== 'duplicate_imvdb_id') {
                 showError('Error: ' + result.error);
                 // Restore original content on error
                 videoCard.innerHTML = originalContent;
@@ -1795,7 +1802,7 @@ function updateSingleVideoCard(videoId) {
             // Find the video card that needs updating
             const videoElement = document.querySelector(`[data-video-id="${videoId}"]`);
             if (!videoElement) {
-                console.error(`Video element with ID ${videoId} not found for update`);
+                console.warn(`Video element with ID ${videoId} not found for update - may be on different page or filtered out`);
                 return;
             }
             
@@ -3809,6 +3816,165 @@ function bulkOrganizeFiles() {
     });
 }
 
+function bulkCheckQuality() {
+    const videoIds = getSelectedVideoIds();
+    if (videoIds.length === 0) {
+        showError('No videos selected');
+        return;
+    }
+    
+    showBulkProgress('Checking video quality...', videoIds.length);
+    
+    fetch('/api/videos/bulk/quality-check', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            video_ids: videoIds
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Quality check feature is not available (endpoint not found)');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text().then(text => {
+                throw new Error(`Expected JSON but received: ${text.substring(0, 200)}...`);
+            });
+        }
+    })
+    .then(data => {
+        hideBulkProgress();
+        if (data.error) {
+            showError('Error checking quality: ' + data.error);
+        } else {
+            showSuccess(`Quality check completed for ${data.checked_count} videos. Found ${data.issues_count || 0} quality issues.`);
+            // Refresh the video list to show updated quality info
+            refreshVideos();
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error checking quality:', error);
+        showError('Error checking quality: ' + error.message);
+    });
+}
+
+function bulkUpgradeQuality() {
+    const videoIds = getSelectedVideoIds();
+    if (videoIds.length === 0) {
+        showError('No videos selected');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to upgrade the quality of ${videoIds.length} selected video${videoIds.length > 1 ? 's' : ''}? This will re-download higher quality versions.`)) {
+        return;
+    }
+    
+    showBulkProgress('Upgrading video quality...', videoIds.length);
+    
+    fetch('/api/videos/bulk/upgrade-quality', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            video_ids: videoIds
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Quality upgrade feature is not available (endpoint not found)');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text().then(text => {
+                throw new Error(`Expected JSON but received: ${text.substring(0, 200)}...`);
+            });
+        }
+    })
+    .then(data => {
+        hideBulkProgress();
+        if (data.error) {
+            showError('Error upgrading quality: ' + data.error);
+        } else {
+            showSuccess(`Quality upgrade initiated for ${data.queued_count} videos.`);
+            refreshVideos();
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error upgrading quality:', error);
+        showError('Error upgrading quality: ' + error.message);
+    });
+}
+
+function bulkTranscode() {
+    const videoIds = getSelectedVideoIds();
+    if (videoIds.length === 0) {
+        showError('No videos selected');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to transcode ${videoIds.length} selected video${videoIds.length > 1 ? 's' : ''}? This process may take a long time.`)) {
+        return;
+    }
+    
+    showBulkProgress('Starting transcode jobs...', videoIds.length);
+    
+    fetch('/api/videos/bulk/transcode', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            video_ids: videoIds
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Transcode feature is not available (endpoint not found)');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text().then(text => {
+                throw new Error(`Expected JSON but received: ${text.substring(0, 200)}...`);
+            });
+        }
+    })
+    .then(data => {
+        hideBulkProgress();
+        if (data.error) {
+            showError('Error starting transcode: ' + data.error);
+        } else {
+            showSuccess(`Transcode jobs started for ${data.queued_count} videos.`);
+            refreshVideos();
+        }
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error starting transcode:', error);
+        showError('Error starting transcode: ' + error.message);
+    });
+}
+
 // Selection helper functions
 function selectByStatus() {
     const status = prompt('Select videos by status (WANTED, DOWNLOADING, DOWNLOADED, IGNORED, FAILED):');
@@ -4271,5 +4437,104 @@ async function playVideoById(videoId) {
 <script src="{{ url_for('frontend.js_files', filename='virtualization-engine.js') }}"></script>
 <script src="{{ url_for('frontend.js_files', filename='video-virtualization-integration.js') }}"></script>
 -->
+
+<script>
+// Duplicate Video Merge Dialog Functions
+function showDuplicateVideoDialog(duplicateData, originalContent, videoCard) {
+    // Restore original video card content
+    videoCard.innerHTML = originalContent;
+    
+    // Create and show merge modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'duplicateVideoModal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="hideDuplicateVideoModal()">&times;</span>
+            <h2>🔀 Duplicate Video Found</h2>
+            <div class="merge-content">
+                <p><strong>A video with the same IMVDb ID already exists!</strong></p>
+                <p>These videos appear to be duplicates. You can choose to merge them:</p>
+                
+                <div class="duplicate-video-comparison">
+                    <div class="video-option">
+                        <input type="radio" name="primaryVideo" value="${duplicateData.current_video.id}" id="current_video" checked>
+                        <label for="current_video">
+                            <strong>Current Video (${duplicateData.current_video.id})</strong><br>
+                            Title: ${duplicateData.current_video.title}<br>
+                            Artist: ${duplicateData.current_video.artist}
+                        </label>
+                    </div>
+                    
+                    <div class="video-option">
+                        <input type="radio" name="primaryVideo" value="${duplicateData.duplicate_video.id}" id="existing_video">
+                        <label for="existing_video">
+                            <strong>Existing Video (${duplicateData.duplicate_video.id})</strong><br>
+                            Title: ${duplicateData.duplicate_video.title}<br>
+                            Artist: ${duplicateData.duplicate_video.artist}
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="merge-actions">
+                    <button onclick="performVideoMerge('${duplicateData.current_video.id}', '${duplicateData.duplicate_video.id}')" class="btn btn-primary" id="performVideoMergeBtn">Merge Videos</button>
+                    <button onclick="hideDuplicateVideoModal()" class="btn btn-secondary">Skip Merge</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+}
+
+function hideDuplicateVideoModal() {
+    const modal = document.getElementById('duplicateVideoModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function performVideoMerge(currentVideoId, duplicateVideoId) {
+    const primaryVideoId = document.querySelector('input[name="primaryVideo"]:checked').value;
+    const duplicateIds = primaryVideoId === currentVideoId ? [duplicateVideoId] : [currentVideoId];
+    
+    const mergeBtn = document.getElementById('performVideoMergeBtn');
+    const originalText = mergeBtn.textContent;
+    mergeBtn.textContent = 'Merging...';
+    mergeBtn.disabled = true;
+    
+    fetch('/api/videos/duplicates/merge', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            primary_id: primaryVideoId,
+            duplicate_ids: duplicateIds,
+            merge_strategy: 'merge_data'
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            showError('Error: ' + result.error);
+            mergeBtn.textContent = originalText;
+            mergeBtn.disabled = false;
+        } else {
+            showSuccess(`Successfully merged duplicate videos!`);
+            hideDuplicateVideoModal();
+            // Refresh the page to show updated data
+            loadVideos();
+        }
+    })
+    .catch(error => {
+        console.error('Error merging videos:', error);
+        showError('Error merging videos');
+        mergeBtn.textContent = originalText;
+        mergeBtn.disabled = false;
+    });
+}
+</script>
 
 {% endblock %}

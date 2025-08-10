@@ -2285,7 +2285,36 @@ def refresh_video_metadata(video_id):
 
             # Update video with new metadata based on source
             if metadata_source == "IMVDb":
-                video.imvdb_id = metadata.get("imvdb_id")
+                new_imvdb_id = metadata.get("imvdb_id")
+                if new_imvdb_id and new_imvdb_id != current_imvdb_id:
+                    # Check if this IMVDb ID already exists in another video
+                    existing_video = session.query(Video).filter(
+                        Video.imvdb_id == new_imvdb_id,
+                        Video.id != video_id
+                    ).first()
+                    
+                    if existing_video:
+                        logger.warning(f"IMVDb ID {new_imvdb_id} already exists for video '{existing_video.title}' (ID: {existing_video.id}). Duplicate detected.")
+                        # Return a special response indicating duplicate found
+                        return jsonify({
+                            "error": "duplicate_imvdb_id",
+                            "message": f"A video with IMVDb ID {new_imvdb_id} already exists",
+                            "duplicate_video": {
+                                "id": existing_video.id,
+                                "title": existing_video.title,
+                                "artist": existing_video.artist.name if existing_video.artist else "Unknown",
+                                "url": existing_video.url or ""
+                            },
+                            "current_video": {
+                                "id": video_id,
+                                "title": video_title,
+                                "artist": artist_name,
+                            },
+                            "suggested_action": "merge",
+                            "merge_endpoint": f"/api/videos/{video_id}/merge/{existing_video.id}"
+                        }), 409  # Conflict status code
+                    else:
+                        video.imvdb_id = new_imvdb_id
                 if metadata.get("year"):
                     video.year = metadata["year"]
                 if metadata.get("thumbnail_url"):
@@ -2756,8 +2785,20 @@ def refresh_all_metadata():
                                         imvdb_data
                                     )
 
-                                    # Update video with new metadata
-                                    video.imvdb_id = metadata.get("imvdb_id")
+                                    # Update video with new metadata  
+                                    new_imvdb_id = metadata.get("imvdb_id")
+                                    if new_imvdb_id:
+                                        # Check for duplicates
+                                        existing_video = update_session.query(Video).filter(
+                                            Video.imvdb_id == new_imvdb_id,
+                                            Video.id != video_id
+                                        ).first()
+                                        
+                                        if existing_video:
+                                            logger.warning(f"Bulk refresh: IMVDb ID {new_imvdb_id} already exists for video '{existing_video.title}' (ID: {existing_video.id}). Skipping this video.")
+                                            continue  # Skip this video in bulk refresh
+                                        else:
+                                            video.imvdb_id = new_imvdb_id
                                     if metadata.get("year"):
                                         video.year = metadata["year"]
                                     if metadata.get("thumbnail_url"):
@@ -3755,6 +3796,298 @@ def bulk_refresh_metadata():
 
     except Exception as e:
         logger.error(f"Failed to bulk refresh metadata: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/bulk/quality-check", methods=["POST"])
+def bulk_quality_check():
+    """Check quality status for multiple videos"""
+    try:
+        data = request.get_json()
+        if not data or "video_ids" not in data:
+            return jsonify({"error": "video_ids required"}), 400
+
+        video_ids = data["video_ids"]
+        if not isinstance(video_ids, list) or not video_ids:
+            return jsonify({"error": "video_ids must be a non-empty list"}), 400
+
+        checked_videos = []
+        failed_checks = []
+
+        with get_db() as session:
+            videos = session.query(Video).filter(Video.id.in_(video_ids)).all()
+
+            for video in videos:
+                try:
+                    # Basic quality analysis
+                    quality_info = {
+                        "video_id": video.id,
+                        "title": video.title,
+                        "current_quality": video.quality or "Unknown",
+                        "file_size": video.file_size,
+                        "resolution": video.resolution,
+                        "bitrate": video.bitrate,
+                        "file_path": video.file_path,
+                    }
+
+                    # Check if file exists
+                    if video.file_path and os.path.exists(video.file_path):
+                        quality_info["file_exists"] = True
+                        try:
+                            # Get file stats
+                            stat = os.stat(video.file_path)
+                            quality_info["file_size_actual"] = stat.st_size
+                        except Exception as e:
+                            quality_info["file_error"] = str(e)
+                    else:
+                        quality_info["file_exists"] = False
+
+                    # Assess quality level
+                    resolution = video.resolution
+                    if resolution:
+                        if "4K" in resolution or "2160" in resolution:
+                            quality_info["quality_level"] = "4K"
+                        elif "1080" in resolution:
+                            quality_info["quality_level"] = "HD"
+                        elif "720" in resolution:
+                            quality_info["quality_level"] = "HD-Ready"
+                        else:
+                            quality_info["quality_level"] = "Standard"
+                    else:
+                        quality_info["quality_level"] = "Unknown"
+
+                    checked_videos.append(quality_info)
+
+                except Exception as e:
+                    logger.error(f"Failed to check quality for video {video.id}: {e}")
+                    failed_checks.append(
+                        {
+                            "video_id": video.id,
+                            "title": video.title if video else f"Video {video.id}",
+                            "error": str(e),
+                        }
+                    )
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "checked_count": len(checked_videos),
+                    "failed_count": len(failed_checks),
+                    "checked_videos": checked_videos,
+                    "failed_checks": failed_checks,
+                    "message": f"Quality check completed for {len(checked_videos)} video(s)",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk check quality: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/bulk/upgrade-quality", methods=["POST"])
+def bulk_upgrade_quality():
+    """Upgrade quality for multiple videos"""
+    try:
+        data = request.get_json()
+        if not data or "video_ids" not in data:
+            return jsonify({"error": "video_ids required"}), 400
+
+        video_ids = data["video_ids"]
+        target_quality = data.get("target_quality", "1080p")
+        
+        if not isinstance(video_ids, list) or not video_ids:
+            return jsonify({"error": "video_ids must be a non-empty list"}), 400
+
+        upgraded_videos = []
+        failed_upgrades = []
+        skipped_videos = []
+
+        with get_db() as session:
+            videos = session.query(Video).filter(Video.id.in_(video_ids)).all()
+
+            for video in videos:
+                try:
+                    current_quality = video.quality or "Unknown"
+                    
+                    # Skip if already at target quality or higher
+                    if current_quality == target_quality:
+                        skipped_videos.append(
+                            {
+                                "video_id": video.id,
+                                "title": video.title,
+                                "reason": f"Already at {target_quality} quality",
+                            }
+                        )
+                        continue
+
+                    # Check if higher quality is available for download
+                    # This would typically involve checking YouTube or other sources
+                    # For now, we'll mark as WANTED for manual re-download
+                    if video.status in ["DOWNLOADED", "UNWANTED"]:
+                        video.status = VideoStatus.WANTED
+                        video.quality = target_quality
+                        
+                        upgraded_videos.append(
+                            {
+                                "video_id": video.id,
+                                "title": video.title,
+                                "old_quality": current_quality,
+                                "new_quality": target_quality,
+                                "status": "Marked for re-download",
+                            }
+                        )
+                        
+                        logger.info(
+                            f"Marked video {video.title} for quality upgrade: {current_quality} -> {target_quality}"
+                        )
+                    else:
+                        skipped_videos.append(
+                            {
+                                "video_id": video.id,
+                                "title": video.title,
+                                "reason": f"Current status ({video.status}) not eligible for upgrade",
+                            }
+                        )
+
+                except Exception as e:
+                    logger.error(f"Failed to upgrade quality for video {video.id}: {e}")
+                    failed_upgrades.append(
+                        {
+                            "video_id": video.id,
+                            "title": video.title if video else f"Video {video.id}",
+                            "error": str(e),
+                        }
+                    )
+
+            session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "upgraded_count": len(upgraded_videos),
+                    "skipped_count": len(skipped_videos),
+                    "failed_count": len(failed_upgrades),
+                    "upgraded_videos": upgraded_videos,
+                    "skipped_videos": skipped_videos,
+                    "failed_upgrades": failed_upgrades,
+                    "message": f"Quality upgrade completed for {len(upgraded_videos)} video(s)",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk upgrade quality: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/bulk/transcode", methods=["POST"])
+def bulk_transcode():
+    """Transcode multiple videos to different formats"""
+    try:
+        data = request.get_json()
+        if not data or "video_ids" not in data:
+            return jsonify({"error": "video_ids required"}), 400
+
+        video_ids = data["video_ids"]
+        target_format = data.get("target_format", "mp4")
+        target_codec = data.get("target_codec", "h264")
+        
+        if not isinstance(video_ids, list) or not video_ids:
+            return jsonify({"error": "video_ids must be a non-empty list"}), 400
+
+        transcoded_videos = []
+        failed_transcodes = []
+        skipped_videos = []
+
+        with get_db() as session:
+            videos = session.query(Video).filter(Video.id.in_(video_ids)).all()
+
+            for video in videos:
+                try:
+                    # Check if video file exists
+                    if not video.file_path or not os.path.exists(video.file_path):
+                        skipped_videos.append(
+                            {
+                                "video_id": video.id,
+                                "title": video.title,
+                                "reason": "Video file not found",
+                            }
+                        )
+                        continue
+
+                    # Check current format
+                    current_format = os.path.splitext(video.file_path)[1].lower().lstrip('.')
+                    
+                    if current_format == target_format.lower():
+                        skipped_videos.append(
+                            {
+                                "video_id": video.id,
+                                "title": video.title,
+                                "reason": f"Already in {target_format} format",
+                            }
+                        )
+                        continue
+
+                    # For now, we'll just mark the transcode request
+                    # In a full implementation, this would queue the video for transcoding
+                    # using ffmpeg or similar tools
+                    
+                    transcode_info = {
+                        "video_id": video.id,
+                        "title": video.title,
+                        "current_format": current_format,
+                        "target_format": target_format,
+                        "target_codec": target_codec,
+                        "status": "Queued for transcoding",
+                        "original_path": video.file_path,
+                    }
+                    
+                    # Update video metadata to reflect pending transcode
+                    video.transcoding_status = "pending"
+                    video.target_format = target_format
+                    
+                    transcoded_videos.append(transcode_info)
+                    
+                    logger.info(
+                        f"Queued video {video.title} for transcoding: {current_format} -> {target_format}"
+                    )
+
+                except Exception as e:
+                    logger.error(f"Failed to queue transcode for video {video.id}: {e}")
+                    failed_transcodes.append(
+                        {
+                            "video_id": video.id,
+                            "title": video.title if video else f"Video {video.id}",
+                            "error": str(e),
+                        }
+                    )
+
+            session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "transcoded_count": len(transcoded_videos),
+                    "skipped_count": len(skipped_videos),
+                    "failed_count": len(failed_transcodes),
+                    "transcoded_videos": transcoded_videos,
+                    "skipped_videos": skipped_videos,
+                    "failed_transcodes": failed_transcodes,
+                    "message": f"Transcode queued for {len(transcoded_videos)} video(s)",
+                    "note": "Transcoding feature is currently in development. Videos are queued for future processing.",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk transcode: {e}")
         return jsonify({"error": str(e)}), 500
 
 

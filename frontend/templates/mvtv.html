@@ -3,6 +3,25 @@
 {% block title %}MvTV - Continuous Video Player{% endblock %}
 
 {% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="text-h1">MvTV</h1>
+            <p class="text-secondary">Continuous music video player experience</p>
+        </div>
+        <div class="action-group" role="group" aria-label="Player controls">
+            <button onclick="toggleFilterPanel()" class="btn btn-secondary" aria-label="Toggle filter panel" aria-expanded="false" aria-controls="filterPanel">
+                <iconify-icon icon="tabler:filter" aria-hidden="true"></iconify-icon>
+                Filters
+            </button>
+            <div class="status-indicator" id="playbackStatus" role="status" aria-live="polite">
+                <iconify-icon icon="mdi:stop" aria-hidden="true"></iconify-icon>
+                <span>Ready to Play</span>
+            </div>
+        </div>
+    </div>
+
 <style>
 .mvtv-container {
     max-width: 1200px;
@@ -587,97 +606,151 @@ body.light-theme .btn-danger {
 }
 </style>
 
-<div class="mvtv-container">
-    <!-- MvTV Header removed per user request -->
-    
-    <div class="mvtv-controls">
-        <div class="playlist-controls">
-            <button id="playBtn" class="btn btn-success" onclick="startPlayback()">
-                <span id="playBtnText">▶ Start Playing</span>
-            </button>
-            <button id="pauseBtn" class="btn btn-secondary" onclick="pausePlayback()" disabled>
-                ⏸ Pause
-            </button>
-            <button id="nextBtn" class="btn btn-primary" onclick="nextVideo()">
-                ⏭ Next
-            </button>
-            <button id="shuffleBtn" class="btn btn-secondary" onclick="toggleShuffle()">
-                🔀 Shuffle: <span id="shuffleStatus">Off</span>
-            </button>
-            <button id="cinematicBtn" class="btn btn-warning" onclick="toggleCinematicMode()">
-                🎬 Cinematic
-            </button>
-        </div>
-        
-        <div class="filter-controls">
-            <select id="genreFilter" onchange="applyFilters()">
-                <option value="">All Genres</option>
-            </select>
-            <div class="artist-select-container">
-                <input type="text" id="artistSearchInput" placeholder="Search artists..." onkeyup="filterArtists()" onclick="toggleArtistDropdown()">
-                <div id="artistDropdown" class="artist-dropdown">
-                    <div class="artist-option" data-value="" onclick="selectArtist('', 'All Artists')">All Artists</div>
-                </div>
-                <input type="hidden" id="artistFilter" value="">
+    <!-- Player Controls -->
+    <div class="secondary-actions" role="region" aria-labelledby="player-controls-title">
+        <div class="action-group action-group-primary">
+            <h2 id="player-controls-title" class="text-h3">Player Controls</h2>
+            <div class="btn-group" role="toolbar" aria-label="Video playback controls">
+                <button id="playBtn" class="btn btn-success" onclick="startPlayback()" aria-label="Start video playback">
+                    <iconify-icon icon="mdi:play" aria-hidden="true"></iconify-icon>
+                    <span id="playBtnText">Start Playing</span>
+                </button>
+                <button id="pauseBtn" class="btn btn-secondary" onclick="pausePlayback()" disabled aria-label="Pause video playback">
+                    <iconify-icon icon="mdi:pause" aria-hidden="true"></iconify-icon>
+                    Pause
+                </button>
+                <button id="nextBtn" class="btn btn-primary" onclick="nextVideo()" aria-label="Skip to next video">
+                    <iconify-icon icon="mdi:skip-next" aria-hidden="true"></iconify-icon>
+                    Next
+                </button>
+                <button id="shuffleBtn" class="btn btn-secondary" onclick="toggleShuffle()" aria-label="Toggle shuffle mode" aria-pressed="false">
+                    <iconify-icon icon="mdi:shuffle" aria-hidden="true"></iconify-icon>
+                    Shuffle: <span id="shuffleStatus">Off</span>
+                </button>
+                <button id="cinematicBtn" class="btn btn-info" onclick="toggleCinematicMode()" aria-label="Enter cinematic fullscreen mode">
+                    <iconify-icon icon="mdi:fullscreen" aria-hidden="true"></iconify-icon>
+                    Cinematic
+                </button>
             </div>
-            <select id="qualityFilter" onchange="applyFilters()">
-                <option value="">Any Quality</option>
-                <option value="720p">720p+</option>
-                <option value="1080p">1080p+</option>
-            </select>
+        </div>
+    </div>
+
+    <!-- Filter Controls -->
+    <div id="filterPanel" class="advanced-search-panel" role="region" aria-labelledby="filter-controls-title" style="display: none;">
+        <div class="search-header">
+            <h3 id="filter-controls-title" class="text-h4">Filter Content</h3>
+        </div>
+        <div class="filter-row" role="group" aria-label="Content filters">
+            <div class="filter-group">
+                <label for="genreFilter">Genre:</label>
+                <select id="genreFilter" onchange="applyFilters()" aria-label="Filter by music genre">
+                    <option value="">All Genres</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="artistSearchInput">Artist:</label>
+                <div class="artist-select-container">
+                    <input type="text" id="artistSearchInput" placeholder="Search artists..." 
+                           onkeyup="filterArtists()" onclick="toggleArtistDropdown()"
+                           aria-label="Search and select artist" aria-describedby="artistDropdown" 
+                           aria-expanded="false" role="combobox" aria-autocomplete="list">
+                    <div id="artistDropdown" class="artist-dropdown" role="listbox" aria-label="Artist suggestions">
+                        <div class="artist-option" data-value="" onclick="selectArtist('', 'All Artists')" role="option">All Artists</div>
+                    </div>
+                    <input type="hidden" id="artistFilter" value="">
+                </div>
+            </div>
+            <div class="filter-group">
+                <label for="qualityFilter">Quality:</label>
+                <select id="qualityFilter" onchange="applyFilters()" aria-label="Filter by video quality">
+                    <option value="">Any Quality</option>
+                    <option value="720p">720p+</option>
+                    <option value="1080p">1080p+</option>
+                </select>
+            </div>
         </div>
     </div>
     
-    <div class="mvtv-player">
+    <!-- Video Player -->
+    <div class="mvtv-player" role="region" aria-labelledby="video-player-title">
+        <h3 id="video-player-title" class="sr-only">Video Player</h3>
         <div class="video-player">
-            <video id="videoPlayer" controls preload="metadata">
+            <video id="videoPlayer" controls preload="metadata" 
+                   aria-label="Music video player" aria-describedby="videoInfo">
                 <source id="videoSource" src="" type="video/mp4">
-                Your browser does not support the video tag.
+                <p>Your browser does not support the video tag. Please update your browser or try a different one.</p>
             </video>
         </div>
         
-        <div class="video-info" id="videoInfo" style="display: none;">
-            <h3 id="videoTitle">Loading...</h3>
-            <div class="artist" id="videoArtist">Loading...</div>
-            <div class="genres" id="videoGenres"></div>
+        <div class="video-info" id="videoInfo" style="display: none;" role="complementary" aria-label="Current video information">
+            <h4 id="videoTitle" class="text-h4">Loading...</h4>
+            <p class="artist text-secondary" id="videoArtist">Loading...</p>
+            <div class="genres" id="videoGenres" role="list" aria-label="Music genres"></div>
         </div>
     </div>
     
-    <div class="status-display">
-        <div class="status-indicator" id="playbackStatus">
-            <span>⏹</span> <span>Ready to Play</span>
-        </div>
-        <div class="status-indicator">
-            <span>📊</span> <span id="queueCount">0 videos in queue</span>
-        </div>
-        <div class="status-indicator">
-            <span>🎵</span> <span id="currentPosition">0 / 0</span>
+    <!-- Player Status -->
+    <div class="status-display" role="region" aria-labelledby="player-status-title">
+        <h4 id="player-status-title" class="sr-only">Player Status</h4>
+        <div class="status-indicators">
+            <div class="status-indicator" role="status" aria-live="polite" aria-label="Playback status">
+                <iconify-icon icon="mdi:stop" aria-hidden="true"></iconify-icon>
+                <span>Ready to Play</span>
+            </div>
+            <div class="status-indicator" role="status" aria-live="polite" aria-label="Queue information">
+                <iconify-icon icon="mdi:playlist-music" aria-hidden="true"></iconify-icon>
+                <span id="queueCount">0 videos in queue</span>
+            </div>
+            <div class="status-indicator" role="status" aria-live="polite" aria-label="Current position">
+                <iconify-icon icon="mdi:music-note" aria-hidden="true"></iconify-icon>
+                <span id="currentPosition">0 / 0</span>
+            </div>
         </div>
     </div>
     
-    <div class="playlist-queue">
-        <h4>Up Next</h4>
-        <div id="queueList">
-            <div class="loading-indicator">Loading video queue...</div>
+    <!-- Playlist Queue -->
+    <div class="playlist-queue" role="region" aria-labelledby="queue-title">
+        <h4 id="queue-title" class="text-h4">
+            <iconify-icon icon="mdi:playlist-play" aria-hidden="true"></iconify-icon>
+            Up Next
+        </h4>
+        <div id="queueList" role="list" aria-label="Upcoming videos queue">
+            <div class="loading-indicator" role="status" aria-live="polite">
+                <span class="loading-spinner"></span>
+                Loading video queue...
+            </div>
         </div>
     </div>
-</div>
+
+</div> <!-- Close container -->
 
 <!-- Cinematic Mode Overlay -->
-<div id="cinematicMode" class="cinematic-mode">
-    <button class="cinematic-exit" onclick="exitCinematicMode()">✕</button>
+<div id="cinematicMode" class="cinematic-mode" role="dialog" aria-labelledby="cinematic-title" aria-hidden="true">
+    <button class="cinematic-exit" onclick="exitCinematicMode()" aria-label="Exit cinematic mode">
+        <iconify-icon icon="mdi:close" aria-hidden="true"></iconify-icon>
+    </button>
     <div class="cinematic-video-container">
-        <video id="cinematicVideoPlayer" controls>
+        <video id="cinematicVideoPlayer" controls aria-label="Cinematic video player">
             <source id="cinematicVideoSource" src="" type="video/mp4">
+            <p>Your browser does not support the video tag.</p>
         </video>
-        <div class="cinematic-info">
-            <h3 id="cinematicVideoTitle">Video Title</h3>
-            <div class="artist" id="cinematicVideoArtist">Artist Name</div>
+        <div class="cinematic-info" role="complementary">
+            <h3 id="cinematic-title" class="text-h3">Video Title</h3>
+            <p class="artist text-secondary" id="cinematicVideoArtist">Artist Name</p>
         </div>
-        <div class="cinematic-controls">
-            <button class="btn btn-primary" onclick="cinematicPrevious()">⏮ Previous</button>
-            <button class="btn btn-secondary" onclick="cinematicPlayPause()" id="cinematicPlayPauseBtn">⏸ Pause</button>
-            <button class="btn btn-primary" onclick="cinematicNext()">⏭ Next</button>
+        <div class="cinematic-controls" role="toolbar" aria-label="Cinematic playback controls">
+            <button class="btn btn-primary" onclick="cinematicPrevious()" aria-label="Previous video">
+                <iconify-icon icon="mdi:skip-previous" aria-hidden="true"></iconify-icon>
+                Previous
+            </button>
+            <button class="btn btn-secondary" onclick="cinematicPlayPause()" id="cinematicPlayPauseBtn" aria-label="Pause video">
+                <iconify-icon icon="mdi:pause" aria-hidden="true"></iconify-icon>
+                Pause
+            </button>
+            <button class="btn btn-primary" onclick="cinematicNext()" aria-label="Next video">
+                <iconify-icon icon="mdi:skip-next" aria-hidden="true"></iconify-icon>
+                Next
+            </button>
         </div>
     </div>
 </div>
@@ -915,6 +988,30 @@ class MvTVPlayer {
         }
     }
     
+    previousVideo() {
+        if (this.playlist.length === 0) return;
+        
+        let prevIndex;
+        
+        if (this.shuffle) {
+            // In shuffle mode, pick a random video (simple approach)
+            prevIndex = Math.floor(Math.random() * this.playlist.length);
+        } else {
+            // Sequential mode - go to previous video
+            prevIndex = this.currentIndex - 1;
+            if (prevIndex < 0) {
+                prevIndex = this.playlist.length - 1; // Wrap to end
+            }
+        }
+        
+        this.loadVideo(prevIndex);
+        
+        // Auto-play if currently playing
+        if (this.isPlaying) {
+            this.videoPlayer.play();
+        }
+    }
+    
     toggleShuffle() {
         this.shuffle = !this.shuffle;
         const shuffleStatus = document.getElementById('shuffleStatus');
@@ -1099,17 +1196,31 @@ function enterCinematicMode() {
         cinematicVideoSource.src = `/api/videos/${currentVideo.id}/stream`;
         cinematicVideoPlayer.load();
         
-        // Copy current time from main player
+        // Pause main player first to avoid sync issues
         const currentTime = mvtvPlayer.videoPlayer.currentTime;
-        cinematicVideoPlayer.currentTime = currentTime;
+        mvtvPlayer.videoPlayer.pause();
         
         // Update cinematic info
-        document.getElementById('cinematicVideoTitle').textContent = currentVideo.title;
-        document.getElementById('cinematicVideoArtist').textContent = currentVideo.artist_name;
+        const titleElement = document.getElementById('cinematic-title');
+        const artistElement = document.getElementById('cinematicVideoArtist');
         
-        // Pause main player and play cinematic player
-        mvtvPlayer.videoPlayer.pause();
-        cinematicVideoPlayer.play();
+        if (titleElement) titleElement.textContent = currentVideo.title;
+        if (artistElement) artistElement.textContent = currentVideo.artist_name;
+        
+        // Wait for video to load before setting time and playing
+        cinematicVideoPlayer.addEventListener('loadeddata', function onLoadedData() {
+            cinematicVideoPlayer.removeEventListener('loadeddata', onLoadedData);
+            cinematicVideoPlayer.currentTime = currentTime;
+            cinematicVideoPlayer.play();
+        });
+        
+        // Fallback: if loadeddata doesn't fire, try to play anyway
+        setTimeout(() => {
+            if (cinematicVideoPlayer.paused && cinematicVideoPlayer.readyState >= 2) {
+                cinematicVideoPlayer.currentTime = currentTime;
+                cinematicVideoPlayer.play();
+            }
+        }, 1000);
     }
     
     // Show cinematic mode
@@ -1194,8 +1305,11 @@ function syncToCinematicMode() {
     cinematicVideoPlayer.play();
     
     // Update cinematic info
-    document.getElementById('cinematicVideoTitle').textContent = currentVideo.title;
-    document.getElementById('cinematicVideoArtist').textContent = currentVideo.artist_name;
+    const titleElement = document.getElementById('cinematic-title');
+    const artistElement = document.getElementById('cinematicVideoArtist');
+    
+    if (titleElement) titleElement.textContent = currentVideo.title;
+    if (artistElement) artistElement.textContent = currentVideo.artist_name;
 }
 
 // Keyboard shortcuts for cinematic mode
@@ -1227,5 +1341,23 @@ document.addEventListener('DOMContentLoaded', function() {
     loadFilterOptions();
     mvtvPlayer = new MvTVPlayer();
 });
+
+// Filter Panel Toggle Function
+function toggleFilterPanel() {
+    const filterPanel = document.getElementById('filterPanel');
+    const toggleButton = document.querySelector('button[onclick="toggleFilterPanel()"]');
+    
+    if (filterPanel.style.display === 'none' || filterPanel.style.display === '') {
+        filterPanel.style.display = 'block';
+        if (toggleButton) {
+            toggleButton.setAttribute('aria-expanded', 'true');
+        }
+    } else {
+        filterPanel.style.display = 'none';
+        if (toggleButton) {
+            toggleButton.setAttribute('aria-expanded', 'false');
+        }
+    }
+}
 </script>
 {% endblock %}

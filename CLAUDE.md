@@ -325,3 +325,60 @@ semgrep --config=p/security-audit --config=p/secrets --config=p/owasp-top-ten sr
 - Ensure documentation links remain current with repository structure
 - Monitor Pages deployment status and resolve any build failures
 - Keep release information and roadmap current with project development
+
+## Current Session TODO List
+**Updated:** August 10, 2025
+
+### High Priority Issues (Critical)
+- ❌ **Fix modal dialog issues interfering with other buttons** (Status: In Progress)
+  - Issue: Add Video modal is intercepting clicks on other buttons
+  - Impact: UI interactions broken on videos page
+  - Location: frontend/templates/videos.html modals
+
+- ❌ **Add missing user profile button selector** (Status: Pending)
+  - Issue: User profile button selector not found during testing
+  - Impact: Profile functionality may be broken
+  - Needs: Investigation and implementation
+
+- ❌ **Fix /api/artists/bulk-validate-metadata 500 error** (Status: Pending)
+  - Issue: Endpoint exists but returns 500 errors
+  - Impact: Artist metadata validation broken
+  - Location: src/api/artists.py:3621-3705
+
+### Medium Priority Issues
+- ❌ **Fix MvTV page title format test failure** (Status: Pending)
+  - Issue: Different title format causing test failure
+  - Impact: Test automation broken
+  - Location: frontend/templates/mvtv.html
+
+- ❌ **Test MvTV page functionality** (Status: Pending)
+  - Issue: MvTV page not thoroughly tested due to service issues
+  - Impact: Unknown functionality status
+  - Action: Run comprehensive test once service stable
+
+- ❌ **Test Settings page functionality** (Status: Pending)
+  - Issue: Settings page not thoroughly tested due to service issues
+  - Impact: Unknown functionality status
+  - Action: Run comprehensive test once service stable
+
+### Completed Items ✅
+- ✅ **Run fresh comprehensive test with service running**
+- ✅ **Fix backend API endpoints returning 404/500 errors**
+- ✅ **Implement missing /api/artists/bulk-imvdb-link endpoint**
+- ✅ **Implement missing /api/videos/bulk/quality-check endpoint**
+- ✅ **Implement missing /api/videos/bulk/upgrade-quality endpoint**
+- ✅ **Implement missing /api/videos/bulk/transcode endpoint**
+- ✅ **Restart service and test new API endpoints**
+
+### Summary
+- **Total Issues:** 6 remaining
+- **Critical Issues:** 3
+- **Medium Issues:** 3
+- **Completed:** 7
+- **Overall Progress:** 54% complete
+
+**Next Actions:**
+1. Investigate and fix modal dialog click interference
+2. Locate and fix missing user profile button
+3. Debug the bulk-validate-metadata 500 error
+4. Complete testing of MvTV and Settings pages

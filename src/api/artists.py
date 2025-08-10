@@ -3766,6 +3766,112 @@ def bulk_organize_folders():
         return jsonify({"error": str(e)}), 500
 
 
+@artists_bp.route("/bulk-imvdb-link", methods=["POST"])
+def bulk_imvdb_link():
+    """Link multiple artists to IMVDb entries"""
+    try:
+        data = request.get_json()
+        if not data or "artist_ids" not in data:
+            return jsonify({"error": "artist_ids required"}), 400
+
+        artist_ids = data["artist_ids"]
+        if not isinstance(artist_ids, list) or not artist_ids:
+            return jsonify({"error": "artist_ids must be a non-empty list"}), 400
+
+        # Check if IMVDb API key is configured
+        from src.services.settings_service import SettingsService
+
+        SettingsService.reload_cache()
+        api_key = SettingsService.get("imvdb_api_key", "")
+
+        if not api_key:
+            return (
+                jsonify(
+                    {
+                        "error": "IMVDb API key not configured",
+                        "message": "Please configure your IMVDb API key in Settings to use this feature",
+                    }
+                ),
+                400,
+            )
+
+        linked_count = 0
+        linked_artists = []
+        errors = []
+
+        with get_db() as session:
+            artists = session.query(Artist).filter(Artist.id.in_(artist_ids)).all()
+
+            for artist in artists:
+                try:
+                    # Skip if already has IMVDb ID
+                    if artist.imvdb_id:
+                        continue
+
+                    # Try to find IMVDb match
+                    imvdb_data = imvdb_service.search_artist(artist.name)
+                    if imvdb_data and len(imvdb_data) > 0:
+                        # Use the first match
+                        match = imvdb_data[0]
+                        artist.imvdb_id = match.get("id")
+                        
+                        # Update additional metadata if available
+                        if match.get("url"):
+                            artist.imvdb_url = match["url"]
+                        if match.get("image") and not artist.thumbnail_url:
+                            artist.thumbnail_url = match["image"]
+
+                        linked_count += 1
+                        linked_artists.append(
+                            {
+                                "artist_id": artist.id,
+                                "artist_name": artist.name,
+                                "imvdb_id": artist.imvdb_id,
+                                "imvdb_url": artist.imvdb_url,
+                            }
+                        )
+                        logger.info(
+                            f"Linked artist {artist.name} to IMVDb ID: {artist.imvdb_id}"
+                        )
+                    else:
+                        errors.append(
+                            {
+                                "artist_id": artist.id,
+                                "artist_name": artist.name,
+                                "error": "No IMVDb match found",
+                            }
+                        )
+
+                except Exception as e:
+                    logger.error(f"Failed to link artist {artist.name} to IMVDb: {e}")
+                    errors.append(
+                        {
+                            "artist_id": artist.id,
+                            "artist_name": artist.name,
+                            "error": str(e),
+                        }
+                    )
+
+            session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "linked_count": linked_count,
+                    "linked_artists": linked_artists,
+                    "errors": errors,
+                    "message": f"Successfully linked {linked_count} artist(s) to IMVDb",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk link artists to IMVDb: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @artists_bp.route("/cleanup-zero-videos", methods=["POST"])
 def cleanup_artists_with_zero_videos():
     """Delete all artists with 0 videos associated"""
