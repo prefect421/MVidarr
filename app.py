@@ -129,7 +129,6 @@ def create_app():
 
     # Initialize and start scheduler service
     try:
-        from src.services.scheduler_service import scheduler_service
         from src.services.settings_service import SettingsService
 
         # Ensure settings cache is loaded before checking scheduler setting
@@ -149,7 +148,18 @@ def create_app():
             app.logger.info(
                 "Auto-download scheduling is enabled, starting scheduler..."
             )
-            scheduler_service.start()
+            
+            # Check if enhanced scheduler should be used (Docker environment)
+            use_enhanced = os.getenv("MVIDARR_USE_ENHANCED_SCHEDULER", "false").lower() == "true"
+            
+            if use_enhanced:
+                app.logger.info("Using enhanced Docker-native scheduler")
+                from src.services.enhanced_scheduler_service import enhanced_scheduler_service
+                enhanced_scheduler_service.start()
+            else:
+                app.logger.info("Using standard scheduler")
+                from src.services.scheduler_service import scheduler_service
+                scheduler_service.start()
         else:
             app.logger.info("Auto-download scheduling is disabled")
     except Exception as e:

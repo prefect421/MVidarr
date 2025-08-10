@@ -74,6 +74,49 @@ def create_app():
 
     register_routes(app)
 
+    # Initialize and start scheduler service
+    try:
+        import os
+
+        from src.services.settings_service import SettingsService
+
+        # Ensure settings cache is loaded before checking scheduler setting
+        SettingsService._cache_loaded = False
+        SettingsService.load_cache()
+
+        # Ensure default authentication credentials exist
+        try:
+            from src.services.simple_auth_service import SimpleAuthService
+
+            SimpleAuthService.ensure_default_credentials()
+        except Exception as e:
+            logger.error(f"Failed to ensure default credentials: {e}")
+
+        if SettingsService.get_bool("auto_download_schedule_enabled", False):
+            logger.info("Auto-download scheduling is enabled, starting scheduler...")
+
+            # Check if enhanced scheduler should be used (Docker environment)
+            use_enhanced = (
+                os.getenv("MVIDARR_USE_ENHANCED_SCHEDULER", "false").lower() == "true"
+            )
+
+            if use_enhanced:
+                logger.info("Using enhanced Docker-native scheduler")
+                from src.services.enhanced_scheduler_service import (
+                    enhanced_scheduler_service,
+                )
+
+                enhanced_scheduler_service.start()
+            else:
+                logger.info("Using standard scheduler")
+                from src.services.scheduler_service import scheduler_service
+
+                scheduler_service.start()
+        else:
+            logger.info("Auto-download scheduling is disabled")
+    except Exception as e:
+        logger.error(f"Failed to initialize scheduler: {e}")
+
     @app.before_request
     def before_request():
         """Set up request context"""

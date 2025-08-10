@@ -7,6 +7,7 @@ from flask import Blueprint
 from src.api.admin_interface import admin_bp
 from src.api.artists import artists_bp
 from src.api.auth import auth_bp
+from src.api.enhanced_scheduler import enhanced_scheduler_bp
 from src.api.genres import genres_bp
 from src.api.health import health_bp
 from src.api.imvdb import imvdb_bp
@@ -47,6 +48,7 @@ def register_routes(app):
     api_bp.register_blueprint(artists_bp)
     api_bp.register_blueprint(videos_bp)
     api_bp.register_blueprint(settings_bp)
+    api_bp.register_blueprint(enhanced_scheduler_bp)
     api_bp.register_blueprint(themes_bp, url_prefix="/themes")
     api_bp.register_blueprint(health_bp)
     api_bp.register_blueprint(users_bp)
