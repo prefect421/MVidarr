@@ -1,75 +1,245 @@
-# MVidarr GitHub Pages Configuration
-title: MVidarr
-description: >-
+# The Site Configuration
+
+# Import the theme
+theme: jekyll-theme-chirpy
+
+# The language of the webpage › http://www.lingoes.net/en/translator/langcode.htm
+# If it has the same name as one of the files in folder `_data/locales`, the layout language will also be changed,
+# otherwise, the layout language will use the default value of 'en'.
+lang: en
+
+# Change to your timezone › https://kevinnovak.github.io/Time-Zone-Picker
+timezone: America/New_York
+
+# jekyll-paginate setting › https://github.com/sverrirs/jekyll-paginate-v2/blob/master/README-GENERATOR.md#site-configuration
+paginate: 10
+
+# The base URL of your site
+baseurl: "/mvidarr"
+
+# The main domain › e.g., 'https://username.github.io'
+url: "https://prefect421.github.io"
+
+# Site Settings
+title: MVidarr                       # the main title
+
+tagline: Music Video Management & Discovery Platform   # it will display as the sub-title
+
+description: >-                        # used by seo meta and the atom feed
   A comprehensive music video management and discovery platform that helps you 
   organize, discover, and stream your music video collection with intelligent 
   artist management and advanced search capabilities.
+
+# Fill in the protocol & hostname for your site.
+# e.g. 'https://username.github.io', note that it does not end with a '/'.
+
+# The website icon
+avatar: https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/static/favicon.ico
+
+# Boolean type, the global switch for TOC in posts.
+toc: true
+
+comments:
+  active: false        # The global switch for posts comments, e.g., 'disqus'.  Keep it empty means disable
+  # The active options are as follows:
+  disqus:
+    shortname:    # fill with the Disqus shortname. › https://help.disqus.com/en/articles/1717111-what-s-a-shortname
+
+# Self-hosted static assets, optional › https://github.com/cotes2020/chirpy-static-assets
+assets:
+  self_host:
+    enabled: false
+    env:          # [development|production]
+
+pwa:
+  enabled: false   # the option for PWA feature
+
+paginate: 10
+
+# The site verification › https://developers.google.com/search/docs/verification/overview
+webmaster_verifications:
+  google:         # fill in your Google verification code
+  bing:           # fill in your Bing verification code
+  alexa:          # fill in your Alexa verification code
+  yandex:         # fill in your Yandex verification code
+  baidu:          # fill in your Baidu verification code
+  facebook:       # fill in your Facebook verification code
+
+# ↑ --------------------------
+# The end of `jekyll-seo-tag` settings
+
+google_analytics:
+  id:             # fill in your Google Analytics ID
+
+# Prefer color scheme setting.
+#
+# Note: Keep empty will follow the system prefer color by default,
+# and there will be a toggle to switch the theme between dark and light
+# on the bottom left of the sidebar.
+#
+# Available options:
+#
+#     light  - Use the light color scheme
+#     dark   - Use the dark color scheme
+#
+theme_mode: dark   # [light|dark] - Set to dark for night mode
+
+# The CDN endpoint for images.
+# Notice that once it is assigned, the CDN url
+# will be added to all image (site avatar & posts' images) paths starting with '/'
+#
+# e.g. 'https://cdn.com'
+img_cdn:
+
+# the avatar on sidebar, support local or CORS resources
+avatar: https://avatars.githubusercontent.com/u/70246999?v=4
+
+# boolean type, the global switch for ToC in posts.
+toc: true
+
+comments:
+  active: false        # The global switch for posts comments, e.g., 'disqus'.  Keep it empty means disable
+
+# Self-hosted static assets, optional › https://github.com/cotes2020/chirpy-static-assets
+assets:
+  self_host:
+    enabled:      # boolean, keep empty means false
+    # specify the Jekyll environment, empty means both
+    # only works if `assets.self_host.enabled` is 'true'
+    env:          # [development|production]
+
+pwa:
+  enabled: false   # the option for PWA feature (installable)
+  cache:
+    enabled: false       # the option for PWA offline cache
+    # Paths defined here will be excluded from the PWA cache.
+    # Usually its value is the `baseurl` of another website that
+    # shares the same domain name as the current website.
+    deny_paths:
+      # - "/example"  # URLs match `<SITE_URL>/example/*` will not be cached by the PWA
+
+paginate: 10
+
+# The site verification ID for [Google Webmaster Tools](https://www.google.com/webmasters/)
+webmaster_verifications:
+  google: # fill in your Google verification code
+  bing: # fill in your Bing verification code
+  alexa: # fill in your Alexa verification code
+  yandex: # fill in your Yandex verification code
+  baidu: # fill in your Baidu verification code
+  facebook: # fill in your Facebook verification code
+
+# ↑ --------------------------
+# The end of `jekyll-seo-tag` settings
+
+# Web Analytics Settings
+google_analytics:
+  id: # fill in your Google Analytics ID
+
+# Site Author
+social:
+  # Change to your full name.
+  name: MVidarr Team
+  email: noreply@github.com # change to your email address
+  links:
+    # The first element serves as the copyright owner's link
+    - https://github.com/prefect421/mvidarr       # change to your github homepage
+    # Uncomment below to add more social links
+    # - https://www.facebook.com/username
+    # - https://www.linkedin.com/in/username
+
+# Site Repository
+github:
+  username: prefect421             # change to your github username
+
+twitter:
+  username: # change to your twitter username
+
+# Only if your site type is GitHub Project sites and doesn't have a custom domain,
+# change below value to '/projectname'.
 baseurl: "/mvidarr"
+
+# Change the following value to '/PROJECT_NAME' ONLY IF your site type is GitHub Project Page and
+# doesn't have a custom domain.
 url: "https://prefect421.github.io"
 
-# Build settings
-markdown: kramdown
-theme: minima
+author: MVidarr Team                  # change to your full name
+
+# The end of `jekyll-seo-tag` settings
 plugins:
   - jekyll-feed
   - jekyll-sitemap
+  - jekyll-paginate
   - jekyll-seo-tag
+  - jekyll-redirect-from
 
-# Site settings
-author:
-  name: MVidarr Team
-  email: noreply@github.com
+# ------------ The following options are not recommended to be modified ------------------
 
-# Repository information
-github_username: prefect421
-repository: prefect421/mvidarr
+kramdown:
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:   # Rouge Options › https://github.com/jneen/rouge#options
+    css_class: highlight
+    # default_lang: console
+    span:
+      line_numbers: false
+    block:
+      line_numbers: true
+      start_line: 1
 
-# Navigation
-header_pages:
-  - about.md
-  - installation.md
-  - features.md
-  - documentation.md
-  - releases.md
+collections:
+  tabs:
+    output: true
+    sort_by: order
 
-# Minima theme settings
-minima:
-  skin: auto
-  social_links:
-    github: prefect421/mvidarr
+defaults:
+  - scope:
+      path: ''          # An empty string here means all files in the project
+      type: posts
+    values:
+      layout: post
+      comments: true    # Enable comments in posts.
+      toc: true         # Display TOC column in posts.
+      # DO NOT modify the following parameter unless you are confident enough
+      # to update the code of all other post links in this project.
+      permalink: /posts/:title/
+  - scope:
+      path: _drafts
+    values:
+      comments: false
+  - scope:
+      path: ''
+      type: tabs             # see `site.collections`
+    values:
+      layout: page
+      permalink: /:title/
+  - scope:
+      path: assets/img/favicons
+    values:
+      swcache: true
+  - scope:
+      path: assets/js/dist
+    values:
+      swcache: true
 
-# Exclude files from Jekyll processing
+sass:
+  style: compressed
+
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  profile: false
+  blanklines: false
+  ignore:
+    envs: [development]
+
 exclude:
-  - .dockerignore
-  - ".env*"
-  - ".git*"
-  - .python-version
-  - __pycache__/
-  - "*.pyc"
-  - app.py
-  - "requirements*.txt"
-  - src/
-  - frontend/
-  - scripts/
-  - migrations/
-  - data/
-  - logs/
-  - "*.log"
-  - "docker-compose*.yml"
-  - "Dockerfile*"
-  - entrypoint.sh
-  - version.json
-  - node_modules/
-  - vendor/
-  - .sass-cache/
-  - .jekyll-cache/
-  - gemfiles/
-  - "Gemfile*"
-  - "*.gem"
-  - "*.gemspec"
-
-# Include specific documentation files
-include:
+  - '*.gem'
+  - '*.gemspec'
   - docs/
+  - tools/
+  - README.md
   - CHANGELOG.md
   - LICENSE
+  - rollup.config.js
+  - package*.json
