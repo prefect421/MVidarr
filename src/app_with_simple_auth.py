@@ -17,6 +17,7 @@ from flask import Flask, g, redirect, request, session, url_for
 # Import all existing API blueprints
 from src.api.artists import artists_bp
 from src.api.health import health_bp
+from src.api.performance import performance_bp
 from src.api.settings import settings_bp
 from src.api.simple_auth import register_simple_auth_routes
 from src.api.videos import videos_bp
@@ -66,11 +67,55 @@ def create_app():
     app.register_blueprint(videos_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(health_bp)
+    app.register_blueprint(performance_bp)
 
     # Import and register main routes
     from src.api.routes import register_routes
 
     register_routes(app)
+
+    # Initialize and start scheduler service
+    try:
+        import os
+
+        from src.services.settings_service import SettingsService
+
+        # Ensure settings cache is loaded before checking scheduler setting
+        SettingsService._cache_loaded = False
+        SettingsService.load_cache()
+
+        # Ensure default authentication credentials exist
+        try:
+            from src.services.simple_auth_service import SimpleAuthService
+
+            SimpleAuthService.ensure_default_credentials()
+        except Exception as e:
+            logger.error(f"Failed to ensure default credentials: {e}")
+
+        if SettingsService.get_bool("auto_download_schedule_enabled", False):
+            logger.info("Auto-download scheduling is enabled, starting scheduler...")
+
+            # Check if enhanced scheduler should be used (Docker environment)
+            use_enhanced = (
+                os.getenv("MVIDARR_USE_ENHANCED_SCHEDULER", "false").lower() == "true"
+            )
+
+            if use_enhanced:
+                logger.info("Using enhanced Docker-native scheduler")
+                from src.services.enhanced_scheduler_service import (
+                    enhanced_scheduler_service,
+                )
+
+                enhanced_scheduler_service.start()
+            else:
+                logger.info("Using standard scheduler")
+                from src.services.scheduler_service import scheduler_service
+
+                scheduler_service.start()
+        else:
+            logger.info("Auto-download scheduling is disabled")
+    except Exception as e:
+        logger.error(f"Failed to initialize scheduler: {e}")
 
     @app.before_request
     def before_request():

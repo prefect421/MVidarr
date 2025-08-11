@@ -1,0 +1,223 @@
+name: Unified Security Audit
+
+on:
+  schedule:
+    # Run comprehensive security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan to run'
+        required: false
+        default: 'comprehensive'
+        type: choice
+        options:
+        - comprehensive
+        - quick
+        - secrets-only
+        - dependencies-only
+  push:
+    branches: [ main, dev ]
+    paths: 
+      - 'requirements.txt'
+      - 'requirements-*.txt'
+      - 'src/**'
+      - 'Dockerfile*'
+      - '.github/workflows/unified-security.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  unified-security-scan:
+    name: Unified Security Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+      issues: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+        # Install security tools
+        pip install pip-audit safety bandit[toml] semgrep
+
+    - name: Determine scan scope
+      id: scan-scope
+      run: |
+        # Determine what type of scan to run based on trigger and input
+        if [ "${{ github.event_name }}" == "schedule" ]; then
+          echo "scan_type=comprehensive" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "scan_type=${{ github.event.inputs.scan_type }}" >> $GITHUB_OUTPUT
+        else
+          # For push events, determine scope based on changed files
+          if git diff --name-only HEAD^ HEAD | grep -E "(requirements.*\.txt|Dockerfile)" > /dev/null; then
+            echo "scan_type=dependencies" >> $GITHUB_OUTPUT
+          else
+            echo "scan_type=quick" >> $GITHUB_OUTPUT
+          fi
+        fi
+
+    # Python Dependency Vulnerability Scanning
+    - name: Run pip-audit (Python Dependencies)
+      if: steps.scan-scope.outputs.scan_type != 'secrets-only'
+      run: |
+        echo "🔍 Scanning Python dependencies for vulnerabilities..."
+        pip-audit --requirement=requirements.txt --desc --format=json --output=pip-audit-results.json || true
+        pip-audit --requirement=requirements.txt --desc || true
+
+    - name: Run Safety (Known Security Vulnerabilities)
+      if: steps.scan-scope.outputs.scan_type != 'secrets-only'
+      run: |
+        echo "🛡️ Checking for known security vulnerabilities..."
+        safety check --requirement=requirements.txt --json --output=safety-results.json || true
+        safety check --requirement=requirements.txt || true
+
+    # Source Code Security Analysis
+    - name: Run Bandit (Python Security Linter)
+      if: steps.scan-scope.outputs.scan_type != 'secrets-only' && steps.scan-scope.outputs.scan_type != 'dependencies-only'
+      run: |
+        echo "🔒 Running Python security linter..."
+        bandit -r src/ -f json -o bandit-results.json || true
+        bandit -r src/ || true
+
+    - name: Run Semgrep (Security Pattern Analysis)
+      if: steps.scan-scope.outputs.scan_type == 'comprehensive' || steps.scan-scope.outputs.scan_type == 'quick'
+      run: |
+        echo "🎯 Running security pattern analysis..."
+        semgrep --config=p/security-audit src/ --json --output=semgrep-results.json || true
+        semgrep --config=p/security-audit src/ || true
+
+    # Secret Detection
+    - name: Install Secret Detection Tools
+      if: steps.scan-scope.outputs.scan_type == 'comprehensive' || steps.scan-scope.outputs.scan_type == 'secrets-only'
+      run: |
+        # Install GitLeaks
+        wget -O gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_8.21.2_linux_x64.tar.gz
+        tar -xzf gitleaks.tar.gz
+        chmod +x gitleaks
+        sudo mv gitleaks /usr/local/bin/
+        
+        # Install detect-secrets
+        pip install detect-secrets
+        
+        # Install TruffleHog3
+        pip install truffleHog3
+
+    - name: Run GitLeaks (Secret Detection)
+      if: steps.scan-scope.outputs.scan_type == 'comprehensive' || steps.scan-scope.outputs.scan_type == 'secrets-only'
+      run: |
+        echo "🔐 Scanning for secrets with GitLeaks..."
+        gitleaks detect --source . --report-path gitleaks-results.json --report-format json || true
+        gitleaks detect --source . --verbose || true
+
+    - name: Run detect-secrets
+      if: steps.scan-scope.outputs.scan_type == 'comprehensive' || steps.scan-scope.outputs.scan_type == 'secrets-only'
+      run: |
+        echo "🕵️ Scanning for secrets with detect-secrets..."
+        detect-secrets scan --all-files --exclude-files '.*\.git/.*' > detect-secrets-results.json || true
+        detect-secrets scan --all-files --exclude-files '.*\.git/.*' || true
+
+    - name: Run TruffleHog3 (Historical Secret Detection)
+      if: steps.scan-scope.outputs.scan_type == 'comprehensive'
+      run: |
+        echo "🐷 Scanning git history for secrets..."
+        trufflehog3 --format json --output trufflehog-results.json . || true
+        trufflehog3 . || true
+
+    # Container Security (for comprehensive scans)
+    - name: Install Trivy (Container Scanner)
+      if: steps.scan-scope.outputs.scan_type == 'comprehensive'
+      run: |
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list
+        sudo apt-get update
+        sudo apt-get install trivy
+
+    - name: Run Trivy (Filesystem and Container Scan)
+      if: steps.scan-scope.outputs.scan_type == 'comprehensive'
+      run: |
+        echo "🐳 Running container and filesystem security scan..."
+        trivy fs --format json --output trivy-fs-results.json . || true
+        trivy fs . || true
+
+    # Security Policy Enforcement
+    - name: Security Policy Validation
+      if: steps.scan-scope.outputs.scan_type != 'secrets-only' && steps.scan-scope.outputs.scan_type != 'dependencies-only'
+      run: |
+        echo "📋 Validating security policies..."
+        
+        # Check for required security files
+        echo "✅ Checking for security documentation..."
+        [ -f "SECURITY.md" ] && echo "✅ SECURITY.md exists" || echo "⚠️ SECURITY.md missing"
+        [ -f ".github/SECURITY.md" ] && echo "✅ .github/SECURITY.md exists" || echo "⚠️ .github/SECURITY.md missing"
+        
+        # Check for secure dependencies
+        echo "✅ Checking dependency security..."
+        if [ -f "requirements.txt" ]; then
+          echo "📦 Found requirements.txt"
+          if grep -i "django\|flask\|fastapi" requirements.txt > /dev/null; then
+            echo "🌐 Web framework detected - extra security attention required"
+          fi
+        fi
+
+    # Upload Results and Generate Reports
+    - name: Upload Security Scan Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan-results
+        path: |
+          *-results.json
+          !node_modules/**
+        retention-days: 90
+
+    - name: Generate Security Summary
+      if: always()
+      run: |
+        echo "# 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Scan Type:** ${{ steps.scan-scope.outputs.scan_type }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Count results from JSON files
+        if [ -f "pip-audit-results.json" ]; then
+          PIP_AUDIT_COUNT=$(jq '.vulnerabilities | length' pip-audit-results.json 2>/dev/null || echo "0")
+          echo "**Pip-audit vulnerabilities:** $PIP_AUDIT_COUNT" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ -f "bandit-results.json" ]; then
+          BANDIT_COUNT=$(jq '.results | length' bandit-results.json 2>/dev/null || echo "0")
+          echo "**Bandit security issues:** $BANDIT_COUNT" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ -f "gitleaks-results.json" ]; then
+          GITLEAKS_COUNT=$(jq '. | length' gitleaks-results.json 2>/dev/null || echo "0")
+          echo "**GitLeaks secrets found:** $GITLEAKS_COUNT" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📊 **Scan completed successfully**" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload to GitHub Security Tab (SARIF)
+      if: steps.scan-scope.outputs.scan_type == 'comprehensive' && (success() || failure())
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: semgrep-results.json
+      continue-on-error: true

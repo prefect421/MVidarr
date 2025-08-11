@@ -16,10 +16,12 @@ from src.database.connection import get_db
 from src.database.models import Artist, Download, Video, VideoStatus
 from src.services.imvdb_service import imvdb_service
 from src.services.search_optimization_service import search_optimization_service
+from src.services.settings_service import SettingsService
 from src.services.thumbnail_service import thumbnail_service
 from src.services.wikipedia_service import wikipedia_service
 from src.services.youtube_search_service import youtube_search_service
 from src.utils.logger import get_logger
+from src.utils.performance_monitor import monitor_performance
 
 artists_bp = Blueprint("artists", __name__, url_prefix="/artists")
 logger = get_logger("mvidarr.api.artists")
@@ -55,47 +57,101 @@ def ensure_artist_folder_path(artist, session=None):
 
 
 @artists_bp.route("/", methods=["GET"])
+@monitor_performance("api.artists.list")
 def get_artists():
-    """Get all tracked artists with search and filtering"""
+    """Get all tracked artists with search and filtering - OPTIMIZED"""
+    import time
+
+    start_time = time.time()
+
     try:
         with get_db() as session:
-            # Build query with video count subquery
-            video_count_subquery = (
-                session.query(
-                    Video.artist_id, func.count(Video.id).label("video_count")
+            # Use optimized query builder if available
+            try:
+                from src.database.performance_optimizations import (
+                    DatabasePerformanceOptimizer,
                 )
-                .group_by(Video.artist_id)
-                .subquery()
-            )
 
-            query = (
-                session.query(Artist)
-                .outerjoin(
-                    video_count_subquery, Artist.id == video_count_subquery.c.artist_id
+                optimizer = DatabasePerformanceOptimizer()
+                query = optimizer.get_optimized_artist_video_counts(
+                    session, monitored_only=False
                 )
-                .add_columns(
-                    func.coalesce(video_count_subquery.c.video_count, 0).label(
-                        "video_count"
+
+                # Convert to the expected format (Artist, video_count)
+                results_raw = query.all()
+
+            except ImportError:
+                logger.warning(
+                    "Performance optimizer not available, using fallback query"
+                )
+                # Fallback to optimized subquery approach
+                video_count_subquery = (
+                    session.query(
+                        Video.artist_id, func.count(Video.id).label("video_count")
+                    )
+                    .filter(Video.status.in_(["DOWNLOADED", "WANTED", "DOWNLOADING"]))
+                    .group_by(Video.artist_id)
+                    .subquery()
+                )
+
+                query = (
+                    session.query(Artist)
+                    .outerjoin(
+                        video_count_subquery,
+                        Artist.id == video_count_subquery.c.artist_id,
+                    )
+                    .add_columns(
+                        func.coalesce(video_count_subquery.c.video_count, 0).label(
+                            "video_count"
+                        )
                     )
                 )
-            )
+                results_raw = None
 
-            # Search functionality
+            # Apply filters to the query
             search_term = request.args.get("search", "").strip()
-            if search_term:
-                query = query.filter(Artist.name.ilike(f"%{search_term}%"))
-
-            # Filter by monitoring status
             monitored = request.args.get("monitored")
-            if monitored is not None:
-                monitored_bool = monitored.lower() in ["true", "1", "yes"]
-                query = query.filter(Artist.monitored == monitored_bool)
-
-            # Filter by auto-download
             auto_download = request.args.get("auto_download")
-            if auto_download is not None:
-                auto_download_bool = auto_download.lower() in ["true", "1", "yes"]
-                query = query.filter(Artist.auto_download == auto_download_bool)
+
+            # If using optimized query, we need to handle filters differently
+            if results_raw is not None:
+                # Apply filters to the results in memory (still efficient for reasonable dataset sizes)
+                filtered_results = results_raw
+
+                if search_term:
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if search_term.lower() in r[0].name.lower()
+                    ]
+
+                if monitored is not None:
+                    monitored_bool = monitored.lower() in ["true", "1", "yes"]
+                    filtered_results = [
+                        r for r in filtered_results if r[0].monitored == monitored_bool
+                    ]
+
+                if auto_download is not None:
+                    auto_download_bool = auto_download.lower() in ["true", "1", "yes"]
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if r[0].auto_download == auto_download_bool
+                    ]
+
+                results_raw = filtered_results
+            else:
+                # Apply filters to the query (fallback mode)
+                if search_term:
+                    query = query.filter(Artist.name.ilike(f"%{search_term}%"))
+
+                if monitored is not None:
+                    monitored_bool = monitored.lower() in ["true", "1", "yes"]
+                    query = query.filter(Artist.monitored == monitored_bool)
+
+                if auto_download is not None:
+                    auto_download_bool = auto_download.lower() in ["true", "1", "yes"]
+                    query = query.filter(Artist.auto_download == auto_download_bool)
 
             # Sorting
             sort_by = request.args.get("sort", "name")
@@ -118,12 +174,58 @@ def get_artists():
             else:
                 query = query.order_by(sort_column.asc())
 
-            # Pagination
+            # Handle sorting and pagination
             page = int(request.args.get("page", 1))
             per_page = int(request.args.get("per_page", 50))
+            sort_by = request.args.get("sort", "name")
+            sort_order = request.args.get("order", "asc")
 
-            total_count = query.count()
-            results = query.offset((page - 1) * per_page).limit(per_page).all()
+            if results_raw is not None:
+                # Handle sorting and pagination in memory for optimized query
+                if sort_by == "name":
+                    results_raw.sort(
+                        key=lambda x: x[0].name.lower(),
+                        reverse=(sort_order.lower() == "desc"),
+                    )
+                elif sort_by == "video_count":
+                    results_raw.sort(
+                        key=lambda x: x[1], reverse=(sort_order.lower() == "desc")
+                    )
+                elif sort_by == "created_at":
+                    results_raw.sort(
+                        key=lambda x: x[0].created_at,
+                        reverse=(sort_order.lower() == "desc"),
+                    )
+                elif sort_by == "updated_at":
+                    results_raw.sort(
+                        key=lambda x: x[0].updated_at,
+                        reverse=(sort_order.lower() == "desc"),
+                    )
+
+                total_count = len(results_raw)
+                start_idx = (page - 1) * per_page
+                end_idx = start_idx + per_page
+                results = results_raw[start_idx:end_idx]
+            else:
+                # Handle sorting and pagination in database (fallback mode)
+                if sort_by == "name":
+                    sort_column = Artist.name
+                elif sort_by == "created_at":
+                    sort_column = Artist.created_at
+                elif sort_by == "updated_at":
+                    sort_column = Artist.updated_at
+                elif sort_by == "video_count":
+                    sort_column = func.coalesce(video_count_subquery.c.video_count, 0)
+                else:
+                    sort_column = Artist.name
+
+                if sort_order.lower() == "desc":
+                    query = query.order_by(sort_column.desc())
+                else:
+                    query = query.order_by(sort_column.asc())
+
+                total_count = query.count()
+                results = query.offset((page - 1) * per_page).limit(per_page).all()
 
             artists_list = []
             for result in results:
@@ -149,6 +251,12 @@ def get_artists():
                     }
                 )
 
+            # Add performance monitoring
+            query_time = time.time() - start_time
+            logger.info(
+                f"Artists query completed in {query_time:.3f}s (total: {total_count}, page: {page})"
+            )
+
             return (
                 jsonify(
                     {
@@ -158,6 +266,7 @@ def get_artists():
                         "page": page,
                         "per_page": per_page,
                         "pages": (total_count + per_page - 1) // per_page,
+                        "query_time": query_time,
                     }
                 ),
                 200,
@@ -169,6 +278,7 @@ def get_artists():
 
 
 @artists_bp.route("/search/advanced", methods=["GET"])
+@monitor_performance("api.artists.advanced_search")
 def advanced_search():
     """Advanced artist search with comprehensive filters and analytics - OPTIMIZED"""
     try:
@@ -3513,21 +3623,35 @@ def bulk_delete_artists():
 def bulk_validate_metadata():
     """Validate metadata for multiple artists"""
     try:
+        logger.info("Starting bulk metadata validation")
+
+        # Validate request data
         data = request.get_json()
-        if not data or "artist_ids" not in data:
+        if not data:
+            logger.warning("No JSON data received in request")
+            return jsonify({"error": "No data provided"}), 400
+
+        if "artist_ids" not in data:
+            logger.warning("Missing artist_ids in request data")
             return jsonify({"error": "artist_ids required"}), 400
 
         artist_ids = data["artist_ids"]
         if not isinstance(artist_ids, list) or not artist_ids:
+            logger.warning(f"Invalid artist_ids provided: {artist_ids}")
             return jsonify({"error": "artist_ids must be a non-empty list"}), 400
 
-        # Check if IMVDb API key is configured
-        from src.services.settings_service import SettingsService
+        logger.info(f"Processing validation for {len(artist_ids)} artists")
 
-        SettingsService.reload_cache()
-        api_key = SettingsService.get("imvdb_api_key", "")
+        # Check if IMVDb API key is configured
+        try:
+            SettingsService.reload_cache()
+            api_key = SettingsService.get("imvdb_api_key", "")
+        except Exception as e:
+            logger.error(f"Failed to load settings: {e}")
+            return jsonify({"error": "Failed to load configuration"}), 500
 
         if not api_key:
+            logger.warning("IMVDb API key not configured")
             return (
                 jsonify(
                     {
@@ -3541,43 +3665,56 @@ def bulk_validate_metadata():
         validation_issues = []
         validated_count = 0
 
-        with get_db() as session:
-            artists = session.query(Artist).filter(Artist.id.in_(artist_ids)).all()
+        try:
+            with get_db() as session:
+                logger.info("Database session opened successfully")
 
-            for artist in artists:
-                validated_count += 1
-                issues = []
+                # Fetch artists from database
+                artists = session.query(Artist).filter(Artist.id.in_(artist_ids)).all()
+                logger.info(f"Found {len(artists)} artists in database")
 
-                # Check for missing IMVDb ID
-                if not artist.imvdb_id:
-                    issues.append("Missing IMVDb ID")
+                for artist in artists:
+                    validated_count += 1
+                    issues = []
 
-                # Check for missing thumbnail
-                if not artist.thumbnail_url and not artist.thumbnail_path:
-                    issues.append("Missing thumbnail")
+                    # Check for missing IMVDb ID
+                    if not artist.imvdb_id:
+                        issues.append("Missing IMVDb ID")
 
-                # Check for minimal metadata (can be expanded)
-                if not artist.bio or artist.bio.strip() == "":
-                    issues.append("Missing biography")
+                    # Check for missing thumbnail
+                    if not artist.thumbnail_url and not artist.thumbnail_path:
+                        issues.append("Missing thumbnail")
 
-                # Check if IMVDb ID is accessible (basic validation)
-                if artist.imvdb_id:
-                    try:
-                        # Quick validation - check if IMVDb ID is valid format
-                        if not str(artist.imvdb_id).isdigit():
-                            issues.append("Invalid IMVDb ID format")
-                    except Exception:
-                        issues.append("Invalid IMVDb ID")
+                    # Check for minimal metadata (can be expanded)
+                    if not artist.bio or artist.bio.strip() == "":
+                        issues.append("Missing biography")
 
-                # Add to validation issues if any problems found
-                if issues:
-                    validation_issues.append(
-                        {
-                            "artist_id": artist.id,
-                            "artist_name": artist.name,
-                            "issues": issues,
-                        }
-                    )
+                    # Check if IMVDb ID is accessible (basic validation)
+                    if artist.imvdb_id:
+                        try:
+                            # Quick validation - check if IMVDb ID is valid format
+                            if not str(artist.imvdb_id).isdigit():
+                                issues.append("Invalid IMVDb ID format")
+                        except Exception:
+                            issues.append("Invalid IMVDb ID")
+
+                    # Add to validation issues if any problems found
+                    if issues:
+                        validation_issues.append(
+                            {
+                                "artist_id": artist.id,
+                                "artist_name": artist.name,
+                                "issues": issues,
+                            }
+                        )
+
+        except Exception as e:
+            logger.error(f"Database error during validation: {e}")
+            return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+        logger.info(
+            f"Validation complete: {validated_count} artists validated, {len(validation_issues)} issues found"
+        )
 
         return (
             jsonify(
@@ -3592,7 +3729,7 @@ def bulk_validate_metadata():
         )
 
     except Exception as e:
-        logger.error(f"Failed to bulk validate metadata: {e}")
+        logger.error(f"Failed to bulk validate metadata: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
 
@@ -3654,6 +3791,110 @@ def bulk_organize_folders():
 
     except Exception as e:
         logger.error(f"Failed to bulk organize folders: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@artists_bp.route("/bulk-imvdb-link", methods=["POST"])
+def bulk_imvdb_link():
+    """Link multiple artists to IMVDb entries"""
+    try:
+        data = request.get_json()
+        if not data or "artist_ids" not in data:
+            return jsonify({"error": "artist_ids required"}), 400
+
+        artist_ids = data["artist_ids"]
+        if not isinstance(artist_ids, list) or not artist_ids:
+            return jsonify({"error": "artist_ids must be a non-empty list"}), 400
+
+        # Check if IMVDb API key is configured
+        SettingsService.reload_cache()
+        api_key = SettingsService.get("imvdb_api_key", "")
+
+        if not api_key:
+            return (
+                jsonify(
+                    {
+                        "error": "IMVDb API key not configured",
+                        "message": "Please configure your IMVDb API key in Settings to use this feature",
+                    }
+                ),
+                400,
+            )
+
+        linked_count = 0
+        linked_artists = []
+        errors = []
+
+        with get_db() as session:
+            artists = session.query(Artist).filter(Artist.id.in_(artist_ids)).all()
+
+            for artist in artists:
+                try:
+                    # Skip if already has IMVDb ID
+                    if artist.imvdb_id:
+                        continue
+
+                    # Try to find IMVDb match
+                    imvdb_data = imvdb_service.search_artist(artist.name)
+                    if imvdb_data and len(imvdb_data) > 0:
+                        # Use the first match
+                        match = imvdb_data[0]
+                        artist.imvdb_id = match.get("id")
+
+                        # Update additional metadata if available
+                        if match.get("url"):
+                            artist.imvdb_url = match["url"]
+                        if match.get("image") and not artist.thumbnail_url:
+                            artist.thumbnail_url = match["image"]
+
+                        linked_count += 1
+                        linked_artists.append(
+                            {
+                                "artist_id": artist.id,
+                                "artist_name": artist.name,
+                                "imvdb_id": artist.imvdb_id,
+                                "imvdb_url": artist.imvdb_url,
+                            }
+                        )
+                        logger.info(
+                            f"Linked artist {artist.name} to IMVDb ID: {artist.imvdb_id}"
+                        )
+                    else:
+                        errors.append(
+                            {
+                                "artist_id": artist.id,
+                                "artist_name": artist.name,
+                                "error": "No IMVDb match found",
+                            }
+                        )
+
+                except Exception as e:
+                    logger.error(f"Failed to link artist {artist.name} to IMVDb: {e}")
+                    errors.append(
+                        {
+                            "artist_id": artist.id,
+                            "artist_name": artist.name,
+                            "error": str(e),
+                        }
+                    )
+
+            session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "linked_count": linked_count,
+                    "linked_artists": linked_artists,
+                    "errors": errors,
+                    "message": f"Successfully linked {linked_count} artist(s) to IMVDb",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk link artists to IMVDb: {e}")
         return jsonify({"error": str(e)}), 500
 
 

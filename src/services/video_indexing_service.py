@@ -527,51 +527,66 @@ class VideoIndexingService:
 
     def get_indexing_stats(self) -> Dict:
         """
-        Get current indexing statistics
+        Get current indexing statistics - OPTIMIZED
 
         Returns:
             Dictionary with indexing statistics
         """
         try:
             with get_db() as session:
-                total_artists = session.query(Artist).count()
-                total_videos = session.query(Video).count()
-                total_downloads = session.query(Download).count()
-
-                # Count videos with IMVDb metadata
-                videos_with_imvdb = (
-                    session.query(Video).filter(Video.imvdb_id.isnot(None)).count()
-                )
-
-                # Count downloaded videos
-                downloaded_videos = (
-                    session.query(Video)
-                    .filter(Video.status == VideoStatus.DOWNLOADED)
-                    .count()
-                )
-
-                # Count videos with local files
-                videos_with_files = (
-                    session.query(Download)
-                    .filter(
-                        Download.file_path.isnot(None), Download.status == "completed"
+                # Use optimized query if available
+                try:
+                    from src.database.performance_optimizations import (
+                        DatabasePerformanceOptimizer,
                     )
-                    .count()
-                )
 
-                return {
-                    "total_artists": total_artists,
-                    "total_videos": total_videos,
-                    "total_downloads": total_downloads,
-                    "videos_with_imvdb": videos_with_imvdb,
-                    "downloaded_videos": downloaded_videos,
-                    "videos_with_files": videos_with_files,
-                    "imvdb_coverage": (
-                        round((videos_with_imvdb / total_videos * 100), 2)
-                        if total_videos > 0
-                        else 0
-                    ),
-                }
+                    optimizer = DatabasePerformanceOptimizer()
+                    return optimizer.optimize_video_indexing_stats(session)
+                except ImportError:
+                    logger.warning(
+                        "Performance optimizer not available, using fallback queries"
+                    )
+
+                    # Fallback to original individual queries
+                    total_artists = session.query(Artist).count()
+                    total_videos = session.query(Video).count()
+                    total_downloads = session.query(Download).count()
+
+                    # Count videos with IMVDb metadata
+                    videos_with_imvdb = (
+                        session.query(Video).filter(Video.imvdb_id.isnot(None)).count()
+                    )
+
+                    # Count downloaded videos
+                    downloaded_videos = (
+                        session.query(Video)
+                        .filter(Video.status == VideoStatus.DOWNLOADED)
+                        .count()
+                    )
+
+                    # Count videos with local files
+                    videos_with_files = (
+                        session.query(Download)
+                        .filter(
+                            Download.file_path.isnot(None),
+                            Download.status == "completed",
+                        )
+                        .count()
+                    )
+
+                    return {
+                        "total_artists": total_artists,
+                        "total_videos": total_videos,
+                        "total_downloads": total_downloads,
+                        "videos_with_imvdb": videos_with_imvdb,
+                        "downloaded_videos": downloaded_videos,
+                        "videos_with_files": videos_with_files,
+                        "imvdb_coverage": (
+                            round((videos_with_imvdb / total_videos * 100), 2)
+                            if total_videos > 0
+                            else 0
+                        ),
+                    }
 
         except Exception as e:
             logger.error(f"Failed to get indexing stats: {e}")

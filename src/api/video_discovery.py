@@ -6,12 +6,14 @@ from flask import Blueprint, jsonify, request
 
 from src.services.video_discovery_service import video_discovery_service
 from src.utils.logger import get_logger
+from src.utils.performance_monitor import monitor_performance
 
 video_discovery_bp = Blueprint("video_discovery", __name__, url_prefix="/discovery")
 logger = get_logger("mvidarr.api.video_discovery")
 
 
 @video_discovery_bp.route("/artist/<int:artist_id>", methods=["POST"])
+@monitor_performance("api.discovery.artist")
 def discover_for_artist(artist_id):
     """Discover new videos for a specific artist"""
     try:

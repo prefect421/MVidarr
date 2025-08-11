@@ -408,6 +408,18 @@ def initialize_database():
         logger.error("Database health check failed")
         return False
 
+    # Create performance optimization indexes
+    try:
+        from src.database.performance_optimizations import DatabasePerformanceOptimizer
+
+        optimizer = DatabasePerformanceOptimizer()
+        optimizer.create_performance_indexes()
+        logger.info("Performance indexes created successfully")
+    except ImportError:
+        logger.warning("Performance optimizer not available, skipping index creation")
+    except Exception as e:
+        logger.warning(f"Performance index creation failed: {e}")
+
     logger.info("Database initialization completed successfully")
     return True
 

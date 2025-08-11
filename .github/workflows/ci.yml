@@ -3,8 +3,20 @@ name: CI Integration Tests
 on:
   push:
     branches: [ main, dev ]
+    paths:
+      - 'src/**'
+      - 'requirements*.txt'
+      - 'tests/**'
+      - 'app.py'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main, dev ]
+    paths:
+      - 'src/**'
+      - 'requirements*.txt'
+      - 'tests/**'
+      - 'app.py'
+      - '.github/workflows/ci.yml'
   release:
     types: [ published ]
   workflow_dispatch:

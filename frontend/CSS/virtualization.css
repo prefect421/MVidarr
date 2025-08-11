@@ -1,0 +1,449 @@
+/**
+ * Virtualization Engine CSS
+ * Optimized styles for virtual scrolling and large dataset rendering
+ */
+
+/* ========================================
+   VIRTUAL LIST CONTAINER
+   ======================================== */
+
+.virtual-list {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+.virtual-spacer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.virtual-viewport {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
+
+.virtual-item {
+    position: absolute;
+    left: 0;
+    right: 0;
+    transition: none; /* Disable transitions for performance */
+    contain: layout style; /* CSS containment for better performance */
+}
+
+/* ========================================
+   VIRTUALIZED VIDEO GRID
+   ======================================== */
+
+.virtualized-video-grid {
+    width: 100%;
+    min-height: 400px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+}
+
+.virtual-video-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    transition: none; /* Disable transitions for virtualization */
+    contain: layout style paint;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: var(--space-3);
+}
+
+.virtual-video-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--status-info);
+    transition: all var(--animation-fast); /* Re-enable for hover */
+}
+
+.virtual-video-card.selected {
+    border-color: var(--status-success);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.virtual-video-card.selected::after {
+    content: '';
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    width: 1rem;
+    height: 1rem;
+    background: var(--status-success);
+    border-radius: 50%;
+    z-index: 10;
+}
+
+/* ========================================
+   VIDEO CARD CONTENT LAYOUT
+   ======================================== */
+
+.video-card-content {
+    display: flex;
+    height: 100%;
+    padding: var(--space-4);
+    gap: var(--space-4);
+    align-items: flex-start;
+}
+
+.video-thumbnail {
+    position: relative;
+    width: 180px;
+    height: 120px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-tertiary);
+}
+
+.video-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--animation-normal);
+}
+
+.video-thumbnail:hover img {
+    transform: scale(1.05);
+}
+
+.video-duration {
+    position: absolute;
+    bottom: var(--space-1);
+    right: var(--space-1);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+}
+
+.video-status-badge {
+    position: absolute;
+    top: var(--space-1);
+    left: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.video-status-badge.status-wanted {
+    background: var(--status-info);
+    color: white;
+}
+
+.video-status-badge.status-downloading {
+    background: var(--status-warning);
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.video-status-badge.status-downloaded {
+    background: var(--status-success);
+    color: white;
+}
+
+.video-status-badge.status-failed {
+    background: var(--status-error);
+    color: white;
+}
+
+.video-status-badge.status-ignored {
+    background: var(--status-neutral);
+    color: white;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ========================================
+   VIDEO INFORMATION SECTION
+   ======================================== */
+
+.video-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.video-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: var(--line-height-tight);
+    
+    /* Text overflow handling */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.video-artist {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 500;
+    
+    /* Text overflow handling */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.video-metadata {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.video-metadata > span {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+}
+
+.video-dates {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.video-dates small {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    line-height: var(--line-height-tight);
+}
+
+/* ========================================
+   VIDEO ACTIONS SECTION
+   ======================================== */
+
+.video-actions {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-2);
+}
+
+.video-select {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+
+.video-select input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    position: relative;
+    transition: all var(--animation-fast);
+}
+
+.video-select:hover .checkmark {
+    border-color: var(--status-info);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.video-select input:checked ~ .checkmark {
+    background: var(--status-success);
+    border-color: var(--status-success);
+}
+
+.video-select input:checked ~ .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 0.4rem;
+    top: 0.1rem;
+    width: 0.3rem;
+    height: 0.6rem;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+/* GPU acceleration for smooth scrolling */
+.virtual-video-card {
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+/* Optimize image loading */
+.video-thumbnail img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+}
+
+/* Reduce layout thrashing */
+.virtual-item * {
+    contain: layout;
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+.virtual-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-muted);
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.virtual-loading .loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid var(--border-primary);
+    border-top: 3px solid var(--status-info);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.virtual-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text-muted);
+    flex-direction: column;
+    gap: var(--space-4);
+    text-align: center;
+}
+
+.virtual-empty iconify-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 768px) {
+    .video-card-content {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    .video-thumbnail {
+        width: 100%;
+        height: 160px;
+    }
+    
+    .video-info {
+        align-items: flex-start;
+    }
+    
+    .video-actions {
+        align-items: stretch;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    
+    .video-metadata {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
+    }
+}
+
+@media (max-width: 480px) {
+    .virtualized-video-grid {
+        padding: var(--space-2);
+    }
+    
+    .video-card-content {
+        padding: var(--space-3);
+    }
+    
+    .video-thumbnail {
+        height: 140px;
+    }
+    
+    .video-title {
+        font-size: var(--font-size-base);
+        -webkit-line-clamp: 3;
+    }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+.virtual-video-card:focus-visible {
+    outline: 2px solid var(--status-info);
+    outline-offset: 2px;
+}
+
+.virtual-video-card[aria-selected="true"] {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: var(--status-info);
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .video-status-badge {
+        border: 2px solid currentColor;
+    }
+    
+    .checkmark {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .virtual-video-card,
+    .video-thumbnail img,
+    .checkmark {
+        transition: none;
+    }
+    
+    .video-status-badge.status-downloading {
+        animation: none;
+    }
+}

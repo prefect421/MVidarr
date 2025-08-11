@@ -34,6 +34,15 @@
     
     <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='main.css') }}" id="main-theme">
     <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='themes.css') }}" id="themes-stylesheet">
+    
+    <!-- UI/UX Enhancement System -->
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='typography.css') }}">
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='buttons.css') }}">
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='accessibility.css') }}">
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='loading-feedback.css') }}">
+    <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='ux-enhancements.css') }}">
+    
     <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
     <!-- Test if Iconify works at all -->
     <script>
@@ -1013,6 +1022,12 @@
             border: none;
             transition: all 0.2s ease;
             color: inherit;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .header-user-info:visited {
+            color: inherit;
         }
         
         .header-user-info:hover {
@@ -1185,7 +1200,7 @@
 <body>
     
     <!-- Left Sidebar Navigation -->
-    <nav class="sidebar" id="sidebar">
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
         <div class="sidebar-header" style="padding: 0.75rem 1rem; height: 60px;">
             <div class="sidebar-logo">
                 <a href="{{ url_for('frontend.index') }}" style="font-size: 1.5rem;">
@@ -1311,7 +1326,7 @@
             <!-- User Info Section -->
             <div class="header-user-section" id="headerUserSection" style="display: flex;">
                 <!-- User Info Display -->
-                <div class="header-user-info">
+                <a href="/settings" class="header-user-info" title="View Profile & Settings">
                     <div class="header-user-avatar">
                         <iconify-icon icon="tabler:user-circle"></iconify-icon>
                     </div>
@@ -1319,7 +1334,7 @@
                         <span class="header-username" id="headerUsername">admin</span>
                         <span class="header-user-role" id="headerUserRole">Admin</span>
                     </div>
-                </div>
+                </a>
                 
                 <!-- Logout Button -->
                 <button class="header-logout-button" onclick="logout(); return false;" title="Logout">
@@ -1331,7 +1346,8 @@
 
     <!-- Main content area -->
     <div class="app-layout">
-        <main class="main-content" id="mainContent">
+        <main class="main-content" id="mainContent" role="main" aria-label="Main content">
+            <a href="#mainContent" class="skip-link">Skip to main content</a>
             {% block content %}{% endblock %}
         </main>
     </div>
@@ -1339,6 +1355,7 @@
 
     <script src="{{ url_for('frontend.static_files', filename='toast.js') }}"></script>
     <script src="{{ url_for('frontend.static_files', filename='main.js') }}"></script>
+    <script src="{{ url_for('frontend.static_files', filename='loading-feedback.js') }}"></script>
     <script>
         
         
@@ -2129,25 +2146,8 @@
         function initializeHeader() {
             // Synchronize header theme slider with main theme slider
             
-            // Header user menu dropdown functionality
-            const headerUserMenu = document.getElementById('headerUserMenu');
-            const headerUserInfo = headerUserMenu?.querySelector('.header-user-info');
-            const headerUserDropdown = document.getElementById('headerUserDropdown');
-            
-            if (headerUserInfo && headerUserDropdown) {
-                headerUserInfo.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const isVisible = headerUserDropdown.style.display === 'block';
-                    headerUserDropdown.style.display = isVisible ? 'none' : 'block';
-                });
-                
-                // Close dropdown when clicking outside
-                document.addEventListener('click', function(e) {
-                    if (!headerUserMenu.contains(e.target)) {
-                        headerUserDropdown.style.display = 'none';
-                    }
-                });
-            }
+            // Header user menu is now a direct link to settings page
+            // No dropdown functionality needed - link goes directly to /settings
             
             // Show/hide header user section based on authentication
             updateHeaderUserSection();

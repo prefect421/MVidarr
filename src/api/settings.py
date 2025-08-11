@@ -6,12 +6,14 @@ from flask import Blueprint, jsonify, request
 
 from src.services.settings_service import settings
 from src.utils.logger import get_logger
+from src.utils.performance_monitor import monitor_performance
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 logger = get_logger("mvidarr.api.settings")
 
 
 @settings_bp.route("/", methods=["GET"])
+@monitor_performance("api.settings.get_all")
 def get_all_settings():
     """Get all application settings"""
     try:
@@ -338,6 +340,7 @@ def restart_systemd_service():
 
 
 @settings_bp.route("/scheduler/status", methods=["GET"])
+@monitor_performance("api.settings.scheduler_status")
 def get_scheduler_status():
     """Get current scheduler status and configuration"""
     try:
@@ -345,12 +348,45 @@ def get_scheduler_status():
 
         schedule_info = scheduler_service.get_schedule_info()
 
+        # Add diagnostic information to help troubleshoot issues
+        diagnostic_info = {
+            "wanted_videos_count": 0,
+            "settings_accessible": True,
+            "issues_detected": [],
+        }
+
+        try:
+            # Check if we can count wanted videos
+            wanted_count = scheduler_service._get_wanted_video_count()
+            diagnostic_info["wanted_videos_count"] = wanted_count
+
+            if wanted_count == 0:
+                diagnostic_info["issues_detected"].append("No videos marked as WANTED")
+        except Exception as e:
+            diagnostic_info["issues_detected"].append(
+                f"Cannot access wanted videos: {str(e)}"
+            )
+
+        try:
+            # Check if settings are accessible
+            from src.services.settings_service import SettingsService
+
+            test_setting = SettingsService.get_bool(
+                "auto_download_schedule_enabled", True
+            )
+        except Exception as e:
+            diagnostic_info["settings_accessible"] = False
+            diagnostic_info["issues_detected"].append(
+                f"Cannot access settings: {str(e)}"
+            )
+
         return (
             jsonify(
                 {
                     "scheduler": {
                         "running": scheduler_service.running,
                         "schedule_info": schedule_info,
+                        "diagnostics": diagnostic_info,
                     }
                 }
             ),
