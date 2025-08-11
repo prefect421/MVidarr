@@ -19,6 +19,9 @@ Docker deployment is the recommended method for production use, offering consist
 git clone https://github.com/prefect421/mvidarr.git
 cd mvidarr
 
+# Checkout the latest stable release (v0.9.5 - recommended)
+git checkout v0.9.5
+
 # Start with Docker Compose
 docker-compose up -d
 ```

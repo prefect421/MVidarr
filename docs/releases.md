@@ -37,6 +37,9 @@ Track MVidarr's development progress through our release history and upcoming mi
 - Complete Duplicate Video Merge functionality with enhanced UI
 - Docker build optimization with consistent 8-minute build times
 - Container size optimization to 1.41GB production images
+- **Fixed GitHub Actions Release Automation**: Resolved tar archive and permissions issues
+- **Modernized CI/CD Pipeline**: Updated to use GitHub CLI with proper workflow permissions
+- **Reliable Release Asset Generation**: Automated source code and installation package creation
 
 ## 📋 Previous Release: v0.9.4
 

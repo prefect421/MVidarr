@@ -25,7 +25,7 @@ title: Home
 - **🔐 User Authentication** - Role-based access control with security features
 - **🌙 Dark/Light Themes** - Multiple theme options with automatic switching
 
-## 🆕 Recent Updates (v0.9.5)
+## 🆕 Recent Updates (v0.9.5) - **LATEST STABLE RELEASE**
 
 - **🎨 UI/UX Excellence** - Streamlined design with clean headers and improved navigation
 - **📚 Complete Documentation** - Comprehensive guides for developers, users, and operations
@@ -33,6 +33,8 @@ title: Home
 - **⚡ Performance Optimizations** - 60% CI time reduction and enhanced system reliability
 - **🔧 Enhanced Scheduler** - Flexible time intervals and improved error handling
 - **🐛 Critical Bug Fixes** - SQLAlchemy compatibility, API authentication, and UI issues resolved
+- **🤖 Fixed Release Automation** - Resolved GitHub Actions workflow issues for reliable deployments
+- **📦 Automated Asset Generation** - Source code and installation packages now auto-generated
 - **📦 Container Size Optimization** - Efficient multi-stage builds with optimized caching (1.41GB optimized size)
 - **🔍 Build Monitoring** - Comprehensive Docker build monitoring and validation infrastructure
 - **⚡ Build Reliability** - 100% build success rate with automated size monitoring and performance tracking
@@ -50,8 +52,11 @@ docker-compose up -d
 
 **Production Docker Image:**
 ```bash
-# Use the latest optimized release
-docker pull ghcr.io/prefect421/mvidarr:v0.9.4
+# Use the latest stable release (v0.9.5)
+docker pull ghcr.io/prefect421/mvidarr:v0.9.5
+
+# Or use the latest tag
+docker pull ghcr.io/prefect421/mvidarr:latest
 ```
 
 **Access the application:**
