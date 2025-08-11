@@ -36,6 +36,9 @@ description: >-                        # used by seo meta and the atom feed
 # The website icon
 avatar: https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/mvidarr-logo.png
 
+# Favicon settings
+favicon: "/assets/img/favicons/favicon.ico"
+
 # Boolean type, the global switch for TOC in posts.
 toc: true
 
