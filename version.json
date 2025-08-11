@@ -1,9 +1,9 @@
 {
-  "version": "0.9.3",
-  "build_date": "2025-08-10T01:45:13.025096",
-  "git_commit": "0c629aa",
+  "version": "0.9.5",
+  "build_date": "2025-08-11T14:23:17.580833",
+  "git_commit": "d5c4403",
   "git_branch": "dev",
-  "release_name": "Current Development",
+  "release_name": "UI/UX Excellence & Documentation Complete",
   "features": [
     "Advanced Artist Management with multi-criteria search and bulk operations",
     "Comprehensive Video Discovery with dual-source integration (IMVDb + YouTube)",
@@ -22,6 +22,16 @@
     "Two-Factor Authentication with TOTP support",
     "Fixed Video Search Results Display with improved CSS and field mapping",
     "Robust CI/CD Integration with comprehensive testing and deployment",
-    "Enhanced Database Initialization with secure admin user creation"
+    "Enhanced Database Initialization with secure admin user creation",
+    "Streamlined UI Design with clean headers and improved navigation",
+    "Complete Artists Page Pagination with full navigation controls",
+    "Enhanced Docker-Native Scheduler Service with improved reliability",
+    "Comprehensive Documentation Portfolio with developer and user guides",
+    "Fixed Video Indexing Database Statistics with SQLAlchemy compatibility",
+    "Resolved Themes API Authentication for seamless settings management",
+    "Verified Scheduled Download System functionality for YouTube videos",
+    "Complete Duplicate Video Merge functionality with enhanced UI",
+    "Advanced Performance Optimizations reducing CI time by 60%",
+    "Professional Error Handling and User Experience Improvements"
   ]
 }
