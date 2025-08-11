@@ -34,7 +34,7 @@ description: >-                        # used by seo meta and the atom feed
 # e.g. 'https://username.github.io', note that it does not end with a '/'.
 
 # The website icon
-avatar: https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/static/favicon.ico
+avatar: https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/logo.svg
 
 # Boolean type, the global switch for TOC in posts.
 toc: true
@@ -92,7 +92,7 @@ theme_mode: dark   # [light|dark] - Set to dark for night mode
 img_cdn:
 
 # the avatar on sidebar, support local or CORS resources
-avatar: https://avatars.githubusercontent.com/u/70246999?v=4
+avatar: https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/logo.svg
 
 # boolean type, the global switch for ToC in posts.
 toc: true

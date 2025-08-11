@@ -1,6 +1,10 @@
-# MVidarr
-
-**A comprehensive music video management and discovery platform** that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.
+<div align="center">
+  <img src="./frontend/src/Content/Images/logo.svg" alt="MVidarr Logo" width="200" height="200">
+  
+  # MVidarr
+  
+  **A comprehensive music video management and discovery platform** that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.
+</div>
 
 ## ✨ Key Features
 

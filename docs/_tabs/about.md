@@ -6,6 +6,10 @@ order: 1
 
 # About MVidarr
 
+<div align="center">
+  <img src="https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/logo.svg" alt="MVidarr Logo" width="150" height="150">
+</div>
+
 **MVidarr** is a comprehensive music video management and discovery platform that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.
 
 ## 🎯 **Mission**
