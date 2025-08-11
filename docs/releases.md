@@ -8,7 +8,37 @@ permalink: /releases/
 
 Track MVidarr's development progress through our release history and upcoming milestones.
 
-## 🚀 Current Release: v0.9.4
+## 🚀 Current Release: v0.9.5
+
+**Released**: August 11, 2025  
+**Focus**: UI/UX Excellence & Documentation Complete
+
+### Major Improvements
+- **🎨 Streamlined UI Design**: Clean, professional headers and improved navigation across all pages
+- **📚 Complete Documentation Portfolio**: Comprehensive guides for developers, users, and operations
+- **📄 Artists Page Pagination**: Full navigation controls with customizable page sizes
+- **⚡ Performance Optimizations**: 60% CI time reduction and enhanced system reliability
+- **🔧 Enhanced Scheduler Service**: Flexible time intervals and improved error handling
+
+### Key Features
+- 35 comprehensive features including all core functionality
+- Complete dual-source video discovery (IMVDb + YouTube)
+- Professional thumbnail management with multi-source search
+- Advanced artist management with bulk operations
+- Enterprise-grade security with automated vulnerability scanning
+- Multi-user authentication with role-based access control
+- MvTV continuous player with cinematic mode
+- Enhanced Docker-native scheduler service
+
+### Technical Enhancements
+- Fixed Video Indexing Database Statistics with SQLAlchemy compatibility
+- Resolved Themes API Authentication for seamless settings management
+- Verified Scheduled Download System functionality for YouTube videos
+- Complete Duplicate Video Merge functionality with enhanced UI
+- Docker build optimization with consistent 8-minute build times
+- Container size optimization to 1.41GB production images
+
+## 📋 Previous Release: v0.9.4
 
 **Released**: August 6, 2025  
 **Focus**: Docker Optimization and Build Reliability

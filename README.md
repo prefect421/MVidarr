@@ -32,7 +32,20 @@
 - **💻 Improved JavaScript** - Comprehensive error handling and authentication integration
 - **🎛️ Modular UI Components** - Reusable pagination, search, and modal systems
 
-## 🆕 Recent Updates (v0.9.4)
+## 🆕 What's New in v0.9.5
+
+**UI/UX Excellence & Documentation Complete Release**
+
+- **🎨 UI/UX Excellence** - Streamlined design with clean headers and improved navigation across all pages
+- **📚 Complete Documentation Portfolio** - Comprehensive guides for developers, users, and operations
+- **📄 Artists Page Pagination** - Full navigation controls with customizable page sizes  
+- **⚡ Performance Optimizations** - 60% CI time reduction and enhanced system reliability
+- **🔧 Enhanced Scheduler Service** - Flexible time intervals and improved error handling
+- **🐛 Critical Bug Fixes** - SQLAlchemy compatibility, API authentication, and UI issues resolved
+- **📊 35 Comprehensive Features** - All core functionality with enterprise-grade security
+- **🔍 Verified System Reliability** - Scheduled downloads, video indexing, and theme management
+
+## 🆕 Previous Updates (v0.9.4)
 
 - **🐳 Docker Optimization** - Reduced build time from timeout failures to consistent 8-minute builds
 - **📦 Container Size Optimization** - Efficient multi-stage builds with optimized caching (1.41GB optimized size)
