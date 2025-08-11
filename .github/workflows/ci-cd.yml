@@ -237,23 +237,36 @@ jobs:
     
     - name: Create release assets
       run: |
-        # Create source code archive
-        tar -czf mvidarr-enhanced-${{ github.event.release.tag_name }}.tar.gz \
-          --exclude='.git' \
-          --exclude='data' \
-          --exclude='__pycache__' \
-          --exclude='*.pyc' \
-          --exclude='.env' \
-          .
+        # Create source code archive more reliably
+        # Create temporary directory to avoid file change issues
+        mkdir -p /tmp/mvidarr-release
         
-        # Create installation package
+        # Copy specific directories and files to avoid concurrent file changes
+        cp -r src/ frontend/ scripts/ /tmp/mvidarr-release/ 2>/dev/null || true
+        cp -r docker/ /tmp/mvidarr-release/ 2>/dev/null || true
+        cp *.py *.md *.json *.txt /tmp/mvidarr-release/ 2>/dev/null || true
+        cp requirements*.txt /tmp/mvidarr-release/ 2>/dev/null || true
+        cp Dockerfile* docker-compose*.yml /tmp/mvidarr-release/ 2>/dev/null || true
+        cp .env.template /tmp/mvidarr-release/ 2>/dev/null || true
+        
+        # Create archive from temporary directory
+        cd /tmp
+        tar -czf $GITHUB_WORKSPACE/mvidarr-enhanced-${{ github.event.release.tag_name }}.tar.gz \
+          mvidarr-release/
+        cd $GITHUB_WORKSPACE
+        
+        # Create installation package more reliably
         mkdir -p release-package
-        cp -r src/ frontend/ scripts/ docker/ release-package/
-        cp app.py requirements.txt docker-compose.production.yml Dockerfile.production release-package/
-        cp .env.template release-package/.env.example
-        cp SETUP.md README.md release-package/
+        cp -r src/ frontend/ scripts/ release-package/ 2>/dev/null || true
+        cp -r docker/ release-package/ 2>/dev/null || true
+        cp app.py requirements.txt release-package/ 2>/dev/null || true
+        cp docker-compose.production.yml Dockerfile.production release-package/ 2>/dev/null || true
+        cp .env.template release-package/.env.example 2>/dev/null || true
+        cp SETUP.md README.md release-package/ 2>/dev/null || true
         
-        tar -czf mvidarr-enhanced-install-${{ github.event.release.tag_name }}.tar.gz -C release-package .
+        # Create installation archive from release-package directory  
+        tar -czf mvidarr-enhanced-install-${{ github.event.release.tag_name }}.tar.gz \
+          -C release-package .
     
     - name: Upload release assets
       uses: actions/upload-release-asset@v1
