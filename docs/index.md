@@ -114,7 +114,7 @@ docker pull ghcr.io/prefect421/mvidarr:v0.9.5
   <a href="https://github.com/prefect421/mvidarr/discussions" target="_blank" style="background: #0969da; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
     💬 Discussions
   </a>
-  <a href="{% link _tabs/documentation.md %}" style="background: #1f883d; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
+  <a href="https://github.com/prefect421/mvidarr/tree/main/docs" target="_blank" style="background: #1f883d; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
     📚 Documentation
   </a>
 </div>
