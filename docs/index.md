@@ -3,14 +3,14 @@ layout: home
 title: MVidarr - Music Video Management Platform
 ---
 
-<div style="text-align: center; margin-bottom: 30px;">
-  <img src="https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/mvidarr-logo.png" alt="MVidarr Logo" width="150" height="150" style="margin-bottom: 20px;">
+<div class="home-header">
+  <img src="https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/mvidarr-logo.png" alt="MVidarr Logo" width="150" height="150">
   
   <h1>MVidarr</h1>
   
-  <p><strong>A comprehensive music video management and discovery platform</strong> that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.</p>
+  <p class="tagline"><strong>A comprehensive music video management and discovery platform</strong> that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.</p>
   
-  <p>
+  <div class="badges">
     <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.5" target="_blank">
       <img src="https://img.shields.io/badge/version-v0.9.5-blue.svg" alt="Version">
     </a>
@@ -23,7 +23,7 @@ title: MVidarr - Music Video Management Platform
     <a href="https://ghcr.io/prefect421/mvidarr:v0.9.5" target="_blank">
       <img src="https://img.shields.io/badge/docker-ghcr.io-2496ED.svg" alt="Docker">
     </a>
-  </p>
+  </div>
 </div>
 
 ## ✨ Key Features
@@ -61,10 +61,10 @@ title: MVidarr - Music Video Management Platform
 
 ## 🚀 Quick Start
 
-<div style="text-align: center; margin: 20px 0;">
-<a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.5" target="_blank" style="margin: 0 10px;">📥 <strong>Download v0.9.5</strong></a> |
-<a href="https://ghcr.io/prefect421/mvidarr:v0.9.5" target="_blank" style="margin: 0 10px;">🐳 <strong>Docker Image</strong></a> |
-<a href="#installation" style="margin: 0 10px;">📚 <strong>Installation Guide</strong></a>
+<div class="quick-start">
+  <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.5" target="_blank">📥 Download v0.9.5</a>
+  <a href="https://ghcr.io/prefect421/mvidarr:v0.9.5" target="_blank">🐳 Docker Image</a>
+  <a href="#installation">📚 Installation Guide</a>
 </div>
 
 ### 🐳 Docker Deployment (Recommended)
@@ -86,20 +86,20 @@ docker pull ghcr.io/prefect421/mvidarr:v0.9.5
 
 ## 🏗️ Architecture
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
-  <div style="border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px;">
+<div class="architecture-grid">
+  <div class="arch-card">
     <h3>🐍 Backend</h3>
     <p>Flask (Python 3.12+) with modular service architecture, RESTful APIs, and comprehensive error handling</p>
   </div>
-  <div style="border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px;">
+  <div class="arch-card">
     <h3>🗄️ Database</h3>
     <p>MariaDB 11.4+ with automatic initialization, optimized queries, and intelligent indexing</p>
   </div>
-  <div style="border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px;">
+  <div class="arch-card">
     <h3>🎨 Frontend</h3>
     <p>Modern responsive design with advanced JavaScript, theme system, and mobile optimization</p>
   </div>
-  <div style="border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px;">
+  <div class="arch-card">
     <h3>🔒 Security</h3>
     <p>Enterprise-grade security with role-based access, automated vulnerability scanning, and audit logging</p>
   </div>
@@ -107,7 +107,7 @@ docker pull ghcr.io/prefect421/mvidarr:v0.9.5
 
 ## 🤝 Community & Support
 
-<div align="center" style="margin: 20px 0;">
+<div class="community-section">
   <a href="https://github.com/prefect421/mvidarr/issues" target="_blank" style="background: #6f42c1; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
     🐛 Report Issues
   </a>
@@ -121,7 +121,7 @@ docker pull ghcr.io/prefect421/mvidarr:v0.9.5
 
 ---
 
-<div align="center" style="margin: 20px 0; padding: 20px; background: #f6f8fa; border-radius: 6px;">
+<div class="version-footer">
   <h3>🚀 MVidarr v0.9.5</h3>
   <p><strong>UI/UX Excellence & Documentation Complete</strong></p>
   <p>Built with ❤️ for music video enthusiasts</p>
