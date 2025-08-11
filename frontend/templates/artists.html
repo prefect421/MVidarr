@@ -379,8 +379,60 @@
         </div>
     </div>
 
+    <!-- Pagination Controls Top -->
+    <div class="pagination-container top-pagination" id="topPagination" style="display: none;">
+        <div class="pagination-info">
+            <span id="artistCountInfo">Loading...</span>
+        </div>
+        <div class="pagination-controls">
+            <button class="btn btn-secondary pagination-btn" id="prevPageTop" onclick="previousArtistPage()" disabled>
+                ← Previous
+            </button>
+            <div class="page-selector">
+                <span>Page </span>
+                <input type="number" id="pageInputTop" class="page-input" min="1" value="1" onchange="goToArtistPage(this.value)">
+                <span> of <span id="totalPagesTop">1</span></span>
+            </div>
+            <button class="btn btn-secondary pagination-btn" id="nextPageTop" onclick="nextArtistPage()" disabled>
+                Next →
+            </button>
+        </div>
+        <div class="page-size-selector">
+            <label for="pageSizeSelect">Artists per page:</label>
+            <select id="pageSizeSelect" onchange="changeArtistPageSize(this.value)">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+            </select>
+        </div>
+    </div>
+
     <div class="artists-grid" id="artists-grid">
         <p>Loading artists...</p>
+    </div>
+
+    <!-- Pagination Controls Bottom -->
+    <div class="pagination-container bottom-pagination" id="bottomPagination" style="display: none;">
+        <div class="pagination-info">
+            <span id="artistCountInfoBottom">Loading...</span>
+        </div>
+        <div class="pagination-controls">
+            <button class="btn btn-secondary pagination-btn" id="prevPageBottom" onclick="previousArtistPage()" disabled>
+                ← Previous
+            </button>
+            <div class="page-selector">
+                <span>Page </span>
+                <input type="number" id="pageInputBottom" class="page-input" min="1" value="1" onchange="goToArtistPage(this.value)">
+                <span> of <span id="totalPagesBottom">1</span></span>
+            </div>
+            <button class="btn btn-secondary pagination-btn" id="nextPageBottom" onclick="nextArtistPage()" disabled>
+                Next →
+            </button>
+        </div>
+        <div class="page-size-selector">
+            <span>Artists per page: <span id="currentArtistPageSize">50</span></span>
+        </div>
     </div>
 </div>
 
@@ -468,10 +520,17 @@ let activeFilters = 0;
 let isSelectionMode = false;
 let selectedArtists = new Set();
 
-function loadArtists(page = 1) {
+function loadArtists(page = 1, resetPage = false) {
+    // Update pagination state
+    if (resetPage) {
+        artistCurrentPage = 1;
+    } else {
+        artistCurrentPage = page;
+    }
+    
     const params = new URLSearchParams();
-    params.append('page', page);
-    params.append('per_page', 50);
+    params.append('page', artistCurrentPage);
+    params.append('per_page', artistPageSize);
     
     // Add search term
     const searchTerm = document.getElementById('searchInput').value.trim();
@@ -526,14 +585,17 @@ function loadArtists(page = 1) {
             
             const grid = document.getElementById('artists-grid');
             
-            // Safely access pagination data with fallbacks (basic API format)
-            currentPage = data.page || 1;
-            totalPages = data.pages || 1;
+            // Update pagination variables with API response
+            artistCurrentPage = data.page || 1;
+            artistTotalPages = data.pages || 1;
+            
+            // Update pagination controls
+            updateArtistPagination(data);
             
             // Create pagination object for compatibility
             const pagination = {
-                page: currentPage,
-                pages: totalPages,
+                page: artistCurrentPage,
+                pages: artistTotalPages,
                 per_page: data.per_page || 50
             };
             
@@ -621,8 +683,11 @@ function loadArtists(page = 1) {
                     const grid = document.getElementById('artists-grid');
                     
                     // Handle basic endpoint response format
-                    currentPage = data.page || 1;
-                    totalPages = data.pages || 1;
+                    artistCurrentPage = data.page || 1;
+                    artistTotalPages = data.pages || 1;
+                    
+                    // Update pagination controls
+                    updateArtistPagination(data);
                     
                     // Update results summary for basic format
                     const summary = document.getElementById('resultsCount');
@@ -2362,6 +2427,87 @@ function hideBulkProgress() {
 }
 
 // Enhanced Selection UI Updates
+
+// Artist Pagination Functions
+let artistCurrentPage = 1;
+let artistTotalPages = 1;
+let artistPageSize = 50;
+
+function nextArtistPage() {
+    if (artistCurrentPage < artistTotalPages) {
+        loadArtists(artistCurrentPage + 1);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function previousArtistPage() {
+    if (artistCurrentPage > 1) {
+        loadArtists(artistCurrentPage - 1);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function goToArtistPage(page) {
+    const pageNum = parseInt(page);
+    if (pageNum >= 1 && pageNum <= artistTotalPages && pageNum !== artistCurrentPage) {
+        loadArtists(pageNum);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function changeArtistPageSize(newSize) {
+    const size = parseInt(newSize);
+    if (size !== artistPageSize) {
+        artistPageSize = size;
+        // Reset to page 1 when changing page size
+        loadArtists(1, true);
+        // Update display
+        document.getElementById('currentArtistPageSize').textContent = size;
+        // Update pagination variables
+        artistCurrentPage = 1;
+    }
+}
+
+// Update artist pagination controls based on API response
+function updateArtistPagination(data) {
+    const totalArtists = data.total || 0;
+    
+    // Calculate pagination values
+    artistTotalPages = Math.ceil(totalArtists / artistPageSize);
+    const startIndex = totalArtists > 0 ? ((artistCurrentPage - 1) * artistPageSize) + 1 : 0;
+    const endIndex = Math.min(artistCurrentPage * artistPageSize, totalArtists);
+    
+    // Update pagination info displays
+    const topInfo = document.getElementById('artistCountInfo');
+    const bottomInfo = document.getElementById('artistCountInfoBottom');
+    const infoText = `Showing ${startIndex}-${endIndex} of ${totalArtists} artists`;
+    
+    if (topInfo) topInfo.textContent = infoText;
+    if (bottomInfo) bottomInfo.textContent = infoText;
+    
+    // Update page inputs and total pages display
+    document.getElementById('pageInputTop').value = artistCurrentPage;
+    document.getElementById('pageInputBottom').value = artistCurrentPage;
+    document.getElementById('totalPagesTop').textContent = artistTotalPages;
+    document.getElementById('totalPagesBottom').textContent = artistTotalPages;
+    
+    // Update button states
+    const hasPrevious = artistCurrentPage > 1;
+    const hasNext = artistCurrentPage < artistTotalPages;
+    
+    document.getElementById('prevPageTop').disabled = !hasPrevious;
+    document.getElementById('prevPageBottom').disabled = !hasPrevious;
+    document.getElementById('nextPageTop').disabled = !hasNext;
+    document.getElementById('nextPageBottom').disabled = !hasNext;
+    
+    // Show pagination controls when we have artists (even if only one page)
+    const showPagination = totalArtists > 0;
+    document.getElementById('topPagination').style.display = showPagination ? 'flex' : 'none';
+    document.getElementById('bottomPagination').style.display = showPagination ? 'flex' : 'none';
+}
 </script>
 
 </div> <!-- Close container -->
@@ -3264,6 +3410,96 @@ function hideBulkProgress() {
     
     .search-container {
         flex-direction: column;
+    }
+}
+
+/* Artist Pagination Styles */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    padding: 15px 20px;
+    background: var(--bg-card, #2a2a2a);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+}
+
+.pagination-info {
+    color: var(--text-secondary, #ccc);
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pagination-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.page-selector {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-secondary, #ccc);
+    font-size: 14px;
+}
+
+.page-input {
+    width: 60px;
+    padding: 4px 8px;
+    background: var(--input-bg, #333);
+    border: 1px solid var(--input-border, #444);
+    border-radius: 4px;
+    color: var(--input-text, #fff);
+    text-align: center;
+    font-size: 14px;
+}
+
+.page-input:focus {
+    outline: none;
+    border-color: var(--input-focus, #00d4ff);
+}
+
+.page-size-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary, #ccc);
+    font-size: 14px;
+}
+
+.page-size-selector select {
+    padding: 4px 8px;
+    background: var(--input-bg, #333);
+    border: 1px solid var(--input-border, #444);
+    border-radius: 4px;
+    color: var(--input-text, #fff);
+    font-size: 14px;
+}
+
+.page-size-selector select:focus {
+    outline: none;
+    border-color: var(--input-focus, #00d4ff);
+}
+
+@media (max-width: 768px) {
+    .pagination-container {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .pagination-controls {
+        order: 2;
+    }
+    
+    .page-size-selector {
+        order: 3;
     }
 }
 </style>

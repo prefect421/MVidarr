@@ -3,7 +3,6 @@
 {% block title %}Videos - MVidarr{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='videos.css') }}">
 <!-- Performance Enhancement CSS - DISABLED: Causing loading issues
 <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='ui-enhancements.css') }}">
 <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='virtualization.css') }}">
@@ -17,7 +16,7 @@
         </div>
         
         <!-- Primary Actions - Most Important Operations -->
-        <div class="action-group action-group-primary" role="toolbar" aria-label="Primary video actions">
+        <div class="action-group" role="group" aria-label="Primary video actions">
             <button onclick="showAddVideoModal()" class="btn btn-primary" aria-label="Add new video to collection">
                 <iconify-icon icon="tabler:plus" aria-hidden="true"></iconify-icon>
                 Add Video
