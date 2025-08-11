@@ -1,9 +1,9 @@
 {
-  "version": "0.9.5",
-  "build_date": "2025-08-11T14:23:17.580833",
-  "git_commit": "d5c4403",
-  "git_branch": "main",
-  "release_name": "UI/UX Excellence & Documentation Complete",
+  "version": "0.9.6-dev",
+  "build_date": "2025-08-11T14:35:00.875520",
+  "git_commit": "497be62",
+  "git_branch": "dev",
+  "release_name": "Advanced Testing & Mobile Optimization",
   "features": [
     "Advanced Artist Management with multi-criteria search and bulk operations",
     "Comprehensive Video Discovery with dual-source integration (IMVDb + YouTube)",
@@ -39,6 +39,11 @@
     "Verified Scheduled Download System functionality for YouTube videos",
     "Complete Duplicate Video Merge functionality with enhanced UI",
     "Advanced Performance Optimizations reducing CI time by 60%",
-    "Professional Error Handling and User Experience Improvements"
+    "Professional Error Handling and User Experience Improvements",
+    "[PLANNED] Advanced Testing Framework with comprehensive coverage",
+    "[PLANNED] Enhanced Video Quality Management with automatic optimization",
+    "[PLANNED] Extended API Functionality for third-party integrations",
+    "[PLANNED] Mobile-Responsive Design improvements",
+    "[PLANNED] Performance Monitoring Dashboard with real-time metrics"
   ]
 }
