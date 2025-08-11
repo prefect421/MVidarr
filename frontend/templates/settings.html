@@ -5590,7 +5590,9 @@ function switchThemeTab(event, tabId) {
 async function loadThemes() {
     try {
         console.log('Loading themes from /api/themes...');
-        const response = await fetch('/api/themes');
+        const response = await fetch('/api/themes', {
+            credentials: 'same-origin'
+        });
         console.log('Themes API response status:', response.status);
         
         if (!response.ok) {
@@ -5697,7 +5699,8 @@ async function quickApplyTheme(themeId) {
         // If this is a built-in theme, get its CSS variables
         if (theme.is_built_in) {
             const extractResponse = await fetch(`/api/themes/built-in/${theme.name}/extract`, {
-                method: 'POST'
+                method: 'POST',
+                credentials: 'same-origin'
             });
             if (extractResponse.ok) {
                 const extractData = await extractResponse.json();
@@ -5718,6 +5721,7 @@ async function quickApplyTheme(themeId) {
         // Save theme preference using themes API
         const response = await fetch('/api/themes/apply', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 theme_name: theme.id || theme.name
@@ -5824,7 +5828,8 @@ async function loadThemeForCustomization(theme) {
     if (theme.is_built_in && !themeData) {
         try {
             const response = await fetch(`/api/themes/built-in/${theme.name}/extract`, {
-                method: 'POST'
+                method: 'POST',
+                credentials: 'same-origin'
             });
             if (response.ok) {
                 const extractData = await response.json();
@@ -5905,6 +5910,7 @@ async function applyCurrentTheme() {
         // Save theme preference using themes API
         const response = await fetch('/api/themes/apply', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 theme_name: currentTheme.name  // Always use name, not ID
@@ -5964,6 +5970,7 @@ async function saveCustomTheme() {
         // Save custom theme
         const response = await fetch('/api/themes', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: customName.toLowerCase().replace(/\s+/g, '_'),
@@ -6001,6 +6008,7 @@ async function exportAllThemes() {
         
         const response = await fetch('/api/themes/export/all', {
             method: 'GET',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -6050,6 +6058,7 @@ async function exportCurrentTheme() {
         
         const response = await fetch(`/api/themes/${themeId}/export`, {
             method: 'GET',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -6100,6 +6109,7 @@ function importThemes() {
             
             const validateResponse = await fetch('/api/themes/import/validate', {
                 method: 'POST',
+                credentials: 'same-origin',
                 body: formData
             });
             
@@ -6159,6 +6169,7 @@ async function performImport(file) {
         
         const response = await fetch('/api/themes/import', {
             method: 'POST',
+            credentials: 'same-origin',
             body: formData
         });
         
@@ -6250,6 +6261,7 @@ async function saveCurrentTheme() {
         // Update the theme
         const response = await fetch(url, {
             method: method,
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updateData)
         });
@@ -6374,7 +6386,8 @@ async function deleteTheme(themeId, themeName) {
 async function proceedDeleteTheme(themeId) {
     try {
         const response = await fetch(`/api/themes/${themeId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'same-origin'
         });
         
         const data = await response.json();
@@ -6465,6 +6478,7 @@ async function updateCurrentTheme() {
         // Update existing theme
         const response = await fetch(url, {
             method: method,
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updateData)
         });
