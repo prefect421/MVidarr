@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./frontend/src/Content/Images/logo.svg" alt="MVidarr Logo" width="200" height="200">
+  <img src="./frontend/src/Content/Images/mvidarr-logo.png" alt="MVidarr Logo" width="200" height="200">
   
   # MVidarr
   
