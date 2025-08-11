@@ -3,9 +3,28 @@ layout: home
 title: Home
 ---
 
-# MVidarr
-
-**A comprehensive music video management and discovery platform** that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.
+<div align="center">
+  <img src="https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/mvidarr-logo.png" alt="MVidarr Logo" width="150" height="150">
+  
+  <h1>MVidarr</h1>
+  
+  <p><strong>A comprehensive music video management and discovery platform</strong> that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.</p>
+  
+  <p>
+    <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.5" target="_blank">
+      <img src="https://img.shields.io/badge/version-v0.9.5-blue.svg" alt="Version">
+    </a>
+    <a href="https://github.com/prefect421/mvidarr" target="_blank">
+      <img src="https://img.shields.io/github/stars/prefect421/mvidarr.svg" alt="Stars">
+    </a>
+    <a href="https://github.com/prefect421/mvidarr/blob/main/LICENSE" target="_blank">
+      <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
+    </a>
+    <a href="https://ghcr.io/prefect421/mvidarr:v0.9.5" target="_blank">
+      <img src="https://img.shields.io/badge/docker-ghcr.io-2496ED.svg" alt="Docker">
+    </a>
+  </p>
+</div>
 
 ## ✨ Key Features
 
@@ -42,43 +61,75 @@ title: Home
 
 ## 🚀 Quick Start
 
-### Docker Deployment (Recommended)
+<div align="center" style="margin: 20px 0;">
+  <a href="{% link _tabs/installation.md %}" style="background: #007acc; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
+    📥 Installation Guide
+  </a>
+  <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.5" target="_blank" style="background: #28a745; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
+    🎉 Download v0.9.5
+  </a>
+  <a href="https://ghcr.io/prefect421/mvidarr:v0.9.5" target="_blank" style="background: #2496ED; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
+    🐳 Docker Image
+  </a>
+</div>
+
+### 🐳 Docker Deployment (Recommended)
 
 ```bash
+# Quick start with Docker Compose
 git clone https://github.com/prefect421/mvidarr.git
-cd mvidarr
+cd mvidarr && git checkout v0.9.5
 docker-compose up -d
-```
 
-**Production Docker Image:**
-```bash
-# Use the latest stable release (v0.9.5)
+# Or use production image directly
 docker pull ghcr.io/prefect421/mvidarr:v0.9.5
-
-# Or use the latest tag
-docker pull ghcr.io/prefect421/mvidarr:latest
 ```
 
-**Access the application:**
-- Open your browser to `http://localhost:5001`
-- Default login: `admin` / `admin` (change immediately)
+**🌐 Access your application:**
+- **URL**: `http://localhost:5001`
+- **Default Login**: `admin` / `admin` ⚠️ *Change immediately*
+- **API Docs**: `http://localhost:5001/api/docs`
 
 ## 🏗️ Architecture
 
-MVidarr is built with:
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
+  <div style="border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px;">
+    <h3>🐍 Backend</h3>
+    <p>Flask (Python 3.12+) with modular service architecture, RESTful APIs, and comprehensive error handling</p>
+  </div>
+  <div style="border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px;">
+    <h3>🗄️ Database</h3>
+    <p>MariaDB 11.4+ with automatic initialization, optimized queries, and intelligent indexing</p>
+  </div>
+  <div style="border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px;">
+    <h3>🎨 Frontend</h3>
+    <p>Modern responsive design with advanced JavaScript, theme system, and mobile optimization</p>
+  </div>
+  <div style="border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px;">
+    <h3>🔒 Security</h3>
+    <p>Enterprise-grade security with role-based access, automated vulnerability scanning, and audit logging</p>
+  </div>
+</div>
 
-- **Backend**: Flask (Python 3.12+) with modular service architecture
-- **Database**: MariaDB 11.4+ with automatic table initialization
-- **Frontend**: Modern HTML5/CSS3/JavaScript with responsive design
-- **Media Processing**: FFmpeg, yt-dlp for video downloading and processing
-- **Authentication**: Secure user management with role-based access control
-- **Security**: bcrypt password hashing, session management, audit logging
-- **Containerization**: Optimized Docker Compose with multi-stage builds, automated monitoring, and 1.41GB production images
+## 🤝 Community & Support
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE]({{ site.github.repository_url }}/blob/main/LICENSE) file for details.
+<div align="center" style="margin: 20px 0;">
+  <a href="https://github.com/prefect421/mvidarr/issues" target="_blank" style="background: #6f42c1; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
+    🐛 Report Issues
+  </a>
+  <a href="https://github.com/prefect421/mvidarr/discussions" target="_blank" style="background: #0969da; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
+    💬 Discussions
+  </a>
+  <a href="{% link _tabs/documentation.md %}" style="background: #1f883d; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
+    📚 Documentation
+  </a>
+</div>
 
 ---
 
-**MVidarr v{{ site.data.version.current | default: "0.9.4" }}** - Built with ❤️ for music video enthusiasts
+<div align="center" style="margin: 20px 0; padding: 20px; background: #f6f8fa; border-radius: 6px;">
+  <h3>🚀 MVidarr v0.9.5</h3>
+  <p><strong>UI/UX Excellence & Documentation Complete</strong></p>
+  <p>Built with ❤️ for music video enthusiasts</p>
+  <small>Licensed under the <a href="https://github.com/prefect421/mvidarr/blob/main/LICENSE" target="_blank">MIT License</a></small>
+</div>
