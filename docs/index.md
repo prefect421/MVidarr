@@ -1,22 +1,30 @@
 ---
 layout: home
-title: Home
+title: MVidarr - Music Video Management Platform
 ---
 
-{: .text-center }
-![MVidarr Logo](https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/mvidarr-logo.png){: width="150" height="150"}
-
-# MVidarr
-{: .text-center }
-
-**A comprehensive music video management and discovery platform** that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.
-{: .text-center }
-
-{: .text-center }
-[![Version](https://img.shields.io/badge/version-v0.9.5-blue.svg)](https://github.com/prefect421/mvidarr/releases/tag/v0.9.5){: target="_blank"}
-[![Stars](https://img.shields.io/github/stars/prefect421/mvidarr.svg)](https://github.com/prefect421/mvidarr){: target="_blank"}
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/prefect421/mvidarr/blob/main/LICENSE){: target="_blank"}
-[![Docker](https://img.shields.io/badge/docker-ghcr.io-2496ED.svg)](https://ghcr.io/prefect421/mvidarr:v0.9.5){: target="_blank"}
+<div style="text-align: center; margin-bottom: 30px;">
+  <img src="https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/mvidarr-logo.png" alt="MVidarr Logo" width="150" height="150" style="margin-bottom: 20px;">
+  
+  <h1>MVidarr</h1>
+  
+  <p><strong>A comprehensive music video management and discovery platform</strong> that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.</p>
+  
+  <p>
+    <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.5" target="_blank">
+      <img src="https://img.shields.io/badge/version-v0.9.5-blue.svg" alt="Version">
+    </a>
+    <a href="https://github.com/prefect421/mvidarr" target="_blank">
+      <img src="https://img.shields.io/github/stars/prefect421/mvidarr.svg" alt="Stars">
+    </a>
+    <a href="https://github.com/prefect421/mvidarr/blob/main/LICENSE" target="_blank">
+      <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
+    </a>
+    <a href="https://ghcr.io/prefect421/mvidarr:v0.9.5" target="_blank">
+      <img src="https://img.shields.io/badge/docker-ghcr.io-2496ED.svg" alt="Docker">
+    </a>
+  </p>
+</div>
 
 ## ✨ Key Features
 
@@ -53,10 +61,11 @@ title: Home
 
 ## 🚀 Quick Start
 
-{: .text-center }
-📥 **[Installation Guide]({% link _tabs/installation.md %})**  
-🎉 **[Download v0.9.5](https://github.com/prefect421/mvidarr/releases/tag/v0.9.5)**  
-🐳 **[Docker Image](https://ghcr.io/prefect421/mvidarr:v0.9.5)**
+<div style="text-align: center; margin: 20px 0;">
+<a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.5" target="_blank" style="margin: 0 10px;">📥 <strong>Download v0.9.5</strong></a> |
+<a href="https://ghcr.io/prefect421/mvidarr:v0.9.5" target="_blank" style="margin: 0 10px;">🐳 <strong>Docker Image</strong></a> |
+<a href="#installation" style="margin: 0 10px;">📚 <strong>Installation Guide</strong></a>
+</div>
 
 ### 🐳 Docker Deployment (Recommended)
 
