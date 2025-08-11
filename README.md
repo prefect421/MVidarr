@@ -24,18 +24,6 @@
 - **🔐 User Authentication** - Role-based access control with security features
 - **🎨 Advanced Theme System** - 7 built-in themes with export/import functionality
 
-## 🆕 What's New in v0.9.3
-
-**Theme System & UI Improvements Release**
-
-- **🎨 Complete Theme Export/Import** - Export individual themes or all themes as JSON files
-- **🔧 Simplified Theme Management** - Streamlined single-variant theme system  
-- **📹 Enhanced Video Management** - Bulk refresh metadata with preserved navigation context
-- **🏗️ Major Code Refactoring** - Videos page reduced by 98.7% through modular components
-- **🎯 API-Based Themes** - 7 built-in themes: Default, Cyber, VaporWave, TARDIS, Punk 77, MTV, LCARS
-- **💻 Improved JavaScript** - Comprehensive error handling and authentication integration
-- **🎛️ Modular UI Components** - Reusable pagination, search, and modal systems
-
 ## 🆕 What's New in v0.9.5
 
 **UI/UX Excellence & Documentation Complete Release**
