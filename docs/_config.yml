@@ -1,6 +1,6 @@
 # Site settings
-title: MVidarr
-description: A comprehensive music video management and discovery platform
+title: MVidarr - Music Video Management Platform
+description: A comprehensive music video management and discovery platform with intelligent automation, enterprise security, and modern streaming experience
 baseurl: "/mvidarr"
 url: "https://prefect421.github.io"
 

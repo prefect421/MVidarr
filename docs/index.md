@@ -105,6 +105,54 @@ docker pull ghcr.io/prefect421/mvidarr:v0.9.5
   </div>
 </div>
 
+## 🎯 About MVidarr
+
+<div class="about-section">
+  <p>MVidarr is a comprehensive music video management and discovery platform designed for music enthusiasts who want to organize, discover, and stream their music video collections with professional-grade tools and intelligent automation.</p>
+
+  <h2>🌟 Project Vision</h2>
+  <p>Our vision is to create the ultimate music video management solution that combines the discovery power of multiple sources with intelligent organization, advanced search capabilities, and a modern streaming experience.</p>
+
+  <h2>🛡️ Enterprise Security Features</h2>
+  <div class="architecture-grid">
+    <div class="arch-card">
+      <h3>🔐 Authentication</h3>
+      <p>Role-based access control with Admin, Manager, User, and ReadOnly roles</p>
+    </div>
+    <div class="arch-card">
+      <h3>🔒 Data Protection</h3>
+      <p>bcrypt password hashing, secure session management, and SQL injection prevention</p>
+    </div>
+    <div class="arch-card">
+      <h3>📊 Audit Logging</h3>
+      <p>Comprehensive audit trails and account lockout protection</p>
+    </div>
+    <div class="arch-card">
+      <h3>🛡️ Security Scanning</h3>
+      <p>Automated vulnerability scanning with enterprise-grade security workflows</p>
+    </div>
+  </div>
+
+  <h2>📈 Development Philosophy</h2>
+  <ul>
+    <li><strong>Security First</strong>: Every feature is designed with security in mind</li>
+    <li><strong>User Experience</strong>: Intuitive interfaces that don't compromise on functionality</li>
+    <li><strong>Performance</strong>: Optimized for speed and reliability with 60% CI time reduction</li>
+    <li><strong>Maintainability</strong>: Clean, well-documented code architecture</li>
+    <li><strong>Extensibility</strong>: Built to grow with your needs</li>
+  </ul>
+
+  <h2>🚀 Current Status: v0.9.5</h2>
+  <p><strong>Latest Release</strong>: UI/UX Excellence & Documentation Complete</p>
+  <ul>
+    <li>✅ Complete Docker optimization with 8-minute reliable builds</li>
+    <li>✅ Container size optimization (1.41GB production images)</li>
+    <li>✅ Enterprise-grade security with 17 vulnerabilities resolved</li>
+    <li>✅ 35+ comprehensive features with advanced automation</li>
+    <li>✅ Professional documentation and GitHub Pages deployment</li>
+  </ul>
+</div>
+
 ## 🤝 Community & Support
 
 <div class="community-section">
