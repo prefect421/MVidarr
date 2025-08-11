@@ -701,13 +701,13 @@ class DatabasePerformanceOptimizer:
                 func.count(Artist.id).label("total_artists"),
                 func.count(Video.id).label("total_videos"),
                 func.count(Download.id).label("total_downloads"),
-                func.sum(case([(Video.imvdb_id.isnot(None), 1)], else_=0)).label(
+                func.sum(case((Video.imvdb_id.isnot(None), 1), else_=0)).label(
                     "videos_with_imvdb"
                 ),
                 func.sum(
-                    case([(Video.status == VideoStatus.DOWNLOADED, 1)], else_=0)
+                    case((Video.status == VideoStatus.DOWNLOADED, 1), else_=0)
                 ).label("downloaded_videos"),
-                func.sum(case([(Download.file_path.isnot(None), 1)], else_=0)).label(
+                func.sum(case((Download.file_path.isnot(None), 1), else_=0)).label(
                     "videos_with_files"
                 ),
             )
