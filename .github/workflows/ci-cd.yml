@@ -8,6 +8,13 @@ on:
   release:
     types: [ published ]
 
+# Global permissions for the workflow
+permissions:
+  contents: write
+  packages: write
+  actions: read
+  security-events: write
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -274,9 +281,30 @@ jobs:
     - name: Upload release assets
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # Upload both release archives using GitHub CLI
-        gh release upload ${{ github.event.release.tag_name }} \
-          mvidarr-enhanced-${{ github.event.release.tag_name }}.tar.gz \
-          mvidarr-enhanced-install-${{ github.event.release.tag_name }}.tar.gz \
-          --clobber
+        # Wait a moment for release to be fully created
+        sleep 5
+        
+        # Check if release exists and create assets list
+        echo "Uploading assets to release ${{ github.event.release.tag_name }}"
+        
+        # Upload source code archive
+        if [ -f "mvidarr-enhanced-${{ github.event.release.tag_name }}.tar.gz" ]; then
+          echo "Uploading source archive..."
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "mvidarr-enhanced-${{ github.event.release.tag_name }}.tar.gz" \
+            --clobber || echo "Failed to upload source archive"
+        fi
+        
+        # Upload installation package
+        if [ -f "mvidarr-enhanced-install-${{ github.event.release.tag_name }}.tar.gz" ]; then
+          echo "Uploading installation package..."
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "mvidarr-enhanced-install-${{ github.event.release.tag_name }}.tar.gz" \
+            --clobber || echo "Failed to upload installation package"
+        fi
+        
+        # List final release assets
+        echo "Final release assets:"
+        gh release view "${{ github.event.release.tag_name }}" --json assets --jq '.assets[].name'
