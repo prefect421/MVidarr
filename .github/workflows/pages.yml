@@ -37,21 +37,25 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@v1.190.0
         with:
           ruby-version: '3.1'
           bundler-cache: true
+          cache-version: 1
           
       - name: Create Gemfile
         run: |
+          cd docs
           cat > Gemfile << 'EOF'
           source 'https://rubygems.org'
           
           gem "jekyll", "~> 4.3.0"
-          gem "minima", "~> 2.5"
+          gem "jekyll-theme-chirpy", "~> 7.0"
           gem "jekyll-feed", "~> 0.12"
           gem "jekyll-sitemap", "~> 1.4"
           gem "jekyll-seo-tag", "~> 2.6"
+          gem "jekyll-paginate", "~> 1.1"
+          gem "jekyll-redirect-from", "~> 0.16"
           
           # Windows and JRuby does not include zoneinfo files, so bundle the tzinfo-data gem
           # and associated library.
@@ -70,6 +74,7 @@ jobs:
           
       - name: Install dependencies
         run: |
+          cd docs
           bundle install
           
       - name: Setup Pages
@@ -78,7 +83,8 @@ jobs:
         
       - name: Build with Jekyll
         run: |
-          bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+          cd docs
+          bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}" --destination ../_site
         env:
           JEKYLL_ENV: production
           
