@@ -10,8 +10,18 @@
   --mvidarr-link: #00b366;
 }
 
-/* Dark theme base */
-html, body {
+/* Dark theme base - Force override */
+html {
+  background-color: var(--mvidarr-dark) !important;
+}
+
+body {
+  background-color: var(--mvidarr-dark) !important;
+  color: var(--mvidarr-text) !important;
+}
+
+/* Force main wrapper background */
+.wrapper, .page-content, .site-content {
   background-color: var(--mvidarr-dark) !important;
   color: var(--mvidarr-text) !important;
 }
