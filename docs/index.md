@@ -1,6 +1,6 @@
 ---
 layout: home
-title: MVidarr - Music Video Management Platform
+title: Home
 ---
 
 <div class="home-header">
