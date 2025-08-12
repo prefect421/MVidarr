@@ -1,35 +1,58 @@
 #!/usr/bin/env python3
+from playwright.sync_api import sync_playwright
+import time
 
-import asyncio
-from playwright.async_api import async_playwright
-
-async def take_screenshot():
-    async with async_playwright() as p:
-        # Launch browser in headless mode
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(
-            viewport={'width': 1280, 'height': 720}
-        )
-        page = await context.new_page()
+def take_screenshot():
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
         
         try:
-            # Navigate to the Videos page
-            print("Navigating to Videos page...")
-            await page.goto('http://localhost:5000/videos')
+            print('Loading GitHub Pages site...')
+            page.goto('https://prefect421.github.io/mvidarr', wait_until='networkidle', timeout=30000)
+            page.wait_for_timeout(3000)
             
-            # Wait for page to load
-            await page.wait_for_load_state('networkidle')
+            print('Taking screenshot...')
+            page.screenshot(path='/home/mike/mvidarr/github_pages_current.png', full_page=True)
+            print('Screenshot saved as github_pages_current.png')
             
-            # Take screenshot
-            screenshot_path = '/home/mike/mvidarr/videos_header_screenshot.png'
-            await page.screenshot(path=screenshot_path, full_page=True)
-            print(f"Screenshot saved to: {screenshot_path}")
+            # Check what CSS files are loading
+            css_links = page.query_selector_all('link[rel="stylesheet"]')
+            print(f'\nFound {len(css_links)} CSS files:')
+            for link in css_links:
+                href = link.get_attribute('href')
+                print(f'  - {href}')
+                
+            # Check if our custom CSS is in head
+            head_content = page.inner_html('head')
+            if '--mvidarr-dark' in head_content:
+                print('\n✅ Custom MVidarr CSS variables found in head')
+            else:
+                print('\n❌ Custom MVidarr CSS variables NOT found in head')
+                
+            # Check page background color
+            body_style = page.evaluate('window.getComputedStyle(document.body).backgroundColor')
+            html_style = page.evaluate('window.getComputedStyle(document.documentElement).backgroundColor')
+            print(f'\nPage colors:')
+            print(f'  HTML background: {html_style}')
+            print(f'  Body background: {body_style}')
             
+            # Check if head-custom.html content is present
+            if 'mvidarr-primary' in head_content:
+                print('\n✅ head-custom.html content found')
+                # Show a snippet
+                start = head_content.find('mvidarr-primary')
+                snippet = head_content[max(0, start-50):start+100]
+                print(f'Snippet: ...{snippet}...')
+            else:
+                print('\n❌ head-custom.html content NOT found')
+                
         except Exception as e:
-            print(f"Error taking screenshot: {e}")
-        
+            print(f'Error: {e}')
+            import traceback
+            traceback.print_exc()
         finally:
-            await browser.close()
+            browser.close()
 
 if __name__ == "__main__":
-    asyncio.run(take_screenshot())
+    take_screenshot()
