@@ -795,7 +795,7 @@ def delete_video(video_id):
         # Get optional blacklist parameter from request body
         data = request.get_json() or {}
         add_to_blacklist = data.get("add_to_blacklist", False)
-        
+
         with get_db() as session:
             video = session.query(Video).filter(Video.id == video_id).first()
 
@@ -811,16 +811,23 @@ def delete_video(video_id):
 
             # First, delete any playlist entries that reference this video
             from src.database.models import PlaylistEntry
-            playlist_entries = session.query(PlaylistEntry).filter(PlaylistEntry.video_id == video_id).all()
+
+            playlist_entries = (
+                session.query(PlaylistEntry)
+                .filter(PlaylistEntry.video_id == video_id)
+                .all()
+            )
             playlist_count = len(playlist_entries)
-            
+
             for entry in playlist_entries:
                 session.delete(entry)
-            
+
             # Delete any downloads that reference this video
-            downloads = session.query(Download).filter(Download.video_id == video_id).all()
+            downloads = (
+                session.query(Download).filter(Download.video_id == video_id).all()
+            )
             download_count = len(downloads)
-            
+
             for download in downloads:
                 session.delete(download)
 
@@ -828,28 +835,31 @@ def delete_video(video_id):
             blacklisted = False
             if add_to_blacklist and video.url:
                 try:
-                    from src.database.models import VideoBlacklist
                     from flask import g
-                    
+
+                    from src.database.models import VideoBlacklist
+
                     # Check if URL is already blacklisted
-                    existing_blacklist = session.query(VideoBlacklist).filter(
-                        VideoBlacklist.youtube_url == video.url
-                    ).first()
-                    
+                    existing_blacklist = (
+                        session.query(VideoBlacklist)
+                        .filter(VideoBlacklist.youtube_url == video.url)
+                        .first()
+                    )
+
                     if not existing_blacklist:
                         # Add to blacklist
                         blacklist_entry = VideoBlacklist(
                             youtube_url=video.url,
                             title=video.title,
                             artist_name=video.artist.name if video.artist else None,
-                            blacklisted_by=getattr(g, 'current_user_id', None)
+                            blacklisted_by=getattr(g, "current_user_id", None),
                         )
                         session.add(blacklist_entry)
                         blacklisted = True
                         logger.info(f"Added video to blacklist: {video.url}")
                     else:
                         blacklisted = True  # Already blacklisted
-                        
+
                 except Exception as e:
                     logger.warning(f"Failed to add video to blacklist: {e}")
 
@@ -863,13 +873,15 @@ def delete_video(video_id):
             )
 
             return (
-                jsonify({
-                    "message": "Video deleted successfully", 
-                    "video": video_info,
-                    "playlist_entries_removed": playlist_count,
-                    "downloads_removed": download_count,
-                    "blacklisted": blacklisted
-                }),
+                jsonify(
+                    {
+                        "message": "Video deleted successfully",
+                        "video": video_info,
+                        "playlist_entries_removed": playlist_count,
+                        "downloads_removed": download_count,
+                        "blacklisted": blacklisted,
+                    }
+                ),
                 200,
             )
 
@@ -914,20 +926,29 @@ def bulk_delete_videos():
 
                     # First, delete any playlist entries that reference this video
                     from src.database.models import PlaylistEntry
-                    playlist_entries = session.query(PlaylistEntry).filter(PlaylistEntry.video_id == video_id).all()
-                    
+
+                    playlist_entries = (
+                        session.query(PlaylistEntry)
+                        .filter(PlaylistEntry.video_id == video_id)
+                        .all()
+                    )
+
                     for entry in playlist_entries:
                         session.delete(entry)
-                    
+
                     # Delete any downloads that reference this video
-                    downloads = session.query(Download).filter(Download.video_id == video_id).all()
-                    
+                    downloads = (
+                        session.query(Download)
+                        .filter(Download.video_id == video_id)
+                        .all()
+                    )
+
                     for download in downloads:
                         session.delete(download)
 
                     # Now delete the video record
                     session.delete(video)
-                    
+
                     # Add counts to video info
                     video_info["playlist_entries_removed"] = len(playlist_entries)
                     video_info["downloads_removed"] = len(downloads)
@@ -2406,12 +2427,36 @@ def refresh_video_metadata(video_id):
                                         "id": video_id,
                                         "title": video_title,
                                         "artist": artist_name,
-                                        "quality": video.quality if 'video' in locals() and video else None,
-                                        "duration": video.duration if 'video' in locals() and video else None,
-                                        "year": video.year if 'video' in locals() and video else None,
-                                        "thumbnail_url": video.thumbnail_url if 'video' in locals() and video else None,
-                                        "thumbnail_path": video.thumbnail_path if 'video' in locals() and video else None,
-                                        "video_metadata": video.video_metadata if 'video' in locals() and video else None,
+                                        "quality": (
+                                            video.quality
+                                            if "video" in locals() and video
+                                            else None
+                                        ),
+                                        "duration": (
+                                            video.duration
+                                            if "video" in locals() and video
+                                            else None
+                                        ),
+                                        "year": (
+                                            video.year
+                                            if "video" in locals() and video
+                                            else None
+                                        ),
+                                        "thumbnail_url": (
+                                            video.thumbnail_url
+                                            if "video" in locals() and video
+                                            else None
+                                        ),
+                                        "thumbnail_path": (
+                                            video.thumbnail_path
+                                            if "video" in locals() and video
+                                            else None
+                                        ),
+                                        "video_metadata": (
+                                            video.video_metadata
+                                            if "video" in locals() and video
+                                            else None
+                                        ),
                                     },
                                     "suggested_action": "merge",
                                     "merge_endpoint": f"/api/videos/{video_id}/merge/{existing_video.id}",
@@ -2464,25 +2509,31 @@ def refresh_video_metadata(video_id):
             if video.local_path:
                 try:
                     from pathlib import Path
+
                     from src.services.video_indexing_service import VideoIndexingService
-                    
+
                     video_path = Path(video.local_path)
                     if video_path.exists():
                         indexing_service = VideoIndexingService()
-                        ffmpeg_metadata = indexing_service.extract_ffmpeg_metadata(video_path)
-                        
+                        ffmpeg_metadata = indexing_service.extract_ffmpeg_metadata(
+                            video_path
+                        )
+
                         # Update basic fields if not already set
                         if ffmpeg_metadata.get("duration") and not video.duration:
                             video.duration = ffmpeg_metadata["duration"]
                             ffmpeg_extracted = True
-                            
+
                         if ffmpeg_metadata.get("quality") and not video.quality:
                             video.quality = ffmpeg_metadata["quality"]
                             ffmpeg_extracted = True
-                            
+
                         # Store additional technical metadata in video_metadata field
-                        if ffmpeg_metadata.get("width") or ffmpeg_metadata.get("height"):
+                        if ffmpeg_metadata.get("width") or ffmpeg_metadata.get(
+                            "height"
+                        ):
                             from datetime import datetime
+
                             existing_metadata = video.video_metadata or {}
                             tech_metadata = {
                                 "width": ffmpeg_metadata.get("width"),
@@ -2492,22 +2543,30 @@ def refresh_video_metadata(video_id):
                                 "fps": ffmpeg_metadata.get("fps"),
                                 "bitrate": ffmpeg_metadata.get("bitrate"),
                                 "ffmpeg_extracted": True,
-                                "extraction_date": datetime.utcnow().isoformat()
+                                "extraction_date": datetime.utcnow().isoformat(),
                             }
                             existing_metadata.update(tech_metadata)
                             video.video_metadata = existing_metadata
                             ffmpeg_extracted = True
-                            
+
                         if ffmpeg_extracted:
-                            logger.info(f"Updated video {video_id} with FFmpeg metadata: duration={video.duration}s, quality={video.quality}")
+                            logger.info(
+                                f"Updated video {video_id} with FFmpeg metadata: duration={video.duration}s, quality={video.quality}"
+                            )
                     else:
-                        logger.warning(f"Video file not found for FFmpeg extraction: {video.local_path}")
+                        logger.warning(
+                            f"Video file not found for FFmpeg extraction: {video.local_path}"
+                        )
                 except Exception as e:
-                    logger.warning(f"Failed to extract FFmpeg metadata for video {video_id}: {e}")
+                    logger.warning(
+                        f"Failed to extract FFmpeg metadata for video {video_id}: {e}"
+                    )
 
             session.commit()
 
-            logger.info(f"Successfully updated metadata for video {video_id} from {metadata_source}")
+            logger.info(
+                f"Successfully updated metadata for video {video_id} from {metadata_source}"
+            )
 
             # Return updated video data
             updated_video = {
@@ -2547,7 +2606,9 @@ def refresh_video_metadata(video_id):
                         "metadata_match": metadata,
                         "source": metadata_source,
                         "ffmpeg_extracted": ffmpeg_extracted,
-                        "ffmpeg_metadata": ffmpeg_metadata if ffmpeg_extracted else None,
+                        "ffmpeg_metadata": (
+                            ffmpeg_metadata if ffmpeg_extracted else None
+                        ),
                     }
                 ),
                 200,
@@ -3137,27 +3198,39 @@ def update_video(video_id):
             if refresh_ffmpeg and video.local_path:
                 try:
                     from pathlib import Path
+
                     from src.services.video_indexing_service import VideoIndexingService
-                    
+
                     video_path = Path(video.local_path)
                     if video_path.exists():
                         indexing_service = VideoIndexingService()
-                        ffmpeg_metadata = indexing_service.extract_ffmpeg_metadata(video_path)
-                        
+                        ffmpeg_metadata = indexing_service.extract_ffmpeg_metadata(
+                            video_path
+                        )
+
                         # Update basic fields if not already set or if forced
                         force_ffmpeg_update = data.get("force_ffmpeg_update", False)
                         ffmpeg_updated = False
-                        
-                        if ffmpeg_metadata.get("duration") and (not video.duration or force_ffmpeg_update):
+
+                        if ffmpeg_metadata.get("duration") and (
+                            not video.duration or force_ffmpeg_update
+                        ):
                             video.duration = ffmpeg_metadata["duration"]
                             ffmpeg_updated = True
-                            
-                        if ffmpeg_metadata.get("quality") and (not video.quality or force_ffmpeg_update):
+
+                        if ffmpeg_metadata.get("quality") and (
+                            not video.quality or force_ffmpeg_update
+                        ):
                             video.quality = ffmpeg_metadata["quality"]
                             ffmpeg_updated = True
-                            
+
                         # Update technical metadata
-                        if ffmpeg_updated or force_ffmpeg_update or not video.video_metadata or not video.video_metadata.get("ffmpeg_extracted"):
+                        if (
+                            ffmpeg_updated
+                            or force_ffmpeg_update
+                            or not video.video_metadata
+                            or not video.video_metadata.get("ffmpeg_extracted")
+                        ):
                             existing_metadata = video.video_metadata or {}
                             tech_metadata = {
                                 "width": ffmpeg_metadata.get("width"),
@@ -3167,16 +3240,22 @@ def update_video(video_id):
                                 "fps": ffmpeg_metadata.get("fps"),
                                 "bitrate": ffmpeg_metadata.get("bitrate"),
                                 "ffmpeg_extracted": True,
-                                "extraction_date": datetime.utcnow().isoformat()
+                                "extraction_date": datetime.utcnow().isoformat(),
                             }
                             existing_metadata.update(tech_metadata)
                             video.video_metadata = existing_metadata
-                            
-                        logger.info(f"FFmpeg metadata extracted for video {video_id}: duration={video.duration}s, quality={video.quality}")
+
+                        logger.info(
+                            f"FFmpeg metadata extracted for video {video_id}: duration={video.duration}s, quality={video.quality}"
+                        )
                     else:
-                        logger.warning(f"Video file not found for FFmpeg extraction: {video.local_path}")
+                        logger.warning(
+                            f"Video file not found for FFmpeg extraction: {video.local_path}"
+                        )
                 except Exception as e:
-                    logger.error(f"Failed to extract FFmpeg metadata for video {video_id}: {e}")
+                    logger.error(
+                        f"Failed to extract FFmpeg metadata for video {video_id}: {e}"
+                    )
 
             session.commit()
 
@@ -5880,16 +5959,25 @@ def merge_duplicate_videos():
 
                 # Handle playlist entries - transfer them to primary video
                 from src.database.models import PlaylistEntry
-                playlist_entries = session.query(PlaylistEntry).filter(PlaylistEntry.video_id == dup_video.id).all()
+
+                playlist_entries = (
+                    session.query(PlaylistEntry)
+                    .filter(PlaylistEntry.video_id == dup_video.id)
+                    .all()
+                )
                 playlist_transfer_count = 0
-                
+
                 for entry in playlist_entries:
                     # Check if primary video is already in this playlist at this position
-                    existing_entry = session.query(PlaylistEntry).filter(
-                        PlaylistEntry.playlist_id == entry.playlist_id,
-                        PlaylistEntry.video_id == primary_id
-                    ).first()
-                    
+                    existing_entry = (
+                        session.query(PlaylistEntry)
+                        .filter(
+                            PlaylistEntry.playlist_id == entry.playlist_id,
+                            PlaylistEntry.video_id == primary_id,
+                        )
+                        .first()
+                    )
+
                     if existing_entry:
                         # Primary video already in playlist - just delete the duplicate entry
                         session.delete(entry)
@@ -5897,16 +5985,20 @@ def merge_duplicate_videos():
                         # Transfer the playlist entry to primary video
                         entry.video_id = primary_id
                         playlist_transfer_count += 1
-                
+
                 merge_details["playlist_entries_transferred"] = playlist_transfer_count
-                
+
                 # Delete any downloads that reference this video
-                downloads = session.query(Download).filter(Download.video_id == dup_video.id).all()
+                downloads = (
+                    session.query(Download)
+                    .filter(Download.video_id == dup_video.id)
+                    .all()
+                )
                 download_transfer_count = len(downloads)
                 for download in downloads:
                     session.delete(download)
                 merge_details["downloads_removed"] = download_transfer_count
-                
+
                 # Delete the duplicate video
                 session.delete(dup_video)
                 merged_info.append(merge_details)
@@ -6232,40 +6324,48 @@ def search_results_page():
 def extract_ffmpeg_metadata_single(video_id):
     """Extract FFmpeg technical metadata for a specific video"""
     try:
-        from src.services.video_indexing_service import VideoIndexingService
         from pathlib import Path
-        
+
+        from src.services.video_indexing_service import VideoIndexingService
+
         with get_db() as session:
             video = session.query(Video).filter(Video.id == video_id).first()
-            
+
             if not video:
                 return jsonify({"error": "Video not found"}), 404
-                
+
             if not video.local_path:
                 return jsonify({"error": "Video has no local file path"}), 400
-                
+
             video_path = Path(video.local_path)
             if not video_path.exists():
                 return jsonify({"error": "Video file not found on disk"}), 404
-                
+
             # Extract FFmpeg metadata
             indexing_service = VideoIndexingService()
             ffmpeg_metadata = indexing_service.extract_ffmpeg_metadata(video_path)
-            
+
             if not (ffmpeg_metadata.get("duration") or ffmpeg_metadata.get("quality")):
-                return jsonify({"error": "Failed to extract metadata from video file"}), 500
-                
+                return (
+                    jsonify({"error": "Failed to extract metadata from video file"}),
+                    500,
+                )
+
             # Update video record
             updated = False
             if ffmpeg_metadata.get("duration") and not video.duration:
                 video.duration = ffmpeg_metadata["duration"]
                 updated = True
-                
+
             if ffmpeg_metadata.get("quality") and not video.quality:
                 video.quality = ffmpeg_metadata["quality"]
                 updated = True
-                
-            if updated or not video.video_metadata or not video.video_metadata.get("ffmpeg_extracted"):
+
+            if (
+                updated
+                or not video.video_metadata
+                or not video.video_metadata.get("ffmpeg_extracted")
+            ):
                 # Update video_metadata with technical info
                 existing_metadata = video.video_metadata or {}
                 tech_metadata = {
@@ -6276,31 +6376,33 @@ def extract_ffmpeg_metadata_single(video_id):
                     "fps": ffmpeg_metadata.get("fps"),
                     "bitrate": ffmpeg_metadata.get("bitrate"),
                     "ffmpeg_extracted": True,
-                    "extraction_date": datetime.utcnow().isoformat()
+                    "extraction_date": datetime.utcnow().isoformat(),
                 }
                 existing_metadata.update(tech_metadata)
                 video.video_metadata = existing_metadata
                 video.updated_at = datetime.utcnow()
                 updated = True
-                
+
             session.commit()
-            
-            return jsonify({
-                "success": True,
-                "video_id": video_id,
-                "updated": updated,
-                "metadata": {
-                    "duration": video.duration,
-                    "quality": video.quality,
-                    "width": ffmpeg_metadata.get("width"),
-                    "height": ffmpeg_metadata.get("height"),
-                    "video_codec": ffmpeg_metadata.get("video_codec"),
-                    "audio_codec": ffmpeg_metadata.get("audio_codec"),
-                    "fps": ffmpeg_metadata.get("fps"),
-                    "bitrate": ffmpeg_metadata.get("bitrate")
+
+            return jsonify(
+                {
+                    "success": True,
+                    "video_id": video_id,
+                    "updated": updated,
+                    "metadata": {
+                        "duration": video.duration,
+                        "quality": video.quality,
+                        "width": ffmpeg_metadata.get("width"),
+                        "height": ffmpeg_metadata.get("height"),
+                        "video_codec": ffmpeg_metadata.get("video_codec"),
+                        "audio_codec": ffmpeg_metadata.get("audio_codec"),
+                        "fps": ffmpeg_metadata.get("fps"),
+                        "bitrate": ffmpeg_metadata.get("bitrate"),
+                    },
                 }
-            })
-            
+            )
+
     except Exception as e:
         logger.error(f"Error extracting FFmpeg metadata for video {video_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -6310,26 +6412,29 @@ def extract_ffmpeg_metadata_single(video_id):
 def extract_ffmpeg_metadata_bulk():
     """Extract FFmpeg technical metadata for multiple videos or all videos with local files"""
     try:
-        from src.services.video_indexing_service import VideoIndexingService
         from pathlib import Path
-        
+
+        from src.services.video_indexing_service import VideoIndexingService
+
         data = request.get_json() or {}
         video_ids = data.get("video_ids", [])
-        force_update = data.get("force_update", False)  # Force update even if metadata exists
-        
+        force_update = data.get(
+            "force_update", False
+        )  # Force update even if metadata exists
+
         indexing_service = VideoIndexingService()
         results = {
             "success": True,
             "processed": 0,
             "updated": 0,
             "failed": 0,
-            "errors": []
+            "errors": [],
         }
-        
+
         with get_db() as session:
             # Build query
             query = session.query(Video).filter(Video.local_path.isnot(None))
-            
+
             if video_ids:
                 query = query.filter(Video.id.in_(video_ids))
             elif not force_update:
@@ -6337,39 +6442,57 @@ def extract_ffmpeg_metadata_bulk():
                 query = query.filter(
                     or_(Video.duration.is_(None), Video.quality.is_(None))
                 )
-                
+
             videos = query.all()
-            
+
             for video in videos:
                 try:
                     results["processed"] += 1
-                    
+
                     video_path = Path(video.local_path)
                     if not video_path.exists():
                         results["failed"] += 1
-                        results["errors"].append(f"Video {video.id}: File not found at {video.local_path}")
+                        results["errors"].append(
+                            f"Video {video.id}: File not found at {video.local_path}"
+                        )
                         continue
-                        
+
                     # Extract FFmpeg metadata
-                    ffmpeg_metadata = indexing_service.extract_ffmpeg_metadata(video_path)
-                    
-                    if not (ffmpeg_metadata.get("duration") or ffmpeg_metadata.get("quality")):
+                    ffmpeg_metadata = indexing_service.extract_ffmpeg_metadata(
+                        video_path
+                    )
+
+                    if not (
+                        ffmpeg_metadata.get("duration")
+                        or ffmpeg_metadata.get("quality")
+                    ):
                         results["failed"] += 1
-                        results["errors"].append(f"Video {video.id}: Failed to extract metadata")
+                        results["errors"].append(
+                            f"Video {video.id}: Failed to extract metadata"
+                        )
                         continue
-                        
+
                     # Update video record
                     updated = False
-                    
-                    if ffmpeg_metadata.get("duration") and (not video.duration or force_update):
+
+                    if ffmpeg_metadata.get("duration") and (
+                        not video.duration or force_update
+                    ):
                         video.duration = ffmpeg_metadata["duration"]
                         updated = True
-                        
-                    if ffmpeg_metadata.get("quality") and (not video.quality or force_update):
+
+                    if ffmpeg_metadata.get("quality") and (
+                        not video.quality or force_update
+                    ):
                         video.quality = ffmpeg_metadata["quality"]
                         updated = True
-                        
-                    if updated or force_update or not video.video_metadata or not video.video_metadata.get("ffmpeg_extracted"):
+
+                    if (
+                        updated
+                        or force_update
+                        or not video.video_metadata
+                        or not video.video_metadata.get("ffmpeg_extracted")
+                    ):
                         # Update video_metadata with technical info
                         existing_metadata = video.video_metadata or {}
                         tech_metadata = {
@@ -6380,27 +6503,29 @@ def extract_ffmpeg_metadata_bulk():
                             "fps": ffmpeg_metadata.get("fps"),
                             "bitrate": ffmpeg_metadata.get("bitrate"),
                             "ffmpeg_extracted": True,
-                            "extraction_date": datetime.utcnow().isoformat()
+                            "extraction_date": datetime.utcnow().isoformat(),
                         }
                         existing_metadata.update(tech_metadata)
                         video.video_metadata = existing_metadata
                         video.updated_at = datetime.utcnow()
                         updated = True
-                        
+
                     if updated:
                         results["updated"] += 1
-                        
+
                 except Exception as e:
                     results["failed"] += 1
                     results["errors"].append(f"Video {video.id}: {str(e)}")
                     logger.error(f"Error processing video {video.id}: {e}")
-                    
+
             session.commit()
-            
-        logger.info(f"FFmpeg metadata extraction completed: {results['processed']} processed, {results['updated']} updated, {results['failed']} failed")
-        
+
+        logger.info(
+            f"FFmpeg metadata extraction completed: {results['processed']} processed, {results['updated']} updated, {results['failed']} failed"
+        )
+
         return jsonify(results)
-        
+
     except Exception as e:
         logger.error(f"Error in bulk FFmpeg metadata extraction: {e}")
         return jsonify({"error": str(e)}), 500
@@ -6412,42 +6537,46 @@ def get_blacklist():
     try:
         with get_db() as session:
             from src.database.models import VideoBlacklist
-            
+
             # Get query parameters
             page = request.args.get("page", 1, type=int)
             per_page = min(request.args.get("per_page", 50, type=int), 100)
             search = request.args.get("search", "").strip()
-            
+
             # Build query
             query = session.query(VideoBlacklist)
-            
+
             if search:
                 search_filter = f"%{search}%"
                 query = query.filter(
                     or_(
                         VideoBlacklist.title.ilike(search_filter),
                         VideoBlacklist.artist_name.ilike(search_filter),
-                        VideoBlacklist.youtube_url.ilike(search_filter)
+                        VideoBlacklist.youtube_url.ilike(search_filter),
                     )
                 )
-            
+
             # Order by blacklisted date (newest first)
             query = query.order_by(VideoBlacklist.blacklisted_at.desc())
-            
+
             # Paginate
             total = query.count()
-            blacklist_entries = query.offset((page - 1) * per_page).limit(per_page).all()
-            
-            return jsonify({
-                "blacklist": [entry.to_dict() for entry in blacklist_entries],
-                "pagination": {
-                    "page": page,
-                    "per_page": per_page,
-                    "total": total,
-                    "pages": (total + per_page - 1) // per_page
+            blacklist_entries = (
+                query.offset((page - 1) * per_page).limit(per_page).all()
+            )
+
+            return jsonify(
+                {
+                    "blacklist": [entry.to_dict() for entry in blacklist_entries],
+                    "pagination": {
+                        "page": page,
+                        "per_page": per_page,
+                        "total": total,
+                        "pages": (total + per_page - 1) // per_page,
+                    },
                 }
-            })
-            
+            )
+
     except Exception as e:
         logger.error(f"Error getting blacklist: {e}")
         return jsonify({"error": str(e)}), 500
@@ -6459,43 +6588,56 @@ def add_to_blacklist():
     try:
         data = request.get_json()
         youtube_url = data.get("youtube_url")
-        
+
         if not youtube_url:
             return jsonify({"error": "youtube_url is required"}), 400
-            
+
         with get_db() as session:
-            from src.database.models import VideoBlacklist
             from flask import g
-            
+
+            from src.database.models import VideoBlacklist
+
             # Check if already blacklisted
-            existing = session.query(VideoBlacklist).filter(
-                VideoBlacklist.youtube_url == youtube_url
-            ).first()
-            
+            existing = (
+                session.query(VideoBlacklist)
+                .filter(VideoBlacklist.youtube_url == youtube_url)
+                .first()
+            )
+
             if existing:
-                return jsonify({
-                    "message": "URL already blacklisted",
-                    "blacklist_entry": existing.to_dict()
-                }), 200
-            
+                return (
+                    jsonify(
+                        {
+                            "message": "URL already blacklisted",
+                            "blacklist_entry": existing.to_dict(),
+                        }
+                    ),
+                    200,
+                )
+
             # Add to blacklist
             blacklist_entry = VideoBlacklist(
                 youtube_url=youtube_url,
                 title=data.get("title"),
                 artist_name=data.get("artist_name"),
-                blacklisted_by=getattr(g, 'current_user_id', None)
+                blacklisted_by=getattr(g, "current_user_id", None),
             )
-            
+
             session.add(blacklist_entry)
             session.commit()
-            
+
             logger.info(f"Added URL to blacklist: {youtube_url}")
-            
-            return jsonify({
-                "message": "URL added to blacklist successfully",
-                "blacklist_entry": blacklist_entry.to_dict()
-            }), 201
-            
+
+            return (
+                jsonify(
+                    {
+                        "message": "URL added to blacklist successfully",
+                        "blacklist_entry": blacklist_entry.to_dict(),
+                    }
+                ),
+                201,
+            )
+
     except Exception as e:
         logger.error(f"Error adding to blacklist: {e}")
         return jsonify({"error": str(e)}), 500
@@ -6506,29 +6648,34 @@ def remove_from_blacklist(youtube_url):
     """Remove a YouTube URL from blacklist"""
     try:
         with get_db() as session:
-            from src.database.models import VideoBlacklist
             from urllib.parse import unquote
-            
+
+            from src.database.models import VideoBlacklist
+
             # Decode URL parameter
             decoded_url = unquote(youtube_url)
-            
-            blacklist_entry = session.query(VideoBlacklist).filter(
-                VideoBlacklist.youtube_url == decoded_url
-            ).first()
-            
+
+            blacklist_entry = (
+                session.query(VideoBlacklist)
+                .filter(VideoBlacklist.youtube_url == decoded_url)
+                .first()
+            )
+
             if not blacklist_entry:
                 return jsonify({"error": "URL not found in blacklist"}), 404
-            
+
             session.delete(blacklist_entry)
             session.commit()
-            
+
             logger.info(f"Removed URL from blacklist: {decoded_url}")
-            
-            return jsonify({
-                "message": "URL removed from blacklist successfully",
-                "removed_url": decoded_url
-            })
-            
+
+            return jsonify(
+                {
+                    "message": "URL removed from blacklist successfully",
+                    "removed_url": decoded_url,
+                }
+            )
+
     except Exception as e:
         logger.error(f"Error removing from blacklist: {e}")
         return jsonify({"error": str(e)}), 500
@@ -6540,22 +6687,28 @@ def check_blacklist():
     try:
         data = request.get_json()
         youtube_url = data.get("youtube_url")
-        
+
         if not youtube_url:
             return jsonify({"error": "youtube_url is required"}), 400
-            
+
         with get_db() as session:
             from src.database.models import VideoBlacklist
-            
-            blacklist_entry = session.query(VideoBlacklist).filter(
-                VideoBlacklist.youtube_url == youtube_url
-            ).first()
-            
-            return jsonify({
-                "is_blacklisted": blacklist_entry is not None,
-                "blacklist_entry": blacklist_entry.to_dict() if blacklist_entry else None
-            })
-            
+
+            blacklist_entry = (
+                session.query(VideoBlacklist)
+                .filter(VideoBlacklist.youtube_url == youtube_url)
+                .first()
+            )
+
+            return jsonify(
+                {
+                    "is_blacklisted": blacklist_entry is not None,
+                    "blacklist_entry": (
+                        blacklist_entry.to_dict() if blacklist_entry else None
+                    ),
+                }
+            )
+
     except Exception as e:
         logger.error(f"Error checking blacklist: {e}")
         return jsonify({"error": str(e)}), 500
@@ -6569,124 +6722,190 @@ def bulk_merge_preview():
         mode = data.get("mode", "manual")  # 'auto' or 'manual'
         video_ids = data.get("video_ids", [])
         options = data.get("options", {})
-        
+
         if mode == "manual" and len(video_ids) < 2:
-            return jsonify({"error": "At least 2 videos are required for manual merge"}), 400
-            
+            return (
+                jsonify({"error": "At least 2 videos are required for manual merge"}),
+                400,
+            )
+
         with get_db() as session:
             merge_groups = []
-            
+
             if mode == "auto":
                 # Auto-detect duplicates based on similarity criteria
-                all_videos = session.query(Video).filter(Video.status == "DOWNLOADED").all()
-                
+                all_videos = (
+                    session.query(Video).filter(Video.status == "DOWNLOADED").all()
+                )
+
                 # Group videos by potential duplicates
                 potential_groups = {}
-                
+
                 for video in all_videos:
                     if not video.artist or not video.title:
                         continue
-                        
+
                     key = f"{video.artist.name.lower()}"
                     if key not in potential_groups:
                         potential_groups[key] = []
                     potential_groups[key].append(video)
-                
+
                 # Find duplicates within each artist group
                 for artist_videos in potential_groups.values():
                     if len(artist_videos) < 2:
                         continue
-                        
+
                     # Check for title similarity
                     for i, video1 in enumerate(artist_videos):
                         group_videos = [video1]
-                        
+
                         for j, video2 in enumerate(artist_videos):
                             if i == j:
                                 continue
-                                
+
                             # Check title similarity
                             title_similar = False
                             if options.get("match_title", True):
-                                similarity = calculate_similarity(video1.title, video2.title)
+                                similarity = calculate_similarity(
+                                    video1.title, video2.title
+                                )
                                 threshold = options.get("similarity_threshold", 80)
                                 title_similar = similarity >= threshold
-                            
+
                             # Check duration similarity
                             duration_similar = True
-                            if options.get("match_duration", True) and video1.duration and video2.duration:
+                            if (
+                                options.get("match_duration", True)
+                                and video1.duration
+                                and video2.duration
+                            ):
                                 duration_diff = abs(video1.duration - video2.duration)
                                 duration_similar = duration_diff <= 30  # ±30 seconds
-                            
+
                             if title_similar and duration_similar:
                                 group_videos.append(video2)
-                        
+
                         if len(group_videos) > 1:
                             # Determine primary video (highest quality, longest duration, etc.)
                             primary_video = determine_primary_video(group_videos)
-                            duplicates = [v for v in group_videos if v.id != primary_video.id]
-                            
+                            duplicates = [
+                                v for v in group_videos if v.id != primary_video.id
+                            ]
+
                             if duplicates:
-                                merge_groups.append({
-                                    "primary": {
-                                        "id": primary_video.id,
-                                        "title": primary_video.title,
-                                        "artist_name": primary_video.artist.name if primary_video.artist else None,
-                                        "quality": primary_video.quality,
-                                        "duration": primary_video.duration,
-                                        "status": primary_video.status.value if hasattr(primary_video.status, 'value') else primary_video.status
-                                    },
-                                    "duplicates": [{
-                                        "id": dup.id,
-                                        "title": dup.title,
-                                        "artist_name": dup.artist.name if dup.artist else None,
-                                        "quality": dup.quality,
-                                        "duration": dup.duration,
-                                        "status": dup.status.value if hasattr(dup.status, 'value') else dup.status
-                                    } for dup in duplicates]
-                                })
-                            
+                                merge_groups.append(
+                                    {
+                                        "primary": {
+                                            "id": primary_video.id,
+                                            "title": primary_video.title,
+                                            "artist_name": (
+                                                primary_video.artist.name
+                                                if primary_video.artist
+                                                else None
+                                            ),
+                                            "quality": primary_video.quality,
+                                            "duration": primary_video.duration,
+                                            "status": (
+                                                primary_video.status.value
+                                                if hasattr(
+                                                    primary_video.status, "value"
+                                                )
+                                                else primary_video.status
+                                            ),
+                                        },
+                                        "duplicates": [
+                                            {
+                                                "id": dup.id,
+                                                "title": dup.title,
+                                                "artist_name": (
+                                                    dup.artist.name
+                                                    if dup.artist
+                                                    else None
+                                                ),
+                                                "quality": dup.quality,
+                                                "duration": dup.duration,
+                                                "status": (
+                                                    dup.status.value
+                                                    if hasattr(dup.status, "value")
+                                                    else dup.status
+                                                ),
+                                            }
+                                            for dup in duplicates
+                                        ],
+                                    }
+                                )
+
                             # Remove processed videos from artist_videos to avoid duplicates
                             for processed_video in group_videos:
                                 if processed_video in artist_videos:
                                     artist_videos.remove(processed_video)
-            
+
             else:
                 # Manual mode - merge specific selected videos
                 videos = session.query(Video).filter(Video.id.in_(video_ids)).all()
-                
+
                 if len(videos) < 2:
-                    return jsonify({"error": "Selected videos not found or insufficient videos"}), 400
-                
+                    return (
+                        jsonify(
+                            {
+                                "error": "Selected videos not found or insufficient videos"
+                            }
+                        ),
+                        400,
+                    )
+
                 # Determine primary video based on strategy
-                primary_video = determine_primary_video(videos, options.get("primary_strategy", "highest_quality"))
+                primary_video = determine_primary_video(
+                    videos, options.get("primary_strategy", "highest_quality")
+                )
                 duplicates = [v for v in videos if v.id != primary_video.id]
-                
-                merge_groups.append({
-                    "primary": {
-                        "id": primary_video.id,
-                        "title": primary_video.title,
-                        "artist_name": primary_video.artist.name if primary_video.artist else None,
-                        "quality": primary_video.quality,
-                        "duration": primary_video.duration,
-                        "status": primary_video.status.value if hasattr(primary_video.status, 'value') else primary_video.status
-                    },
-                    "duplicates": [{
-                        "id": dup.id,
-                        "title": dup.title,
-                        "artist_name": dup.artist.name if dup.artist else None,
-                        "quality": dup.quality,
-                        "duration": dup.duration,
-                        "status": dup.status.value if hasattr(dup.status, 'value') else dup.status
-                    } for dup in duplicates]
-                })
-            
-            return jsonify({
-                "merge_groups": merge_groups,
-                "total_groups": len(merge_groups),
-                "total_videos_to_merge": sum(len(group["duplicates"]) for group in merge_groups)
-            })
-            
+
+                merge_groups.append(
+                    {
+                        "primary": {
+                            "id": primary_video.id,
+                            "title": primary_video.title,
+                            "artist_name": (
+                                primary_video.artist.name
+                                if primary_video.artist
+                                else None
+                            ),
+                            "quality": primary_video.quality,
+                            "duration": primary_video.duration,
+                            "status": (
+                                primary_video.status.value
+                                if hasattr(primary_video.status, "value")
+                                else primary_video.status
+                            ),
+                        },
+                        "duplicates": [
+                            {
+                                "id": dup.id,
+                                "title": dup.title,
+                                "artist_name": dup.artist.name if dup.artist else None,
+                                "quality": dup.quality,
+                                "duration": dup.duration,
+                                "status": (
+                                    dup.status.value
+                                    if hasattr(dup.status, "value")
+                                    else dup.status
+                                ),
+                            }
+                            for dup in duplicates
+                        ],
+                    }
+                )
+
+            return jsonify(
+                {
+                    "merge_groups": merge_groups,
+                    "total_groups": len(merge_groups),
+                    "total_videos_to_merge": sum(
+                        len(group["duplicates"]) for group in merge_groups
+                    ),
+                }
+            )
+
     except Exception as e:
         logger.error(f"Error previewing bulk merge: {e}")
         return jsonify({"error": str(e)}), 500
@@ -6700,87 +6919,117 @@ def bulk_merge():
         mode = data.get("mode", "manual")
         video_ids = data.get("video_ids", [])
         options = data.get("options", {})
-        
+
         if mode == "manual" and len(video_ids) < 2:
-            return jsonify({"error": "At least 2 videos are required for manual merge"}), 400
-        
+            return (
+                jsonify({"error": "At least 2 videos are required for manual merge"}),
+                400,
+            )
+
         # First get the merge preview to know what we're working with
         preview_response = bulk_merge_preview()
         preview_data = preview_response.get_json()
-        
+
         if preview_data.get("error"):
             return jsonify({"error": preview_data["error"]}), 400
-            
+
         merge_groups = preview_data.get("merge_groups", [])
-        
+
         if not merge_groups:
             return jsonify({"error": "No merge groups found"}), 400
-        
+
         merged_count = 0
-        
+
         with get_db() as session:
             for group in merge_groups:
                 primary_id = group["primary"]["id"]
                 duplicate_ids = [dup["id"] for dup in group["duplicates"]]
-                
+
                 # Use the existing merge endpoint logic
                 try:
-                    primary_video = session.query(Video).filter(Video.id == primary_id).first()
+                    primary_video = (
+                        session.query(Video).filter(Video.id == primary_id).first()
+                    )
                     if not primary_video:
-                        logger.warning(f"Primary video {primary_id} not found, skipping group")
+                        logger.warning(
+                            f"Primary video {primary_id} not found, skipping group"
+                        )
                         continue
-                    
+
                     for dup_id in duplicate_ids:
-                        duplicate_video = session.query(Video).filter(Video.id == dup_id).first()
+                        duplicate_video = (
+                            session.query(Video).filter(Video.id == dup_id).first()
+                        )
                         if not duplicate_video:
-                            logger.warning(f"Duplicate video {dup_id} not found, skipping")
+                            logger.warning(
+                                f"Duplicate video {dup_id} not found, skipping"
+                            )
                             continue
-                            
+
                         # Merge playlist entries
                         from src.database.models import PlaylistEntry
-                        playlist_entries = session.query(PlaylistEntry).filter(
-                            PlaylistEntry.video_id == dup_id
-                        ).all()
-                        
+
+                        playlist_entries = (
+                            session.query(PlaylistEntry)
+                            .filter(PlaylistEntry.video_id == dup_id)
+                            .all()
+                        )
+
                         for entry in playlist_entries:
                             # Check if primary video is already in this playlist
-                            existing_entry = session.query(PlaylistEntry).filter(
-                                PlaylistEntry.playlist_id == entry.playlist_id,
-                                PlaylistEntry.video_id == primary_id
-                            ).first()
-                            
+                            existing_entry = (
+                                session.query(PlaylistEntry)
+                                .filter(
+                                    PlaylistEntry.playlist_id == entry.playlist_id,
+                                    PlaylistEntry.video_id == primary_id,
+                                )
+                                .first()
+                            )
+
                             if not existing_entry:
                                 # Update the entry to point to primary video
                                 entry.video_id = primary_id
-                                logger.info(f"Updated playlist entry to point to primary video {primary_id}")
+                                logger.info(
+                                    f"Updated playlist entry to point to primary video {primary_id}"
+                                )
                             else:
                                 # Remove duplicate entry
                                 session.delete(entry)
-                                logger.info(f"Removed duplicate playlist entry for video {dup_id}")
-                        
+                                logger.info(
+                                    f"Removed duplicate playlist entry for video {dup_id}"
+                                )
+
                         # Delete associated downloads
-                        downloads = session.query(Download).filter(Download.video_id == dup_id).all()
+                        downloads = (
+                            session.query(Download)
+                            .filter(Download.video_id == dup_id)
+                            .all()
+                        )
                         for download in downloads:
                             session.delete(download)
-                        
+
                         # Delete the duplicate video
                         session.delete(duplicate_video)
                         merged_count += 1
-                        logger.info(f"Merged video {dup_id} into primary video {primary_id}")
-                
+                        logger.info(
+                            f"Merged video {dup_id} into primary video {primary_id}"
+                        )
+
                 except Exception as e:
                     logger.error(f"Error merging group with primary {primary_id}: {e}")
                     continue
-            
+
             session.commit()
-            
-        return jsonify({
-            "success": True,
-            "merge_groups": len(merge_groups),
-            "merged_count": merged_count,
-            "message": f"Successfully merged {merged_count} videos in {len(merge_groups)} groups"
-        })
-        
+
+        return jsonify(
+            {
+                "success": True,
+                "merge_groups": len(merge_groups),
+                "merged_count": merged_count,
+                "message": f"Successfully merged {merged_count} videos in {len(merge_groups)} groups",
+            }
+        )
+
     except Exception as e:
         logger.error(f"Error performing bulk merge: {e}")
         return jsonify({"error": str(e)}), 500
@@ -6790,23 +7039,23 @@ def calculate_similarity(str1, str2):
     """Calculate similarity percentage between two strings"""
     if not str1 or not str2:
         return 0
-    
+
     str1 = str1.lower().strip()
     str2 = str2.lower().strip()
-    
+
     if str1 == str2:
         return 100
-    
+
     # Simple word-based similarity
     words1 = set(str1.split())
     words2 = set(str2.split())
-    
+
     intersection = words1.intersection(words2)
     union = words1.union(words2)
-    
+
     if not union:
         return 0
-    
+
     return (len(intersection) / len(union)) * 100
 
 
@@ -6814,38 +7063,39 @@ def determine_primary_video(videos, strategy="highest_quality"):
     """Determine which video should be the primary one in a merge"""
     if not videos:
         return None
-    
+
     if len(videos) == 1:
         return videos[0]
-    
+
     if strategy == "highest_quality":
         # Priority order: 4K > 1440p > 1080p > 720p > 480p > others
         quality_priority = {
-            "4K": 6, "2160p": 6,
+            "4K": 6,
+            "2160p": 6,
             "1440p": 5,
             "1080p": 4,
             "720p": 3,
             "480p": 2,
-            "360p": 1
+            "360p": 1,
         }
-        
+
         best_video = videos[0]
         best_score = quality_priority.get(best_video.quality or "", 0)
-        
+
         for video in videos[1:]:
             score = quality_priority.get(video.quality or "", 0)
             if score > best_score:
                 best_video = video
                 best_score = score
-        
+
         return best_video
-    
+
     elif strategy == "longest_duration":
         return max(videos, key=lambda v: v.duration or 0)
-    
+
     elif strategy == "newest":
         return max(videos, key=lambda v: v.created_at or datetime.min)
-    
+
     else:
         # Default to first video
         return videos[0]

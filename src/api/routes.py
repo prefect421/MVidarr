@@ -18,8 +18,8 @@ from src.api.metube import metube_bp
 # OpenAPI documentation
 from src.api.openapi import openapi_bp
 from src.api.optimization import optimization_bp
-from src.api.plex import plex_bp
 from src.api.playlists import playlists_bp
+from src.api.plex import plex_bp
 from src.api.settings import settings_bp
 
 # External integration blueprints

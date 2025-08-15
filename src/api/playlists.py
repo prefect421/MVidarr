@@ -335,7 +335,6 @@ def add_video_to_playlist(playlist_id):
         if not isinstance(video_ids, list) or not video_ids:
             return jsonify({"error": "video_ids must be a non-empty list"}), 400
 
-
         with get_db() as session:
             playlist = (
                 session.query(Playlist).filter(Playlist.id == playlist_id).first()

@@ -621,7 +621,7 @@ class Playlist(Base):
         "PlaylistEntry",
         back_populates="playlist",
         cascade="all, delete-orphan",
-        order_by="PlaylistEntry.position"
+        order_by="PlaylistEntry.position",
     )
 
     # Indexes
@@ -631,7 +631,9 @@ class Playlist(Base):
         Index("idx_playlist_is_public", "is_public"),
         Index("idx_playlist_is_featured", "is_featured"),
         Index("idx_playlist_created_at", "created_at"),
-        Index("idx_playlist_user_public", "user_id", "is_public"),  # Composite for permissions
+        Index(
+            "idx_playlist_user_public", "user_id", "is_public"
+        ),  # Composite for permissions
         {"extend_existing": True},
     )
 
@@ -697,7 +699,9 @@ class PlaylistEntry(Base):
     video_id = Column(Integer, ForeignKey("videos.id"), nullable=False)
     position = Column(Integer, nullable=False)
     notes = Column(Text, nullable=True)  # User notes for this playlist entry
-    added_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # Who added the video
+    added_by = Column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )  # Who added the video
     added_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -751,18 +755,22 @@ class PlaylistEntry(Base):
 
 class VideoBlacklist(Base):
     """Blacklisted YouTube URLs to prevent re-download of unwanted videos"""
-    
+
     __tablename__ = "video_blacklist"
-    
+
     youtube_url = Column(String(500), primary_key=True)  # YouTube URL as primary key
     title = Column(String(500), nullable=True)  # Optional: video title when blacklisted
-    artist_name = Column(String(255), nullable=True)  # Optional: artist name when blacklisted
+    artist_name = Column(
+        String(255), nullable=True
+    )  # Optional: artist name when blacklisted
     blacklisted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    blacklisted_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # User who blacklisted
-    
+    blacklisted_by = Column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )  # User who blacklisted
+
     # Relationships
     user = relationship("User", backref="blacklisted_videos")
-    
+
     # Indexes
     __table_args__ = (
         Index("idx_blacklist_url", "youtube_url"),
@@ -770,7 +778,7 @@ class VideoBlacklist(Base):
         Index("idx_blacklist_user", "blacklisted_by"),
         {"extend_existing": True},
     )
-    
+
     def to_dict(self):
         """Convert blacklist entry to dictionary"""
         return {
@@ -781,6 +789,6 @@ class VideoBlacklist(Base):
             "blacklisted_by": self.blacklisted_by,
             "blacklisted_by_username": self.user.username if self.user else None,
         }
-    
+
     def __repr__(self):
         return f"<VideoBlacklist(youtube_url='{self.youtube_url}', blacklisted_at='{self.blacklisted_at}')>"
