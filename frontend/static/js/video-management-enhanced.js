@@ -1107,12 +1107,24 @@ class VideoManagementUI {
                 });
             }
             
+            // Show/hide create playlist button based on availability
+            const createPlaylistGroup = document.getElementById('createPlaylistGroup');
             if (data.playlists && data.playlists.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'No playlists available - create one below';
+                option.textContent = 'No playlists available - create one first';
                 option.disabled = true;
                 playlistSelect.appendChild(option);
+                
+                // Show create playlist button when no playlists exist
+                if (createPlaylistGroup) {
+                    createPlaylistGroup.style.display = 'block';
+                }
+            } else {
+                // Hide create playlist button when playlists exist (optional - you can keep it visible if preferred)
+                if (createPlaylistGroup) {
+                    createPlaylistGroup.style.display = 'block'; // Always show for convenience
+                }
             }
         } catch (error) {
             console.error('Failed to load playlists:', error);
@@ -1196,6 +1208,20 @@ class VideoManagementUI {
         window.location.href = '/playlists';
     }
     
+    showCreatePlaylistFromModal() {
+        // Store currently selected videos for playlist creation
+        const selectedVideos = this.getSelectedVideoIds();
+        if (selectedVideos && selectedVideos.length > 0) {
+            sessionStorage.setItem('selectedVideosForPlaylist', JSON.stringify(selectedVideos));
+        }
+        
+        // Close current modal
+        this.closeAddToPlaylistModal();
+        
+        // Redirect to playlists page where user can create new playlist
+        window.location.href = '/playlists';
+    }
+    
     closeAddToPlaylistModal() {
         const modal = document.getElementById('addToPlaylistModal');
         if (modal) {
@@ -1252,3 +1278,4 @@ window.bulkCreatePlaylistFromSelection = () => videoManagementUI.bulkCreatePlayl
 window.addVideosToPlaylist = () => videoManagementUI.addVideosToPlaylist();
 window.closeAddToPlaylistModal = () => videoManagementUI.closeAddToPlaylistModal();
 window.addSingleVideoToPlaylist = (videoId) => videoManagementUI.addSingleVideoToPlaylist(videoId);
+window.showCreatePlaylistFromModal = () => videoManagementUI.showCreatePlaylistFromModal();

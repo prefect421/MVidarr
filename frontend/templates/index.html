@@ -226,8 +226,8 @@ function loadDownloadHistory() {
                         <div class="download-info">
                             <div class="download-header">
                                 <div class="download-title">
-                                    <strong>${download.title}</strong><br>
-                                    <small>by ${download.artist} • ${download.status} • ${new Date(download.updated_at).toLocaleString()}</small>
+                                    <strong><a href="/video/${download.video_id || 'unknown'}" class="video-title-link">${download.title}</a></strong><br>
+                                    <small>by ${download.artist} • ${download.status} • ${formatDownloadDate(download)}</small>
                                     ${download.file_size ? `<div class="file-info">File size: ${formatFileSize(download.file_size)}</div>` : ''}
                                 </div>
                                 <div class="download-actions">
@@ -257,6 +257,25 @@ function formatFileSize(bytes) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatDownloadDate(download) {
+    // Use completed_at for completed/failed downloads, otherwise use created_at
+    let dateStr = download.completed_at || download.created_at;
+    
+    if (!dateStr) {
+        return 'Unknown date';
+    }
+    
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+            return 'Invalid date';
+        }
+        return date.toLocaleString();
+    } catch (error) {
+        return 'Date error';
+    }
 }
 
 function clearDownloadHistory() {
@@ -697,6 +716,22 @@ function proceedDownloadWantedVideos() {
     .downloads-section, .recent-activity {
         padding: 20px;
     }
+}
+
+/* Video title link styling */
+.video-title-link {
+    color: #00d4ff !important;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.video-title-link:hover {
+    color: #66e5ff !important;
+    text-decoration: underline;
+}
+
+.video-title-link:visited {
+    color: #00a8cc !important;
 }
 </style>
 

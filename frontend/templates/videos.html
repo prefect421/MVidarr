@@ -1772,15 +1772,15 @@ function refreshVideoMetadata(id) {
             method: 'POST'
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
             if (response.status === 409) {
-                // Handle duplicate IMVDb ID
+                // Handle duplicate IMVDb ID conflict
                 return response.json().then(result => {
                     showDuplicateVideoDialog(result, originalContent, videoCard);
                     return null; // Skip normal processing
                 });
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
@@ -5026,6 +5026,14 @@ function performVideoMerge(currentVideoId, duplicateVideoId) {
                         <select id="playlistSelect" class="form-control" required>
                             <option value="">Loading playlists...</option>
                         </select>
+                    </div>
+                    
+                    <div class="form-group" id="createPlaylistGroup" style="display: none;">
+                        <button onclick="showCreatePlaylistFromModal()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                            <iconify-icon icon="tabler:plus"></iconify-icon>
+                            Create New Playlist
+                        </button>
+                        <div class="form-help">Create a new playlist if none exist or you need a new one</div>
                     </div>
                     
                 </div>
