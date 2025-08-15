@@ -2,7 +2,9 @@
 Video indexing service for scanning and adding existing videos to database
 """
 
+import json
 import os
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -63,6 +65,126 @@ class VideoIndexingService:
 
         logger.info(f"Found {len(video_files)} video files in {directory}")
         return video_files
+
+    def extract_ffmpeg_metadata(self, file_path: Path) -> Dict:
+        """
+        Extract technical metadata from video file using FFprobe
+        
+        Args:
+            file_path: Path to video file
+            
+        Returns:
+            Dictionary with video metadata (duration, resolution, quality, etc.)
+        """
+        metadata = {
+            "duration": None,
+            "quality": None,
+            "width": None,
+            "height": None,
+            "video_codec": None,
+            "audio_codec": None,
+            "fps": None,
+            "bitrate": None,
+            "file_size": None
+        }
+        
+        try:
+            # Use ffprobe to get detailed video information
+            cmd = [
+                "ffprobe",
+                "-v", "quiet",
+                "-print_format", "json",
+                "-show_format",
+                "-show_streams",
+                str(file_path)
+            ]
+            
+            logger.debug(f"Running ffprobe on: {file_path}")
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            
+            if result.returncode != 0:
+                logger.warning(f"FFprobe failed for {file_path}: {result.stderr}")
+                return metadata
+                
+            data = json.loads(result.stdout)
+            
+            # Extract format information
+            if "format" in data:
+                format_info = data["format"]
+                
+                # Duration in seconds
+                if "duration" in format_info:
+                    try:
+                        metadata["duration"] = int(float(format_info["duration"]))
+                    except (ValueError, TypeError):
+                        pass
+                        
+                # Bitrate
+                if "bit_rate" in format_info:
+                    try:
+                        metadata["bitrate"] = int(format_info["bit_rate"])
+                    except (ValueError, TypeError):
+                        pass
+                        
+                # File size
+                if "size" in format_info:
+                    try:
+                        metadata["file_size"] = int(format_info["size"])
+                    except (ValueError, TypeError):
+                        pass
+            
+            # Extract stream information
+            if "streams" in data:
+                for stream in data["streams"]:
+                    if stream.get("codec_type") == "video":
+                        # Video stream information
+                        metadata["width"] = stream.get("width")
+                        metadata["height"] = stream.get("height")
+                        metadata["video_codec"] = stream.get("codec_name")
+                        
+                        # Frame rate
+                        if "r_frame_rate" in stream:
+                            try:
+                                fps_str = stream["r_frame_rate"]
+                                if "/" in fps_str:
+                                    num, den = fps_str.split("/")
+                                    metadata["fps"] = round(float(num) / float(den), 2)
+                                else:
+                                    metadata["fps"] = float(fps_str)
+                            except (ValueError, TypeError, ZeroDivisionError):
+                                pass
+                                
+                    elif stream.get("codec_type") == "audio":
+                        # Audio stream information
+                        if not metadata["audio_codec"]:  # Take first audio stream
+                            metadata["audio_codec"] = stream.get("codec_name")
+            
+            # Determine quality based on height
+            if metadata["height"]:
+                height = metadata["height"]
+                if height >= 2160:
+                    metadata["quality"] = "4K"
+                elif height >= 1440:
+                    metadata["quality"] = "1440p"
+                elif height >= 1080:
+                    metadata["quality"] = "1080p"
+                elif height >= 720:
+                    metadata["quality"] = "720p"
+                elif height >= 480:
+                    metadata["quality"] = "480p"
+                else:
+                    metadata["quality"] = f"{height}p"
+            
+            logger.debug(f"Extracted metadata for {file_path}: duration={metadata['duration']}s, quality={metadata['quality']}")
+            
+        except subprocess.TimeoutExpired:
+            logger.error(f"FFprobe timeout for {file_path}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse FFprobe output for {file_path}: {e}")
+        except Exception as e:
+            logger.error(f"Error extracting FFmpeg metadata for {file_path}: {e}")
+            
+        return metadata
 
     def extract_file_metadata(self, file_path: Path) -> Dict:
         """
@@ -187,6 +309,7 @@ class VideoIndexingService:
         artist: Artist,
         file_metadata: Dict,
         imvdb_metadata: Dict = None,
+        ffmpeg_metadata: Dict = None,
         session=None,
     ) -> Video:
         """
@@ -196,6 +319,7 @@ class VideoIndexingService:
             artist: Artist object
             file_metadata: File metadata dictionary
             imvdb_metadata: Optional IMVDb metadata
+            ffmpeg_metadata: Optional FFmpeg technical metadata
             session: Database session
 
         Returns:
@@ -210,6 +334,25 @@ class VideoIndexingService:
             local_path=file_metadata["file_path"],
             created_at=file_metadata.get("created_time", datetime.utcnow()),
         )
+        
+        # Add FFmpeg technical metadata if available
+        if ffmpeg_metadata:
+            video.duration = ffmpeg_metadata.get("duration")
+            video.quality = ffmpeg_metadata.get("quality")
+            
+            # Store additional technical metadata in video_metadata field
+            tech_metadata = {
+                "width": ffmpeg_metadata.get("width"),
+                "height": ffmpeg_metadata.get("height"),
+                "video_codec": ffmpeg_metadata.get("video_codec"),
+                "audio_codec": ffmpeg_metadata.get("audio_codec"),
+                "fps": ffmpeg_metadata.get("fps"),
+                "bitrate": ffmpeg_metadata.get("bitrate"),
+                "ffmpeg_extracted": True,
+                "extraction_date": datetime.utcnow().isoformat()
+            }
+            video.video_metadata = tech_metadata
+            logger.info(f"Added FFmpeg metadata: duration={video.duration}s, quality={video.quality}")
 
         # Add IMVDb metadata if available
         if imvdb_metadata:
@@ -301,11 +444,17 @@ class VideoIndexingService:
             "imvdb_metadata_found": False,
             "thumbnail_downloaded": False,
             "already_indexed": False,
+            "ffmpeg_metadata_extracted": False,
+            "ffmpeg_metadata_updated": False,
         }
 
         try:
             # Extract file metadata
             file_metadata = self.extract_file_metadata(file_path)
+            
+            # Extract FFmpeg technical metadata
+            ffmpeg_metadata = self.extract_ffmpeg_metadata(file_path)
+            result["ffmpeg_metadata_extracted"] = bool(ffmpeg_metadata.get("duration") or ffmpeg_metadata.get("quality"))
 
             if not file_metadata["extracted_artist"]:
                 result["error"] = "Could not extract artist name from file or folder"
@@ -364,6 +513,30 @@ class VideoIndexingService:
                 # Create or update video record
                 if existing_video:
                     video = existing_video
+                    
+                    # Update with FFmpeg metadata if not already present
+                    if ffmpeg_metadata and (not video.duration or not video.quality):
+                        video.duration = ffmpeg_metadata.get("duration") or video.duration
+                        video.quality = ffmpeg_metadata.get("quality") or video.quality
+                        
+                        # Update video_metadata with technical info
+                        existing_metadata = video.video_metadata or {}
+                        tech_metadata = {
+                            "width": ffmpeg_metadata.get("width"),
+                            "height": ffmpeg_metadata.get("height"),
+                            "video_codec": ffmpeg_metadata.get("video_codec"),
+                            "audio_codec": ffmpeg_metadata.get("audio_codec"),
+                            "fps": ffmpeg_metadata.get("fps"),
+                            "bitrate": ffmpeg_metadata.get("bitrate"),
+                            "ffmpeg_extracted": True,
+                            "extraction_date": datetime.utcnow().isoformat()
+                        }
+                        existing_metadata.update(tech_metadata)
+                        video.video_metadata = existing_metadata
+                        video.updated_at = datetime.utcnow()
+                        result["ffmpeg_metadata_updated"] = True
+                        logger.info(f"Updated existing video with FFmpeg metadata: duration={video.duration}s, quality={video.quality}")
+                    
                     # Update with IMVDb metadata if found
                     if imvdb_metadata and not video.imvdb_id:
                         video.imvdb_id = imvdb_metadata.get("imvdb_id")
@@ -399,7 +572,7 @@ class VideoIndexingService:
                                 )
                 else:
                     video = self.create_video_record(
-                        artist, file_metadata, imvdb_metadata, session
+                        artist, file_metadata, imvdb_metadata, ffmpeg_metadata, session
                     )
                     result["video_created"] = True
                     if imvdb_metadata and imvdb_metadata.get("thumbnail_url"):

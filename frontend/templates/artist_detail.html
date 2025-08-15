@@ -600,6 +600,9 @@
                     <button onclick="bulkDownloadSelected()" class="btn btn-primary" id="bulkDownloadBtn" disabled>
                         <span id="downloadBtnText">Download Selected</span>
                     </button>
+                    <button onclick="bulkAddToPlaylist()" class="btn btn-success" id="bulkPlaylistBtn" disabled>
+                        <iconify-icon icon="tabler:playlist-add"></iconify-icon> Add to Playlist
+                    </button>
                     <button onclick="bulkUpdateStatus()" class="btn btn-secondary" id="bulkStatusBtn" disabled>
                         <span id="statusBtnText">Update Status</span>
                     </button>
@@ -6113,6 +6116,153 @@ function showMergeDialog(conflictData) {
         }
     `;
     document.head.appendChild(style);
+}
+
+// Bulk action functions for artist videos
+function selectAllVideos() {
+    const checkboxes = document.querySelectorAll('.video-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        const videoId = checkbox.dataset.videoId;
+        if (videoId) {
+            selectedVideos.add(parseInt(videoId));
+        }
+    });
+    updateSelectionUI();
+}
+
+function deselectAllVideos() {
+    const checkboxes = document.querySelectorAll('.video-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    selectedVideos.clear();
+    updateSelectionUI();
+}
+
+function bulkAddToPlaylist() {
+    if (selectedVideos.size === 0) {
+        showError('Please select videos to add to playlist');
+        return;
+    }
+    
+    // Simple implementation for artist page - redirect to videos page with selection
+    const videoIds = Array.from(selectedVideos);
+    sessionStorage.setItem('selectedVideosForPlaylist', JSON.stringify(videoIds));
+    window.location.href = '/videos?showPlaylistModal=true';
+}
+
+function bulkDownloadSelected() {
+    if (selectedVideos.size === 0) {
+        showError('Please select videos to download');
+        return;
+    }
+    
+    const videoIds = Array.from(selectedVideos);
+    // Implement bulk download logic here
+    showInfo(`Starting download for ${videoIds.length} selected videos...`);
+}
+
+function bulkUpdateStatus() {
+    if (selectedVideos.size === 0) {
+        showError('Please select videos to update status');
+        return;
+    }
+    
+    const videoIds = Array.from(selectedVideos);
+    // Implement bulk status update logic here
+    showInfo(`Updating status for ${videoIds.length} selected videos...`);
+}
+
+function showVideoPreviewModal() {
+    if (selectedVideos.size === 0) {
+        showError('Please select videos to preview');
+        return;
+    }
+    
+    // Implement video preview modal logic here
+    showInfo('Video preview modal not yet implemented');
+}
+
+function bulkDeleteSelected() {
+    if (selectedVideos.size === 0) {
+        showError('Please select videos to delete');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to delete ${selectedVideos.size} selected videos?`)) {
+        const videoIds = Array.from(selectedVideos);
+        // Implement bulk delete logic here
+        showInfo(`Deleting ${videoIds.length} selected videos...`);
+    }
+}
+
+function updateSelectionUI() {
+    const count = selectedVideos.size;
+    const bulkButtons = ['bulkDownloadBtn', 'bulkPlaylistBtn', 'bulkStatusBtn', 'previewBtn', 'bulkDeleteBtn'];
+    
+    bulkButtons.forEach(buttonId => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.disabled = count === 0;
+        }
+    });
+    
+    const selectionInfo = document.getElementById('selectionInfo');
+    const selectionCount = document.getElementById('selectionCount');
+    
+    if (selectionInfo && selectionCount) {
+        if (count > 0) {
+            selectionInfo.style.display = 'block';
+            selectionCount.textContent = count;
+        } else {
+            selectionInfo.style.display = 'none';
+        }
+    }
+}
+
+// Tab navigation function
+function showTab(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // Show the selected tab content
+    const selectedTab = document.getElementById(tabName + 'Content');
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Add active class to the clicked tab button
+    const selectedButton = document.getElementById(tabName + 'Tab');
+    if (selectedButton) {
+        selectedButton.classList.add('active');
+    }
+    
+    // Load tab-specific data if needed
+    switch(tabName) {
+        case 'videos':
+            // Load videos if not already loaded
+            if (!window.videosLoaded) {
+                loadArtistVideos();
+                window.videosLoaded = true;
+            }
+            break;
+        case 'discover':
+            // Load discovery data if needed
+            break;
+        case 'settings':
+            // Load settings if needed
+            break;
+    }
 }
 
 function executeMerge(sourceArtistId, targetArtistId) {

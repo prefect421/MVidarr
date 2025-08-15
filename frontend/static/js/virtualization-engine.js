@@ -428,6 +428,21 @@ class VideoVirtualization extends VirtualizationEngine {
                     </div>
                 </div>
                 <div class="video-actions">
+                    <button data-video-id="${video.id}" data-action="edit" class="btn-icon" title="Edit Video">
+                        <iconify-icon icon="tabler:edit"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="download" class="btn-icon" title="Download Video">
+                        <iconify-icon icon="tabler:download"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="add-to-playlist" class="btn-icon" title="Add to Playlist">
+                        <iconify-icon icon="tabler:playlist-add"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
+                        <iconify-icon icon="tabler:refresh"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="delete" class="btn-icon btn-danger" title="Delete Video">
+                        <iconify-icon icon="tabler:trash"></iconify-icon>
+                    </button>
                     <label class="video-select">
                         <input type="checkbox" ${this.selectedVideos.has(video.id) ? 'checked' : ''}>
                         <span class="checkmark"></span>
@@ -444,6 +459,7 @@ class VideoVirtualization extends VirtualizationEngine {
     
     attachVideoCardListeners(card, video) {
         const checkbox = card.querySelector('input[type="checkbox"]');
+        const actionButtons = card.querySelectorAll('[data-action]');
         
         // Selection handling
         if (checkbox) {
@@ -463,9 +479,31 @@ class VideoVirtualization extends VirtualizationEngine {
             });
         }
         
+        // Action button handling
+        actionButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const action = button.getAttribute('data-action');
+                
+                // Handle playlist action specifically
+                if (action === 'add-to-playlist') {
+                    if (window.addSingleVideoToPlaylist) {
+                        window.addSingleVideoToPlaylist(video.id);
+                    } else {
+                        console.error('addSingleVideoToPlaylist function not found');
+                    }
+                } else {
+                    // Handle other actions through the video action callback
+                    this.onVideoAction(action, video.id);
+                }
+            });
+        });
+        
         // Card click handling
         card.addEventListener('click', (e) => {
-            if (!e.target.closest('.video-select') && !e.target.closest('.video-actions')) {
+            if (!e.target.closest('.video-select') && !e.target.closest('[data-action]') && !e.target.closest('.btn-icon')) {
                 // Toggle selection on card click
                 const isSelected = this.selectedVideos.has(video.id);
                 if (checkbox) {

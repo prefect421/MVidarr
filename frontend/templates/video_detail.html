@@ -807,6 +807,49 @@ function renderVideoDetails(video) {
                     <span>${video.local_path}</span>
                 </div>
             ` : ''}
+            ${video.quality ? `
+                <div class="detail-group">
+                    <label>Quality:</label>
+                    <span class="quality-badge">${video.quality}</span>
+                </div>
+            ` : ''}
+            ${video.video_metadata && video.video_metadata.ffmpeg_extracted ? `
+                <div class="detail-group technical-metadata">
+                    <label>Technical Details:</label>
+                    <div class="metadata-grid">
+                        ${video.video_metadata.width && video.video_metadata.height ? `
+                            <div class="metadata-item">
+                                <span class="metadata-label">Resolution:</span>
+                                <span class="metadata-value">${video.video_metadata.width}x${video.video_metadata.height}</span>
+                            </div>
+                        ` : ''}
+                        ${video.video_metadata.video_codec ? `
+                            <div class="metadata-item">
+                                <span class="metadata-label">Video Codec:</span>
+                                <span class="metadata-value">${video.video_metadata.video_codec}</span>
+                            </div>
+                        ` : ''}
+                        ${video.video_metadata.audio_codec ? `
+                            <div class="metadata-item">
+                                <span class="metadata-label">Audio Codec:</span>
+                                <span class="metadata-value">${video.video_metadata.audio_codec}</span>
+                            </div>
+                        ` : ''}
+                        ${video.video_metadata.fps ? `
+                            <div class="metadata-item">
+                                <span class="metadata-label">Frame Rate:</span>
+                                <span class="metadata-value">${video.video_metadata.fps} fps</span>
+                            </div>
+                        ` : ''}
+                        ${video.video_metadata.bitrate ? `
+                            <div class="metadata-item">
+                                <span class="metadata-label">Bitrate:</span>
+                                <span class="metadata-value">${Math.round(video.video_metadata.bitrate / 1000)} kbps</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            ` : ''}
         </div>
     `;
     document.getElementById('videoInfoSection').innerHTML = infoHtml;
@@ -819,6 +862,7 @@ function renderVideoDetails(video) {
             ${video.video_url ? `<button onclick="playExternalVideo()" class="btn btn-secondary">Play on YouTube</button>` : ''}
             <button onclick="editVideo()" class="btn btn-info">Edit Details</button>
             <button onclick="refreshMetadata()" class="btn btn-info">Refresh Metadata</button>
+            ${video.local_path ? `<button onclick="extractFFmpegMetadata()" class="btn btn-secondary">Extract FFmpeg Metadata</button>` : ''}
             <button onclick="updateStatus()" class="btn btn-secondary">Update Status</button>
             <button onclick="deleteVideo()" class="btn btn-danger">Delete Video</button>
         </div>
@@ -966,6 +1010,40 @@ function refreshMetadata() {
     .catch(error => {
         console.error('Error refreshing metadata:', error);
         showError('Error refreshing metadata');
+    });
+}
+
+function extractFFmpegMetadata() {
+    if (!currentVideo || !currentVideo.local_path) return;
+    
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = 'Extracting...';
+    button.disabled = true;
+    
+    fetch(`/api/videos/${currentVideo.id}/extract-ffmpeg-metadata`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            if (result.updated) {
+                showSuccess('FFmpeg metadata extracted successfully!');
+                loadVideoDetails(); // Refresh to show updated data
+            } else {
+                showInfo('Video already has complete metadata');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error extracting FFmpeg metadata:', error);
+        showError('Error extracting FFmpeg metadata');
+    })
+    .finally(() => {
+        button.textContent = originalText;
+        button.disabled = false;
     });
 }
 

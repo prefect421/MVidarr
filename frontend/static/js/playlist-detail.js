@@ -1,0 +1,1104 @@
+/**
+ * MVidarr Playlist Detail Management JavaScript
+ * Handles detailed playlist view, video management, and drag-drop reordering
+ */
+
+class PlaylistDetailManager {
+    constructor() {
+        this.playlistId = this.extractPlaylistId();
+        this.playlist = null;
+        this.videos = [];
+        this.selectedVideos = new Set();
+        this.availableVideos = [];
+        this.selectedAvailableVideos = new Set();
+        this.isLoading = false;
+        this.canModify = false;
+        this.isAdmin = false;
+        this.draggedElement = null;
+        this.draggedIndex = -1;
+        
+        this.init();
+    }
+
+    extractPlaylistId() {
+        const path = window.location.pathname;
+        const match = path.match(/\/playlist\/(\d+)/);
+        return match ? parseInt(match[1]) : null;
+    }
+
+    async init() {
+        if (!this.playlistId) {
+            this.showError('Invalid playlist ID');
+            return;
+        }
+
+        try {
+            await this.checkUserPermissions();
+            await this.loadPlaylist();
+            this.initializeEventListeners();
+            this.setupDragAndDrop();
+            this.setupKeyboardShortcuts();
+        } catch (error) {
+            console.error('Failed to initialize playlist detail manager:', error);
+            this.showError(`Failed to initialize: ${error.message}`);
+        }
+    }
+
+    async checkUserPermissions() {
+        try {
+            const response = await fetch('/api/auth/user');
+            if (response.ok) {
+                const userData = await response.json();
+                this.isAdmin = userData.user && userData.user.role === 'admin';
+                
+                if (this.isAdmin) {
+                    const featuredGroup = document.getElementById('editFeaturedGroup');
+                    if (featuredGroup) {
+                        featuredGroup.style.display = 'block';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to check user permissions:', error);
+        }
+    }
+
+    async loadPlaylist() {
+        if (this.isLoading) return;
+        
+        this.isLoading = true;
+        this.showLoading(true);
+
+        try {
+            const response = await fetch(`/api/playlists/${this.playlistId}?include_entries=true&include_user=true&include_video_details=true`);
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Playlist not found');
+                } else if (response.status === 403) {
+                    throw new Error('Access denied to this playlist');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                this.playlist = data.playlist;
+                this.videos = data.playlist.entries || [];
+                this.canModify = data.playlist.can_modify || false;
+                
+                // Debug logging to see playlist data structure
+                console.log('Playlist detail data:', this.playlist);
+                console.log('User data:', this.playlist.user);
+                console.log('Owner field:', this.playlist.owner);
+                
+                this.renderPlaylist();
+                this.renderVideos();
+                this.updateUI();
+            } else {
+                throw new Error(data.error || 'Failed to load playlist');
+            }
+        } catch (error) {
+            console.error('Failed to load playlist:', error);
+            this.showError(error.message);
+        } finally {
+            this.isLoading = false;
+            this.showLoading(false);
+        }
+    }
+
+    renderPlaylist() {
+        if (!this.playlist) return;
+
+        // Update header
+        document.getElementById('playlistTitle').textContent = this.playlist.name;
+        
+        const description = document.getElementById('playlistDescription');
+        if (this.playlist.description) {
+            description.textContent = this.playlist.description;
+            description.style.display = 'block';
+        } else {
+            description.style.display = 'none';
+        }
+        
+        // Update meta information
+        const videoCount = this.videos.length;
+        document.getElementById('playlistVideoCount').textContent = `${videoCount} video${videoCount !== 1 ? 's' : ''}`;
+        document.getElementById('playlistOwner').textContent = this.playlist.user?.username || this.playlist.owner || 'System';
+        
+        const updatedDate = new Date(this.playlist.updated_at).toLocaleDateString();
+        document.getElementById('playlistUpdated').textContent = updatedDate;
+        
+        // Update badges
+        const badgesContainer = document.getElementById('playlistBadges');
+        const badges = [];
+        
+        if (this.playlist.is_featured) {
+            badges.push('<span class="playlist-badge featured">Featured</span>');
+        }
+        if (this.playlist.is_public) {
+            badges.push('<span class="playlist-badge public">Public</span>');
+        } else {
+            badges.push('<span class="playlist-badge private">Private</span>');
+        }
+        
+        badgesContainer.innerHTML = badges.join('');
+        
+        // Show/hide action buttons based on permissions
+        const editBtn = document.getElementById('editPlaylistBtn');
+        const addVideoBtn = document.getElementById('addVideoBtn');
+        const addFirstVideoBtn = document.getElementById('addFirstVideoBtn');
+        
+        if (this.canModify) {
+            if (editBtn) editBtn.style.display = 'block';
+            if (addVideoBtn) addVideoBtn.style.display = 'block';
+            if (addFirstVideoBtn) addFirstVideoBtn.style.display = 'block';
+        } else {
+            if (editBtn) editBtn.style.display = 'none';
+            if (addVideoBtn) addVideoBtn.style.display = 'none';
+            if (addFirstVideoBtn) addFirstVideoBtn.style.display = 'none';
+        }
+    }
+
+    renderVideos() {
+        const videoList = document.getElementById('videoList');
+        const playlistVideos = document.getElementById('playlistVideos');
+        const emptyState = document.getElementById('emptyState');
+        
+        if (this.videos.length === 0) {
+            if (playlistVideos) playlistVideos.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'block';
+            return;
+        }
+
+        if (emptyState) emptyState.style.display = 'none';
+        if (playlistVideos) playlistVideos.style.display = 'block';
+        
+        if (!videoList) return;
+
+        videoList.innerHTML = this.videos.map((entry, index) => this.renderVideoItem(entry, index)).join('');
+        
+        // Add event listeners
+        this.videos.forEach((entry, index) => {
+            const item = document.getElementById(`video-item-${entry.id}`);
+            if (item) {
+                const checkbox = item.querySelector('.video-checkbox');
+                if (checkbox) {
+                    checkbox.addEventListener('change', (e) => {
+                        this.handleVideoSelection(entry.id, e.target.checked);
+                    });
+                }
+            }
+        });
+    }
+
+    renderVideoItem(entry, index) {
+        const video = entry.video;
+        if (!video) return '';
+        
+        // Debug logging to see video data structure
+        console.log('Rendering video entry:', entry);
+        console.log('Video data:', video);
+        console.log('Expected fields - artist_name:', video.artist_name, 'quality:', video.quality, 'duration:', video.duration, 'added_at:', entry.added_at);
+        
+        const isSelected = this.selectedVideos.has(entry.id);
+        const thumbnailUrl = video.thumbnail_url || '/static/placeholder-video.png';
+        const position = entry.position || index + 1;
+        
+        return `
+            <div class="video-item ${isSelected ? 'selected' : ''}" 
+                 id="video-item-${entry.id}" 
+                 draggable="${this.canModify ? 'true' : 'false'}"
+                 data-entry-id="${entry.id}"
+                 data-position="${position}">
+                
+                <div class="video-item-checkbox">
+                    <input type="checkbox" class="video-checkbox" ${isSelected ? 'checked' : ''} 
+                           ${this.canModify ? '' : 'disabled'}>
+                </div>
+                
+                ${this.canModify ? `
+                    <div class="video-item-drag">
+                        <iconify-icon icon="tabler:grip-vertical"></iconify-icon>
+                    </div>
+                ` : ''}
+                
+                <div class="video-item-position">${position}</div>
+                
+                <div class="video-item-thumbnail">
+                    <img src="${thumbnailUrl}" alt="Video thumbnail" loading="lazy">
+                </div>
+                
+                <div class="video-item-info">
+                    <div class="video-item-title">${this.escapeHtml(video.title || video.name || 'Unknown Title')}</div>
+                    <div class="video-item-artist">${this.escapeHtml(video.artist_name || video.artist?.name || 'Unknown Artist')}</div>
+                    <div class="video-item-meta">
+                        <span>Quality: ${video.quality || video.video_quality || 'N/A'}</span>
+                        <span>Duration: ${this.formatDuration(video.duration || video.length || video.duration_seconds)}</span>
+                        <span>Added: ${entry.added_at ? new Date(entry.added_at).toLocaleDateString() : entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'Unknown'}</span>
+                    </div>
+                </div>
+                
+                <div class="video-item-actions">
+                    <button onclick="playLocalVideo(${video.id})" class="btn btn-primary btn-sm" title="Play video">
+                        <iconify-icon icon="tabler:play"></iconify-icon>
+                    </button>
+                    <button onclick="viewVideoDetail(${video.id})" class="btn btn-secondary btn-sm" title="View details">
+                        <iconify-icon icon="tabler:info-circle"></iconify-icon>
+                    </button>
+                    ${this.canModify ? `
+                        <button onclick="removeVideoFromPlaylist(${entry.id})" class="btn btn-danger btn-sm" title="Remove from playlist">
+                            <iconify-icon icon="tabler:x"></iconify-icon>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    initializeEventListeners() {
+        // Select all checkbox
+        const selectAllCheckbox = document.getElementById('selectAllVideos');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', (e) => {
+                this.handleSelectAllVideos(e.target.checked);
+            });
+        }
+
+        // Sort order dropdown
+        const sortOrder = document.getElementById('sortOrder');
+        if (sortOrder) {
+            sortOrder.addEventListener('change', () => {
+                this.applySortOrder();
+            });
+        }
+
+        // Video search for adding to playlist
+        const videoSearchInput = document.getElementById('videoSearchInput');
+        if (videoSearchInput) {
+            let debounceTimer;
+            videoSearchInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    this.searchVideosForPlaylist(e.target.value.trim());
+                }, 300);
+            });
+        }
+    }
+
+    setupDragAndDrop() {
+        if (!this.canModify) return;
+
+        const videoList = document.getElementById('videoList');
+        if (!videoList) return;
+
+        videoList.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('video-item')) {
+                this.draggedElement = e.target;
+                this.draggedIndex = Array.from(videoList.children).indexOf(e.target);
+                e.target.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+
+        videoList.addEventListener('dragend', (e) => {
+            if (e.target.classList.contains('video-item')) {
+                e.target.classList.remove('dragging');
+                this.draggedElement = null;
+                this.draggedIndex = -1;
+                
+                // Remove all drag-over classes
+                document.querySelectorAll('.drag-over').forEach(el => {
+                    el.classList.remove('drag-over');
+                });
+            }
+        });
+
+        videoList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const afterElement = this.getDragAfterElement(videoList, e.clientY);
+            const dragging = document.querySelector('.dragging');
+            
+            if (afterElement == null) {
+                videoList.appendChild(dragging);
+            } else {
+                videoList.insertBefore(dragging, afterElement);
+            }
+        });
+
+        videoList.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.handleVideoDrop();
+        });
+    }
+
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.video-item:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    async handleVideoDrop() {
+        if (!this.draggedElement) return;
+
+        const videoList = document.getElementById('videoList');
+        const newIndex = Array.from(videoList.children).indexOf(this.draggedElement);
+        
+        if (newIndex === this.draggedIndex) return; // No change
+
+        try {
+            // Create new order array
+            const newOrder = [];
+            const videoItems = Array.from(videoList.children);
+            
+            videoItems.forEach((item, index) => {
+                const entryId = parseInt(item.dataset.entryId);
+                newOrder.push({
+                    entry_id: entryId,
+                    position: index + 1
+                });
+            });
+
+            await this.reorderVideos(newOrder);
+            
+        } catch (error) {
+            console.error('Failed to reorder videos:', error);
+            this.showToast('Failed to reorder videos', 'error');
+            // Reload to restore original order
+            await this.loadPlaylist();
+        }
+    }
+
+    async reorderVideos(newOrder) {
+        try {
+            const response = await fetch(`/api/playlists/${this.playlistId}/videos/reorder`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ order: newOrder })
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            if (!data.success) throw new Error(data.error);
+
+            this.showToast('Videos reordered successfully', 'success');
+            
+            // Update local data
+            this.videos = this.videos.map(entry => {
+                const newOrderItem = newOrder.find(item => item.entry_id === entry.id);
+                if (newOrderItem) {
+                    entry.position = newOrderItem.position;
+                }
+                return entry;
+            }).sort((a, b) => a.position - b.position);
+
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Escape - Close modals
+            if (e.key === 'Escape') {
+                this.closeAllModals();
+            }
+            
+            // Delete - Remove selected videos
+            if (e.key === 'Delete' && this.selectedVideos.size > 0 && this.canModify && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                this.removeSelectedVideos();
+            }
+            
+            // Ctrl/Cmd + A - Select all videos
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                const selectAllCheckbox = document.getElementById('selectAllVideos');
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = true;
+                    this.handleSelectAllVideos(true);
+                }
+            }
+        });
+    }
+
+    handleVideoSelection(entryId, isSelected) {
+        if (isSelected) {
+            this.selectedVideos.add(entryId);
+        } else {
+            this.selectedVideos.delete(entryId);
+        }
+        
+        this.updateVideoSelectionUI();
+    }
+
+    handleSelectAllVideos(selectAll) {
+        this.selectedVideos.clear();
+        
+        if (selectAll) {
+            this.videos.forEach(entry => {
+                this.selectedVideos.add(entry.id);
+            });
+        }
+        
+        // Update checkboxes
+        document.querySelectorAll('.video-checkbox').forEach(checkbox => {
+            checkbox.checked = selectAll;
+        });
+        
+        // Update item styles
+        document.querySelectorAll('.video-item').forEach(item => {
+            item.classList.toggle('selected', selectAll);
+        });
+        
+        this.updateVideoSelectionUI();
+    }
+
+    updateVideoSelectionUI() {
+        const selectedCount = this.selectedVideos.size;
+        
+        // Update count displays
+        const countElements = ['selectedVideoCount', 'selectedVideosCount'];
+        countElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = selectedCount === 1 ? '1 video selected' : `${selectedCount} videos selected`;
+            }
+        });
+        
+        // Update select all checkbox
+        const selectAllCheckbox = document.getElementById('selectAllVideos');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = selectedCount === this.videos.length && this.videos.length > 0;
+            selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < this.videos.length;
+        }
+        
+        // Show/hide bulk actions panel
+        const videoActionsPanel = document.getElementById('videoActionsPanel');
+        if (videoActionsPanel) {
+            videoActionsPanel.style.display = selectedCount > 0 ? 'block' : 'none';
+        }
+        
+        // Update item selection styles
+        this.videos.forEach(entry => {
+            const item = document.getElementById(`video-item-${entry.id}`);
+            if (item) {
+                item.classList.toggle('selected', this.selectedVideos.has(entry.id));
+            }
+        });
+    }
+
+    async searchVideosForPlaylist(query) {
+        if (!query) {
+            document.getElementById('availableVideos').innerHTML = '<p style="padding: 1rem; text-align: center; color: var(--text-muted);">Enter a search term to find videos</p>';
+            return;
+        }
+
+        console.log('Searching for videos with query:', query); // Debug logging
+
+        try {
+            // Try multiple possible API endpoints
+            let apiUrl = `/api/videos/search?search=${encodeURIComponent(query)}&per_page=50`;
+            let response = await fetch(apiUrl);
+            
+            // If that fails, try the alternative endpoint
+            if (!response.ok) {
+                console.log('First endpoint failed, trying alternative:', response.status);
+                apiUrl = `/api/videos/?q=${encodeURIComponent(query)}&per_page=50`;
+                response = await fetch(apiUrl);
+            }
+            
+            // If that also fails, try another alternative
+            if (!response.ok) {
+                console.log('Second endpoint failed, trying third alternative:', response.status);
+                apiUrl = `/api/videos/?search=${encodeURIComponent(query)}&per_page=50`;
+                response = await fetch(apiUrl);
+            }
+            
+            console.log('Final API URL used:', apiUrl); // Debug logging
+            console.log('Search response status:', response.status); // Debug logging
+            
+            if (!response.ok) throw new Error(`Failed to search videos: ${response.status} ${response.statusText}`);
+
+            const data = await response.json();
+            console.log('Search response data:', data); // Debug logging
+            
+            if (data.videos) {
+                this.availableVideos = data.videos || [];
+                console.log('Found videos:', this.availableVideos.length); // Debug logging
+                this.renderAvailableVideos();
+            } else {
+                console.error('Search API returned error:', data.error || 'No videos found');
+                this.showToast(`Search failed: ${data.error || 'No videos found'}`, 'error');
+            }
+        } catch (error) {
+            console.error('Failed to search videos:', error);
+            this.showToast(`Failed to search videos: ${error.message}`, 'error');
+        }
+    }
+
+    renderAvailableVideos() {
+        const container = document.getElementById('availableVideos');
+        if (!container) return;
+
+        if (this.availableVideos.length === 0) {
+            container.innerHTML = '<p style="padding: 1rem; text-align: center; color: var(--text-muted);">No videos found</p>';
+            return;
+        }
+
+        console.log('Rendering available videos, first video structure:', this.availableVideos[0]); // Debug
+        console.log('Thumbnail fields check:', {
+            thumbnail_url: this.availableVideos[0]?.thumbnail_url,
+            thumbnail: this.availableVideos[0]?.thumbnail,
+            thumbnail_path: this.availableVideos[0]?.thumbnail_path,
+            image_url: this.availableVideos[0]?.image_url
+        }); // Debug thumbnails
+
+        container.innerHTML = this.availableVideos.map(video => {
+            const isSelected = this.selectedAvailableVideos.has(video.id);
+            const isInPlaylist = this.videos.some(entry => entry.video.id === video.id);
+            
+            return `
+                <div class="available-video-item ${isSelected ? 'selected' : ''} ${isInPlaylist ? 'disabled' : ''}" 
+                     onclick="playlistDetailManager.toggleAvailableVideoSelection(${video.id})">
+                    <input type="checkbox" ${isSelected ? 'checked' : ''} ${isInPlaylist ? 'disabled' : ''}>
+                    <div class="video-thumbnail">
+                        <img src="${video.thumbnail_url || video.thumbnail || video.thumbnail_path || video.image_url || '/static/placeholder-video.png'}" alt="Thumbnail" style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px;">
+                    </div>
+                    <div class="video-info" style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">${this.escapeHtml(video.title || video.name || 'Unknown Title')}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">${this.escapeHtml(video.artist?.name || video.artist_name || video.artist || 'Unknown Artist')}</div>
+                    </div>
+                    ${isInPlaylist ? '<span style="color: var(--text-muted); font-size: 0.8rem;">Already in playlist</span>' : ''}
+                </div>
+            `;
+        }).join('');
+
+        this.updateAddSelectedButton();
+    }
+
+    toggleAvailableVideoSelection(videoId) {
+        const video = this.availableVideos.find(v => v.id === videoId);
+        if (!video) return;
+        
+        // Don't allow selection if video is already in playlist
+        const isInPlaylist = this.videos.some(entry => entry.video.id === video.id);
+        if (isInPlaylist) return;
+
+        if (this.selectedAvailableVideos.has(videoId)) {
+            this.selectedAvailableVideos.delete(videoId);
+        } else {
+            this.selectedAvailableVideos.add(videoId);
+        }
+        
+        this.renderAvailableVideos();
+    }
+
+    updateAddSelectedButton() {
+        const button = document.getElementById('addSelectedBtn');
+        if (button) {
+            const count = this.selectedAvailableVideos.size;
+            button.disabled = count === 0;
+            button.innerHTML = `<iconify-icon icon="tabler:plus"></iconify-icon> Add Selected Videos (${count})`;
+        }
+    }
+
+    async addSelectedVideosToPlaylist() {
+        if (this.selectedAvailableVideos.size === 0) return;
+
+        try {
+            const videoIds = Array.from(this.selectedAvailableVideos);
+            
+            for (const videoId of videoIds) {
+                const response = await fetch(`/api/playlists/${this.playlistId}/videos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ video_id: videoId })
+                });
+
+                if (!response.ok) throw new Error(`Failed to add video ${videoId}`);
+            }
+
+            this.showToast(`Added ${videoIds.length} video${videoIds.length !== 1 ? 's' : ''} to playlist`, 'success');
+            this.selectedAvailableVideos.clear();
+            this.closeAddVideoModal();
+            await this.loadPlaylist();
+
+        } catch (error) {
+            console.error('Failed to add videos:', error);
+            this.showToast(`Failed to add videos: ${error.message}`, 'error');
+        }
+    }
+
+    async removeSelectedVideos() {
+        if (this.selectedVideos.size === 0) return;
+
+        const count = this.selectedVideos.size;
+        if (!confirm(`Remove ${count} video${count !== 1 ? 's' : ''} from this playlist?`)) {
+            return;
+        }
+
+        try {
+            const entryIds = Array.from(this.selectedVideos);
+            
+            for (const entryId of entryIds) {
+                const response = await fetch(`/api/playlists/${this.playlistId}/videos/${entryId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error(`Failed to remove video ${entryId}`);
+            }
+
+            this.showToast(`Removed ${count} video${count !== 1 ? 's' : ''} from playlist`, 'success');
+            this.selectedVideos.clear();
+            await this.loadPlaylist();
+
+        } catch (error) {
+            console.error('Failed to remove videos:', error);
+            this.showToast(`Failed to remove videos: ${error.message}`, 'error');
+        }
+    }
+
+    async removeVideoFromPlaylist(entryId) {
+        if (!confirm('Remove this video from the playlist?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/playlists/${this.playlistId}/videos/${entryId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Failed to remove video');
+
+            const data = await response.json();
+            if (!data.success) throw new Error(data.error);
+
+            this.showToast('Video removed from playlist', 'success');
+            await this.loadPlaylist();
+
+        } catch (error) {
+            console.error('Failed to remove video:', error);
+            this.showToast(`Failed to remove video: ${error.message}`, 'error');
+        }
+    }
+
+    // Playlist actions
+    async playPlaylist() {
+        if (this.videos.length === 0) {
+            this.showToast('Playlist is empty', 'warning');
+            return;
+        }
+        
+        window.location.href = `/mvtv?playlist=${this.playlistId}`;
+    }
+
+    async shufflePlaylist() {
+        if (this.videos.length === 0) {
+            this.showToast('Playlist is empty', 'warning');
+            return;
+        }
+        
+        window.location.href = `/mvtv?playlist=${this.playlistId}&shuffle=true`;
+    }
+
+    showEditPlaylistModal() {
+        if (!this.playlist || !this.canModify) return;
+
+        // Populate form
+        document.getElementById('editPlaylistName').value = this.playlist.name;
+        document.getElementById('editPlaylistDescription').value = this.playlist.description || '';
+        document.getElementById('editPlaylistIsPublic').checked = this.playlist.is_public;
+        document.getElementById('editPlaylistIsFeatured').checked = this.playlist.is_featured;
+
+        this.showModal('editPlaylistModal');
+    }
+
+    async savePlaylistChanges(event) {
+        event.preventDefault();
+        
+        const playlistData = {
+            name: document.getElementById('editPlaylistName').value.trim(),
+            description: document.getElementById('editPlaylistDescription').value.trim(),
+            is_public: document.getElementById('editPlaylistIsPublic').checked,
+            is_featured: document.getElementById('editPlaylistIsFeatured').checked
+        };
+        
+        if (!playlistData.name) {
+            this.showToast('Playlist name is required', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/playlists/${this.playlistId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(playlistData)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (!data.success) throw new Error(data.error);
+            
+            this.showToast('Playlist updated successfully', 'success');
+            this.closeEditPlaylistModal();
+            await this.loadPlaylist();
+            
+        } catch (error) {
+            this.showToast(`Failed to update playlist: ${error.message}`, 'error');
+        }
+    }
+
+    showAddVideoModal() {
+        if (!this.canModify) return;
+        
+        this.selectedAvailableVideos.clear();
+        document.getElementById('videoSearchInput').value = '';
+        document.getElementById('availableVideos').innerHTML = '<p style="padding: 1rem; text-align: center; color: var(--text-muted);">Enter a search term to find videos</p>';
+        
+        this.showModal('addVideoToPlaylistModal');
+    }
+
+
+    async exportPlaylist() {
+        try {
+            const exportData = {
+                name: this.playlist.name,
+                description: this.playlist.description,
+                videos: this.videos.map(entry => ({
+                    title: entry.video.title,
+                    artist: entry.video.artist?.name,
+                    youtube_id: entry.video.youtube_id,
+                    position: entry.position
+                }))
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${this.playlist.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_playlist.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            this.showToast('Playlist exported successfully', 'success');
+        } catch (error) {
+            this.showToast(`Failed to export playlist: ${error.message}`, 'error');
+        }
+    }
+
+    // UI Helper Methods
+    updateUI() {
+        const elements = ['playlistHeader', 'secondaryActions'];
+        elements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.style.display = 'block';
+        });
+    }
+
+    showLoading(show) {
+        const loading = document.getElementById('playlistDetailLoading');
+        if (loading) {
+            loading.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    showError(message) {
+        const errorState = document.getElementById('errorState');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        if (errorState) errorState.style.display = 'block';
+        if (errorMessage) errorMessage.textContent = message;
+        
+        // Hide other elements
+        ['playlistDetailLoading', 'playlistHeader', 'playlistVideos', 'emptyState'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.style.display = 'none';
+        });
+    }
+
+    showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+
+    closeAllModals() {
+        ['editPlaylistModal', 'addVideoToPlaylistModal'].forEach(modalId => {
+            this.closeModal(modalId);
+        });
+    }
+
+    closeEditPlaylistModal() {
+        this.closeModal('editPlaylistModal');
+    }
+
+    closeAddVideoModal() {
+        this.closeModal('addVideoToPlaylistModal');
+    }
+
+    showToast(message, type = 'info') {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type);
+        } else {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            alert(message);
+        }
+    }
+
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    formatDuration(seconds) {
+        if (!seconds || seconds === 0 || isNaN(seconds)) return 'N/A';
+        
+        // Convert to number if it's a string
+        const numSeconds = typeof seconds === 'string' ? parseInt(seconds) : seconds;
+        if (isNaN(numSeconds) || numSeconds <= 0) return 'N/A';
+        
+        const minutes = Math.floor(numSeconds / 60);
+        const remainingSeconds = numSeconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    applySortOrder() {
+        const sortOrder = document.getElementById('sortOrder');
+        if (!sortOrder) return;
+        
+        const sortValue = sortOrder.value;
+        console.log('Applying sort order:', sortValue); // Debug
+        let sortedVideos = [...this.videos];
+        
+        switch (sortValue) {
+            case 'position':
+                sortedVideos.sort((a, b) => (a.position || 0) - (b.position || 0));
+                break;
+            case 'title':
+                sortedVideos.sort((a, b) => (a.video.title || a.video.name || '').localeCompare(b.video.title || b.video.name || ''));
+                break;
+            case 'title_desc':
+                sortedVideos.sort((a, b) => (b.video.title || b.video.name || '').localeCompare(a.video.title || a.video.name || ''));
+                break;
+            case 'artist':
+                sortedVideos.sort((a, b) => (a.video.artist_name || a.video.artist?.name || '').localeCompare(b.video.artist_name || b.video.artist?.name || ''));
+                break;
+            case 'artist_desc':
+                sortedVideos.sort((a, b) => (b.video.artist_name || b.video.artist?.name || '').localeCompare(a.video.artist_name || a.video.artist?.name || ''));
+                break;
+            case 'date_added':
+                sortedVideos.sort((a, b) => new Date(b.added_at || b.created_at) - new Date(a.added_at || a.created_at));
+                break;
+            case 'date_added_desc':
+                sortedVideos.sort((a, b) => new Date(a.added_at || a.created_at) - new Date(b.added_at || b.created_at));
+                break;
+            case 'duration':
+                sortedVideos.sort((a, b) => (b.video.duration || 0) - (a.video.duration || 0));
+                break;
+            default:
+                return; // No sorting needed
+        }
+        
+        this.videos = sortedVideos;
+        this.renderVideos();
+    }
+
+    async removeDuplicateVideos() {
+        if (!this.canModify) {
+            this.showToast('You do not have permission to modify this playlist', 'error');
+            return;
+        }
+
+        try {
+            // Find duplicate videos by video ID
+            const videoIds = new Map();
+            const duplicateEntries = [];
+            
+            this.videos.forEach(entry => {
+                const videoId = entry.video.id;
+                if (videoIds.has(videoId)) {
+                    // This is a duplicate - mark for removal (keep first occurrence)
+                    duplicateEntries.push(entry.id);
+                } else {
+                    videoIds.set(videoId, entry.id);
+                }
+            });
+            
+            if (duplicateEntries.length === 0) {
+                this.showToast('No duplicate videos found in this playlist', 'info');
+                return;
+            }
+            
+            if (!confirm(`Remove ${duplicateEntries.length} duplicate video${duplicateEntries.length !== 1 ? 's' : ''} from this playlist?`)) {
+                return;
+            }
+            
+            // Remove duplicates
+            for (const entryId of duplicateEntries) {
+                const response = await fetch(`/api/playlists/${this.playlistId}/videos/${entryId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error(`Failed to remove duplicate ${entryId}`);
+            }
+            
+            this.showToast(`Removed ${duplicateEntries.length} duplicate video${duplicateEntries.length !== 1 ? 's' : ''} from playlist`, 'success');
+            await this.loadPlaylist();
+            
+        } catch (error) {
+            console.error('Failed to remove duplicates:', error);
+            this.showToast(`Failed to remove duplicates: ${error.message}`, 'error');
+        }
+    }
+}
+
+// Global functions for HTML onclick handlers
+let playlistDetailManager;
+
+function showEditPlaylistModal() {
+    playlistDetailManager.showEditPlaylistModal();
+}
+
+function closeEditPlaylistModal() {
+    playlistDetailManager.closeEditPlaylistModal();
+}
+
+function savePlaylistChanges(event) {
+    return playlistDetailManager.savePlaylistChanges(event);
+}
+
+function showAddVideoModal() {
+    playlistDetailManager.showAddVideoModal();
+}
+
+function closeAddVideoModal() {
+    playlistDetailManager.closeAddVideoModal();
+}
+
+function addSelectedVideosToPlaylist() {
+    playlistDetailManager.addSelectedVideosToPlaylist();
+}
+
+function removeVideoFromPlaylist(entryId) {
+    playlistDetailManager.removeVideoFromPlaylist(entryId);
+}
+
+function removeSelectedVideos() {
+    playlistDetailManager.removeSelectedVideos();
+}
+
+function toggleSelectAllVideos() {
+    const checkbox = document.getElementById('selectAllVideos');
+    if (checkbox) {
+        playlistDetailManager.handleSelectAllVideos(checkbox.checked);
+    }
+}
+
+function toggleVideoActionsPanel() {
+    const panel = document.getElementById('videoActionsPanel');
+    const button = document.getElementById('videoActionsToggle');
+    
+    if (panel) {
+        const isVisible = panel.style.display !== 'none';
+        panel.style.display = isVisible ? 'none' : 'block';
+        
+        if (button) {
+            button.setAttribute('aria-expanded', isVisible ? 'false' : 'true');
+        }
+    }
+}
+
+function playPlaylist() {
+    playlistDetailManager.playPlaylist();
+}
+
+function shufflePlaylist() {
+    playlistDetailManager.shufflePlaylist();
+}
+
+function exportPlaylist() {
+    playlistDetailManager.exportPlaylist();
+}
+
+function refreshPlaylist() {
+    playlistDetailManager.loadPlaylist();
+}
+
+function sortPlaylist() {
+    playlistDetailManager.applySortOrder();
+}
+
+function applySortOrder() {
+    playlistDetailManager.applySortOrder();
+}
+
+function removeDuplicates() {
+    playlistDetailManager.removeDuplicateVideos();
+}
+
+function playLocalVideo(videoId) {
+    if (videoId) {
+        // Use the same playback system as the main videos page
+        if (typeof playVideoById === 'function') {
+            playVideoById(videoId);
+        } else {
+            // Fallback: redirect to video detail page
+            window.location.href = `/video/${videoId}?play=true`;
+        }
+    }
+}
+
+function viewVideoDetail(videoId) {
+    window.location.href = `/video/${videoId}`;
+}
+
+function searchVideosForPlaylist(event) {
+    if (event.key === 'Enter') {
+        playlistDetailManager.searchVideosForPlaylist(event.target.value.trim());
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    playlistDetailManager = new PlaylistDetailManager();
+});

@@ -32,6 +32,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="MVidarr">
     
+    <!-- Cache busting headers -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='main.css') }}" id="main-theme">
     <link rel="stylesheet" href="{{ url_for('frontend.css_files', filename='themes.css') }}" id="themes-stylesheet">
     
@@ -1226,6 +1231,10 @@
                 <li><a href="{{ url_for('frontend.videos') }}" class="sidebar-item">
                     <iconify-icon icon="tabler:video" class="sidebar-icon"></iconify-icon>
                     <span class="sidebar-text">Videos</span>
+                </a></li>
+                <li><a href="{{ url_for('frontend.playlists') }}" class="sidebar-item">
+                    <iconify-icon icon="tabler:playlist" class="sidebar-icon"></iconify-icon>
+                    <span class="sidebar-text">Playlists</span>
                 </a></li>
                 <li><a href="{{ url_for('frontend.mvtv') }}" class="sidebar-item">
                     <iconify-icon icon="tabler:device-tv" class="sidebar-icon"></iconify-icon>

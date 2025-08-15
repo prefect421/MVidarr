@@ -1161,6 +1161,7 @@ def get_artist_detailed(artist_id):
                         "producers": video.producers,
                         "status": video.status.value if video.status else None,
                         "quality": video.quality,
+                        "video_metadata": video.video_metadata,
                         "discovered_date": (
                             video.discovered_date.isoformat()
                             if video.discovered_date

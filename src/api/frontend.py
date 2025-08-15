@@ -70,6 +70,20 @@ def discover():
     return render_template("discover.html", query=query)
 
 
+@frontend_bp.route("/playlists")
+@auth_required
+def playlists():
+    """Playlists management page"""
+    return render_template("playlists.html")
+
+
+@frontend_bp.route("/playlist/<int:playlist_id>")
+@auth_required
+def playlist_detail(playlist_id):
+    """Playlist detail page"""
+    return render_template("playlist_detail.html")
+
+
 @frontend_bp.route("/mvtv")
 @auth_required
 def mvtv():
@@ -110,6 +124,13 @@ def plex():
 def lidarr():
     """Lidarr integration page"""
     return render_template("lidarr.html")
+
+
+@frontend_bp.route("/blacklist")
+@auth_required
+def blacklist():
+    """Video blacklist management page"""
+    return render_template("blacklist.html")
 
 
 @frontend_bp.route("/loading-demo")

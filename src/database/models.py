@@ -596,3 +596,191 @@ class CustomTheme(Base):
 
     def __repr__(self):
         return f"<CustomTheme(name='{self.name}', display_name='{self.display_name}')>"
+
+
+class Playlist(Base):
+    """User-created playlists for organizing videos"""
+
+    __tablename__ = "playlists"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    is_public = Column(Boolean, default=False, nullable=False)
+    is_featured = Column(Boolean, default=False, nullable=False)  # Featured playlists
+    total_duration = Column(Integer, nullable=True)  # Total duration in seconds
+    video_count = Column(Integer, default=0, nullable=False)  # Cached video count
+    playlist_metadata = Column(JSON, nullable=True)  # Additional metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", backref="playlists")
+    entries = relationship(
+        "PlaylistEntry",
+        back_populates="playlist",
+        cascade="all, delete-orphan",
+        order_by="PlaylistEntry.position"
+    )
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_playlist_user_id", "user_id"),
+        Index("idx_playlist_name", "name"),
+        Index("idx_playlist_is_public", "is_public"),
+        Index("idx_playlist_is_featured", "is_featured"),
+        Index("idx_playlist_created_at", "created_at"),
+        Index("idx_playlist_user_public", "user_id", "is_public"),  # Composite for permissions
+        {"extend_existing": True},
+    )
+
+    def update_stats(self):
+        """Update cached statistics (video_count, total_duration)"""
+        if self.entries:
+            self.video_count = len(self.entries)
+            # Calculate total duration from videos
+            total_seconds = 0
+            for entry in self.entries:
+                if entry.video and entry.video.duration:
+                    total_seconds += entry.video.duration
+            self.total_duration = total_seconds if total_seconds > 0 else None
+        else:
+            self.video_count = 0
+            self.total_duration = None
+
+    def can_access(self, user):
+        """Check if user can access this playlist"""
+        if not user:
+            return self.is_public
+        return self.user_id == user.id or self.is_public or user.can_access_admin()
+
+    def can_modify(self, user):
+        """Check if user can modify this playlist"""
+        if not user:
+            return False
+        return self.user_id == user.id or user.can_access_admin()
+
+    def to_dict(self, include_entries=False):
+        """Convert playlist to dictionary"""
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "user_id": self.user_id,
+            "username": self.user.username if self.user else None,
+            "is_public": self.is_public,
+            "is_featured": self.is_featured,
+            "video_count": self.video_count,
+            "total_duration": self.total_duration,
+            "metadata": self.playlist_metadata or {},
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+        if include_entries and self.entries:
+            data["entries"] = [entry.to_dict() for entry in self.entries]
+
+        return data
+
+    def __repr__(self):
+        return f"<Playlist(name='{self.name}', user_id={self.user_id}, videos={self.video_count})>"
+
+
+class PlaylistEntry(Base):
+    """Individual video entries in playlists"""
+
+    __tablename__ = "playlist_entries"
+
+    id = Column(Integer, primary_key=True)
+    playlist_id = Column(Integer, ForeignKey("playlists.id"), nullable=False)
+    video_id = Column(Integer, ForeignKey("videos.id"), nullable=False)
+    position = Column(Integer, nullable=False)
+    notes = Column(Text, nullable=True)  # User notes for this playlist entry
+    added_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # Who added the video
+    added_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    playlist = relationship("Playlist", back_populates="entries")
+    video = relationship("Video")
+    user = relationship("User", backref="playlist_entries")
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_playlist_entry_playlist", "playlist_id"),
+        Index("idx_playlist_entry_video", "video_id"),
+        Index("idx_playlist_entry_position", "playlist_id", "position"),
+        Index("idx_playlist_entry_added_by", "added_by"),
+        Index("idx_playlist_entry_added_at", "added_at"),
+        # Unique constraint to prevent duplicate videos in same playlist
+        Index("idx_playlist_entry_unique", "playlist_id", "video_id", unique=True),
+        {"extend_existing": True},
+    )
+
+    def to_dict(self, include_video=True):
+        """Convert playlist entry to dictionary"""
+        data = {
+            "id": self.id,
+            "playlist_id": self.playlist_id,
+            "video_id": self.video_id,
+            "position": self.position,
+            "notes": self.notes,
+            "added_by": self.added_by,
+            "added_by_username": self.user.username if self.user else None,
+            "added_at": self.added_at.isoformat(),
+        }
+
+        if include_video and self.video:
+            data["video"] = {
+                "id": self.video.id,
+                "title": self.video.title,
+                "artist_name": self.video.artist.name if self.video.artist else None,
+                "duration": self.video.duration,
+                "thumbnail_url": self.video.thumbnail_url,
+                "status": self.video.status.value,
+                "year": self.video.year,
+                "quality": self.video.quality,
+                "video_metadata": self.video.video_metadata,
+            }
+
+        return data
+
+    def __repr__(self):
+        return f"<PlaylistEntry(playlist_id={self.playlist_id}, video_id={self.video_id}, position={self.position})>"
+
+
+class VideoBlacklist(Base):
+    """Blacklisted YouTube URLs to prevent re-download of unwanted videos"""
+    
+    __tablename__ = "video_blacklist"
+    
+    youtube_url = Column(String(500), primary_key=True)  # YouTube URL as primary key
+    title = Column(String(500), nullable=True)  # Optional: video title when blacklisted
+    artist_name = Column(String(255), nullable=True)  # Optional: artist name when blacklisted
+    blacklisted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    blacklisted_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # User who blacklisted
+    
+    # Relationships
+    user = relationship("User", backref="blacklisted_videos")
+    
+    # Indexes
+    __table_args__ = (
+        Index("idx_blacklist_url", "youtube_url"),
+        Index("idx_blacklist_date", "blacklisted_at"),
+        Index("idx_blacklist_user", "blacklisted_by"),
+        {"extend_existing": True},
+    )
+    
+    def to_dict(self):
+        """Convert blacklist entry to dictionary"""
+        return {
+            "youtube_url": self.youtube_url,
+            "title": self.title,
+            "artist_name": self.artist_name,
+            "blacklisted_at": self.blacklisted_at.isoformat(),
+            "blacklisted_by": self.blacklisted_by,
+            "blacklisted_by_username": self.user.username if self.user else None,
+        }
+    
+    def __repr__(self):
+        return f"<VideoBlacklist(youtube_url='{self.youtube_url}', blacklisted_at='{self.blacklisted_at}')>"

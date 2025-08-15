@@ -19,6 +19,7 @@ from src.api.metube import metube_bp
 from src.api.openapi import openapi_bp
 from src.api.optimization import optimization_bp
 from src.api.plex import plex_bp
+from src.api.playlists import playlists_bp
 from src.api.settings import settings_bp
 
 # External integration blueprints
@@ -50,6 +51,7 @@ def register_routes(app):
     api_bp.register_blueprint(settings_bp)
     api_bp.register_blueprint(enhanced_scheduler_bp)
     api_bp.register_blueprint(themes_bp, url_prefix="/themes")
+    api_bp.register_blueprint(playlists_bp)
     api_bp.register_blueprint(health_bp)
     api_bp.register_blueprint(users_bp)
     api_bp.register_blueprint(video_org_bp)

@@ -1,0 +1,657 @@
+"""
+Playlist API endpoints for MVidarr
+Provides CRUD operations and playlist management functionality.
+"""
+
+from flask import Blueprint, jsonify, request
+from sqlalchemy import and_, func, or_
+from sqlalchemy.orm import joinedload
+
+from src.database.connection import get_db
+from src.database.models import Artist, Playlist, PlaylistEntry, User, UserRole, Video
+from src.utils.logger import get_logger
+
+# login_required not needed - dynamic auth middleware handles authentication globally
+from src.utils.performance_monitor import monitor_performance
+
+logger = get_logger("mvidarr.api.playlists")
+
+playlists_bp = Blueprint("playlists", __name__, url_prefix="/playlists")
+
+
+@playlists_bp.route("/test", methods=["GET"])
+def test_endpoint():
+    """Simple test endpoint to check if route works"""
+    return jsonify({"success": True, "message": "Test endpoint working"})
+
+
+def get_current_user_from_session():
+    """Get current user from session for simple auth system"""
+    from flask import session
+
+    username = session.get("username")
+    if not username:
+        return None
+
+    # Get the actual User object from database
+    with get_db() as session_db:
+        user = session_db.query(User).filter(User.username == username).first()
+        if user:
+            # Detach from session to avoid binding issues
+            session_db.expunge(user)
+        return user
+
+
+@playlists_bp.route("/", methods=["GET"])
+@monitor_performance("api.playlists.list")
+def get_playlists():
+    """Get paginated list of playlists accessible to current user"""
+    try:
+        user = get_current_user_from_session()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+
+        page = int(request.args.get("page", 1))
+        per_page = min(int(request.args.get("per_page", 50)), 200)
+
+        offset = (page - 1) * per_page
+
+        with get_db() as session:
+            # Get playlists accessible to current user
+            query = session.query(Playlist).filter(
+                or_(
+                    Playlist.user_id == user.id,  # User's own playlists
+                    Playlist.is_public == True,  # Public playlists
+                    and_(
+                        user.can_access_admin(), Playlist.is_featured == True
+                    ),  # Featured playlists for admins
+                )
+            )
+
+            total_count = query.count()
+
+            playlists = (
+                query.options(joinedload(Playlist.user))
+                .order_by(Playlist.updated_at.desc())
+                .offset(offset)
+                .limit(per_page)
+                .all()
+            )
+
+            playlist_data = []
+            for playlist in playlists:
+                data = playlist.to_dict()
+                data["can_modify"] = playlist.can_modify(user)
+                playlist_data.append(data)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "playlists": playlist_data,
+                    "pagination": {
+                        "page": page,
+                        "per_page": per_page,
+                        "total": total_count,
+                        "pages": (total_count + per_page - 1) // per_page,
+                    },
+                }
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to get playlists: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@playlists_bp.route("/<int:playlist_id>", methods=["GET"])
+@monitor_performance("api.playlists.get")
+def get_playlist(playlist_id):
+    """Get specific playlist with entries"""
+    try:
+        user = get_current_user_from_session()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+        include_entries = request.args.get("include_entries", "true").lower() == "true"
+
+        with get_db() as session:
+            playlist = (
+                session.query(Playlist)
+                .options(
+                    joinedload(Playlist.user),
+                    joinedload(Playlist.entries)
+                    .joinedload(PlaylistEntry.video)
+                    .joinedload(Video.artist),
+                    joinedload(Playlist.entries).joinedload(PlaylistEntry.user),
+                )
+                .filter(Playlist.id == playlist_id)
+                .first()
+            )
+
+            if not playlist:
+                return jsonify({"error": "Playlist not found"}), 404
+
+            if not playlist.can_access(user):
+                return jsonify({"error": "Access denied"}), 403
+
+            playlist_data = playlist.to_dict(include_entries=include_entries)
+            playlist_data["can_modify"] = playlist.can_modify(user)
+
+            return jsonify({"success": True, "playlist": playlist_data})
+
+    except Exception as e:
+        logger.error(f"Failed to get playlist {playlist_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@playlists_bp.route("/", methods=["POST"])
+@monitor_performance("api.playlists.create")
+def create_playlist():
+    """Create new playlist"""
+    try:
+        user = get_current_user_from_session()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+        data = request.get_json()
+
+        if not data or "name" not in data:
+            return jsonify({"error": "name is required"}), 400
+
+        name = data["name"].strip()
+        if not name:
+            return jsonify({"error": "name cannot be empty"}), 400
+
+        description = (data.get("description") or "").strip()
+        is_public = data.get("is_public", False)
+
+        # Only admins can create featured playlists
+        is_featured = data.get("is_featured", False) and user.can_access_admin()
+
+        with get_db() as session:
+            # Check if user already has a playlist with this name
+            existing = (
+                session.query(Playlist)
+                .filter(and_(Playlist.user_id == user.id, Playlist.name == name))
+                .first()
+            )
+
+            if existing:
+                return (
+                    jsonify({"error": "You already have a playlist with this name"}),
+                    400,
+                )
+
+            # Create playlist
+            playlist = Playlist(
+                name=name,
+                description=description or None,
+                user_id=user.id,
+                is_public=is_public,
+                is_featured=is_featured,
+            )
+
+            session.add(playlist)
+            session.commit()
+
+            logger.info(f"Created playlist '{name}' for user {user.username}")
+
+            playlist_data = playlist.to_dict()
+            playlist_data["can_modify"] = True  # Creator can always modify
+
+            return jsonify({"success": True, "playlist": playlist_data}), 201
+
+    except Exception as e:
+        logger.error(f"Failed to create playlist: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@playlists_bp.route("/<int:playlist_id>", methods=["PUT"])
+@monitor_performance("api.playlists.update")
+def update_playlist(playlist_id):
+    """Update playlist details"""
+    try:
+        user = get_current_user_from_session()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "Request data required"}), 400
+
+        with get_db() as session:
+            playlist = (
+                session.query(Playlist).filter(Playlist.id == playlist_id).first()
+            )
+
+            if not playlist:
+                return jsonify({"error": "Playlist not found"}), 404
+
+            if not playlist.can_modify(user):
+                return jsonify({"error": "Access denied"}), 403
+
+            # Update fields
+            if "name" in data:
+                new_name = data["name"].strip()
+                if not new_name:
+                    return jsonify({"error": "name cannot be empty"}), 400
+
+                # Check for duplicate name (excluding current playlist)
+                existing = (
+                    session.query(Playlist)
+                    .filter(
+                        and_(
+                            Playlist.user_id == playlist.user_id,
+                            Playlist.name == new_name,
+                            Playlist.id != playlist_id,
+                        )
+                    )
+                    .first()
+                )
+
+                if existing:
+                    return (
+                        jsonify(
+                            {"error": "You already have a playlist with this name"}
+                        ),
+                        400,
+                    )
+
+                playlist.name = new_name
+
+            if "description" in data:
+                playlist.description = (data["description"] or "").strip() or None
+
+            if "is_public" in data:
+                playlist.is_public = bool(data["is_public"])
+
+            # Only admins can modify featured status
+            if "is_featured" in data and user.can_access_admin():
+                playlist.is_featured = bool(data["is_featured"])
+
+            session.commit()
+
+            logger.info(f"Updated playlist {playlist_id} by user {user.username}")
+
+            playlist_data = playlist.to_dict()
+            playlist_data["can_modify"] = playlist.can_modify(user)
+
+            return jsonify({"success": True, "playlist": playlist_data})
+
+    except Exception as e:
+        logger.error(f"Failed to update playlist {playlist_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@playlists_bp.route("/<int:playlist_id>", methods=["DELETE"])
+@monitor_performance("api.playlists.delete")
+def delete_playlist(playlist_id):
+    """Delete playlist"""
+    try:
+        user = get_current_user_from_session()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+
+        with get_db() as session:
+            playlist = (
+                session.query(Playlist).filter(Playlist.id == playlist_id).first()
+            )
+
+            if not playlist:
+                return jsonify({"error": "Playlist not found"}), 404
+
+            if not playlist.can_modify(user):
+                return jsonify({"error": "Access denied"}), 403
+
+            playlist_name = playlist.name
+            session.delete(playlist)
+            session.commit()
+
+            logger.info(f"Deleted playlist '{playlist_name}' by user {user.username}")
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": f"Playlist '{playlist_name}' deleted successfully",
+                }
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to delete playlist {playlist_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@playlists_bp.route("/<int:playlist_id>/videos", methods=["POST"])
+@monitor_performance("api.playlists.add_video")
+def add_video_to_playlist(playlist_id):
+    """Add video(s) to playlist"""
+    try:
+        user = get_current_user_from_session()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+        data = request.get_json()
+
+        if not data or "video_ids" not in data:
+            return jsonify({"error": "video_ids is required"}), 400
+
+        video_ids = data["video_ids"]
+        if not isinstance(video_ids, list) or not video_ids:
+            return jsonify({"error": "video_ids must be a non-empty list"}), 400
+
+
+        with get_db() as session:
+            playlist = (
+                session.query(Playlist).filter(Playlist.id == playlist_id).first()
+            )
+
+            if not playlist:
+                return jsonify({"error": "Playlist not found"}), 404
+
+            if not playlist.can_modify(user):
+                return jsonify({"error": "Access denied"}), 403
+
+            # Verify all videos exist
+            videos = session.query(Video).filter(Video.id.in_(video_ids)).all()
+            found_video_ids = {v.id for v in videos}
+            missing_ids = [vid for vid in video_ids if vid not in found_video_ids]
+
+            if missing_ids:
+                return jsonify({"error": f"Videos not found: {missing_ids}"}), 404
+
+            # Get current max position
+            max_position = (
+                session.query(func.coalesce(func.max(PlaylistEntry.position), 0))
+                .filter(PlaylistEntry.playlist_id == playlist_id)
+                .scalar()
+                or 0
+            )
+
+            added_count = 0
+            skipped_count = 0
+
+            for video_id in video_ids:
+                # Check if video is already in playlist
+                existing = (
+                    session.query(PlaylistEntry)
+                    .filter(
+                        and_(
+                            PlaylistEntry.playlist_id == playlist_id,
+                            PlaylistEntry.video_id == video_id,
+                        )
+                    )
+                    .first()
+                )
+
+                if existing:
+                    skipped_count += 1
+                    continue
+
+                max_position += 1
+                entry = PlaylistEntry(
+                    playlist_id=playlist_id,
+                    video_id=video_id,
+                    position=max_position,
+                    added_by=user.id,
+                )
+
+                session.add(entry)
+                added_count += 1
+
+            # Update playlist stats
+            playlist.update_stats()
+            session.commit()
+
+            logger.info(
+                f"Added {added_count} videos to playlist {playlist_id} by user {user.username}"
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "added_count": added_count,
+                    "skipped_count": skipped_count,
+                    "total_videos": playlist.video_count,
+                }
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to add videos to playlist {playlist_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@playlists_bp.route("/<int:playlist_id>/videos/<int:entry_id>", methods=["DELETE"])
+@monitor_performance("api.playlists.remove_video")
+def remove_video_from_playlist(playlist_id, entry_id):
+    """Remove video from playlist"""
+    try:
+        user = get_current_user_from_session()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+
+        with get_db() as session:
+            playlist = (
+                session.query(Playlist).filter(Playlist.id == playlist_id).first()
+            )
+
+            if not playlist:
+                return jsonify({"error": "Playlist not found"}), 404
+
+            if not playlist.can_modify(user):
+                return jsonify({"error": "Access denied"}), 403
+
+            entry = (
+                session.query(PlaylistEntry)
+                .filter(
+                    and_(
+                        PlaylistEntry.id == entry_id,
+                        PlaylistEntry.playlist_id == playlist_id,
+                    )
+                )
+                .first()
+            )
+
+            if not entry:
+                return jsonify({"error": "Playlist entry not found"}), 404
+
+            removed_position = entry.position
+            session.delete(entry)
+
+            # Reorder remaining entries
+            session.query(PlaylistEntry).filter(
+                and_(
+                    PlaylistEntry.playlist_id == playlist_id,
+                    PlaylistEntry.position > removed_position,
+                )
+            ).update({PlaylistEntry.position: PlaylistEntry.position - 1})
+
+            # Update playlist stats
+            playlist.update_stats()
+            session.commit()
+
+            logger.info(
+                f"Removed entry {entry_id} from playlist {playlist_id} by user {user.username}"
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Video removed from playlist",
+                    "total_videos": playlist.video_count,
+                }
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to remove video from playlist {playlist_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@playlists_bp.route("/<int:playlist_id>/videos/reorder", methods=["POST"])
+@monitor_performance("api.playlists.reorder")
+def reorder_playlist(playlist_id):
+    """Reorder videos in playlist"""
+    try:
+        user = get_current_user_from_session()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+        data = request.get_json()
+
+        if not data or "entry_orders" not in data:
+            return jsonify({"error": "entry_orders is required"}), 400
+
+        entry_orders = data["entry_orders"]  # List of {id: int, position: int}
+        if not isinstance(entry_orders, list):
+            return jsonify({"error": "entry_orders must be a list"}), 400
+
+        with get_db() as session:
+            playlist = (
+                session.query(Playlist).filter(Playlist.id == playlist_id).first()
+            )
+
+            if not playlist:
+                return jsonify({"error": "Playlist not found"}), 404
+
+            if not playlist.can_modify(user):
+                return jsonify({"error": "Access denied"}), 403
+
+            # Update positions
+            updated_count = 0
+            for item in entry_orders:
+                if (
+                    not isinstance(item, dict)
+                    or "id" not in item
+                    or "position" not in item
+                ):
+                    continue
+
+                entry = (
+                    session.query(PlaylistEntry)
+                    .filter(
+                        and_(
+                            PlaylistEntry.id == item["id"],
+                            PlaylistEntry.playlist_id == playlist_id,
+                        )
+                    )
+                    .first()
+                )
+
+                if entry:
+                    entry.position = item["position"]
+                    updated_count += 1
+
+            session.commit()
+
+            logger.info(
+                f"Reordered {updated_count} entries in playlist {playlist_id} by user {user.username}"
+            )
+
+            return jsonify({"success": True, "updated_count": updated_count})
+
+    except Exception as e:
+        logger.error(f"Failed to reorder playlist {playlist_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@playlists_bp.route("/bulk/delete", methods=["POST"])
+@monitor_performance("api.playlists.bulk_delete")
+def bulk_delete_playlists():
+    """Delete multiple playlists"""
+    try:
+        user = get_current_user_from_session()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+        data = request.get_json()
+
+        if not data or "playlist_ids" not in data:
+            return jsonify({"error": "playlist_ids is required"}), 400
+
+        playlist_ids = data["playlist_ids"]
+        if not isinstance(playlist_ids, list) or not playlist_ids:
+            return jsonify({"error": "playlist_ids must be a non-empty list"}), 400
+
+        with get_db() as session:
+            playlists = (
+                session.query(Playlist).filter(Playlist.id.in_(playlist_ids)).all()
+            )
+
+            deleted_count = 0
+            denied_count = 0
+
+            for playlist in playlists:
+                if playlist.can_modify(user):
+                    session.delete(playlist)
+                    deleted_count += 1
+                else:
+                    denied_count += 1
+
+            session.commit()
+
+            logger.info(
+                f"Bulk deleted {deleted_count} playlists by user {user.username}"
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "deleted_count": deleted_count,
+                    "denied_count": denied_count,
+                }
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to bulk delete playlists: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@playlists_bp.route("/user/<int:user_id>", methods=["GET"])
+@monitor_performance("api.playlists.user_playlists")
+def get_user_playlists(user_id):
+    """Get playlists for specific user"""
+    try:
+        current_user = get_current_user_from_session()
+        if not current_user:
+            return jsonify({"error": "User not found"}), 401
+        page = int(request.args.get("page", 1))
+        per_page = min(int(request.args.get("per_page", 50)), 200)
+
+        offset = (page - 1) * per_page
+
+        with get_db() as session:
+            # Check if requesting user can access target user's playlists
+            if user_id != current_user.id and not current_user.can_access_admin():
+                # Non-admin users can only see public playlists of other users
+                query = session.query(Playlist).filter(
+                    and_(Playlist.user_id == user_id, Playlist.is_public == True)
+                )
+            else:
+                # Admin or own playlists - see all
+                query = session.query(Playlist).filter(Playlist.user_id == user_id)
+
+            total_count = query.count()
+
+            playlists = (
+                query.options(joinedload(Playlist.user))
+                .order_by(Playlist.updated_at.desc())
+                .offset(offset)
+                .limit(per_page)
+                .all()
+            )
+
+            playlist_data = []
+            for playlist in playlists:
+                data = playlist.to_dict()
+                data["can_modify"] = playlist.can_modify(current_user)
+                playlist_data.append(data)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "playlists": playlist_data,
+                    "pagination": {
+                        "page": page,
+                        "per_page": per_page,
+                        "total": total_count,
+                        "pages": (total_count + per_page - 1) // per_page,
+                    },
+                }
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to get user playlists for user {user_id}: {e}")
+        return jsonify({"error": str(e)}), 500
