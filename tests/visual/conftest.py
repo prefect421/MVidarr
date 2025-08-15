@@ -8,124 +8,149 @@ Playwright configuration and visual testing fixtures.
 import pytest
 import os
 from pathlib import Path
-from playwright.sync_api import sync_playwright
 
-
-@pytest.fixture(scope="session")
-def browser_context_args():
-    """Configure browser context for visual testing."""
-    return {
-        "viewport": {"width": 1280, "height": 720},
-        "ignore_https_errors": True,
-        "user_agent": "MVidarr-Visual-Tester/1.0"
-    }
-
-
-@pytest.fixture(scope="session") 
-def browser_type_launch_args():
-    """Configure browser launch arguments."""
-    return {
-        "headless": True,
-        "slow_mo": 100,  # Slow down for better screenshots
-    }
-
-
-@pytest.fixture(scope="function")
-def visual_test_page(page):
-    """Configure page for visual testing."""
-    # Set longer timeouts for visual tests
-    page.set_default_timeout(10000)
-    page.set_default_navigation_timeout(30000)
+# Conditional import for playwright - skip visual tests if not available
+try:
+    from playwright.sync_api import sync_playwright
+    PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    PLAYWRIGHT_AVAILABLE = False
     
-    # Block external resources to speed up tests
-    page.route("**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf,eot}", 
-               lambda route: route.abort())
+    # Create mock fixtures to prevent test collection errors
+    @pytest.fixture(scope="session")
+    def browser_context_args():
+        pytest.skip("Playwright not available")
     
-    return page
-
-
-@pytest.fixture(scope="session")
-def screenshots_dir():
-    """Get screenshots directory."""
-    screenshots_path = Path(__file__).parent / "screenshots"
-    screenshots_path.mkdir(exist_ok=True)
-    return screenshots_path
-
-
-@pytest.fixture(scope="session")
-def baselines_dir():
-    """Get baseline images directory."""
-    baselines_path = Path(__file__).parent / "baselines" 
-    baselines_path.mkdir(exist_ok=True)
-    return baselines_path
-
-
-@pytest.fixture(scope="function")
-def screenshot_helper(visual_test_page, screenshots_dir):
-    """Helper for taking and managing screenshots."""
+    @pytest.fixture(scope="session") 
+    def browser_type_launch_args():
+        pytest.skip("Playwright not available")
     
-    class ScreenshotHelper:
-        def __init__(self, page, screenshots_dir):
-            self.page = page
-            self.screenshots_dir = screenshots_dir
-            self.test_name = None
+    @pytest.fixture(scope="function")
+    def visual_test_page():
+        pytest.skip("Playwright not available")
+    
+    @pytest.fixture(scope="function")
+    def screenshot_helper():
+        pytest.skip("Playwright not available")
+
+
+# Only define fixtures if playwright is available
+if PLAYWRIGHT_AVAILABLE:
+    @pytest.fixture(scope="session")
+    def browser_context_args():
+        """Configure browser context for visual testing."""
+        return {
+            "viewport": {"width": 1280, "height": 720},
+            "ignore_https_errors": True,
+            "user_agent": "MVidarr-Visual-Tester/1.0"
+        }
+
+
+    @pytest.fixture(scope="session") 
+    def browser_type_launch_args():
+        """Configure browser launch arguments."""
+        return {
+            "headless": True,
+            "slow_mo": 100,  # Slow down for better screenshots
+        }
+
+
+    @pytest.fixture(scope="function")
+    def visual_test_page(page):
+        """Configure page for visual testing."""
+        # Set longer timeouts for visual tests
+        page.set_default_timeout(10000)
+        page.set_default_navigation_timeout(30000)
         
-        def set_test_name(self, name):
-            """Set current test name for screenshot naming."""
-            self.test_name = name
+        # Block external resources to speed up tests
+        page.route("**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf,eot}", 
+                   lambda route: route.abort())
         
-        def capture_page(self, name=None, full_page=True):
-            """Capture full page screenshot."""
-            filename = name or f"{self.test_name}_page.png" if self.test_name else "page.png"
-            filepath = self.screenshots_dir / filename
-            
-            self.page.screenshot(path=str(filepath), full_page=full_page)
-            return filepath
+        return page
+
+
+    @pytest.fixture(scope="session")
+    def screenshots_dir():
+        """Get screenshots directory."""
+        screenshots_path = Path(__file__).parent / "screenshots"
+        screenshots_path.mkdir(exist_ok=True)
+        return screenshots_path
+
+
+    @pytest.fixture(scope="session")
+    def baselines_dir():
+        """Get baseline images directory."""
+        baselines_path = Path(__file__).parent / "baselines" 
+        baselines_path.mkdir(exist_ok=True)
+        return baselines_path
+
+
+    @pytest.fixture(scope="function")
+    def screenshot_helper(visual_test_page, screenshots_dir):
+        """Helper for taking and managing screenshots."""
         
-        def capture_element(self, selector, name=None):
-            """Capture element screenshot."""
-            filename = name or f"{self.test_name}_element.png" if self.test_name else "element.png"
-            filepath = self.screenshots_dir / filename
+        class ScreenshotHelper:
+            def __init__(self, page, screenshots_dir):
+                self.page = page
+                self.screenshots_dir = screenshots_dir
+                self.test_name = None
             
-            element = self.page.locator(selector)
-            if element.count() > 0:
-                element.screenshot(path=str(filepath))
-                return filepath
-            return None
-        
-        def capture_viewport(self, name=None):
-            """Capture viewport screenshot."""
-            filename = name or f"{self.test_name}_viewport.png" if self.test_name else "viewport.png"
-            filepath = self.screenshots_dir / filename
+            def set_test_name(self, name):
+                """Set current test name for screenshot naming."""
+                self.test_name = name
             
-            self.page.screenshot(path=str(filepath), full_page=False)
-            return filepath
-        
-        def capture_responsive(self, name_prefix=None):
-            """Capture screenshots at different viewport sizes."""
-            prefix = name_prefix or self.test_name or "responsive"
-            screenshots = {}
-            
-            viewports = [
-                ("desktop", 1280, 720),
-                ("tablet", 768, 1024), 
-                ("mobile", 375, 667)
-            ]
-            
-            for device, width, height in viewports:
-                self.page.set_viewport_size({"width": width, "height": height})
-                self.page.wait_for_timeout(500)  # Let layout settle
-                
-                filename = f"{prefix}_{device}.png"
+            def capture_page(self, name=None, full_page=True):
+                """Capture full page screenshot."""
+                filename = name or f"{self.test_name}_page.png" if self.test_name else "page.png"
                 filepath = self.screenshots_dir / filename
-                self.page.screenshot(path=str(filepath))
-                screenshots[device] = filepath
+                
+                self.page.screenshot(path=str(filepath), full_page=full_page)
+                return filepath
             
-            # Reset to default viewport
-            self.page.set_viewport_size({"width": 1280, "height": 720})
-            return screenshots
-    
-    return ScreenshotHelper(visual_test_page, screenshots_dir)
+            def capture_element(self, selector, name=None):
+                """Capture element screenshot."""
+                filename = name or f"{self.test_name}_element.png" if self.test_name else "element.png"
+                filepath = self.screenshots_dir / filename
+                
+                element = self.page.locator(selector)
+                if element.count() > 0:
+                    element.screenshot(path=str(filepath))
+                    return filepath
+                return None
+            
+            def capture_viewport(self, name=None):
+                """Capture viewport screenshot."""
+                filename = name or f"{self.test_name}_viewport.png" if self.test_name else "viewport.png"
+                filepath = self.screenshots_dir / filename
+                
+                self.page.screenshot(path=str(filepath), full_page=False)
+                return filepath
+            
+            def capture_responsive(self, name_prefix=None):
+                """Capture screenshots at different viewport sizes."""
+                prefix = name_prefix or self.test_name or "responsive"
+                screenshots = {}
+                
+                viewports = [
+                    ("desktop", 1280, 720),
+                    ("tablet", 768, 1024), 
+                    ("mobile", 375, 667)
+                ]
+                
+                for device, width, height in viewports:
+                    self.page.set_viewport_size({"width": width, "height": height})
+                    self.page.wait_for_timeout(500)  # Let layout settle
+                    
+                    filename = f"{prefix}_{device}.png"
+                    filepath = self.screenshots_dir / filename
+                    self.page.screenshot(path=str(filepath))
+                    screenshots[device] = filepath
+                
+                # Reset to default viewport
+                self.page.set_viewport_size({"width": 1280, "height": 720})
+                return screenshots
+        
+        return ScreenshotHelper(visual_test_page, screenshots_dir)
 
 
 class VisualTestConfig:
