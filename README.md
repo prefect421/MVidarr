@@ -24,7 +24,21 @@
 - **🔐 User Authentication** - Role-based access control with security features
 - **🎨 Advanced Theme System** - 7 built-in themes with export/import functionality
 
-## 🆕 What's New in v0.9.5
+## 🆕 What's New in v0.9.6
+
+**Quality Assurance & Testing Infrastructure Release**
+
+- **🧪 Enterprise Testing Infrastructure** - 185+ comprehensive tests across all testing categories
+- **🎨 Enhanced Video Management** - Icon-based video actions with intuitive UI and advanced delete functionality
+- **📊 Complete Test Coverage** - Unit, integration, API, functional, visual, and monitoring tests
+- **🔍 Advanced Testing Intelligence** - Flaky test detection, performance baselines, and automated maintenance
+- **📚 Documentation Excellence** - 6000+ lines of technical documentation with comprehensive guides
+- **🛡️ Security Operations** - Zero known vulnerabilities with enterprise-grade automated monitoring
+- **⚡ FFmpeg Integration** - Technical metadata extraction with video quality analysis
+- **🎭 Playlist Enhancements** - Complete playlist functionality with MvTV integration
+- **🔗 Enhanced Navigation** - Clickable artist names and improved user experience
+
+## 🆕 Previous Updates (v0.9.5)
 
 **UI/UX Excellence & Documentation Complete Release**
 
@@ -34,8 +48,6 @@
 - **⚡ Performance Optimizations** - 60% CI time reduction and enhanced system reliability
 - **🔧 Enhanced Scheduler Service** - Flexible time intervals and improved error handling
 - **🐛 Critical Bug Fixes** - SQLAlchemy compatibility, API authentication, and UI issues resolved
-- **📊 35 Comprehensive Features** - All core functionality with enterprise-grade security
-- **🔍 Verified System Reliability** - Scheduled downloads, video indexing, and theme management
 
 ## 🆕 Previous Updates (v0.9.4)
 
