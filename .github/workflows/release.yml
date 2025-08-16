@@ -93,15 +93,26 @@ jobs:
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref_name }}
-        release_name: MVidarr ${{ github.ref_name }}
-        body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
-        draft: false
-        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+      run: |
+        TAG_NAME=${{ github.ref_name }}
+        IS_PRERELEASE=${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+        
+        if [ "$IS_PRERELEASE" = "true" ]; then
+          PRERELEASE_FLAG="--prerelease"
+        else
+          PRERELEASE_FLAG=""
+        fi
+        
+        gh release create "$TAG_NAME" \
+          --title "MVidarr $TAG_NAME" \
+          --notes-file release_notes.md \
+          $PRERELEASE_FLAG
+        
+        # Get upload URL for other jobs (GitHub CLI doesn't provide this directly)
+        UPLOAD_URL=$(gh api repos/${{ github.repository }}/releases/tags/$TAG_NAME --jq '.upload_url')
+        echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
 
   build-release-assets:
     name: Build Release Assets
@@ -134,7 +145,7 @@ jobs:
 
     - name: Build and push by digest
       id: build
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: .
         file: ./Dockerfile.production
@@ -212,25 +223,19 @@ jobs:
         
         tar -czf mvidarr-enhanced-${TAG_NAME}-install.tar.gz -C install-package .
 
-    - name: Upload source archive
-      uses: actions/upload-release-asset@v1
+    - name: Upload release assets
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./mvidarr-enhanced-${{ github.ref_name }}-source.tar.gz
-        asset_name: mvidarr-enhanced-${{ github.ref_name }}-source.tar.gz
-        asset_content_type: application/gzip
-
-    - name: Upload installation package
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./mvidarr-enhanced-${{ github.ref_name }}-install.tar.gz
-        asset_name: mvidarr-enhanced-${{ github.ref_name }}-install.tar.gz
-        asset_content_type: application/gzip
+      run: |
+        TAG_NAME=${{ github.ref_name }}
+        
+        # Upload source archive
+        gh release upload "$TAG_NAME" "./mvidarr-enhanced-${TAG_NAME}-source.tar.gz" \
+          --clobber
+        
+        # Upload installation package
+        gh release upload "$TAG_NAME" "./mvidarr-enhanced-${TAG_NAME}-install.tar.gz" \
+          --clobber
 
   update-documentation:
     name: Update Documentation
