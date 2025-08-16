@@ -1,9 +1,9 @@
 {
-  "version": "0.9.6",
-  "build_date": "2025-08-16T01:38:40.072000",
-  "git_commit": "a004959",
+  "version": "0.9.7-dev",
+  "build_date": "2025-08-16T01:53:17.045242",
+  "git_commit": "bb27164",
   "git_branch": "main",
-  "release_name": "Quality Assurance & Testing Infrastructure",
+  "release_name": "Development - Performance & Integration",
   "features": [
     "Advanced Artist Management with multi-criteria search and bulk operations",
     "Comprehensive Video Discovery with dual-source integration (IMVDb + YouTube)",
@@ -53,6 +53,13 @@
     "Enterprise Security Operations with zero known vulnerabilities",
     "Automated Security Monitoring with multi-framework compliance",
     "Complete Playlist Functionality with management and MvTV integration",
-    "Clickable Artist Navigation with enhanced user experience"
+    "Clickable Artist Navigation with enhanced user experience",
+    "[DEV] Advanced Video Filtering and Search System - In Development",
+    "[DEV] Bulk Operations and Batch Management System - In Development",
+    "[DEV] Enhanced Artist Discovery and Metadata Enrichment - In Development",
+    "[DEV] Import/Export and Backup Management System - In Development",
+    "[DEV] Advanced Download Queue Management - In Development",
+    "[DEV] Custom Video Organization Rules - In Development"
   ]
 }
+EOF < /dev/null

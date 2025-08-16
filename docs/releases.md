@@ -8,7 +8,33 @@ permalink: /releases/
 
 Track MVidarr's development progress through our release history and upcoming milestones.
 
-## 🚀 Current Release: v0.9.5
+## 🚀 Current Release: v0.9.6
+
+**Released**: August 16, 2025  
+**Focus**: Quality Assurance & Testing Infrastructure
+
+### Major Improvements
+- **🧪 Enterprise Testing Infrastructure**: 185+ comprehensive tests across all testing categories
+- **🎨 Enhanced Video Management**: Icon-based video actions with intuitive UI and advanced delete functionality
+- **📊 Complete Test Coverage**: Unit, integration, API, functional, visual, and monitoring tests
+- **🔍 Advanced Testing Intelligence**: Flaky test detection, performance baselines, and automated maintenance
+- **📚 Documentation Excellence**: 6000+ lines of technical documentation with comprehensive guides
+
+### Key Features
+- **🛡️ Security Operations**: Zero known vulnerabilities with enterprise-grade automated monitoring
+- **⚡ FFmpeg Integration**: Technical metadata extraction with video quality analysis
+- **🎭 Playlist Enhancements**: Complete playlist functionality with MvTV integration
+- **🔗 Enhanced Navigation**: Clickable artist names and improved user experience
+- **🔧 Test Lifecycle Management**: Complete test creation, execution, maintenance, and cleanup automation
+
+### Technical Enhancements
+- **Visual Testing Framework**: Automated screenshot capture and regression detection
+- **CI/CD Testing Integration**: Parallel test execution with flaky test detection
+- **Performance Baselines**: Automated performance regression detection and alerting
+- **Test Monitoring Dashboard**: Coverage analysis, health monitoring, and maintenance reporting
+- **Advanced Test Intelligence**: Environment-aware optimizations and automated maintenance scheduling
+
+## 📋 Previous Release: v0.9.5
 
 **Released**: August 11, 2025  
 **Focus**: UI/UX Excellence & Documentation Complete
@@ -19,27 +45,6 @@ Track MVidarr's development progress through our release history and upcoming mi
 - **📄 Artists Page Pagination**: Full navigation controls with customizable page sizes
 - **⚡ Performance Optimizations**: 60% CI time reduction and enhanced system reliability
 - **🔧 Enhanced Scheduler Service**: Flexible time intervals and improved error handling
-
-### Key Features
-- 35 comprehensive features including all core functionality
-- Complete dual-source video discovery (IMVDb + YouTube)
-- Professional thumbnail management with multi-source search
-- Advanced artist management with bulk operations
-- Enterprise-grade security with automated vulnerability scanning
-- Multi-user authentication with role-based access control
-- MvTV continuous player with cinematic mode
-- Enhanced Docker-native scheduler service
-
-### Technical Enhancements
-- Fixed Video Indexing Database Statistics with SQLAlchemy compatibility
-- Resolved Themes API Authentication for seamless settings management
-- Verified Scheduled Download System functionality for YouTube videos
-- Complete Duplicate Video Merge functionality with enhanced UI
-- Docker build optimization with consistent 8-minute build times
-- Container size optimization to 1.41GB production images
-- **Fixed GitHub Actions Release Automation**: Resolved tar archive and permissions issues
-- **Modernized CI/CD Pipeline**: Updated to use GitHub CLI with proper workflow permissions
-- **Reliable Release Asset Generation**: Automated source code and installation package creation
 
 ## 📋 Previous Release: v0.9.4
 
@@ -70,33 +75,34 @@ Track MVidarr's development progress through our release history and upcoming mi
 
 ---
 
-## 🔄 Development Version: v0.9.5-dev
+## 🔄 Development Version: v0.9.7-dev
 
 **Status**: In Active Development  
-**Focus**: Performance & User Experience Enhancements
+**Focus**: Performance & Integration
 
 ### Planned Improvements
-- Database performance analysis and targeted query optimization
-- API response time optimization for critical endpoints  
-- Frontend loading performance and user experience optimization
-- UI/UX enhancement package and workflow refinement
-- Documentation completion and developer experience enhancement
+- **🔧 Advanced Video Filtering**: Multi-criteria search system with real-time filtering
+- **⚡ Performance Optimization**: Database and frontend performance enhancements
+- **📦 Bulk Operations**: Enhanced batch management and processing systems
+- **🎨 Artist Discovery**: Multi-source metadata enrichment and discovery
+- **📁 Import/Export**: Comprehensive backup and data portability systems
+- **🎯 Queue Management**: Advanced download prioritization and automation
 
 ### Strategic Focus
-Strategic mix of targeted performance improvements with measurable outcomes and user-facing enhancements that deliver tangible value through focused execution on 5-6 specific issues.
+Performance-first development with advanced feature integration, targeting 6 GitHub issues with measurable performance improvements and enhanced user experience through systematic implementation.
 
 ---
 
 ## 📅 Release Roadmap
 
-### v0.9.6 - Quality Assurance & Testing Infrastructure
-**Planned Release**: November 2025
+### v0.9.6 - Quality Assurance & Testing Infrastructure ✅ **COMPLETED**
+**Released**: August 16, 2025
 
-- Comprehensive pytest test suite framework
-- Visual testing and screenshot automation  
-- Log capture and error analysis system
-- CI/CD testing integration and automation
-- Test monitoring and maintenance infrastructure
+- ✅ Comprehensive pytest test suite framework (185+ tests)
+- ✅ Visual testing and screenshot automation with regression detection
+- ✅ Log capture and error analysis system with structured monitoring
+- ✅ CI/CD testing integration with parallel execution and flaky detection
+- ✅ Test monitoring and maintenance infrastructure with automated cleanup
 
 ### v0.9.7 - Advanced Features & Integration  
 **Planned Release**: February 2026
@@ -196,11 +202,11 @@ Each release includes detailed notes covering:
 ## 📋 Release Statistics
 
 ### Development Metrics
-- **Total Releases**: 4 major releases
-- **Issues Resolved**: 150+ across all releases
-- **Security Fixes**: 17 vulnerabilities addressed
+- **Total Releases**: 5 major releases
+- **Issues Resolved**: 200+ across all releases
+- **Security Fixes**: 17 vulnerabilities addressed with zero known vulnerabilities
 - **Docker Optimization**: 100% build reliability achieved
-- **Test Coverage**: 90%+ code coverage (target for v0.9.6)
+- **Test Coverage**: 185+ comprehensive tests with enterprise testing infrastructure
 
 ### Performance Improvements
 - **Docker Build Time**: From timeout failures to 8m6s consistent builds
@@ -214,10 +220,10 @@ Each release includes detailed notes covering:
 ## 🎯 Version Support
 
 ### Current Support Status
-- **v0.9.4**: ✅ Fully supported with security updates
-- **v0.9.3**: ✅ Security updates only
-- **v0.9.2**: ⚠️ End of life - upgrade recommended
-- **v0.9.1**: ❌ End of life - upgrade required
+- **v0.9.6**: ✅ Fully supported with security updates (Current)
+- **v0.9.5**: ✅ Security updates only
+- **v0.9.4**: ⚠️ End of life - upgrade recommended
+- **v0.9.3**: ❌ End of life - upgrade required
 
 ### Support Policy
 - **Latest Release**: Full feature support and security updates
@@ -234,7 +240,7 @@ Each release includes detailed notes covering:
 docker pull ghcr.io/prefect421/mvidarr:latest
 
 # Specific version
-docker pull ghcr.io/prefect421/mvidarr:v0.9.4
+docker pull ghcr.io/prefect421/mvidarr:v0.9.6
 
 # Development build
 docker pull ghcr.io/prefect421/mvidarr:dev
@@ -243,7 +249,7 @@ docker pull ghcr.io/prefect421/mvidarr:dev
 ### Source Code
 ```bash
 # Latest release
-git clone --branch v0.9.4 https://github.com/prefect421/mvidarr.git
+git clone --branch v0.9.6 https://github.com/prefect421/mvidarr.git
 
 # Development version
 git clone --branch dev https://github.com/prefect421/mvidarr.git

@@ -11,8 +11,8 @@ title: Home
   <p class="tagline"><strong>A comprehensive music video management and discovery platform</strong> that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.</p>
   
   <div class="badges">
-    <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.5" target="_blank">
-      <img src="https://img.shields.io/badge/version-v0.9.5-blue.svg" alt="Version">
+    <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.6" target="_blank">
+      <img src="https://img.shields.io/badge/version-v0.9.6-blue.svg" alt="Version">
     </a>
     <a href="https://github.com/prefect421/mvidarr" target="_blank">
       <img src="https://img.shields.io/github/stars/prefect421/mvidarr.svg" alt="Stars">
@@ -20,7 +20,7 @@ title: Home
     <a href="https://github.com/prefect421/mvidarr/blob/main/LICENSE" target="_blank">
       <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
     </a>
-    <a href="https://ghcr.io/prefect421/mvidarr:v0.9.5" target="_blank">
+    <a href="https://ghcr.io/prefect421/mvidarr:v0.9.6" target="_blank">
       <img src="https://img.shields.io/badge/docker-ghcr.io-2496ED.svg" alt="Docker">
     </a>
   </div>
@@ -44,26 +44,34 @@ title: Home
 - **🔐 User Authentication** - Role-based access control with security features
 - **🌙 Dark/Light Themes** - Multiple theme options with automatic switching
 
-## 🆕 Recent Updates (v0.9.5) - **LATEST STABLE RELEASE**
+## 🆕 Recent Updates (v0.9.6) - **LATEST STABLE RELEASE**
 
-- **🎨 UI/UX Excellence** - Streamlined design with clean headers and improved navigation
-- **📚 Complete Documentation** - Comprehensive guides for developers, users, and operations
-- **📄 Artists Page Pagination** - Full navigation controls with customizable page sizes
-- **⚡ Performance Optimizations** - 60% CI time reduction and enhanced system reliability
-- **🔧 Enhanced Scheduler** - Flexible time intervals and improved error handling
-- **🐛 Critical Bug Fixes** - SQLAlchemy compatibility, API authentication, and UI issues resolved
-- **🤖 Fixed Release Automation** - Resolved GitHub Actions workflow issues for reliable deployments
-- **📦 Automated Asset Generation** - Source code and installation packages now auto-generated
-- **📦 Container Size Optimization** - Efficient multi-stage builds with optimized caching (1.41GB optimized size)
-- **🔍 Build Monitoring** - Comprehensive Docker build monitoring and validation infrastructure
-- **⚡ Build Reliability** - 100% build success rate with automated size monitoring and performance tracking
-- **🛠️ Infrastructure** - Enhanced CI/CD workflows with automated Docker monitoring and health checks
+**Quality Assurance & Testing Infrastructure Release**
+
+- **🧪 Enterprise Testing Infrastructure** - 185+ comprehensive tests across all testing categories
+- **🎨 Enhanced Video Management** - Icon-based video actions with intuitive UI and advanced delete functionality
+- **📊 Complete Test Coverage** - Unit, integration, API, functional, visual, and monitoring tests
+- **🔍 Advanced Testing Intelligence** - Flaky test detection, performance baselines, and automated maintenance
+- **📚 Documentation Excellence** - 6000+ lines of technical documentation with comprehensive guides
+- **🛡️ Security Operations** - Zero known vulnerabilities with enterprise-grade automated monitoring
+- **⚡ FFmpeg Integration** - Technical metadata extraction with video quality analysis
+- **🎭 Playlist Enhancements** - Complete playlist functionality with MvTV integration
+- **🔗 Enhanced Navigation** - Clickable artist names and improved user experience
+
+## 🔄 Development Version (v0.9.7-dev)
+
+**Performance & Integration Development**
+
+- **🔧 Advanced Video Filtering** - Multi-criteria search system in development
+- **⚡ Performance Optimization** - Database and frontend enhancements
+- **📦 Bulk Operations** - Enhanced batch management and processing
+- **🎨 Artist Discovery** - Multi-source metadata enrichment system
 
 ## 🚀 Quick Start
 
 <div class="quick-start">
-  <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.5" target="_blank">📥 Download v0.9.5</a>
-  <a href="https://ghcr.io/prefect421/mvidarr:v0.9.5" target="_blank">🐳 Docker Image</a>
+  <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.6" target="_blank">📥 Download v0.9.6</a>
+  <a href="https://ghcr.io/prefect421/mvidarr:v0.9.6" target="_blank">🐳 Docker Image</a>
   <a href="#installation">📚 Installation Guide</a>
 </div>
 
@@ -72,11 +80,11 @@ title: Home
 ```bash
 # Quick start with Docker Compose
 git clone https://github.com/prefect421/mvidarr.git
-cd mvidarr && git checkout v0.9.5
+cd mvidarr && git checkout v0.9.6
 docker-compose up -d
 
 # Or use production image directly
-docker pull ghcr.io/prefect421/mvidarr:v0.9.5
+docker pull ghcr.io/prefect421/mvidarr:v0.9.6
 ```
 
 **🌐 Access your application:**
@@ -142,14 +150,23 @@ docker pull ghcr.io/prefect421/mvidarr:v0.9.5
     <li><strong>Extensibility</strong>: Built to grow with your needs</li>
   </ul>
 
-  <h2>🚀 Current Status: v0.9.5</h2>
-  <p><strong>Latest Release</strong>: UI/UX Excellence & Documentation Complete</p>
+  <h2>🚀 Current Status: v0.9.6</h2>
+  <p><strong>Latest Release</strong>: Quality Assurance & Testing Infrastructure</p>
   <ul>
-    <li>✅ Complete Docker optimization with 8-minute reliable builds</li>
-    <li>✅ Container size optimization (1.41GB production images)</li>
-    <li>✅ Enterprise-grade security with 17 vulnerabilities resolved</li>
-    <li>✅ 35+ comprehensive features with advanced automation</li>
-    <li>✅ Professional documentation and GitHub Pages deployment</li>
+    <li>✅ Enterprise Testing Infrastructure with 185+ comprehensive tests</li>
+    <li>✅ Complete test lifecycle management and automated maintenance</li>
+    <li>✅ Zero known vulnerabilities with automated security monitoring</li>
+    <li>✅ 6000+ lines of comprehensive technical documentation</li>
+    <li>✅ Enhanced video management with playlist functionality</li>
+  </ul>
+  
+  <h2>🔄 Development Status: v0.9.7-dev</h2>
+  <p><strong>Next Release</strong>: Performance & Integration (Target: February 2026)</p>
+  <ul>
+    <li>🔧 Advanced video filtering and search system</li>
+    <li>⚡ Database and frontend performance optimization</li>
+    <li>📦 Enhanced bulk operations and batch management</li>
+    <li>🎨 Multi-source artist discovery and metadata enrichment</li>
   </ul>
 </div>
 
@@ -170,8 +187,8 @@ docker pull ghcr.io/prefect421/mvidarr:v0.9.5
 ---
 
 <div class="version-footer">
-  <h3>🚀 MVidarr v0.9.5</h3>
-  <p><strong>UI/UX Excellence & Documentation Complete</strong></p>
+  <h3>🚀 MVidarr v0.9.6</h3>
+  <p><strong>Quality Assurance & Testing Infrastructure</strong></p>
   <p>Built with ❤️ for music video enthusiasts</p>
   <small>Licensed under the <a href="https://github.com/prefect421/mvidarr/blob/main/LICENSE" target="_blank">MIT License</a></small>
 </div>
