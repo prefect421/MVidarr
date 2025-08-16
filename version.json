@@ -1,9 +1,9 @@
 {
-  "version": "0.9.6-dev",
-  "build_date": "2025-08-11T14:35:00.875520",
-  "git_commit": "497be62",
-  "git_branch": "dev",
-  "release_name": "Advanced Testing & Mobile Optimization",
+  "version": "0.9.6",
+  "build_date": "2025-08-16T01:25:15.012949",
+  "git_commit": "978c575",
+  "git_branch": "main",
+  "release_name": "Quality Assurance & Testing Infrastructure",
   "features": [
     "Advanced Artist Management with multi-criteria search and bulk operations",
     "Comprehensive Video Discovery with dual-source integration (IMVDb + YouTube)",
@@ -40,10 +40,19 @@
     "Complete Duplicate Video Merge functionality with enhanced UI",
     "Advanced Performance Optimizations reducing CI time by 60%",
     "Professional Error Handling and User Experience Improvements",
-    "[PLANNED] Advanced Testing Framework with comprehensive coverage",
-    "[PLANNED] Enhanced Video Quality Management with automatic optimization",
-    "[PLANNED] Extended API Functionality for third-party integrations",
-    "[PLANNED] Mobile-Responsive Design improvements",
-    "[PLANNED] Performance Monitoring Dashboard with real-time metrics"
+    "Enterprise-Grade Testing Infrastructure with 185+ comprehensive tests",
+    "Complete Test Lifecycle Management from creation to maintenance",
+    "Visual Testing and Screenshot Automation with regression detection",
+    "Advanced CI/CD Testing Integration with flaky test detection",
+    "Comprehensive Monitoring and Analytics with performance baselines",
+    "Enhanced Video Management with icon-based actions and intuitive UI",
+    "Advanced Delete Functionality with URL-based blacklist integration",
+    "FFmpeg Metadata Integration with technical video details extraction",
+    "Professional Error Recovery and user feedback systems",
+    "Complete Documentation Ecosystem with 6000+ lines of technical guides",
+    "Enterprise Security Operations with zero known vulnerabilities",
+    "Automated Security Monitoring with multi-framework compliance",
+    "Complete Playlist Functionality with management and MvTV integration",
+    "Clickable Artist Navigation with enhanced user experience"
   ]
 }
