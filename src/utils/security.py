@@ -425,7 +425,7 @@ class SecurityHeaders:
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com http://fonts.googleapis.com; "
                 "img-src 'self' data: https:; "
                 "media-src 'self' blob:; "
-                "connect-src 'self' https://api.iconify.design; "
+                "connect-src 'self' https://api.iconify.design https://api.simplesvg.com; "
                 "font-src 'self' https://fonts.gstatic.com http://fonts.gstatic.com; "
                 "object-src 'none'; "
                 "base-uri 'self'; "

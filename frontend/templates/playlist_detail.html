@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block title %}Playlist Detail - MVidarr{% endblock %}
+
+{% block content %}
+<div class="playlist-detail-container">
+    
+    <!-- Loading Indicator -->
+    <div id="playlistDetailLoading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading playlist...</p>
+    </div>
+    
+    <!-- Playlist Header -->
+    <div class="playlist-header" id="playlistHeader" style="display: none;">
+        <div class="playlist-header-content">
+            <div class="playlist-header-main">
+                <div class="playlist-header-icon">
+                    <iconify-icon icon="tabler:playlist" style="font-size: 3rem;"></iconify-icon>
+                </div>
+                <div class="playlist-header-info">
+                    <h1 class="playlist-title" id="playlistTitle">Loading...</h1>
+                    <p class="playlist-description" id="playlistDescription"></p>
+                    <div class="playlist-meta">
+                        <div class="playlist-meta-item">
+                            <iconify-icon icon="tabler:music"></iconify-icon>
+                            <span id="playlistVideoCount">0 videos</span>
+                        </div>
+                        <div class="playlist-meta-item">
+                            <iconify-icon icon="tabler:user"></iconify-icon>
+                            <span id="playlistOwner">Unknown</span>
+                        </div>
+                        <div class="playlist-meta-item">
+                            <iconify-icon icon="tabler:calendar"></iconify-icon>
+                            <span id="playlistUpdated">Unknown</span>
+                        </div>
+                    </div>
+                    <div class="playlist-badges" id="playlistBadges">
+                        <!-- Badges will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Playlist Actions -->
+            <div class="playlist-actions">
+                <button onclick="playPlaylist()" class="btn btn-primary" id="playPlaylistBtn">
+                    <iconify-icon icon="tabler:play"></iconify-icon>
+                    Play All
+                </button>
+                <button onclick="shufflePlaylist()" class="btn btn-secondary" id="shufflePlaylistBtn">
+                    <iconify-icon icon="tabler:shuffle"></iconify-icon>
+                    Shuffle
+                </button>
+                <button onclick="showEditPlaylistModal()" class="btn btn-secondary" id="editPlaylistBtn" style="display: none;">
+                    <iconify-icon icon="tabler:edit"></iconify-icon>
+                    Edit
+                </button>
+                <button onclick="showAddVideoModal()" class="btn btn-secondary" id="addVideoBtn" style="display: none;">
+                    <iconify-icon icon="tabler:plus"></iconify-icon>
+                    Add Videos
+                </button>
+                <button onclick="exportPlaylist()" class="btn btn-ghost">
+                    <iconify-icon icon="tabler:download"></iconify-icon>
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Secondary Actions -->
+    <div class="secondary-actions" id="secondaryActions" style="display: none;">
+        <div class="action-group action-group-secondary">
+            <div class="btn-group">
+                <button onclick="refreshPlaylist()" class="btn btn-secondary btn-sm" title="Refresh playlist">
+                    <iconify-icon icon="tabler:refresh"></iconify-icon>
+                    Refresh
+                </button>
+                <button onclick="sortPlaylist()" class="btn btn-secondary btn-sm" title="Sort videos">
+                    <iconify-icon icon="tabler:sort-ascending"></iconify-icon>
+                    Sort
+                </button>
+                <button onclick="removeDuplicates()" class="btn btn-secondary btn-sm" title="Remove duplicate videos">
+                    <iconify-icon icon="tabler:copy-x"></iconify-icon>
+                    Remove Duplicates
+                </button>
+            </div>
+            
+            <!-- Selection Controls -->
+            <div class="selection-controls">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="selectAllVideos" onchange="toggleSelectAllVideos()" aria-label="Select all videos">
+                    <span class="checkmark"></span>
+                    Select All (<span id="selectedVideoCount">0</span>)
+                </label>
+                <button onclick="toggleVideoActionsPanel()" class="btn btn-ghost btn-sm" id="videoActionsToggle">
+                    <iconify-icon icon="tabler:settings"></iconify-icon>
+                    Bulk Actions
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Video Bulk Actions Panel -->
+    <div class="bulk-actions-panel" id="videoActionsPanel" style="display: none;">
+        <div class="bulk-actions-header">
+            <h3>Video Actions</h3>
+            <span id="selectedVideosCount">0 videos selected</span>
+        </div>
+        <div class="bulk-actions-buttons">
+            <button onclick="removeSelectedVideos()" class="btn btn-danger btn-sm">
+                <iconify-icon icon="tabler:trash"></iconify-icon>
+                Remove Selected
+            </button>
+            <button onclick="moveSelectedVideos()" class="btn btn-secondary btn-sm">
+                <iconify-icon icon="tabler:arrows-move"></iconify-icon>
+                Move to Position
+            </button>
+            <button onclick="copySelectedVideos()" class="btn btn-secondary btn-sm">
+                <iconify-icon icon="tabler:copy"></iconify-icon>
+                Copy to Playlist
+            </button>
+        </div>
+    </div>
+    
+    <!-- Videos List -->
+    <div class="playlist-videos" id="playlistVideos" style="display: none;">
+        <div class="videos-header">
+            <h2>Videos</h2>
+            <div class="videos-controls">
+                <select id="sortOrder" class="form-control" style="width: auto;">
+                    <option value="position">Playlist Order</option>
+                    <option value="title">Title A-Z</option>
+                    <option value="title_desc">Title Z-A</option>
+                    <option value="artist">Artist A-Z</option>
+                    <option value="artist_desc">Artist Z-A</option>
+                    <option value="date_added">Recently Added</option>
+                    <option value="date_added_desc">Oldest Added</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Video List Container -->
+        <div class="video-list" id="videoList">
+            <!-- Videos will be populated here -->
+        </div>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-state-icon">
+            <iconify-icon icon="tabler:music-off" style="font-size: 4rem; color: var(--text-muted);"></iconify-icon>
+        </div>
+        <h3>No Videos in Playlist</h3>
+        <p>This playlist doesn't have any videos yet. Add some videos to get started!</p>
+        <button onclick="showAddVideoModal()" class="btn btn-primary" id="addFirstVideoBtn" style="display: none;">
+            <iconify-icon icon="tabler:plus"></iconify-icon>
+            Add Your First Video
+        </button>
+    </div>
+    
+    <!-- Error State -->
+    <div class="error-state" id="errorState" style="display: none;">
+        <div class="error-state-icon">
+            <iconify-icon icon="tabler:alert-circle" style="font-size: 4rem; color: var(--error-color);"></iconify-icon>
+        </div>
+        <h3>Failed to Load Playlist</h3>
+        <p id="errorMessage">An error occurred while loading the playlist.</p>
+        <button onclick="window.location.reload()" class="btn btn-secondary">
+            <iconify-icon icon="tabler:refresh"></iconify-icon>
+            Retry
+        </button>
+        <a href="/playlists" class="btn btn-ghost">
+            <iconify-icon icon="tabler:arrow-left"></iconify-icon>
+            Back to Playlists
+        </a>
+    </div>
+</div>
+
+<!-- Edit Playlist Modal -->
+<div id="editPlaylistModal" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 600px;">
+        <div class="modal-header">
+            <h3>Edit Playlist</h3>
+            <span class="modal-close" onclick="closeEditPlaylistModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editPlaylistForm" onsubmit="savePlaylistChanges(event)">
+                <div class="form-group">
+                    <label for="editPlaylistName">Name *</label>
+                    <input type="text" id="editPlaylistName" class="form-control" required maxlength="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editPlaylistDescription">Description</label>
+                    <textarea id="editPlaylistDescription" class="form-control" rows="3" maxlength="500"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editPlaylistIsPublic">
+                            <span class="checkmark"></span>
+                            Make this playlist public
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="editFeaturedGroup" style="display: none;">
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editPlaylistIsFeatured">
+                            <span class="checkmark"></span>
+                            Feature this playlist
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <iconify-icon icon="tabler:check"></iconify-icon>
+                        Save Changes
+                    </button>
+                    <button type="button" onclick="closeEditPlaylistModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Video to Playlist Modal -->
+<div id="addVideoToPlaylistModal" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h3>Add Videos to Playlist</h3>
+            <span class="modal-close" onclick="closeAddVideoModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <!-- Search Videos -->
+            <div class="form-group">
+                <label for="videoSearchInput">Search Videos</label>
+                <input type="text" id="videoSearchInput" class="form-control" placeholder="Search for videos to add..." onkeyup="searchVideosForPlaylist(event)">
+            </div>
+            
+            <!-- Available Videos List -->
+            <div class="available-videos" id="availableVideos">
+                <!-- Video list will be populated here -->
+            </div>
+            
+            <div class="form-actions">
+                <button onclick="addSelectedVideosToPlaylist()" class="btn btn-primary" id="addSelectedBtn" disabled>
+                    <iconify-icon icon="tabler:plus"></iconify-icon>
+                    Add Selected Videos
+                </button>
+                <button onclick="closeAddVideoModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('frontend.js_files', filename='playlist-detail.js') }}"></script>
+
+<style>
+/* Playlist Detail Styles */
+.playlist-detail-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.playlist-header {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.playlist-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+.playlist-header-main {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.playlist-header-icon {
+    color: var(--accent-primary);
+    background: var(--bg-accent-subtle);
+    padding: 1rem;
+    border-radius: 12px;
+}
+
+.playlist-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.playlist-description {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.playlist-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.playlist-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.playlist-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.playlist-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.playlist-badge.public {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.playlist-badge.private {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.playlist-badge.featured {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+}
+
+.playlist-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.playlist-videos {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.videos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.videos-header h2 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.video-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.video-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.video-item:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.video-item.selected {
+    border-color: var(--accent-primary);
+    background: var(--bg-accent-subtle);
+}
+
+.video-item-checkbox {
+    flex-shrink: 0;
+}
+
+.video-item-drag {
+    flex-shrink: 0;
+    cursor: move;
+    color: var(--text-muted);
+    padding: 0.5rem;
+}
+
+.video-item-drag:hover {
+    color: var(--text-primary);
+}
+
+.video-item-position {
+    flex-shrink: 0;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 2rem;
+    text-align: center;
+}
+
+.video-item-thumbnail {
+    width: 80px;
+    height: 60px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.video-item-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.video-item-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.video-item-artist {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.video-item-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.video-item-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.available-videos {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-secondary);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.available-video-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-secondary);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.available-video-item:hover {
+    background: var(--bg-hover);
+}
+
+.available-video-item:last-child {
+    border-bottom: none;
+}
+
+.available-video-item.selected {
+    background: var(--bg-accent-subtle);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .playlist-header-content {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .playlist-header-main {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .playlist-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .playlist-actions .btn {
+        flex: 1;
+    }
+    
+    .videos-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .video-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .video-item-main {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+}
+
+/* Drag and drop styles */
+.video-item.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.video-item.drag-over {
+    border-color: var(--accent-primary);
+    border-style: dashed;
+}
+
+/* Empty and error states */
+.empty-state, .error-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state h3, .error-state h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.empty-state p, .error-state p {
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+</style>
+
+{% endblock %}

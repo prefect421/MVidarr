@@ -641,6 +641,12 @@ body.light-theme .btn-danger {
         </div>
         <div class="filter-row" role="group" aria-label="Content filters">
             <div class="filter-group">
+                <label for="playlistFilter">Playlist:</label>
+                <select id="playlistFilter" onchange="applyPlaylistFilter()" aria-label="Select playlist to play">
+                    <option value="">All Videos</option>
+                </select>
+            </div>
+            <div class="filter-group">
                 <label for="genreFilter">Genre:</label>
                 <select id="genreFilter" onchange="applyFilters()" aria-label="Filter by music genre">
                     <option value="">All Genres</option>
@@ -798,30 +804,86 @@ class MvTVPlayer {
     async loadVideos() {
         try {
             const filters = this.getFilters();
-            const params = new URLSearchParams(filters);
+            let response, data;
+            let hasSpecificFilters = false;
             
-            // Check if specific artist or genre filters are applied
-            const hasSpecificFilters = filters.artist || filters.genre;
-            
-            if (hasSpecificFilters) {
-                // When specific filters are applied, load more videos to show all matches
-                params.set('limit', '1000');
+            // If playlist filter is selected, use playlist videos endpoint
+            if (filters.playlist) {
+                response = await fetch(`/api/playlists/${filters.playlist}?include_entries=true`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch playlist: ${response.status} ${response.statusText}`);
+                }
+                
+                const playlistData = await response.json();
+                console.log('Playlist API response:', playlistData); // Debug logging
+                console.log('Playlist entries:', playlistData.playlist?.entries); // Debug entries
+                
+                if (playlistData.success && playlistData.playlist && playlistData.playlist.entries) {
+                    // Convert playlist entries to video format and filter out invalid entries
+                    const validVideos = playlistData.playlist.entries
+                        .filter(entry => entry && entry.video) // Filter out null entries
+                        .map(entry => entry.video)
+                        .filter(video => video && video.id); // Filter out null videos
+                    
+                    data = { videos: validVideos };
+                    console.log(`Converted ${validVideos.length} playlist videos from ${playlistData.playlist.entries.length} entries:`, validVideos); // Debug logging
+                    
+                    if (validVideos.length === 0) {
+                        console.log('No valid videos found in playlist entries. Raw entries:', playlistData.playlist.entries);
+                    }
+                } else {
+                    // Handle case where playlist exists but has no entries
+                    if (playlistData.success && playlistData.playlist) {
+                        data = { videos: [] };
+                        console.log('Playlist found but no entries');
+                    } else {
+                        throw new Error(`Failed to load playlist videos: ${playlistData.error || 'Unknown error'}`);
+                    }
+                }
             } else {
-                // When no specific filters, limit to 500 for better performance and random selection
-                params.set('limit', '500');
+                // Use regular video search for non-playlist filters
+                const params = new URLSearchParams();
+                if (filters.genre) params.set('genre', filters.genre);
+                if (filters.artist) params.set('artist', filters.artist);
+                if (filters.quality) params.set('quality', filters.quality);
+                
+                // Check if specific artist or genre filters are applied
+                hasSpecificFilters = filters.artist || filters.genre;
+                
+                if (hasSpecificFilters) {
+                    // When specific filters are applied, load more videos to show all matches
+                    params.set('limit', '1000');
+                } else {
+                    // When no specific filters, limit to 500 for better performance and random selection
+                    params.set('limit', '500');
+                }
+                
+                response = await fetch(`/api/videos/search?${params.toString()}`);
+                data = await response.json();
             }
             
-            const response = await fetch(`/api/videos/search?${params.toString()}`);
-            const data = await response.json();
-            
             if (data.videos && data.videos.length > 0) {
-                // Filter to only include videos that have local files
-                this.playlist = data.videos.filter(video => 
-                    video.local_path && video.status === 'DOWNLOADED'
-                );
+                // For playlist videos, use more lenient filtering since they might have different structure
+                if (filters.playlist) {
+                    // For playlist videos, just check if they have basic video properties
+                    this.playlist = data.videos.filter(video => 
+                        video && video.id && (video.local_path || video.file_path || video.title)
+                    );
+                    console.log('Filtered playlist videos:', this.playlist); // Debug logging
+                } else {
+                    // For regular search, filter to only include videos that have local files
+                    this.playlist = data.videos.filter(video => 
+                        video.local_path && video.status === 'DOWNLOADED'
+                    );
+                }
                 
                 if (this.playlist.length === 0) {
-                    this.showError('No downloaded videos found. Please download some videos first.');
+                    if (filters.playlist) {
+                        this.showError('No valid videos found in this playlist.');
+                    } else {
+                        this.showError('No downloaded videos found. Please download some videos first.');
+                    }
                     return;
                 }
                 
@@ -837,7 +899,15 @@ class MvTVPlayer {
             }
         } catch (error) {
             console.error('Error loading videos:', error);
-            this.showError('Error loading videos. Please try again.');
+            
+            // Provide more specific error messages
+            if (error.message.includes('Failed to fetch playlist')) {
+                this.showError(`Failed to load playlist: ${error.message}`);
+            } else if (error.message.includes('Failed to load playlist videos')) {
+                this.showError(`Playlist error: ${error.message}`);
+            } else {
+                this.showError(`Error loading videos: ${error.message}`);
+            }
         }
     }
     
@@ -845,7 +915,8 @@ class MvTVPlayer {
         return {
             genre: document.getElementById('genreFilter').value,
             artist: document.getElementById('artistFilter').value,
-            quality: document.getElementById('qualityFilter').value
+            quality: document.getElementById('qualityFilter').value,
+            playlist: document.getElementById('playlistFilter').value
         };
     }
     
@@ -1088,6 +1159,24 @@ async function loadFilterOptions() {
             });
         }
         
+        // Load playlists
+        const playlistsResponse = await fetch('/api/playlists/');
+        const playlistsData = await playlistsResponse.json();
+        console.log('Playlists loaded for filter:', playlistsData); // Debug logging
+        
+        const playlistFilter = document.getElementById('playlistFilter');
+        if (playlistsData.success && playlistsData.playlists && playlistsData.playlists.length > 0) {
+            playlistsData.playlists.forEach(playlist => {
+                const option = document.createElement('option');
+                option.value = playlist.id;
+                option.textContent = playlist.name;
+                playlistFilter.appendChild(option);
+                console.log(`Added playlist option: ${playlist.name} (ID: ${playlist.id})`); // Debug logging
+            });
+        } else {
+            console.log('No playlists found or API error:', playlistsData);
+        }
+        
         // Load artists (load all artists for search functionality)
         const artistsResponse = await fetch('/api/artists');
         const artistsData = await artistsResponse.json();
@@ -1113,6 +1202,10 @@ async function loadFilterOptions() {
 }
 
 function applyFilters() {
+    mvtvPlayer.loadVideos();
+}
+
+function applyPlaylistFilter() {
     mvtvPlayer.loadVideos();
 }
 

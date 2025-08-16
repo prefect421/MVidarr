@@ -485,6 +485,74 @@ class YtDlpService:
                             video.local_path = file_path
                             if not file_size:
                                 file_size = os.path.getsize(file_path)
+
+                            # Automatically extract FFmpeg metadata for newly downloaded videos
+                            try:
+                                from datetime import datetime
+                                from pathlib import Path
+
+                                from src.services.video_indexing_service import (
+                                    VideoIndexingService,
+                                )
+
+                                logger.info(
+                                    f"Extracting FFmpeg metadata for newly downloaded video {video_id}"
+                                )
+
+                                video_path = Path(file_path)
+                                indexing_service = VideoIndexingService()
+                                ffmpeg_metadata = (
+                                    indexing_service.extract_ffmpeg_metadata(video_path)
+                                )
+
+                                # Update basic fields if extracted successfully
+                                if (
+                                    ffmpeg_metadata.get("duration")
+                                    and not video.duration
+                                ):
+                                    video.duration = ffmpeg_metadata["duration"]
+                                    logger.info(
+                                        f"Updated video {video_id} duration: {video.duration}s"
+                                    )
+
+                                if ffmpeg_metadata.get("quality") and not video.quality:
+                                    video.quality = ffmpeg_metadata["quality"]
+                                    logger.info(
+                                        f"Updated video {video_id} quality: {video.quality}"
+                                    )
+
+                                # Store additional technical metadata in video_metadata field
+                                if ffmpeg_metadata.get("width") or ffmpeg_metadata.get(
+                                    "height"
+                                ):
+                                    existing_metadata = video.video_metadata or {}
+                                    tech_metadata = {
+                                        "width": ffmpeg_metadata.get("width"),
+                                        "height": ffmpeg_metadata.get("height"),
+                                        "video_codec": ffmpeg_metadata.get(
+                                            "video_codec"
+                                        ),
+                                        "audio_codec": ffmpeg_metadata.get(
+                                            "audio_codec"
+                                        ),
+                                        "fps": ffmpeg_metadata.get("fps"),
+                                        "bitrate": ffmpeg_metadata.get("bitrate"),
+                                        "ffmpeg_extracted": True,
+                                        "extraction_date": datetime.utcnow().isoformat(),
+                                        "extracted_on_download": True,
+                                    }
+                                    existing_metadata.update(tech_metadata)
+                                    video.video_metadata = existing_metadata
+                                    logger.info(
+                                        f"Updated video {video_id} with technical metadata from FFmpeg"
+                                    )
+
+                            except Exception as e:
+                                logger.warning(
+                                    f"Failed to extract FFmpeg metadata for video {video_id}: {e}"
+                                )
+                                # Don't fail the download if FFmpeg extraction fails
+
                     session.commit()
                     logger.info(
                         f"Updated video {video_id} status to {status} in database"

@@ -134,6 +134,12 @@ class VideoManagementUI {
                 handler: 'viewVideo'
             },
             {
+                icon: 'tabler:playlist-add',
+                label: 'Add to Playlist',
+                type: 'btn-success',
+                handler: 'addToPlaylist'
+            },
+            {
                 icon: 'tabler:edit',
                 label: 'Edit',
                 type: 'btn-ghost',
@@ -761,6 +767,9 @@ class VideoManagementUI {
                 case 'editVideo':
                     this.openVideoEditModal(videoId);
                     break;
+                case 'addToPlaylist':
+                    this.addSingleVideoToPlaylist(videoId);
+                    break;
                 case 'viewVideo':
                     this.viewVideoDetails(videoId);
                     break;
@@ -934,6 +943,324 @@ class VideoManagementUI {
         // TODO: Add floating action button for common actions
         // Download All Wanted, Refresh All, etc.
     }
+    
+    // Playlist functionality
+    addSingleVideoToPlaylist(videoId) {
+        // Clear existing selections and select just this video
+        document.querySelectorAll('.video-checkbox:checked').forEach(cb => cb.checked = false);
+        
+        // Find and check the checkbox for this video
+        const videoCheckbox = document.querySelector(`.video-checkbox[value="${videoId}"]`);
+        if (videoCheckbox) {
+            videoCheckbox.checked = true;
+        }
+        
+        this.showBulkAddToPlaylistModal();
+    }
+    
+    showBulkAddToPlaylistModal() {
+        console.log('DEBUG: showBulkAddToPlaylistModal called - VERSION 20241213-1530');
+        // Use the existing video selection system from videos.html
+        const selectedVideos = this.getSelectedVideoIds();
+        if (selectedVideos.length === 0) {
+            this.showError('No videos selected');
+            return;
+        }
+        
+        // Update modal with selected videos info
+        this.updatePlaylistModalContent(selectedVideos);
+        
+        // Load available playlists
+        this.loadAvailablePlaylists();
+        
+        // Show modal
+        const modal = document.getElementById('addToPlaylistModal');
+        if (modal) {
+            console.log('DEBUG: Modal HTML content before fix:', modal.innerHTML.substring(0, 500));
+            // Force clean modal content if it contains unwanted elements
+            this.ensureCleanModal(modal);
+            modal.style.display = 'block';
+        } else {
+            console.error('DEBUG: Modal not found!');
+        }
+    }
+    
+    ensureCleanModal(modal) {
+        // Check if modal contains unwanted content and replace it
+        const modalBodyContent = modal.querySelector('.modal-body');
+        if (modalBodyContent && (modalBodyContent.innerHTML.includes('Notes (optional)') || modalBodyContent.innerHTML.includes('Create New Playlist'))) {
+            console.log('DEBUG: Found unwanted modal content - replacing with clean version');
+            
+            // Replace with clean modal content
+            const cleanModalContent = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><iconify-icon icon="tabler:playlist-add"></iconify-icon> Add Videos to Playlist</h3>
+                        <span class="modal-close" onclick="closeAddToPlaylistModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="playlist-selection-container">
+                            <div class="selected-videos-summary">
+                                <p>Adding <span id="selectedVideosCount">0</span> video(s) to playlist:</p>
+                                <div id="selectedVideosList" class="selected-videos-preview"></div>
+                            </div>
+                            
+                            <div class="playlist-options">
+                                <div class="form-group">
+                                    <label for="playlistSelect">Select Playlist:</label>
+                                    <select id="playlistSelect" class="form-control" required>
+                                        <option value="">Loading playlists...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button onclick="addVideosToPlaylist()" class="btn btn-primary" id="addToPlaylistConfirmBtn">
+                            <iconify-icon icon="tabler:check"></iconify-icon>
+                            Add to Playlist
+                        </button>
+                        <button onclick="closeAddToPlaylistModal()" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            `;
+            modal.innerHTML = cleanModalContent;
+        }
+    }
+    
+    getSelectedVideoIds() {
+        // Use the same function as the original videos.html
+        const selectedCheckboxes = document.querySelectorAll('.video-checkbox:checked');
+        return Array.from(selectedCheckboxes).map(checkbox => parseInt(checkbox.value));
+    }
+    
+    async updatePlaylistModalContent(selectedVideos) {
+        const countElement = document.getElementById('selectedVideosCount');
+        const listElement = document.getElementById('selectedVideosList');
+        
+        if (countElement) {
+            countElement.textContent = selectedVideos.length;
+        }
+        
+        if (listElement) {
+            // Show preview of selected videos
+            listElement.innerHTML = '';
+            
+            for (const videoId of selectedVideos.slice(0, 5)) { // Show first 5
+                // Find the parent video card that contains the data-video-id thumbnail
+                const thumbnailElement = document.querySelector(`[data-video-id="${videoId}"]`);
+                const videoCard = thumbnailElement ? thumbnailElement.closest('.video-card') : null;
+                console.log(`DEBUG: Looking for video card with ID ${videoId}`, 'thumbnail:', thumbnailElement, 'parent card:', videoCard);
+                
+                if (videoCard) {
+                    // Get title from h3 in video-info
+                    const titleElement = videoCard.querySelector('.video-info h3');
+                    const title = titleElement ? titleElement.textContent.trim() : `Video ${videoId}`;
+                    console.log(`DEBUG: Title for video ${videoId}:`, title, 'from element:', titleElement);
+                    
+                    // Get artist from p tag containing "Artist:"
+                    const artistElement = videoCard.querySelector('.video-info p');
+                    let artist = '';
+                    if (artistElement && artistElement.textContent.includes('Artist:')) {
+                        artist = artistElement.textContent.replace('Artist:', '').trim();
+                        if (artist === 'Unknown') artist = '';
+                    }
+                    console.log(`DEBUG: Artist for video ${videoId}:`, artist, 'from element:', artistElement);
+                    
+                    const videoItem = document.createElement('div');
+                    videoItem.className = 'selected-video-item';
+                    videoItem.innerHTML = `
+                        <iconify-icon icon="tabler:music"></iconify-icon>
+                        <span><strong>${title}</strong> ${artist ? `by ${artist}` : ''}</span>
+                    `;
+                    listElement.appendChild(videoItem);
+                }
+            }
+            
+            if (selectedVideos.length > 5) {
+                const moreItem = document.createElement('div');
+                moreItem.className = 'selected-video-item more-items';
+                moreItem.innerHTML = `<span>... and ${selectedVideos.length - 5} more videos</span>`;
+                listElement.appendChild(moreItem);
+            }
+        }
+    }
+    
+    async loadAvailablePlaylists() {
+        const playlistSelect = document.getElementById('playlistSelect');
+        if (!playlistSelect) return;
+        
+        try {
+            const response = await fetch('/api/playlists/');
+            if (!response.ok) throw new Error('Failed to load playlists');
+            
+            const data = await response.json();
+            
+            playlistSelect.innerHTML = '<option value="">Select a playlist...</option>';
+            
+            if (data.success && data.playlists) {
+                data.playlists.forEach(playlist => {
+                    const option = document.createElement('option');
+                    option.value = playlist.id;
+                    option.textContent = `${playlist.name} (${playlist.video_count || 0} videos)`;
+                    playlistSelect.appendChild(option);
+                });
+            }
+            
+            // Show/hide create playlist button based on availability
+            const createPlaylistGroup = document.getElementById('createPlaylistGroup');
+            if (data.playlists && data.playlists.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No playlists available - create one first';
+                option.disabled = true;
+                playlistSelect.appendChild(option);
+                
+                // Show create playlist button when no playlists exist
+                if (createPlaylistGroup) {
+                    createPlaylistGroup.style.display = 'block';
+                }
+            } else {
+                // Hide create playlist button when playlists exist (optional - you can keep it visible if preferred)
+                if (createPlaylistGroup) {
+                    createPlaylistGroup.style.display = 'block'; // Always show for convenience
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load playlists:', error);
+            playlistSelect.innerHTML = '<option value="">Error loading playlists</option>';
+        }
+    }
+    
+    async addVideosToPlaylist() {
+        const playlistSelect = document.getElementById('playlistSelect');
+        
+        const selectedVideos = this.getSelectedVideoIds();
+        console.log('Selected videos for playlist:', selectedVideos);
+        if (selectedVideos.length === 0) {
+            this.showError('No videos selected');
+            return;
+        }
+        
+        const playlistId = playlistSelect?.value;
+        if (!playlistId) {
+            this.showError('Please select a playlist');
+            return;
+        }
+        
+        try {
+            
+            // Add videos to playlist
+            const requestBody = {
+                video_ids: selectedVideos
+            };
+            console.log('Adding videos to playlist:', playlistId, 'Request body:', requestBody);
+            
+            const addResponse = await fetch(`/api/playlists/${playlistId}/videos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+            
+            if (!addResponse.ok) {
+                const errorText = await addResponse.text();
+                throw new Error(`Failed to add videos to playlist (${addResponse.status}): ${errorText}`);
+            }
+            
+            const addData = await addResponse.json();
+            if (!addData.success) throw new Error(addData.error || 'Unknown error adding videos to playlist');
+            
+            // Success
+            const message = addData.skipped_count > 0 
+                ? `Added ${addData.added_count} videos to playlist (${addData.skipped_count} already in playlist)`
+                : `Added ${addData.added_count} video${addData.added_count !== 1 ? 's' : ''} to playlist`;
+                
+            this.showSuccess(message);
+            this.closeAddToPlaylistModal();
+            
+            // Refresh playlist data to update counts
+            await this.loadAvailablePlaylists();
+            
+            // Dispatch event to notify other components (like playlist page) to refresh
+            document.dispatchEvent(new CustomEvent('playlistUpdated', {
+                detail: { playlistId: playlistId, action: 'videosAdded', addedCount: addData.added_count }
+            }));
+            
+        } catch (error) {
+            console.error('Error adding videos to playlist:', error);
+            this.showError(`Failed to add videos to playlist: ${error.message}`);
+        }
+    }
+    
+    bulkCreatePlaylistFromSelection() {
+        const selectedVideos = this.getSelectedVideoIds();
+        
+        // Store selected video IDs in sessionStorage if any are selected
+        // This allows the playlists page to optionally add them to the new playlist
+        if (selectedVideos.length > 0) {
+            sessionStorage.setItem('selectedVideosForPlaylist', JSON.stringify(selectedVideos));
+        } else {
+            // Clear any previous selections
+            sessionStorage.removeItem('selectedVideosForPlaylist');
+        }
+        
+        // Always redirect to playlists page - user can create playlist with or without videos
+        window.location.href = '/playlists';
+    }
+    
+    showCreatePlaylistFromModal() {
+        // Store currently selected videos for playlist creation
+        const selectedVideos = this.getSelectedVideoIds();
+        if (selectedVideos && selectedVideos.length > 0) {
+            sessionStorage.setItem('selectedVideosForPlaylist', JSON.stringify(selectedVideos));
+        }
+        
+        // Close current modal
+        this.closeAddToPlaylistModal();
+        
+        // Redirect to playlists page where user can create new playlist
+        window.location.href = '/playlists';
+    }
+    
+    closeAddToPlaylistModal() {
+        const modal = document.getElementById('addToPlaylistModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        // Clear form
+        const form = modal?.querySelector('.modal-body');
+        if (form) {
+            form.querySelectorAll('input, textarea, select').forEach(field => {
+                if (field.type === 'checkbox') {
+                    field.checked = false;
+                } else {
+                    field.value = '';
+                }
+            });
+        }
+        
+        // Clear video selections
+        document.querySelectorAll('.video-checkbox:checked').forEach(cb => cb.checked = false);
+    }
+    
+    showError(message) {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, 'error');
+        } else {
+            console.error(message);
+            alert(message);
+        }
+    }
+    
+    showSuccess(message) {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, 'success');
+        } else {
+            console.log(message);
+            alert(message);
+        }
+    }
 }
 
 // Initialize enhanced video management
@@ -942,13 +1269,13 @@ const videoManagementUI = new VideoManagementUI();
 // Export for global access
 window.videoManagementUI = videoManagementUI;
 
-// Backward compatibility
-window.toggleBulkActionsPanel = () => videoManagementUI.toggleBulkPanel();
-window.toggleSelectAll = () => {
-    const selectAllCheckbox = document.getElementById('selectAllVideos');
-    if (selectAllCheckbox.checked) {
-        videoManagementUI.selectAll();
-    } else {
-        videoManagementUI.clearSelection();
-    }
-};
+// Don't override existing functions - let original videos.html functions handle bulk actions
+// Only add playlist-specific functionality
+
+// Playlist-related global functions
+window.showBulkAddToPlaylistModal = () => videoManagementUI.showBulkAddToPlaylistModal();
+window.bulkCreatePlaylistFromSelection = () => videoManagementUI.bulkCreatePlaylistFromSelection();
+window.addVideosToPlaylist = () => videoManagementUI.addVideosToPlaylist();
+window.closeAddToPlaylistModal = () => videoManagementUI.closeAddToPlaylistModal();
+window.addSingleVideoToPlaylist = (videoId) => videoManagementUI.addSingleVideoToPlaylist(videoId);
+window.showCreatePlaylistFromModal = () => videoManagementUI.showCreatePlaylistFromModal();

@@ -244,6 +244,9 @@
                         <button onclick="bulkRemoveFiles()" class="btn btn-danger bulk-btn" id="bulkRemoveFilesBtn" disabled aria-label="Remove files but keep database entries">
                             💥 Remove Files Only
                         </button>
+                        <button onclick="showBulkVideoMergeModal()" class="btn btn-warning bulk-btn" id="bulkMergeBtn" disabled aria-label="Merge selected duplicate videos">
+                            🔀 Merge Videos
+                        </button>
                     </div>
                 </div>
                 
@@ -293,31 +296,47 @@
                 <!-- Organize Tab -->
                 <div id="bulkOrganizeTab" class="tab-content">
                     <div class="bulk-organize-form">
-                        <h4>File Organization</h4>
-                        <div class="organize-actions">
-                            <button onclick="bulkOrganizeFiles()" class="btn btn-primary bulk-btn" id="bulkOrganizeBtn" disabled>
-                                📁 Organize Files
-                            </button>
-                            <button onclick="bulkVerifyFiles()" class="btn btn-info bulk-btn" id="bulkVerifyBtn" disabled>
-                                🔍 Verify File Locations
-                            </button>
-                            <button onclick="bulkRefreshMetadata()" class="btn btn-secondary bulk-btn" id="bulkRefreshMetadataBtn" disabled>
-                                🔄 Refresh Metadata
-                            </button>
+                        <div class="bulk-action-group" role="group" aria-labelledby="playlistActionsHeading">
+                            <h4 id="playlistActionsHeading">Playlist Actions</h4>
+                            <div class="playlist-bulk-actions">
+                                <button onclick="showBulkAddToPlaylistModal()" class="btn btn-success bulk-btn" id="bulkAddToPlaylistBtn" disabled aria-label="Add selected videos to playlist">
+                                    <iconify-icon icon="tabler:playlist-add"></iconify-icon>
+                                    Add to Playlist
+                                </button>
+                                <button onclick="bulkCreatePlaylistFromSelection()" class="btn btn-info bulk-btn" id="bulkCreatePlaylistBtn" aria-label="Create new playlist (optionally with selected videos)">
+                                    <iconify-icon icon="tabler:playlist"></iconify-icon>
+                                    Create Playlist
+                                </button>
+                            </div>
                         </div>
-                        <div class="organize-options">
-                            <label>
-                                <input type="checkbox" id="bulkCreateFolders" checked>
-                                Create artist folders if missing
-                            </label>
-                            <label>
-                                <input type="checkbox" id="bulkRenameFiles" checked>
-                                Rename files to match metadata
-                            </label>
-                            <label>
-                                <input type="checkbox" id="bulkRemoveDuplicates">
-                                Remove duplicate files
-                            </label>
+                        
+                        <div class="bulk-action-group" role="group" aria-labelledby="fileOrgHeading">
+                            <h4 id="fileOrgHeading">File Organization</h4>
+                            <div class="organize-actions">
+                                <button onclick="bulkOrganizeFiles()" class="btn btn-primary bulk-btn" id="bulkOrganizeBtn" disabled>
+                                    📁 Organize Files
+                                </button>
+                                <button onclick="bulkVerifyFiles()" class="btn btn-info bulk-btn" id="bulkVerifyBtn" disabled>
+                                    🔍 Verify File Locations
+                                </button>
+                                <button onclick="bulkRefreshMetadata()" class="btn btn-secondary bulk-btn" id="bulkRefreshMetadataBtn" disabled>
+                                    🔄 Refresh Metadata
+                                </button>
+                            </div>
+                            <div class="organize-options">
+                                <label>
+                                    <input type="checkbox" id="bulkCreateFolders" checked>
+                                    Create artist folders if missing
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="bulkRenameFiles" checked>
+                                    Rename files to match metadata
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="bulkRemoveDuplicates">
+                                    Remove duplicate files
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1735,16 +1754,17 @@ function refreshAndPlay(id) {
 }
 
 function refreshVideoMetadata(id) {
-    toastConfirm('Refresh metadata for this video from IMVDb? This will update year, directors, producers, and thumbnail information.', () => {
+    toastConfirm('Refresh metadata for this video from IMVDb and extract FFmpeg technical data? This will update year, directors, producers, thumbnail, duration, quality, and technical metadata.', () => {
         // Find the video card to show loading state
         const videoCard = document.querySelector(`[data-video-id="${id}"]`).closest('.video-card');
         const originalContent = videoCard.innerHTML;
         
-        // Show loading state
+        // Show enhanced loading state
         videoCard.innerHTML = `
             <div style="padding: 20px; text-align: center;">
                 <div class="loading-spinner"></div>
-                <p>Refreshing metadata from IMVDb...</p>
+                <p>Refreshing metadata from IMVDb and extracting technical data...</p>
+                <small style="color: var(--text-muted);">This may take a moment for video analysis</small>
             </div>
         `;
         
@@ -1753,11 +1773,14 @@ function refreshVideoMetadata(id) {
         })
         .then(response => {
             if (response.status === 409) {
-                // Handle duplicate IMVDb ID
+                // Handle duplicate IMVDb ID conflict
                 return response.json().then(result => {
                     showDuplicateVideoDialog(result, originalContent, videoCard);
                     return null; // Skip normal processing
                 });
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
@@ -1773,14 +1796,20 @@ function refreshVideoMetadata(id) {
                 // Restore original content if no match found
                 videoCard.innerHTML = originalContent;
             } else {
-                showSuccess('Metadata refreshed successfully!');
+                // Build success message based on what was updated
+                let message = `Metadata refreshed successfully from ${result.source}!`;
+                if (result.ffmpeg_extracted) {
+                    message += ' Technical metadata also extracted from video file.';
+                }
+                showSuccess(message);
+                
                 // Update just this video card instead of reloading entire page
                 updateSingleVideoCard(id);
             }
         })
         .catch(error => {
             console.error('Error refreshing metadata:', error);
-            showError('Error refreshing metadata');
+            showError(`Error refreshing metadata: ${error.message}`);
             // Restore original content on error
             videoCard.innerHTML = originalContent;
         });
@@ -1829,11 +1858,15 @@ function updateSingleVideoCard(videoId) {
                 </div>
                 <div class="video-info">
                     <h3>${video.title}</h3>
-                    <p>Artist: ${video.artist ? video.artist.name : 'Unknown'}</p>
+                    <p>Artist: ${video.artist ? (video.artist.id ? `<a href="/artist/${video.artist.id}" class="artist-link">${video.artist.name}</a>` : video.artist.name) : 'Unknown'}</p>
                     <p>Status: <span class="status-${video.status ? video.status.toLowerCase() : 'unknown'}">${video.status || 'Unknown'}</span></p>
                     <p>Year: ${video.year || 'Unknown'}</p>
                     ${video.directors ? `<p>Directors: ${video.directors}</p>` : ''}
                     ${video.producers ? `<p>Producers: ${video.producers}</p>` : ''}
+                    <div class="video-metadata">
+                        ${video.quality ? `<span class="metadata-item quality">📺 ${video.quality}</span>` : ''}
+                        ${video.duration ? `<span class="metadata-item duration">⏱️ ${formatDuration(video.duration)}</span>` : ''}
+                    </div>
                 </div>
                 <div class="video-actions">
                     <button data-video-id="${video.id}" data-action="edit" class="btn-icon" title="Edit Video">
@@ -1841,6 +1874,9 @@ function updateSingleVideoCard(videoId) {
                     </button>
                     <button data-video-id="${video.id}" data-action="download" class="btn-icon" title="Download Video">
                         <iconify-icon icon="tabler:download"></iconify-icon>
+                    </button>
+                    <button data-video-id="${video.id}" data-action="add-to-playlist" class="btn-icon" title="Add to Playlist">
+                        <iconify-icon icon="tabler:playlist-add"></iconify-icon>
                     </button>
                     <button data-video-id="${video.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
                         <iconify-icon icon="tabler:refresh"></iconify-icon>
@@ -1918,23 +1954,126 @@ function refreshAllMetadata() {
 
 
 function deleteVideo(id) {
-    toastConfirm('Are you sure you want to delete this video? This action cannot be undone.', () => {
-        fetch(`/api/videos/${id}`, {
-            method: 'DELETE'
-        })
+    // Get video information from the card
+    const videoCard = document.querySelector(`[data-video-id="${id}"]`).closest('.video-card');
+    const title = videoCard.querySelector('h3').textContent;
+    const artist = videoCard.querySelector('.video-info p').textContent.replace('Artist: ', '');
+    
+    // Fetch video details to get YouTube URL
+    fetch(`/api/videos/${id}`)
         .then(response => response.json())
-        .then(result => {
-            if (result.error) {
-                showError('Error: ' + result.error);
-            } else {
-                showSuccess('Video deleted successfully!');
-                loadVideos();
+        .then(video => {
+            if (video.error) {
+                console.error('Error fetching video details:', video.error);
+                showDeleteVideoModal(id, title, artist, '');
+                return;
             }
+            
+            // Try multiple URL fields to find YouTube URL
+            const url = video.video_url || video.url || video.youtube_url || '';
+            showDeleteVideoModal(id, title, artist, url);
         })
         .catch(error => {
-            console.error('Error deleting video:', error);
-            showError('Error deleting video');
+            console.error('Error fetching video details:', error);
+            // Fallback to show modal without URL
+            showDeleteVideoModal(id, title, artist, '');
         });
+}
+
+function showDeleteVideoModal(videoId, title, artist, url) {
+    const modal = document.getElementById('deleteVideoModal');
+    
+    // Store video ID for use in confirm function
+    modal.dataset.videoId = videoId;
+    
+    // Populate modal with video information
+    document.getElementById('deleteVideoTitle').textContent = title;
+    document.getElementById('deleteVideoArtist').textContent = artist;
+    document.getElementById('deleteVideoUrl').textContent = url || 'No URL available';
+    
+    // Show/hide blacklist option based on whether URL exists and is a YouTube URL
+    const blacklistGroup = document.getElementById('deleteBlacklistGroup');
+    const blacklistCheckbox = document.getElementById('deleteAddToBlacklist');
+    
+    if (!blacklistGroup || !blacklistCheckbox) {
+        console.error('Blacklist elements not found in DOM');
+        modal.style.display = 'block';
+        return;
+    }
+    
+    // Reset checkbox state
+    blacklistCheckbox.checked = false;
+    blacklistGroup.style.opacity = '1';
+    
+    // Reset the checkbox text
+    const checkboxText = blacklistGroup.querySelector('.checkbox-text strong');
+    if (checkboxText) {
+        checkboxText.textContent = 'Add to blacklist';
+    }
+    
+    // Show blacklist option for any video that has a URL (not just YouTube)
+    // The backend will handle checking if it's actually a valid URL to blacklist
+    if (url && url.trim() !== '' && url !== 'No URL available') {
+        blacklistGroup.style.display = 'block';
+        
+        // Add note if it's not a YouTube URL
+        if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+            blacklistGroup.style.opacity = '0.8';
+            if (checkboxText) {
+                checkboxText.textContent = 'Add to blacklist (Non-YouTube URL)';
+            }
+        }
+    } else {
+        blacklistGroup.style.display = 'none';
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeDeleteVideoModal() {
+    document.getElementById('deleteVideoModal').style.display = 'none';
+}
+
+function confirmDeleteVideo() {
+    const modal = document.getElementById('deleteVideoModal');
+    const videoId = modal.dataset.videoId;
+    
+    if (!videoId) {
+        showError('No video ID found');
+        return;
+    }
+    
+    const addToBlacklist = document.getElementById('deleteAddToBlacklist').checked;
+    
+    const requestBody = {};
+    if (addToBlacklist) {
+        requestBody.add_to_blacklist = true;
+    }
+    
+    fetch(`/api/videos/${videoId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            showError('Error: ' + result.error);
+        } else {
+            let message = 'Video deleted successfully!';
+            if (result.blacklisted) {
+                message += ' Video URL has been added to blacklist.';
+            }
+            showSuccess(message);
+            closeDeleteVideoModal();
+            loadVideos();
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting video:', error);
+        showError('Error deleting video: ' + error.message);
     });
 }
 
@@ -2227,6 +2366,17 @@ function updateSelectedCount() {
     
     document.getElementById('selectedCount').textContent = count;
     document.getElementById('deleteSelectedBtn').disabled = count === 0;
+    
+    // Update playlist bulk action buttons
+    const addToPlaylistBtn = document.getElementById('bulkAddToPlaylistBtn');
+    const createPlaylistBtn = document.getElementById('bulkCreatePlaylistBtn');
+    
+    if (addToPlaylistBtn) {
+        addToPlaylistBtn.disabled = count === 0; // Requires videos to be selected
+    }
+    if (createPlaylistBtn) {
+        createPlaylistBtn.disabled = false; // Always enabled - can create playlist with or without videos
+    }
     
     // Update select all checkbox state
     const selectAllCheckbox = document.getElementById('selectAllVideos');
@@ -3428,7 +3578,13 @@ function updateBulkButtonStates() {
     const bulkButtons = document.querySelectorAll('.bulk-btn');
     
     bulkButtons.forEach(button => {
-        button.disabled = selectedCount === 0;
+        if (button.id === 'bulkMergeBtn') {
+            // Merge button requires at least 2 videos
+            button.disabled = selectedCount < 2;
+        } else {
+            // Other bulk buttons require at least 1 video
+            button.disabled = selectedCount === 0;
+        }
     });
 }
 
@@ -3973,6 +4129,240 @@ function bulkTranscode() {
     });
 }
 
+// Bulk Video Merge Functions
+function showBulkVideoMergeModal() {
+    const selectedVideos = getSelectedVideoIds();
+    if (selectedVideos.length < 2) {
+        showError('Please select at least 2 videos to merge');
+        return;
+    }
+    
+    document.getElementById('bulkVideoMergeModal').style.display = 'block';
+    updateSelectedVideosDisplay();
+    updateMergeMode();
+}
+
+function closeBulkVideoMergeModal() {
+    document.getElementById('bulkVideoMergeModal').style.display = 'none';
+    document.getElementById('mergePreview').style.display = 'none';
+    document.getElementById('performMergeBtn').disabled = true;
+}
+
+function updateMergeMode() {
+    const mode = document.querySelector('input[name="mergeMode"]:checked').value;
+    const autoOptions = document.getElementById('autoMergeOptions');
+    const manualOptions = document.getElementById('manualMergeOptions');
+    
+    if (mode === 'auto') {
+        autoOptions.style.display = 'block';
+        manualOptions.style.display = 'none';
+    } else {
+        autoOptions.style.display = 'none';
+        manualOptions.style.display = 'block';
+        updateSelectedVideosDisplay();
+    }
+}
+
+function updateSimilarityDisplay() {
+    const threshold = document.getElementById('similarityThreshold').value;
+    document.getElementById('similarityDisplay').textContent = threshold + '%';
+}
+
+function updateSelectedVideosDisplay() {
+    const selectedVideoIds = getSelectedVideoIds();
+    const container = document.getElementById('selectedVideosForMerge');
+    
+    if (selectedVideoIds.length < 2) {
+        container.innerHTML = '<p class="text-muted">Please select at least 2 videos to merge.</p>';
+        return;
+    }
+    
+    // Get video information for selected videos
+    const videoCards = document.querySelectorAll('.video-card');
+    const selectedVideos = [];
+    
+    videoCards.forEach(card => {
+        const checkbox = card.querySelector('.video-checkbox');
+        if (checkbox && checkbox.checked) {
+            const videoId = checkbox.value;
+            const title = card.querySelector('.video-title').textContent;
+            const artist = card.querySelector('.video-artist').textContent;
+            const quality = card.querySelector('.video-quality')?.textContent || 'Unknown';
+            const duration = card.querySelector('.video-duration')?.textContent || 'Unknown';
+            
+            selectedVideos.push({
+                id: videoId,
+                title: title,
+                artist: artist,
+                quality: quality,
+                duration: duration
+            });
+        }
+    });
+    
+    container.innerHTML = selectedVideos.map(video => `
+        <div class="video-merge-item">
+            <div class="video-info-compact">
+                <strong>${video.title}</strong><br>
+                <span class="text-muted">${video.artist} • ${video.quality} • ${video.duration}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function previewMerge() {
+    const mode = document.querySelector('input[name="mergeMode"]:checked').value;
+    const selectedVideoIds = getSelectedVideoIds();
+    
+    if (mode === 'manual' && selectedVideoIds.length < 2) {
+        showError('Please select at least 2 videos to merge');
+        return;
+    }
+    
+    // Show loading state
+    const previewContainer = document.getElementById('mergePreview');
+    const groupsContainer = document.getElementById('mergeGroupsContainer');
+    
+    previewContainer.style.display = 'block';
+    groupsContainer.innerHTML = '<div class="loading-spinner"></div><p>Analyzing videos for merge...</p>';
+    
+    const requestData = {
+        mode: mode,
+        video_ids: mode === 'manual' ? selectedVideoIds : [],
+        options: {}
+    };
+    
+    if (mode === 'auto') {
+        requestData.options = {
+            match_title: document.getElementById('matchTitle').checked,
+            match_artist: document.getElementById('matchArtist').checked,
+            match_duration: document.getElementById('matchDuration').checked,
+            similarity_threshold: parseInt(document.getElementById('similarityThreshold').value)
+        };
+    } else {
+        requestData.options = {
+            primary_strategy: document.getElementById('primaryVideoStrategy').value
+        };
+    }
+    
+    fetch('/api/videos/bulk/merge-preview', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            groupsContainer.innerHTML = `<div class="error-message">${data.error}</div>`;
+            document.getElementById('performMergeBtn').disabled = true;
+            return;
+        }
+        
+        if (data.merge_groups.length === 0) {
+            groupsContainer.innerHTML = '<p class="text-muted">No duplicate videos found to merge.</p>';
+            document.getElementById('performMergeBtn').disabled = true;
+            return;
+        }
+        
+        // Display merge groups
+        groupsContainer.innerHTML = data.merge_groups.map((group, index) => `
+            <div class="merge-group">
+                <h5>Merge Group ${index + 1}</h5>
+                <div class="merge-videos">
+                    <div class="primary-video">
+                        <strong>Primary (Keep):</strong>
+                        <div class="video-merge-item primary">
+                            <strong>${group.primary.title}</strong><br>
+                            <span class="text-muted">${group.primary.artist_name} • ${group.primary.quality || 'Unknown'} • ${group.primary.duration || 'Unknown'}s</span>
+                        </div>
+                    </div>
+                    <div class="merge-videos-list">
+                        <strong>To Merge (Remove):</strong>
+                        ${group.duplicates.map(video => `
+                            <div class="video-merge-item duplicate">
+                                <strong>${video.title}</strong><br>
+                                <span class="text-muted">${video.artist_name} • ${video.quality || 'Unknown'} • ${video.duration || 'Unknown'}s</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="merge-summary">
+                    <small class="text-muted">
+                        ${group.duplicates.length} video(s) will be merged into the primary video.
+                        Playlists and metadata will be transferred.
+                    </small>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('performMergeBtn').disabled = false;
+    })
+    .catch(error => {
+        console.error('Error previewing merge:', error);
+        groupsContainer.innerHTML = `<div class="error-message">Error previewing merge: ${error.message}</div>`;
+        document.getElementById('performMergeBtn').disabled = true;
+    });
+}
+
+function performBulkVideoMerge() {
+    const mode = document.querySelector('input[name="mergeMode"]:checked').value;
+    const selectedVideoIds = getSelectedVideoIds();
+    
+    if (!confirm('Are you sure you want to perform this merge? This action cannot be undone.')) {
+        return;
+    }
+    
+    const requestData = {
+        mode: mode,
+        video_ids: mode === 'manual' ? selectedVideoIds : [],
+        options: {}
+    };
+    
+    if (mode === 'auto') {
+        requestData.options = {
+            match_title: document.getElementById('matchTitle').checked,
+            match_artist: document.getElementById('matchArtist').checked,
+            match_duration: document.getElementById('matchDuration').checked,
+            similarity_threshold: parseInt(document.getElementById('similarityThreshold').value)
+        };
+    } else {
+        requestData.options = {
+            primary_strategy: document.getElementById('primaryVideoStrategy').value
+        };
+    }
+    
+    // Show progress
+    showBulkProgress('Merging videos...', selectedVideoIds.length);
+    
+    fetch('/api/videos/bulk/merge', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideBulkProgress();
+        
+        if (data.error) {
+            showError('Error performing merge: ' + data.error);
+            return;
+        }
+        
+        showSuccess(`Successfully merged ${data.merged_count} video(s) in ${data.merge_groups.length} group(s).`);
+        closeBulkVideoMergeModal();
+        refreshVideos();
+    })
+    .catch(error => {
+        hideBulkProgress();
+        console.error('Error performing merge:', error);
+        showError('Error performing merge: ' + error.message);
+    });
+}
+
 // Selection helper functions
 function selectByStatus() {
     const status = prompt('Select videos by status (WANTED, DOWNLOADING, DOWNLOADED, IGNORED, FAILED):');
@@ -4128,6 +4518,7 @@ function displayVideos(videos) {
                     id: video.id || '',
                     title: escapeHtml(video.title || 'Unknown Title'),
                     artist_name: escapeHtml(video.artist_name || 'Unknown'),
+                    artist_id: video.artist_id || null,
                     status: escapeHtml(video.status || 'UNKNOWN'),
                     year: video.year || null
                 };
@@ -4146,9 +4537,13 @@ function displayVideos(videos) {
                         </div>
                         <div class="video-info">
                             <h3>${safeVideo.title}</h3>
-                            <p>Artist: ${safeVideo.artist_name}</p>
+                            <p>Artist: ${safeVideo.artist_id ? `<a href="/artist/${safeVideo.artist_id}" class="artist-link">${safeVideo.artist_name}</a>` : safeVideo.artist_name}</p>
                             <p>Status: ${safeVideo.status}</p>
                             ${safeVideo.year ? `<p>Year: ${safeVideo.year}</p>` : ''}
+                            <div class="video-metadata">
+                                ${safeVideo.quality ? `<span class="metadata-item quality">📺 ${safeVideo.quality}</span>` : ''}
+                                ${safeVideo.duration ? `<span class="metadata-item duration">⏱️ ${formatDuration(safeVideo.duration)}</span>` : ''}
+                            </div>
                         </div>
                         <div class="video-actions">
                             <button data-video-id="${safeVideo.id}" data-action="view" class="btn-icon" title="View Details">
@@ -4156,6 +4551,9 @@ function displayVideos(videos) {
                             </button>
                             <button data-video-id="${safeVideo.id}" data-action="edit" class="btn-icon" title="Edit Video">
                                 <i class="icon-edit"></i>
+                            </button>
+                            <button data-video-id="${safeVideo.id}" data-action="add-to-playlist" class="btn-icon" title="Add to Playlist">
+                                <iconify-icon icon="tabler:playlist-add"></iconify-icon>
                             </button>
                             <button data-video-id="${safeVideo.id}" data-action="refresh-metadata" class="btn-icon" title="Refresh Metadata">
                                 <i class="icon-refresh"></i>
@@ -4190,6 +4588,18 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Helper function to format duration in seconds to MM:SS format
+function formatDuration(seconds) {
+    if (!seconds || seconds === 0 || isNaN(seconds)) return 'N/A';
+    
+    const numSeconds = typeof seconds === 'string' ? parseInt(seconds) : seconds;
+    if (isNaN(numSeconds) || numSeconds <= 0) return 'N/A';
+    
+    const minutes = Math.floor(numSeconds / 60);
+    const remainingSeconds = numSeconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
 // Update pagination controls based on API response
@@ -4393,6 +4803,9 @@ document.addEventListener('click', function(event) {
         case 'edit':
             editVideo(videoId);
             break;
+        case 'add-to-playlist':
+            addSingleVideoToPlaylist(videoId);
+            break;
         case 'refresh-metadata':
             refreshVideoMetadata(videoId);
             break;
@@ -4428,56 +4841,114 @@ async function playVideoById(videoId) {
 <!-- Include shared Add Video modal component -->
 {% include 'components/add_video_modal.html' %}
 
-<!-- UI Enhancement Scripts - DISABLED: Causing loading issues and notification spam -->
-<!-- 
-<script src="{{ url_for('frontend.js_files', filename='ui-enhancements.js') }}"></script>
-<script src="{{ url_for('frontend.js_files', filename='video-management-enhanced.js') }}"></script>
-<script src="{{ url_for('frontend.js_files', filename='virtualization-engine.js') }}"></script>
+<!-- UI Enhancement Scripts - ENABLED for playlist functionality -->
+<script src="{{ url_for('frontend.js_files', filename='video-management-enhanced.js') }}?v=20241213-1620"></script>
+<!-- Temporarily disabled virtualization to debug loading issue
+<script src="{{ url_for('frontend.js_files', filename='virtualization-engine.js') }}?v=20250813-1447"></script>
 <script src="{{ url_for('frontend.js_files', filename='video-virtualization-integration.js') }}"></script>
 -->
 
 <script>
+// Playlist Global Functions - Fallback registration
+window.addEventListener('DOMContentLoaded', function() {
+    // Wait for video management to load, then register fallback functions
+    setTimeout(function() {
+        if (typeof window.showBulkAddToPlaylistModal === 'undefined' && window.videoManagementUI) {
+            console.log('Registering fallback playlist functions');
+            window.showBulkAddToPlaylistModal = () => window.videoManagementUI.showBulkAddToPlaylistModal();
+            window.bulkCreatePlaylistFromSelection = () => window.videoManagementUI.bulkCreatePlaylistFromSelection();
+            window.addVideosToPlaylist = () => window.videoManagementUI.addVideosToPlaylist();
+            window.closeAddToPlaylistModal = () => window.videoManagementUI.closeAddToPlaylistModal();
+        }
+    }, 1000);
+});
+
 // Duplicate Video Merge Dialog Functions
 function showDuplicateVideoDialog(duplicateData, originalContent, videoCard) {
     // Restore original video card content
     videoCard.innerHTML = originalContent;
+    
+    // Helper function to format duration
+    function formatDuration(seconds) {
+        if (!seconds) return 'N/A';
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Helper function to get thumbnail URL - try multiple sources
+    function getThumbnailUrl(video) {
+        // Try thumbnail_path first (local thumbnails)
+        if (video.thumbnail_path) {
+            return `/api/videos/${video.id}/thumbnail`;
+        }
+        // Try thumbnail_url (external thumbnails)
+        if (video.thumbnail_url) {
+            return video.thumbnail_url;
+        }
+        // Default to a simple colored placeholder
+        return `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80"><rect width="120" height="80" fill="%23e0e0e0"/><text x="60" y="45" text-anchor="middle" font-family="Arial" font-size="12" fill="%23888">📹</text></svg>`;
+    }
     
     // Create and show merge modal
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.id = 'duplicateVideoModal';
     modal.innerHTML = `
-        <div class="modal-content">
+        <div class="modal-content duplicate-modal-content">
             <span class="close" onclick="hideDuplicateVideoModal()">&times;</span>
             <h2>🔀 Duplicate Video Found</h2>
-            <div class="merge-content">
-                <p><strong>A video with the same IMVDb ID already exists!</strong></p>
-                <p>These videos appear to be duplicates. You can choose to merge them:</p>
-                
-                <div class="duplicate-video-comparison">
-                    <div class="video-option">
+            <p><strong>A video with the same IMVDb ID already exists!</strong> Choose which to keep as primary:</p>
+            
+            <div class="duplicate-video-comparison-compact">
+                <div class="video-option-compact">
+                    <div class="video-selection">
                         <input type="radio" name="primaryVideo" value="${duplicateData.current_video.id}" id="current_video" checked>
-                        <label for="current_video">
-                            <strong>Current Video (${duplicateData.current_video.id})</strong><br>
-                            Title: ${duplicateData.current_video.title}<br>
-                            Artist: ${duplicateData.current_video.artist}
-                        </label>
+                        <label for="current_video" class="selection-label">Select as Primary</label>
                     </div>
-                    
-                    <div class="video-option">
-                        <input type="radio" name="primaryVideo" value="${duplicateData.duplicate_video.id}" id="existing_video">
-                        <label for="existing_video">
-                            <strong>Existing Video (${duplicateData.duplicate_video.id})</strong><br>
-                            Title: ${duplicateData.duplicate_video.title}<br>
-                            Artist: ${duplicateData.duplicate_video.artist}
-                        </label>
+                    <div class="video-content">
+                        <div class="video-thumbnail-small">
+                            <img src="${getThumbnailUrl(duplicateData.current_video)}" alt="Video thumbnail">
+                        </div>
+                        <div class="video-info">
+                            <h4>Current Video (${duplicateData.current_video.id})</h4>
+                            <div class="info-grid">
+                                <span><strong>Title:</strong> ${duplicateData.current_video.title || 'Unknown'}</span>
+                                <span><strong>Artist:</strong> ${duplicateData.current_video.artist || 'Unknown'}</span>
+                                <span><strong>Quality:</strong> ${duplicateData.current_video.quality || 'N/A'}</span>
+                                <span><strong>Duration:</strong> ${formatDuration(duplicateData.current_video.duration)}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="merge-actions">
-                    <button onclick="performVideoMerge('${duplicateData.current_video.id}', '${duplicateData.duplicate_video.id}')" class="btn btn-primary" id="performVideoMergeBtn">Merge Videos</button>
-                    <button onclick="hideDuplicateVideoModal()" class="btn btn-secondary">Skip Merge</button>
+                <div class="vs-divider-compact">VS</div>
+                
+                <div class="video-option-compact">
+                    <div class="video-selection">
+                        <input type="radio" name="primaryVideo" value="${duplicateData.duplicate_video.id}" id="existing_video">
+                        <label for="existing_video" class="selection-label">Select as Primary</label>
+                    </div>
+                    <div class="video-content">
+                        <div class="video-thumbnail-small">
+                            <img src="${getThumbnailUrl(duplicateData.duplicate_video)}" alt="Video thumbnail">
+                        </div>
+                        <div class="video-info">
+                            <h4>Existing Video (${duplicateData.duplicate_video.id})</h4>
+                            <div class="info-grid">
+                                <span><strong>Title:</strong> ${duplicateData.duplicate_video.title || 'Unknown'}</span>
+                                <span><strong>Artist:</strong> ${duplicateData.duplicate_video.artist || 'Unknown'}</span>
+                                <span><strong>Quality:</strong> ${duplicateData.duplicate_video.quality || 'N/A'}</span>
+                                <span><strong>Duration:</strong> ${formatDuration(duplicateData.duplicate_video.duration)}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            
+            <div class="merge-actions">
+                <button onclick="performVideoMerge('${duplicateData.current_video.id}', '${duplicateData.duplicate_video.id}')" class="btn btn-primary" id="performVideoMergeBtn">Merge Videos</button>
+                <button onclick="hideDuplicateVideoModal()" class="btn btn-secondary">Skip Merge</button>
             </div>
         </div>
     `;
@@ -4534,5 +5005,702 @@ function performVideoMerge(currentVideoId, duplicateVideoId) {
     });
 }
 </script>
+
+<!-- Add to Playlist Modal -->
+<div id="addToPlaylistModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><iconify-icon icon="tabler:playlist-add"></iconify-icon> Add Videos to Playlist</h3>
+            <span class="modal-close" onclick="closeAddToPlaylistModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="playlist-selection-container">
+                <div class="selected-videos-summary">
+                    <p>Adding <span id="selectedVideosCount">0</span> video(s) to playlist:</p>
+                    <div id="selectedVideosList" class="selected-videos-preview"></div>
+                </div>
+                
+                <div class="playlist-options">
+                    <div class="form-group">
+                        <label for="playlistSelect">Select Playlist:</label>
+                        <select id="playlistSelect" class="form-control" required>
+                            <option value="">Loading playlists...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="createPlaylistGroup" style="display: none;">
+                        <button onclick="showCreatePlaylistFromModal()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                            <iconify-icon icon="tabler:plus"></iconify-icon>
+                            Create New Playlist
+                        </button>
+                        <div class="form-help">Create a new playlist if none exist or you need a new one</div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="addVideosToPlaylist()" class="btn btn-primary" id="addToPlaylistConfirmBtn">
+                <iconify-icon icon="tabler:check"></iconify-icon>
+                Add to Playlist
+            </button>
+            <button onclick="closeAddToPlaylistModal()" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Video Merge Modal -->
+<div id="bulkVideoMergeModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3>🔀 Bulk Video Merge</h3>
+            <span class="modal-close" onclick="closeBulkVideoMergeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="merge-intro">
+                <p><strong>Video Merge Operations</strong></p>
+                <p>This tool helps you merge duplicate videos by selecting which one to keep as the primary video and which ones to remove. All playlists and metadata from merged videos will be transferred to the primary video.</p>
+            </div>
+            
+            <div class="merge-mode-selection">
+                <label>
+                    <input type="radio" name="mergeMode" value="auto" checked onchange="updateMergeMode()">
+                    <strong>Auto-detect duplicates</strong> - Automatically find and merge videos with matching titles and artists
+                </label>
+                <label>
+                    <input type="radio" name="mergeMode" value="manual" onchange="updateMergeMode()">
+                    <strong>Manual selection</strong> - Merge the specific videos you've selected
+                </label>
+            </div>
+            
+            <div id="autoMergeOptions" class="merge-options">
+                <h4>Auto-Detection Settings</h4>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="matchTitle" checked>
+                        Match by title similarity
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="matchArtist" checked>
+                        Match by same artist
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="matchDuration" checked>
+                        Match by similar duration (±30 seconds)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="similarityThreshold">Title similarity threshold:</label>
+                    <input type="range" id="similarityThreshold" min="60" max="100" value="80" oninput="updateSimilarityDisplay()">
+                    <span id="similarityDisplay">80%</span>
+                </div>
+            </div>
+            
+            <div id="manualMergeOptions" class="merge-options" style="display: none;">
+                <h4>Selected Videos for Merge</h4>
+                <div id="selectedVideosForMerge" class="selected-videos-preview">
+                    <p class="text-muted">No videos selected. Please select at least 2 videos to merge.</p>
+                </div>
+                <div class="merge-strategy">
+                    <label for="primaryVideoStrategy">Choose primary video:</label>
+                    <select id="primaryVideoStrategy">
+                        <option value="highest_quality">Highest quality</option>
+                        <option value="longest_duration">Longest duration</option>
+                        <option value="newest">Most recently added</option>
+                        <option value="manual">Let me choose manually</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="merge-preview" id="mergePreview" style="display: none;">
+                <h4>Merge Preview</h4>
+                <div class="merge-groups" id="mergeGroupsContainer">
+                    <!-- Merge groups will be populated here -->
+                </div>
+            </div>
+            
+            <div class="merge-warnings">
+                <div class="warning-box">
+                    <iconify-icon icon="tabler:alert-triangle"></iconify-icon>
+                    <strong>Warning:</strong> This operation cannot be undone. Merged videos will be permanently removed from the database, but their playlists and metadata will be transferred to the primary video.
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="performBulkVideoMerge()" class="btn btn-warning" id="performMergeBtn" disabled>
+                <iconify-icon icon="tabler:git-merge"></iconify-icon>
+                Perform Merge
+            </button>
+            <button onclick="previewMerge()" class="btn btn-info" id="previewMergeBtn">
+                <iconify-icon icon="tabler:eye"></iconify-icon>
+                Preview Merge
+            </button>
+            <button onclick="closeBulkVideoMergeModal()" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Video Confirmation Modal -->
+<div id="deleteVideoModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>🗑️ Delete Video</h3>
+            <span class="modal-close" onclick="closeDeleteVideoModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="delete-video-info">
+                <p><strong>Are you sure you want to delete this video?</strong></p>
+                <div class="video-details-preview">
+                    <div class="detail-row">
+                        <strong>Title:</strong> <span id="deleteVideoTitle"></span>
+                    </div>
+                    <div class="detail-row">
+                        <strong>Artist:</strong> <span id="deleteVideoArtist"></span>
+                    </div>
+                    <div class="detail-row">
+                        <strong>URL:</strong> <span id="deleteVideoUrl" class="url-preview"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="deleteBlacklistGroup" class="blacklist-option-group">
+                <div class="checkbox-container">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="deleteAddToBlacklist">
+                        <span class="checkmark"></span>
+                        <div class="checkbox-text">
+                            <strong>Add to blacklist</strong>
+                            <small>Prevent this YouTube URL from being downloaded again in the future</small>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="warning-section">
+                <div class="warning-box">
+                    <iconify-icon icon="tabler:alert-triangle"></iconify-icon>
+                    <div>
+                        <strong>Warning:</strong> This action cannot be undone. The video will be permanently removed from the database and all playlists.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="confirmDeleteVideo()" class="btn btn-danger" id="confirmDeleteBtn">
+                <iconify-icon icon="tabler:trash"></iconify-icon>
+                Delete Video
+            </button>
+            <button onclick="closeDeleteVideoModal()" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Artist link styles */
+.artist-link {
+    color: var(--primary-color, #4a9eff);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.artist-link:hover {
+    color: var(--primary-color-hover, #6bb6ff);
+    text-decoration: underline;
+}
+
+/* Video metadata styles */
+.video-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.metadata-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: var(--bg-accent-subtle, rgba(102, 126, 234, 0.1));
+    color: var(--text-secondary, #666);
+    border: 1px solid var(--border-secondary, rgba(102, 126, 234, 0.2));
+}
+
+.metadata-item.quality {
+    background: var(--success-bg, rgba(34, 197, 94, 0.1));
+    color: var(--success-text, #16a34a);
+    border-color: var(--success-border, rgba(34, 197, 94, 0.2));
+}
+
+.metadata-item.duration {
+    background: var(--info-bg, rgba(59, 130, 246, 0.1));
+    color: var(--info-text, #2563eb);
+    border-color: var(--info-border, rgba(59, 130, 246, 0.2));
+}
+
+/* Enhanced video card layout for metadata */
+.video-card .video-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.video-card .video-info h3 {
+    margin-bottom: 0.25rem;
+}
+
+.video-card .video-info p {
+    margin-bottom: 0.25rem;
+}
+
+/* Responsive adjustments for metadata */
+@media (max-width: 768px) {
+    .video-metadata {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .metadata-item {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.4rem;
+    }
+}
+
+/* Duplicate Video Dialog Styles - Compact Version */
+.duplicate-modal-content {
+    max-width: 800px;
+    width: 85vw;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.duplicate-video-comparison-compact {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+    align-items: center;
+}
+
+.video-option-compact {
+    border: 2px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 1rem;
+    background: var(--card-bg, #fff);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.video-option-compact:has(input:checked) {
+    border-color: var(--primary-color, #007bff);
+    background: var(--selected-bg, rgba(0,123,255,0.05));
+    box-shadow: 0 3px 10px rgba(0,123,255,0.2);
+}
+
+.video-selection {
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+.video-selection input[type="radio"] {
+    margin-right: 0.5rem;
+    transform: scale(1.1);
+}
+
+.selection-label {
+    font-weight: 600;
+    color: var(--primary-color, #007bff);
+    cursor: pointer;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    background: var(--label-bg, rgba(0,123,255,0.1));
+    display: inline-block;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.selection-label:hover {
+    background: var(--label-hover-bg, rgba(0,123,255,0.2));
+}
+
+.video-content {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.video-thumbnail-small {
+    width: 80px;
+    height: 60px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 4px;
+    background: var(--thumbnail-bg, #f8f9fa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color, #e0e0e0);
+}
+
+.video-thumbnail-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.video-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.video-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--heading-color, #333);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.info-grid {
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.info-grid span {
+    color: var(--text-color, #555);
+    word-break: break-word;
+}
+
+.info-grid strong {
+    color: var(--label-color, #333);
+    font-weight: 600;
+}
+
+.vs-divider-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--divider-color, #999);
+    background: var(--divider-bg, linear-gradient(45deg, #f0f0f0, #e0e0e0));
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    margin: auto;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.merge-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.merge-actions .btn {
+    margin: 0 0.5rem;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .duplicate-modal-content {
+        width: 95vw;
+        padding: 1rem;
+        max-height: 85vh;
+    }
+    
+    .duplicate-video-comparison-compact {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .vs-divider-compact {
+        display: none;
+    }
+    
+    .video-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .video-thumbnail-small {
+        width: 100px;
+        height: 75px;
+    }
+    
+    .info-grid {
+        text-align: left;
+    }
+}
+
+/* Bulk Video Merge Modal Styles */
+.merge-mode-selection {
+    margin: 20px 0;
+}
+
+.merge-mode-selection label {
+    display: block;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    background: var(--card-bg);
+}
+
+.merge-mode-selection input[type="radio"] {
+    margin-right: 10px;
+}
+
+.merge-options {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+}
+
+.merge-options h4 {
+    margin-top: 0;
+    color: var(--text-primary);
+}
+
+.merge-options .form-group {
+    margin: 15px 0;
+}
+
+.merge-options label {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+}
+
+.merge-options input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.merge-options input[type="range"] {
+    width: 200px;
+    margin: 0 10px;
+}
+
+.video-merge-item {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px;
+    margin: 8px 0;
+}
+
+.video-merge-item.primary {
+    background: var(--success-bg, #e8f5e8);
+    border-color: var(--success-color, #28a745);
+}
+
+.video-merge-item.duplicate {
+    background: var(--warning-bg, #fff3cd);
+    border-color: var(--warning-color, #ffc107);
+}
+
+.merge-group {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+    background: var(--card-bg);
+}
+
+.merge-group h5 {
+    margin-top: 0;
+    color: var(--text-primary);
+}
+
+.merge-videos {
+    display: grid;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.primary-video, .merge-videos-list {
+    margin: 10px 0;
+}
+
+.merge-summary {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.warning-box {
+    background: var(--warning-bg, #fff3cd);
+    border: 1px solid var(--warning-color, #ffc107);
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.warning-box iconify-icon {
+    color: var(--warning-color, #ffc107);
+    font-size: 1.2em;
+    margin-top: 2px;
+}
+
+.merge-strategy {
+    margin: 15px 0;
+}
+
+.merge-strategy select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.video-info-compact {
+    font-size: 14px;
+}
+
+.video-info-compact strong {
+    color: var(--text-primary);
+}
+
+.selected-videos-preview {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px;
+    background: var(--input-bg);
+}
+
+.error-message {
+    color: var(--error-color, #dc3545);
+    background: var(--error-bg, #f8d7da);
+    border: 1px solid var(--error-color, #dc3545);
+    border-radius: 6px;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+/* Delete Video Modal Styles */
+.delete-video-info {
+    margin-bottom: 20px;
+}
+
+.video-details-preview {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.detail-row {
+    margin: 8px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.detail-row strong {
+    min-width: 50px;
+    color: var(--text-primary);
+}
+
+.url-preview {
+    word-break: break-all;
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.blacklist-option-group {
+    background: var(--info-bg, #e3f2fd);
+    border: 1px solid var(--info-color, #2196f3);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin: 0;
+    margin-top: 2px;
+}
+
+.checkbox-text {
+    flex: 1;
+}
+
+.checkbox-text strong {
+    display: block;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+}
+
+.checkbox-text small {
+    color: var(--text-muted);
+    font-size: 0.85em;
+    line-height: 1.3;
+}
+
+.warning-section {
+    margin: 15px 0;
+}
+
+.warning-section .warning-box {
+    background: var(--warning-bg, #fff3cd);
+    border: 1px solid var(--warning-color, #ffc107);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.warning-section .warning-box iconify-icon {
+    color: var(--warning-color, #ffc107);
+    font-size: 1.1em;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.warning-section .warning-box div {
+    flex: 1;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+</style>
 
 {% endblock %}

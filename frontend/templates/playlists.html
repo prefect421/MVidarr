@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+
+{% block title %}Playlists - MVidarr{% endblock %}
+
+{% block content %}
+<div class="playlists-container">
+    
+    <!-- Page Header with Improved Visual Hierarchy -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="text-h1">Playlists</h1>
+        </div>
+        
+        <!-- Primary Actions - Most Important Operations -->
+        <div class="action-group" role="group" aria-label="Primary playlist actions">
+            <button onclick="showCreatePlaylistModal()" class="btn btn-primary" aria-label="Create new playlist">
+                <iconify-icon icon="tabler:plus" aria-hidden="true"></iconify-icon>
+                Create Playlist
+            </button>
+            <button onclick="toggleSearchPanel()" class="btn btn-secondary" aria-label="Toggle search and filter panel" aria-expanded="false" aria-controls="playlistSearchPanel">
+                <iconify-icon icon="tabler:search" aria-hidden="true"></iconify-icon>
+                Search & Filter
+            </button>
+        </div>
+    </div>
+    
+    <!-- Secondary Actions - Less Frequent Operations -->
+    <div class="secondary-actions">
+        <div class="action-group action-group-secondary" role="group" aria-label="Secondary playlist actions">
+            <div class="btn-group" role="toolbar" aria-label="Playlist maintenance actions">
+                <button onclick="refreshPlaylists()" class="btn btn-secondary btn-sm" title="Refresh playlist list" aria-label="Refresh playlist list">
+                    <iconify-icon icon="tabler:refresh" aria-hidden="true"></iconify-icon>
+                    Refresh
+                </button>
+                <button onclick="showImportPlaylistModal()" class="btn btn-secondary btn-sm" title="Import playlist from external sources" aria-label="Import playlist">
+                    <iconify-icon icon="tabler:download" aria-hidden="true"></iconify-icon>
+                    Import
+                </button>
+            </div>
+            
+            <!-- Selection Controls -->
+            <div class="selection-controls" role="group" aria-label="Playlist selection controls">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="selectAllPlaylists" onchange="toggleSelectAll()" aria-label="Select all playlists" aria-describedby="selectedCount">
+                    <span class="checkmark"></span>
+                    Select All (<span id="selectedCount" aria-live="polite">0</span>)
+                </label>
+                <button onclick="toggleBulkActionsPanel()" class="btn btn-ghost btn-sm" id="bulkActionsToggle" aria-label="Toggle bulk actions panel" aria-expanded="false" aria-controls="bulkActionsPanel">
+                    <iconify-icon icon="tabler:settings" aria-hidden="true"></iconify-icon>
+                    Bulk Actions
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Advanced Search Panel -->
+    <div class="advanced-search-panel" id="playlistSearchPanel" style="display: none;" role="search" aria-label="Playlist search and filters">
+        <div class="search-header">
+            <div class="search-input-container">
+                <input type="text" id="playlistSearchInput" placeholder="Search playlists by name or description..." onkeyup="handlePlaylistSearchInput(event)" aria-label="Search playlists" aria-describedby="playlistSearchSuggestions" autocomplete="off">
+                <div class="search-suggestions" id="playlistSearchSuggestions" role="listbox" aria-label="Search suggestions"></div>
+            </div>
+            <button onclick="togglePlaylistAdvancedFilters()" class="btn btn-secondary" id="playlistFiltersToggle" aria-label="Toggle advanced filters" aria-expanded="false" aria-controls="playlistAdvancedFilters">
+                <span>Filters</span> <span id="playlistFilterCount" class="filter-count" aria-live="polite"></span>
+            </button>
+        </div>
+        
+        <div class="advanced-filters" id="playlistAdvancedFilters" style="display: none;" role="group" aria-label="Advanced search filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="playlistVisibilityFilter">Visibility:</label>
+                    <select id="playlistVisibilityFilter" onchange="applyPlaylistFilters()" aria-label="Filter by playlist visibility">
+                        <option value="">All Playlists</option>
+                        <option value="my">My Playlists</option>
+                        <option value="public">Public Playlists</option>
+                        <option value="featured">Featured Playlists</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="playlistOwnerFilter">Owner:</label>
+                    <select id="playlistOwnerFilter" onchange="applyPlaylistFilters()" aria-label="Filter by playlist owner">
+                        <option value="">Any Owner</option>
+                        <!-- Populated dynamically via JavaScript -->
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="playlistSortFilter">Sort By:</label>
+                    <select id="playlistSortFilter" onchange="applyPlaylistFilters()" aria-label="Sort playlists by">
+                        <option value="updated_desc">Recently Updated</option>
+                        <option value="created_desc">Recently Created</option>
+                        <option value="name_asc">Name A-Z</option>
+                        <option value="name_desc">Name Z-A</option>
+                        <option value="video_count_desc">Most Videos</option>
+                        <option value="video_count_asc">Least Videos</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button onclick="clearPlaylistFilters()" class="btn btn-ghost btn-sm" aria-label="Clear all filters">
+                    <iconify-icon icon="tabler:x" aria-hidden="true"></iconify-icon>
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Actions Panel -->
+    <div class="bulk-actions-panel" id="bulkActionsPanel" style="display: none;" role="region" aria-label="Bulk actions for selected playlists">
+        <div class="bulk-actions-header">
+            <h3>Bulk Actions</h3>
+            <span id="bulkSelectedCount" aria-live="polite">0 playlists selected</span>
+        </div>
+        <div class="bulk-actions-buttons">
+            <button onclick="bulkDeletePlaylists()" class="btn btn-danger btn-sm" title="Delete selected playlists">
+                <iconify-icon icon="tabler:trash" aria-hidden="true"></iconify-icon>
+                Delete Selected
+            </button>
+            <button onclick="bulkToggleVisibility()" class="btn btn-secondary btn-sm" title="Toggle visibility of selected playlists">
+                <iconify-icon icon="tabler:eye" aria-hidden="true"></iconify-icon>
+                Toggle Visibility
+            </button>
+            <button onclick="bulkExportPlaylists()" class="btn btn-secondary btn-sm" title="Export selected playlists">
+                <iconify-icon icon="tabler:download" aria-hidden="true"></iconify-icon>
+                Export Selected
+            </button>
+        </div>
+    </div>
+    
+    <!-- Loading Indicator -->
+    <div id="playlistsLoading" class="loading-container" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Loading playlists...</p>
+    </div>
+    
+    <!-- Playlists Grid -->
+    <div class="playlists-grid" id="playlistsGrid">
+        <!-- Playlists will be populated here via JavaScript -->
+    </div>
+    
+    <!-- Pagination -->
+    <div class="pagination-container" id="playlistsPagination" style="display: none;">
+        <!-- Pagination will be populated here via JavaScript -->
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="playlistsEmptyState" style="display: none;">
+        <div class="empty-state-icon">
+            <iconify-icon icon="tabler:playlist-x" style="font-size: 4rem; color: var(--text-muted);"></iconify-icon>
+        </div>
+        <h3>No Playlists Found</h3>
+        <p>You haven't created any playlists yet. Click "Create Playlist" to get started!</p>
+        <button onclick="showCreatePlaylistModal()" class="btn btn-primary">
+            <iconify-icon icon="tabler:plus" aria-hidden="true"></iconify-icon>
+            Create Your First Playlist
+        </button>
+    </div>
+</div>
+
+<!-- Create/Edit Playlist Modal -->
+<div id="playlistModal" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 600px;">
+        <div class="modal-header">
+            <h3 id="playlistModalTitle">Create Playlist</h3>
+            <span class="modal-close" onclick="closePlaylistModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="playlistForm" onsubmit="savePlaylist(event)">
+                <input type="hidden" id="playlistId" value="">
+                
+                <div class="form-group">
+                    <label for="playlistName">Name *</label>
+                    <input type="text" id="playlistName" class="form-control" required maxlength="100" placeholder="Enter playlist name">
+                    <div class="form-help">Give your playlist a unique and descriptive name</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="playlistDescription">Description</label>
+                    <textarea id="playlistDescription" class="form-control" rows="3" maxlength="500" placeholder="Optional description of your playlist"></textarea>
+                    <div class="form-help">Describe what this playlist is about</div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="playlistIsPublic">
+                            <span class="checkmark"></span>
+                            Make this playlist public
+                        </label>
+                        <div class="form-help">Public playlists can be viewed by other users</div>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="featuredGroup" style="display: none;">
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="playlistIsFeatured">
+                            <span class="checkmark"></span>
+                            Feature this playlist
+                        </label>
+                        <div class="form-help">Featured playlists appear prominently to all users</div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="savePlaylistBtn">
+                        <iconify-icon icon="tabler:check" aria-hidden="true"></iconify-icon>
+                        Create Playlist
+                    </button>
+                    <button type="button" onclick="closePlaylistModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Import Playlist Modal -->
+<div id="importPlaylistModal" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 700px;">
+        <div class="modal-header">
+            <h3>Import Playlist</h3>
+            <span class="modal-close" onclick="closeImportPlaylistModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="import-tabs">
+                <button class="tab-button active" onclick="switchImportTab('url', this)">🔗 From URL</button>
+                <button class="tab-button" onclick="switchImportTab('file', this)">📄 From File</button>
+                <button class="tab-button" onclick="switchImportTab('youtube', this)">🎬 YouTube Playlist</button>
+            </div>
+            
+            <!-- URL Import -->
+            <div id="urlImportTab" class="import-tab-content active">
+                <div class="form-group">
+                    <label for="importUrl">Playlist URL</label>
+                    <input type="url" id="importUrl" class="form-control" placeholder="https://...">
+                    <div class="form-help">Supported: YouTube playlists, Spotify playlists, and other music platforms</div>
+                </div>
+                <div class="form-actions">
+                    <button onclick="importPlaylistFromUrl()" class="btn btn-primary">Import Playlist</button>
+                    <button onclick="closeImportPlaylistModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+            
+            <!-- File Import -->
+            <div id="fileImportTab" class="import-tab-content">
+                <div class="form-group">
+                    <label for="importFile">Select File</label>
+                    <input type="file" id="importFile" class="form-control" accept=".json,.m3u,.pls,.xspf">
+                    <div class="form-help">Supported formats: JSON, M3U, PLS, XSPF</div>
+                </div>
+                <div class="form-actions">
+                    <button onclick="importPlaylistFromFile()" class="btn btn-primary">Import Playlist</button>
+                    <button onclick="closeImportPlaylistModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+            
+            <!-- YouTube Import -->
+            <div id="youtubeImportTab" class="import-tab-content">
+                <div class="form-group">
+                    <label for="youtubePlaylistUrl">YouTube Playlist URL</label>
+                    <input type="url" id="youtubePlaylistUrl" class="form-control" placeholder="https://www.youtube.com/playlist?list=...">
+                    <div class="form-help">Import videos from a YouTube playlist</div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="youtubeImportPrivate" checked>
+                            <span class="checkmark"></span>
+                            Make imported playlist private
+                        </label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button onclick="importYouTubePlaylist()" class="btn btn-primary">Import from YouTube</button>
+                    <button onclick="closeImportPlaylistModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Playlist Detail Modal -->
+<div id="playlistDetailModal" class="modal">
+    <div class="modal-content" style="width: 95%; max-width: 1200px; max-height: 90vh;">
+        <div class="modal-header">
+            <h3 id="playlistDetailTitle">Playlist Details</h3>
+            <span class="modal-close" onclick="closePlaylistDetailModal()">&times;</span>
+        </div>
+        <div class="modal-body" style="max-height: calc(90vh - 120px); overflow-y: auto;">
+            <div id="playlistDetailContent">
+                <!-- Content will be populated via JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('frontend.js_files', filename='playlists.js') }}"></script>
+
+<style>
+/* Playlist-specific styles */
+.playlists-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.playlists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.playlist-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: pointer;
+}
+
+.playlist-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--shadow);
+    border-color: var(--accent-primary);
+}
+
+.playlist-card.selected {
+    border-color: var(--accent-primary);
+    background: var(--bg-accent-subtle);
+}
+
+.playlist-card-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.playlist-card-checkbox {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.playlist-card-icon {
+    font-size: 2.5rem;
+    color: var(--accent-primary);
+    margin-bottom: 0.5rem;
+}
+
+.playlist-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.playlist-card-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.playlist-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.playlist-card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-secondary);
+}
+
+.playlist-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.playlist-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.playlist-badge.public {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.playlist-badge.private {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.playlist-badge.featured {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+}
+
+.playlist-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.playlist-card-actions .btn {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.import-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.tab-button {
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.tab-button.active {
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+}
+
+.tab-button:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.import-tab-content {
+    display: none;
+}
+
+.import-tab-content.active {
+    display: block;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .playlists-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .playlist-card {
+        padding: 1rem;
+    }
+    
+    .action-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .action-group .btn {
+        width: 100%;
+    }
+}
+</style>
+
+{% endblock %}
