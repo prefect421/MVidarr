@@ -24,18 +24,6 @@
 - **🔐 User Authentication** - Role-based access control with security features
 - **🎨 Advanced Theme System** - 7 built-in themes with export/import functionality
 
-## 🆕 What's New in v0.9.7-dev
-
-**Performance & Integration Development Release**
-
-- **🔄 In Development** - Advanced video filtering and search system
-- **⚡ Performance Focus** - Database optimization and frontend enhancements
-- **🔧 Bulk Operations** - Enhanced batch management and processing
-- **🎨 Artist Discovery** - Multi-source metadata enrichment
-- **📦 Import/Export** - Comprehensive backup and data portability
-- **🎯 Queue Management** - Advanced download prioritization
-- **📋 Organization Rules** - Custom video organization automation
-
 ## 🆕 Latest Stable (v0.9.6)
 
 **Quality Assurance & Testing Infrastructure Release**
@@ -200,4 +188,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**MVidarr v0.9.7-dev** - Built with ❤️ for music video enthusiasts
+**MVidarr v0.9.6** - Built with AI for music video enthusiasts
