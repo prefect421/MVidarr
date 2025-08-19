@@ -115,6 +115,25 @@ class PlaylistDetailManager {
         // Update header
         document.getElementById('playlistTitle').textContent = this.playlist.name;
         
+        // Update thumbnail
+        const thumbnailContainer = document.getElementById('playlistHeaderThumbnail');
+        console.log('Thumbnail debug:', {
+            container: thumbnailContainer,
+            thumbnailUrl: this.playlist.thumbnail_url,
+            playlistData: this.playlist
+        });
+        
+        if (thumbnailContainer && this.playlist.thumbnail_url) {
+            console.log('Setting thumbnail image:', this.playlist.thumbnail_url);
+            thumbnailContainer.innerHTML = `<img src="${this.escapeHtml(this.playlist.thumbnail_url)}" alt="${this.escapeHtml(this.playlist.name)} thumbnail" 
+                                                 onerror="this.parentElement.innerHTML='<div class=\\'playlist-header-icon\\'><iconify-icon icon=\\'tabler:playlist\\' style=\\'font-size: 3rem;\\'></iconify-icon></div>'">`;
+        } else if (thumbnailContainer) {
+            console.log('Setting default icon - no thumbnail URL or container');
+            thumbnailContainer.innerHTML = '<div class="playlist-header-icon"><iconify-icon icon="tabler:playlist" style="font-size: 3rem;"></iconify-icon></div>';
+        } else {
+            console.log('No thumbnail container found');
+        }
+        
         const description = document.getElementById('playlistDescription');
         if (this.playlist.description) {
             description.textContent = this.playlist.description;
@@ -723,11 +742,27 @@ class PlaylistDetailManager {
     showEditPlaylistModal() {
         if (!this.playlist || !this.canModify) return;
 
-        // Populate form
-        document.getElementById('editPlaylistName').value = this.playlist.name;
-        document.getElementById('editPlaylistDescription').value = this.playlist.description || '';
-        document.getElementById('editPlaylistIsPublic').checked = this.playlist.is_public;
-        document.getElementById('editPlaylistIsFeatured').checked = this.playlist.is_featured;
+        // Populate form with null checks
+        const nameField = document.getElementById('editPlaylistName');
+        const descriptionField = document.getElementById('editPlaylistDescription');
+        const thumbnailUrlField = document.getElementById('editPlaylistThumbnailUrl');
+        const publicField = document.getElementById('editPlaylistIsPublic');
+        const featuredField = document.getElementById('editPlaylistIsFeatured');
+        
+        if (nameField) nameField.value = this.playlist.name;
+        if (descriptionField) descriptionField.value = this.playlist.description || '';
+        if (thumbnailUrlField) thumbnailUrlField.value = this.playlist.thumbnail_url || '';
+        if (publicField) publicField.checked = this.playlist.is_public;
+        if (featuredField) featuredField.checked = this.playlist.is_featured;
+        
+        // Reset file upload fields with null checks
+        const fileInput = document.getElementById('editPlaylistThumbnailFile');
+        const fileNameInput = document.getElementById('editPlaylistThumbnailFileName');
+        const uploadBtn = document.getElementById('editUploadThumbnailBtn');
+        
+        if (fileInput) fileInput.value = '';
+        if (fileNameInput) fileNameInput.value = '';
+        if (uploadBtn) uploadBtn.disabled = true;
 
         this.showModal('editPlaylistModal');
     }
@@ -735,16 +770,36 @@ class PlaylistDetailManager {
     async savePlaylistChanges(event) {
         event.preventDefault();
         
+        const nameField = document.getElementById('editPlaylistName');
+        const descriptionField = document.getElementById('editPlaylistDescription');
+        const thumbnailUrlField = document.getElementById('editPlaylistThumbnailUrl');
+        const publicField = document.getElementById('editPlaylistIsPublic');
+        const featuredField = document.getElementById('editPlaylistIsFeatured');
+        
         const playlistData = {
-            name: document.getElementById('editPlaylistName').value.trim(),
-            description: document.getElementById('editPlaylistDescription').value.trim(),
-            is_public: document.getElementById('editPlaylistIsPublic').checked,
-            is_featured: document.getElementById('editPlaylistIsFeatured').checked
+            name: nameField ? nameField.value.trim() : '',
+            description: descriptionField ? descriptionField.value.trim() : '',
+            thumbnail_url: thumbnailUrlField ? thumbnailUrlField.value.trim() : '',
+            is_public: publicField ? publicField.checked : false,
+            is_featured: featuredField ? featuredField.checked : false
         };
         
         if (!playlistData.name) {
             this.showToast('Playlist name is required', 'error');
             return;
+        }
+        
+        // Validate thumbnail URL if provided
+        if (playlistData.thumbnail_url) {
+            // Allow local paths (starting with /) or valid URLs
+            if (!playlistData.thumbnail_url.startsWith('/')) {
+                try {
+                    new URL(playlistData.thumbnail_url);
+                } catch (error) {
+                    this.showToast('Please enter a valid thumbnail URL or local path', 'error');
+                    return;
+                }
+            }
         }
         
         try {
@@ -990,6 +1045,11 @@ class PlaylistDetailManager {
             this.showToast(`Failed to remove duplicates: ${error.message}`, 'error');
         }
     }
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 }
 
 // Global functions for HTML onclick handlers
@@ -1095,6 +1155,201 @@ function viewVideoDetail(videoId) {
 function searchVideosForPlaylist(event) {
     if (event.key === 'Enter') {
         playlistDetailManager.searchVideosForPlaylist(event.target.value.trim());
+    }
+}
+
+// Thumbnail upload functions for playlist detail page
+async function importPlaylistThumbnailDetail() {
+    const playlistId = playlistDetailManager.playlistId;
+    const thumbnailUrlField = document.getElementById('editPlaylistThumbnailUrl');
+    const importBtn = document.getElementById('editImportThumbnailBtn');
+    
+    if (!thumbnailUrlField || !importBtn) {
+        console.error('Thumbnail elements not found in DOM');
+        return;
+    }
+    
+    const thumbnailUrl = thumbnailUrlField.value.trim();
+    
+    if (!thumbnailUrl) {
+        playlistDetailManager.showToast('Please enter a thumbnail URL first', 'error');
+        return;
+    }
+    
+    // If it's already a local thumbnail path, no need to import
+    if (thumbnailUrl.startsWith('/thumbnails/')) {
+        playlistDetailManager.showToast('This is already a local thumbnail path', 'info');
+        return;
+    }
+    
+    // Validate that it's a proper URL
+    try {
+        new URL(thumbnailUrl);
+    } catch (error) {
+        playlistDetailManager.showToast('Please enter a valid URL (e.g., https://example.com/image.jpg)', 'error');
+        return;
+    }
+    
+    if (!playlistId) {
+        playlistDetailManager.showToast('Invalid playlist ID', 'error');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const originalContent = importBtn.innerHTML;
+        importBtn.innerHTML = '<iconify-icon icon="tabler:loader-2" class="spin"></iconify-icon> Importing...';
+        importBtn.disabled = true;
+        
+        const response = await fetch(`/api/playlists/${playlistId}/thumbnail/upload`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                url: thumbnailUrl
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error);
+        }
+        
+        // Update the thumbnail URL field with the imported path
+        if (data.thumbnail_path && thumbnailUrlField) {
+            thumbnailUrlField.value = data.thumbnail_path;
+        }
+        
+        // Update the playlist data and re-render
+        playlistDetailManager.playlist.thumbnail_url = data.thumbnail_path;
+        playlistDetailManager.renderPlaylist();
+        
+        playlistDetailManager.showToast('Thumbnail imported successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Failed to import thumbnail:', error);
+        playlistDetailManager.showToast(`Failed to import thumbnail: ${error.message}`, 'error');
+    } finally {
+        // Restore button state
+        const originalContent = '<iconify-icon icon="tabler:download" aria-hidden="true"></iconify-icon> Import';
+        importBtn.innerHTML = originalContent;
+        importBtn.disabled = false;
+    }
+}
+
+function handleDetailThumbnailFileSelect() {
+    const fileInput = document.getElementById('editPlaylistThumbnailFile');
+    const fileNameInput = document.getElementById('editPlaylistThumbnailFileName');
+    const uploadBtn = document.getElementById('editUploadThumbnailBtn');
+    
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            playlistDetailManager.showToast('Please select a valid image file (JPG, PNG, WebP, or GIF)', 'error');
+            fileInput.value = '';
+            fileNameInput.value = '';
+            uploadBtn.disabled = true;
+            return;
+        }
+        
+        // Validate file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            playlistDetailManager.showToast('File too large. Maximum size is 10MB.', 'error');
+            fileInput.value = '';
+            fileNameInput.value = '';
+            uploadBtn.disabled = true;
+            return;
+        }
+        
+        fileNameInput.value = file.name;
+        uploadBtn.disabled = false;
+    } else {
+        fileNameInput.value = '';
+        uploadBtn.disabled = true;
+    }
+}
+
+async function uploadPlaylistThumbnailDetail() {
+    const playlistId = playlistDetailManager.playlistId;
+    const fileInput = document.getElementById('editPlaylistThumbnailFile');
+    const uploadBtn = document.getElementById('editUploadThumbnailBtn');
+    
+    if (!fileInput || !uploadBtn) {
+        console.error('File upload elements not found in DOM');
+        return;
+    }
+    
+    if (!fileInput.files.length) {
+        playlistDetailManager.showToast('Please select a file first', 'error');
+        return;
+    }
+    
+    if (!playlistId) {
+        playlistDetailManager.showToast('Invalid playlist ID', 'error');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    
+    try {
+        // Show loading state
+        const originalContent = uploadBtn.innerHTML;
+        uploadBtn.innerHTML = '<iconify-icon icon="tabler:loader-2" class="spin"></iconify-icon> Uploading...';
+        uploadBtn.disabled = true;
+        
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`/api/playlists/${playlistId}/thumbnail/file`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error);
+        }
+        
+        // Update the thumbnail URL field with the uploaded path
+        const thumbnailUrlField = document.getElementById('editPlaylistThumbnailUrl');
+        if (data.thumbnail_path && thumbnailUrlField) {
+            thumbnailUrlField.value = data.thumbnail_path;
+        }
+        
+        // Update the playlist data and re-render
+        playlistDetailManager.playlist.thumbnail_url = data.thumbnail_path;
+        playlistDetailManager.renderPlaylist();
+        
+        // Clear the file input
+        fileInput.value = '';
+        const fileNameInput = document.getElementById('editPlaylistThumbnailFileName');
+        if (fileNameInput) fileNameInput.value = '';
+        
+        playlistDetailManager.showToast('Thumbnail uploaded successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Failed to upload thumbnail:', error);
+        playlistDetailManager.showToast(`Failed to upload thumbnail: ${error.message}`, 'error');
+    } finally {
+        // Restore button state
+        const originalContent = '<iconify-icon icon="tabler:upload" aria-hidden="true"></iconify-icon> Upload';
+        uploadBtn.innerHTML = originalContent;
+        uploadBtn.disabled = !fileInput.files.length;
     }
 }
 

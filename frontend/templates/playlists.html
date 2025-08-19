@@ -183,9 +183,38 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="playlistThumbnailUrl">Thumbnail URL</label>
-                    <input type="url" id="playlistThumbnailUrl" class="form-control" placeholder="https://example.com/image.jpg">
-                    <div class="form-help">Optional thumbnail image for your playlist. Should be a publicly accessible image URL.</div>
+                    <label for="playlistThumbnailUrl">Thumbnail</label>
+                    
+                    <!-- URL Import Section -->
+                    <div class="thumbnail-section">
+                        <label class="form-sublabel">From URL</label>
+                        <div class="input-group">
+                            <input type="text" id="playlistThumbnailUrl" class="form-control" placeholder="https://example.com/image.jpg or /thumbnails/...">
+                            <button type="button" class="btn btn-secondary" id="importThumbnailBtn" onclick="importPlaylistThumbnail()">
+                                <iconify-icon icon="tabler:download" aria-hidden="true"></iconify-icon>
+                                Import
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload Section -->
+                    <div class="thumbnail-section">
+                        <label class="form-sublabel">Upload File</label>
+                        <div class="file-upload-container">
+                            <input type="file" id="playlistThumbnailFile" class="form-control-file" accept="image/*" onchange="handleThumbnailFileSelect()" style="display: none;">
+                            <div class="input-group">
+                                <input type="text" id="playlistThumbnailFileName" class="form-control" placeholder="No file selected" readonly>
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('playlistThumbnailFile').click()">
+                                    <iconify-icon icon="tabler:photo" aria-hidden="true"></iconify-icon>
+                                    Browse
+                                </button>
+                                <button type="button" class="btn btn-primary" id="uploadThumbnailBtn" onclick="uploadPlaylistThumbnail()" disabled>
+                                    <iconify-icon icon="tabler:upload" aria-hidden="true"></iconify-icon>
+                                    Upload
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -377,6 +406,53 @@
 
 .playlist-card-thumbnail:hover img {
     transform: scale(1.05);
+}
+
+.input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
+}
+
+.input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    white-space: nowrap;
+}
+
+.thumbnail-section {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-primary);
+}
+
+.thumbnail-section:last-child {
+    margin-bottom: 0;
+}
+
+.form-sublabel {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.file-upload-container {
+    position: relative;
+}
+
+.form-control-file {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .playlist-card-title {

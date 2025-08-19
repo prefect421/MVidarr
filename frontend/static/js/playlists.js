@@ -542,6 +542,19 @@ class PlaylistManager {
             return;
         }
         
+        // Validate thumbnail URL if provided
+        if (playlistData.thumbnail_url) {
+            // Allow local paths (starting with /) or valid URLs
+            if (!playlistData.thumbnail_url.startsWith('/')) {
+                try {
+                    new URL(playlistData.thumbnail_url);
+                } catch (error) {
+                    this.showToast('Please enter a valid thumbnail URL or local path', 'error');
+                    return;
+                }
+            }
+        }
+        
         const playlistId = document.getElementById('playlistId').value;
         const isEdit = playlistId && playlistId !== '';
         
@@ -1004,6 +1017,15 @@ class PlaylistManager {
         if (form) form.reset();
         document.getElementById('playlistId').value = '';
         document.getElementById('playlistThumbnailUrl').value = '';
+        
+        // Reset file upload fields
+        const fileInput = document.getElementById('playlistThumbnailFile');
+        const fileNameInput = document.getElementById('playlistThumbnailFileName');
+        const uploadBtn = document.getElementById('uploadThumbnailBtn');
+        
+        if (fileInput) fileInput.value = '';
+        if (fileNameInput) fileNameInput.value = '';
+        if (uploadBtn) uploadBtn.disabled = true;
     }
 
     showLoading(show) {
@@ -1168,6 +1190,178 @@ function bulkExportPlaylists() {
 
 function bulkToggleVisibility() {
     playlistManager.bulkToggleVisibility();
+}
+
+async function importPlaylistThumbnail() {
+    const playlistId = document.getElementById('playlistId').value;
+    const thumbnailUrl = document.getElementById('playlistThumbnailUrl').value.trim();
+    const importBtn = document.getElementById('importThumbnailBtn');
+    
+    if (!thumbnailUrl) {
+        playlistManager.showToast('Please enter a thumbnail URL first', 'error');
+        return;
+    }
+    
+    // If it's already a local thumbnail path, no need to import
+    if (thumbnailUrl.startsWith('/thumbnails/')) {
+        playlistManager.showToast('This is already a local thumbnail path', 'info');
+        return;
+    }
+    
+    // Validate that it's a proper URL
+    try {
+        new URL(thumbnailUrl);
+    } catch (error) {
+        playlistManager.showToast('Please enter a valid URL (e.g., https://example.com/image.jpg)', 'error');
+        return;
+    }
+    
+    if (!playlistId) {
+        playlistManager.showToast('Please save the playlist first before importing thumbnails', 'error');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const originalContent = importBtn.innerHTML;
+        importBtn.innerHTML = '<iconify-icon icon="tabler:loader-2" class="spin"></iconify-icon> Importing...';
+        importBtn.disabled = true;
+        
+        const response = await fetch(`/api/playlists/${playlistId}/thumbnail/upload`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                url: thumbnailUrl
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error);
+        }
+        
+        // Update the thumbnail URL field with the imported path
+        if (data.thumbnail_path) {
+            document.getElementById('playlistThumbnailUrl').value = data.thumbnail_path;
+        }
+        
+        playlistManager.showToast('Thumbnail imported successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Failed to import thumbnail:', error);
+        playlistManager.showToast(`Failed to import thumbnail: ${error.message}`, 'error');
+    } finally {
+        // Restore button state
+        const originalContent = '<iconify-icon icon="tabler:download" aria-hidden="true"></iconify-icon> Import';
+        importBtn.innerHTML = originalContent;
+        importBtn.disabled = false;
+    }
+}
+
+function handleThumbnailFileSelect() {
+    const fileInput = document.getElementById('playlistThumbnailFile');
+    const fileNameInput = document.getElementById('playlistThumbnailFileName');
+    const uploadBtn = document.getElementById('uploadThumbnailBtn');
+    
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            playlistManager.showToast('Please select a valid image file (JPG, PNG, WebP, or GIF)', 'error');
+            fileInput.value = '';
+            fileNameInput.value = '';
+            uploadBtn.disabled = true;
+            return;
+        }
+        
+        // Validate file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            playlistManager.showToast('File too large. Maximum size is 10MB.', 'error');
+            fileInput.value = '';
+            fileNameInput.value = '';
+            uploadBtn.disabled = true;
+            return;
+        }
+        
+        fileNameInput.value = file.name;
+        uploadBtn.disabled = false;
+    } else {
+        fileNameInput.value = '';
+        uploadBtn.disabled = true;
+    }
+}
+
+async function uploadPlaylistThumbnail() {
+    const playlistId = document.getElementById('playlistId').value;
+    const fileInput = document.getElementById('playlistThumbnailFile');
+    const uploadBtn = document.getElementById('uploadThumbnailBtn');
+    
+    if (!fileInput.files.length) {
+        playlistManager.showToast('Please select a file first', 'error');
+        return;
+    }
+    
+    if (!playlistId) {
+        playlistManager.showToast('Please save the playlist first before uploading thumbnails', 'error');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    
+    try {
+        // Show loading state
+        const originalContent = uploadBtn.innerHTML;
+        uploadBtn.innerHTML = '<iconify-icon icon="tabler:loader-2" class="spin"></iconify-icon> Uploading...';
+        uploadBtn.disabled = true;
+        
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`/api/playlists/${playlistId}/thumbnail/file`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error);
+        }
+        
+        // Update the thumbnail URL field with the uploaded path
+        if (data.thumbnail_path) {
+            document.getElementById('playlistThumbnailUrl').value = data.thumbnail_path;
+        }
+        
+        // Clear the file input
+        fileInput.value = '';
+        document.getElementById('playlistThumbnailFileName').value = '';
+        
+        playlistManager.showToast('Thumbnail uploaded successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Failed to upload thumbnail:', error);
+        playlistManager.showToast(`Failed to upload thumbnail: ${error.message}`, 'error');
+    } finally {
+        // Restore button state
+        const originalContent = '<iconify-icon icon="tabler:upload" aria-hidden="true"></iconify-icon> Upload';
+        uploadBtn.innerHTML = originalContent;
+        uploadBtn.disabled = !fileInput.files.length;
+    }
 }
 
 // Initialize when DOM is ready

@@ -159,3 +159,10 @@ def js_files(filename):
     """Serve JavaScript files"""
     js_dir = Path(__file__).parent.parent.parent / "frontend" / "static" / "js"
     return send_from_directory(js_dir, filename)
+
+
+@frontend_bp.route("/thumbnails/<path:filename>")
+def thumbnails(filename):
+    """Serve thumbnail files"""
+    thumbnails_dir = Path(__file__).parent.parent.parent / "data" / "thumbnails"
+    return send_from_directory(thumbnails_dir, filename)
