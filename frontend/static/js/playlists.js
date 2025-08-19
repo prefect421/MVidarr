@@ -261,9 +261,15 @@ class PlaylistManager {
                            aria-label="Select playlist ${playlist.name}">
                 </div>
                 
-                <div class="playlist-card-icon">
-                    <iconify-icon icon="tabler:playlist"></iconify-icon>
-                </div>
+                ${playlist.thumbnail_url ? 
+                    `<div class="playlist-card-thumbnail">
+                        <img src="${this.escapeHtml(playlist.thumbnail_url)}" alt="${this.escapeHtml(playlist.name)} thumbnail" 
+                             onerror="this.parentElement.innerHTML='<div class=\\'playlist-card-icon\\'><iconify-icon icon=\\'tabler:playlist\\'></iconify-icon></div>'">
+                    </div>` : 
+                    `<div class="playlist-card-icon">
+                        <iconify-icon icon="tabler:playlist"></iconify-icon>
+                    </div>`
+                }
                 
                 <h3 class="playlist-card-title">${this.escapeHtml(playlist.name)}</h3>
                 
@@ -504,6 +510,7 @@ class PlaylistManager {
             document.getElementById('playlistId').value = playlist.id;
             document.getElementById('playlistName').value = playlist.name;
             document.getElementById('playlistDescription').value = playlist.description || '';
+            document.getElementById('playlistThumbnailUrl').value = playlist.thumbnail_url || '';
             document.getElementById('playlistIsPublic').checked = playlist.is_public;
             document.getElementById('playlistIsFeatured').checked = playlist.is_featured;
             
@@ -525,6 +532,7 @@ class PlaylistManager {
         const playlistData = {
             name: document.getElementById('playlistName').value.trim(),
             description: document.getElementById('playlistDescription').value.trim(),
+            thumbnail_url: document.getElementById('playlistThumbnailUrl').value.trim(),
             is_public: document.getElementById('playlistIsPublic').checked,
             is_featured: document.getElementById('playlistIsFeatured').checked
         };
@@ -995,6 +1003,7 @@ class PlaylistManager {
         const form = document.getElementById('playlistForm');
         if (form) form.reset();
         document.getElementById('playlistId').value = '';
+        document.getElementById('playlistThumbnailUrl').value = '';
     }
 
     showLoading(show) {

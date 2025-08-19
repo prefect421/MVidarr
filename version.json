@@ -1,7 +1,7 @@
 {
   "version": "0.9.7-dev",
-  "build_date": "2025-08-19T17:08:12.007846",
-  "git_commit": "6e03c16",
+  "build_date": "2025-08-19T21:15:43.364755",
+  "git_commit": "14d7ce2",
   "git_branch": "dev",
   "release_name": "Performance & Integration",
   "features": [
@@ -61,6 +61,7 @@
     "[COMPLETED] User Experience Polish with IMVDb reference removal and interface improvements",
     "[COMPLETED] Critical UI Bug Fix - Search Panel Visibility resolved by correcting element targeting",
     "[COMPLETED] Major HTML Structure Fix - Videos and pagination properly extracted from bulkActionsPanel",
+    "[COMPLETED] Playlist Thumbnail Assignment - Users can now assign custom thumbnails to playlists via URL",
     "[PLANNED] Advanced Performance Analytics with real-time monitoring dashboard",
     "[PLANNED] Enhanced API Integration with external service extensions",
     "[PLANNED] Mobile-Responsive Design with touch-optimized interfaces",

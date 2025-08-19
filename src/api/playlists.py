@@ -259,6 +259,10 @@ def update_playlist(playlist_id):
             if "description" in data:
                 playlist.description = (data["description"] or "").strip() or None
 
+            if "thumbnail_url" in data:
+                thumbnail_url = (data["thumbnail_url"] or "").strip() or None
+                playlist.thumbnail_url = thumbnail_url
+
             if "is_public" in data:
                 playlist.is_public = bool(data["is_public"])
 

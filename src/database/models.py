@@ -612,6 +612,7 @@ class Playlist(Base):
     total_duration = Column(Integer, nullable=True)  # Total duration in seconds
     video_count = Column(Integer, default=0, nullable=False)  # Cached video count
     playlist_metadata = Column(JSON, nullable=True)  # Additional metadata
+    thumbnail_url = Column(String(500), nullable=True)  # Playlist thumbnail URL
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -676,6 +677,7 @@ class Playlist(Base):
             "video_count": self.video_count,
             "total_duration": self.total_duration,
             "metadata": self.playlist_metadata or {},
+            "thumbnail_url": self.thumbnail_url,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }

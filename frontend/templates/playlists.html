@@ -183,6 +183,12 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="playlistThumbnailUrl">Thumbnail URL</label>
+                    <input type="url" id="playlistThumbnailUrl" class="form-control" placeholder="https://example.com/image.jpg">
+                    <div class="form-help">Optional thumbnail image for your playlist. Should be a publicly accessible image URL.</div>
+                </div>
+                
+                <div class="form-group">
                     <div class="checkbox-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="playlistIsPublic">
@@ -351,6 +357,26 @@
     font-size: 2.5rem;
     color: var(--accent-primary);
     margin-bottom: 0.5rem;
+}
+
+.playlist-card-thumbnail {
+    width: 100%;
+    height: 150px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.playlist-card-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.playlist-card-thumbnail:hover img {
+    transform: scale(1.05);
 }
 
 .playlist-card-title {
