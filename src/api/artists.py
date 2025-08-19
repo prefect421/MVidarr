@@ -2458,6 +2458,35 @@ def update_artist_settings(artist_id):
                             400,
                         )
 
+            # Handle MusicBrainz ID (stored in imvdb_metadata JSON field)
+            if "musicbrainz_id" in data:
+                new_mbid = data["musicbrainz_id"]
+                if not isinstance(artist.imvdb_metadata, dict):
+                    artist.imvdb_metadata = {}
+                if new_mbid == "" or new_mbid is None:
+                    if "musicbrainz_id" in artist.imvdb_metadata:
+                        del artist.imvdb_metadata["musicbrainz_id"]
+                else:
+                    artist.imvdb_metadata["musicbrainz_id"] = str(new_mbid).strip()
+                from sqlalchemy.orm.attributes import flag_modified
+                flag_modified(artist, "imvdb_metadata")
+
+            # Handle Spotify ID updates
+            if "spotify_id" in data:
+                new_spotify_id = data["spotify_id"]
+                if new_spotify_id == "" or new_spotify_id is None:
+                    artist.spotify_id = None
+                else:
+                    artist.spotify_id = str(new_spotify_id).strip()
+
+            # Handle Last.fm name updates
+            if "lastfm_name" in data:
+                new_lastfm_name = data["lastfm_name"]
+                if new_lastfm_name == "" or new_lastfm_name is None:
+                    artist.lastfm_name = None
+                else:
+                    artist.lastfm_name = str(new_lastfm_name).strip()
+
             # Update the updated_at timestamp
             artist.updated_at = datetime.utcnow()
 
@@ -2474,6 +2503,9 @@ def update_artist_settings(artist_id):
                             "id": artist.id,
                             "name": artist.name,
                             "imvdb_id": artist.imvdb_id,
+                            "spotify_id": artist.spotify_id,
+                            "lastfm_name": artist.lastfm_name,
+                            "imvdb_metadata": artist.imvdb_metadata,
                             "folder_path": ensure_artist_folder_path(artist, session),
                             "keywords": artist.keywords or [],
                             "monitored": artist.monitored,

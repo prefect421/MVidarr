@@ -1279,7 +1279,7 @@
                 <!-- Search Results Dropdown -->
                 <div class="universal-search-results" id="universalSearchResults" style="display: none;">
                     <div class="universal-search-loading" id="universalSearchLoading" style="display: none;">
-                        <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+                        <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
                         <span>Searching...</span>
                     </div>
                     
@@ -2094,7 +2094,7 @@
                 
                 this.isSearching = true;
                 this.searchMoreButton.innerHTML = `
-                    <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+                    <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
                     <span>Searching IMVDb & YouTube...</span>
                 `;
                 this.searchMoreButton.disabled = true;

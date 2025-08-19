@@ -1,7 +1,7 @@
 {
   "version": "0.9.7-dev",
-  "build_date": "2025-08-16T01:26:31.035773",
-  "git_commit": "a12a878",
+  "build_date": "2025-08-19T17:08:12.007846",
+  "git_commit": "6e03c16",
   "git_branch": "dev",
   "release_name": "Performance & Integration",
   "features": [
@@ -54,6 +54,13 @@
     "Automated Security Monitoring with multi-framework compliance",
     "Complete Playlist Functionality with management and MvTV integration",
     "Clickable Artist Navigation with enhanced user experience",
+    "[COMPLETED] Advanced Video Filtering System with year range support and multi-criteria search",
+    "[COMPLETED] Streamlined Bulk Operations Interface with compact grid design replacing bulky tabs",
+    "[COMPLETED] Theme-Consistent UI with MVIDARR logo loading animations and CSS variable compliance",
+    "[COMPLETED] Enhanced Subtitle Support with language selection settings and automatic download",
+    "[COMPLETED] User Experience Polish with IMVDb reference removal and interface improvements",
+    "[COMPLETED] Critical UI Bug Fix - Search Panel Visibility resolved by correcting element targeting",
+    "[COMPLETED] Major HTML Structure Fix - Videos and pagination properly extracted from bulkActionsPanel",
     "[PLANNED] Advanced Performance Analytics with real-time monitoring dashboard",
     "[PLANNED] Enhanced API Integration with external service extensions",
     "[PLANNED] Mobile-Responsive Design with touch-optimized interfaces",

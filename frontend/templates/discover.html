@@ -6,7 +6,7 @@
 <div class="discover-container">
     <div class="discover-header">
         <h1>🌟 Discover Music Videos</h1>
-        <p class="page-description">Search across IMVDb and YouTube to discover new music videos</p>
+        <p class="page-description">Search across multiple sources to discover new music videos</p>
     </div>
 
     <!-- Search Section -->
@@ -25,7 +25,7 @@
     <!-- Search Status -->
     <div id="searchStatus" class="search-status" style="display: none;">
         <div class="loading-spinner">
-            <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+            <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 20px; height: 20px;">
             <span id="searchStatusText">Searching IMVDb & YouTube...</span>
         </div>
     </div>
@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function() {
             searchStatus.style.display = 'block';
             searchButton.disabled = true;
             searchButton.innerHTML = `
-                <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+                <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 20px; height: 20px;">
                 Searching...
             `;
         } else {

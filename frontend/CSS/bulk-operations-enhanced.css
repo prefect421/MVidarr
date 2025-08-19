@@ -1,0 +1,362 @@
+/**
+ * Enhanced Bulk Operations CSS for MVidarr 0.9.7 - Issue #74
+ * Styles for progress tracking, preview functionality, and improved UX
+ */
+
+/* Bulk Progress Container */
+.bulk-progress-container {
+    background: var(--card-background, #f8f9fa);
+    border: 2px solid var(--accent-color, #007bff);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Progress Header */
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-header h4 {
+    margin: 0;
+    color: var(--text-color, #333);
+    font-weight: 600;
+}
+
+.btn-cancel {
+    background: var(--danger-color, #dc3545);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.btn-cancel:hover {
+    background: var(--danger-hover, #c82333);
+}
+
+/* Progress Bar */
+.progress-bar-container {
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 24px;
+    background: var(--input-background, #e9ecef);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-color, #007bff), var(--accent-light, #28a745));
+    border-radius: 12px;
+    transition: width 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+#bulkProgressText {
+    display: block;
+    text-align: center;
+    margin-top: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color, #333);
+}
+
+/* Progress Stats */
+.progress-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text-muted, #6c757d);
+    margin-bottom: 1rem;
+}
+
+/* Progress Errors */
+.progress-errors {
+    background: var(--warning-background, #fff3cd);
+    border: 1px solid var(--warning-border, #ffeaa7);
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.progress-errors h5 {
+    margin: 0 0 0.5rem 0;
+    color: var(--warning-color, #856404);
+}
+
+.progress-errors ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.progress-errors li {
+    color: var(--warning-color, #856404);
+    margin-bottom: 0.25rem;
+}
+
+/* Progress Actions */
+.progress-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-undo {
+    background: var(--warning-color, #ffc107);
+    color: var(--dark-color, #212529);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    font-weight: 500;
+}
+
+.btn-undo:hover {
+    background: var(--warning-hover, #e0a800);
+}
+
+/* Preview Buttons */
+.btn-preview {
+    background: var(--info-color, #17a2b8);
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.btn-preview:hover {
+    background: var(--info-hover, #138496);
+}
+
+/* Enhanced bulk actions panel */
+.bulk-actions-panel {
+    position: relative;
+}
+
+.bulk-actions-panel.has-progress {
+    min-height: 400px;
+}
+
+/* Status indicators */
+.operation-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.operation-status.pending {
+    background: var(--info-background, #d1ecf1);
+    color: var(--info-color, #0c5460);
+}
+
+.operation-status.running {
+    background: var(--warning-background, #fff3cd);
+    color: var(--warning-color, #856404);
+}
+
+.operation-status.completed {
+    background: var(--success-background, #d4edda);
+    color: var(--success-color, #155724);
+}
+
+.operation-status.failed {
+    background: var(--danger-background, #f8d7da);
+    color: var(--danger-color, #721c24);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .bulk-progress-container {
+        padding: 1rem;
+        margin: 0.5rem 0;
+    }
+    
+    .progress-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+    
+    .progress-stats {
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: flex-start;
+    }
+    
+    .progress-actions {
+        flex-direction: column;
+    }
+    
+    .btn-preview {
+        margin-left: 0;
+        margin-top: 0.25rem;
+        display: block;
+        width: 100%;
+    }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    .bulk-progress-container {
+        background: var(--card-background-dark, #2d3748);
+        border-color: var(--accent-color-dark, #4299e1);
+    }
+    
+    .progress-header h4 {
+        color: var(--text-color-dark, #e2e8f0);
+    }
+    
+    #bulkProgressText {
+        color: var(--text-color-dark, #e2e8f0);
+    }
+    
+    .progress-stats {
+        color: var(--text-muted-dark, #a0aec0);
+    }
+    
+    .progress-bar {
+        background: var(--input-background-dark, #4a5568);
+    }
+}
+
+/* Animation for progress updates */
+.progress-fill {
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pulse animation for active operations */
+.bulk-progress-container.active {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        border-color: var(--accent-color, #007bff);
+    }
+    50% {
+        border-color: var(--accent-light, #28a745);
+    }
+}
+
+/* Enhanced selection indicators */
+.video-card.selected-for-preview {
+    border: 2px solid var(--accent-color, #007bff);
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Improved accessibility */
+.btn-cancel:focus,
+.btn-undo:focus,
+.btn-preview:focus {
+    outline: 2px solid var(--focus-color, #80bdff);
+    outline-offset: 2px;
+}
+
+/* Loading spinner for operations */
+.loading-spinner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid #f3f3f3;
+    border-top: 1.5px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    position: relative;
+    background-color: #f8f9fa;
+    margin: 0 auto;
+}
+
+.loading-spinner::before {
+    content: '';
+    position: absolute;
+    top: -1.5px;
+    left: -1.5px;
+    right: -1.5px;
+    bottom: -1.5px;
+    background-image: url('/static/MVidarr.png');
+    background-size: 70%;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Success and error message styling */
+.bulk-message {
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+    font-weight: 500;
+}
+
+.bulk-message.success {
+    background: var(--success-background, #d4edda);
+    color: var(--success-color, #155724);
+    border: 1px solid var(--success-border, #c3e6cb);
+}
+
+.bulk-message.error {
+    background: var(--danger-background, #f8d7da);
+    color: var(--danger-color, #721c24);
+    border: 1px solid var(--danger-border, #f5c6cb);
+}

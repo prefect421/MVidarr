@@ -535,6 +535,106 @@
     color: var(--input-text, #fff);
 }
 
+/* Year Range Filter Styling */
+.year-range-filter .year-range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.year-range-filter input {
+    flex: 1;
+    max-width: 80px;
+}
+
+.year-range-filter .range-separator {
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Streamlined Bulk Operations Interface */
+.bulk-actions-panel.streamlined .bulk-actions-content {
+    padding: 20px;
+}
+
+/* Ensure bulk actions panel doesn't interfere with page layout */
+.bulk-actions-panel {
+    position: relative;
+    z-index: 10;
+    margin-bottom: 20px;
+}
+
+.bulk-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.bulk-btn-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    font-weight: 500;
+    min-height: 60px;
+}
+
+.bulk-btn-compact:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.bulk-btn-compact iconify-icon {
+    font-size: 20px;
+}
+
+.bulk-quick-edit {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.bulk-input-compact {
+    padding: 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--input-text);
+    font-size: 12px;
+    flex: 1;
+}
+
+.bulk-actions-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-primary);
+}
+
+.bulk-actions-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
 .filter-actions {
     display: flex;
     gap: 12px;
@@ -552,6 +652,18 @@
     color: var(--text-secondary, #ccc);
     font-size: 0.9rem;
     text-align: center;
+}
+
+/* Critical Fix: Ensure videos-grid and pagination are always visible */
+.videos-grid {
+    display: grid !important;
+    position: relative;
+    z-index: 1;
+}
+
+.pagination-container {
+    position: relative;
+    z-index: 1;
 }
 
 

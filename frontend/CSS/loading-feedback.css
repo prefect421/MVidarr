@@ -47,6 +47,13 @@
 /* Loading Spinner */
 .loading-spinner {
     width: 24px;
+}
+
+/* MVIDARR Logo Spinner */
+.mvidarr-logo-spinner {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
     height: 24px;
     border: 2px solid var(--bg-tertiary);
     border-top: 2px solid var(--btn-primary-bg);

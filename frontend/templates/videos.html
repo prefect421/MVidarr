@@ -113,9 +113,18 @@
                     <select id="videoSourceFilter" onchange="applyVideoFilters()">
                         <option value="">Any Source</option>
                         <option value="youtube">YouTube</option>
-                        <option value="imvdb">IMVDb</option>
+                        <option value="external">External</option>
                         <option value="manual">Manual</option>
                     </select>
+                </div>
+                
+                <div class="filter-group year-range-filter">
+                    <label>Year Range:</label>
+                    <div class="year-range-inputs">
+                        <input type="number" id="videoYearFrom" placeholder="From" min="1950" max="2030" onchange="applyVideoFilters()" aria-label="Year from">
+                        <span class="range-separator">to</span>
+                        <input type="number" id="videoYearTo" placeholder="To" min="1950" max="2030" onchange="applyVideoFilters()" aria-label="Year to">
+                    </div>
                 </div>
                 
                 <div class="filter-group">
@@ -193,260 +202,63 @@
         </div>
     </div>
     
-    <!-- Enhanced Bulk Actions Panel -->
-    <div id="bulkActionsPanel" class="bulk-actions-panel" style="display: none;" role="dialog" aria-labelledby="bulkActionsTitle" aria-hidden="true">
+    <!-- Streamlined Bulk Actions Panel -->
+    <div id="bulkActionsPanel" class="bulk-actions-panel streamlined" style="display: none;" role="dialog" aria-labelledby="bulkActionsTitle" aria-hidden="true">
         <div class="bulk-actions-header">
-            <h3 id="bulkActionsTitle">🔧 Bulk Operations</h3>
+            <h3 id="bulkActionsTitle">Bulk Operations</h3>
             <button class="bulk-actions-close" onclick="closeBulkActionsPanel()" aria-label="Close bulk actions panel">&times;</button>
         </div>
         <div class="bulk-actions-content">
-            <div class="bulk-actions-tabs" role="tablist" aria-label="Bulk operation categories">
-                <button class="tab-button active" onclick="switchBulkTab('actions')" role="tab" aria-selected="true" aria-controls="bulkActionsTab" id="actionsTabBtn">Actions</button>
-                <button class="tab-button" onclick="switchBulkTab('edit')" role="tab" aria-selected="false" aria-controls="bulkEditTab" id="editTabBtn">Edit</button>
-                <button class="tab-button" onclick="switchBulkTab('organize')" role="tab" aria-selected="false" aria-controls="bulkOrganizeTab" id="organizeTabBtn">Organize</button>
-                <button class="tab-button" onclick="switchBulkTab('quality')" role="tab" aria-selected="false" aria-controls="bulkQualityTab" id="qualityTabBtn">Quality</button>
-            </div>
-            
-            <div class="bulk-actions-tab-content">
-                <!-- Actions Tab -->
-                <div id="bulkActionsTab" class="tab-content active" role="tabpanel" aria-labelledby="actionsTabBtn">
-                    <div class="bulk-action-group" role="group" aria-labelledby="downloadActionsHeading">
-                        <h4 id="downloadActionsHeading">Download Actions</h4>
-                        <button onclick="bulkDownloadSelected()" class="btn btn-primary bulk-btn" id="bulkDownloadBtn" disabled aria-label="Download all selected videos">
-                            📥 Download Selected
-                        </button>
-                        <button onclick="bulkRetryFailed()" class="btn btn-warning bulk-btn" id="bulkRetryBtn" disabled aria-label="Retry all failed downloads">
-                            🔄 Retry Failed Downloads
-                        </button>
-                        <button onclick="bulkPauseDownloads()" class="btn btn-secondary bulk-btn" id="bulkPauseBtn" disabled aria-label="Pause all active downloads">
-                            ⏸️ Pause Downloads
-                        </button>
-                    </div>
-                    
-                    <div class="bulk-action-group" role="group" aria-labelledby="statusActionsHeading">
-                        <h4 id="statusActionsHeading">Status Actions</h4>
-                        <button onclick="bulkSetStatus('WANTED')" class="btn btn-info bulk-btn" id="bulkWantedBtn" disabled aria-label="Mark selected videos as wanted">
-                            ⭐ Mark as Wanted
-                        </button>
-                        <button onclick="bulkSetStatus('IGNORED')" class="btn btn-secondary bulk-btn" id="bulkIgnoreBtn" disabled aria-label="Mark selected videos as ignored">
-                            🚫 Mark as Ignored
-                        </button>
-                        <button onclick="bulkSetStatus('FAILED')" class="btn btn-warning bulk-btn" id="bulkFailedBtn" disabled aria-label="Mark selected videos as failed">
-                            ❌ Mark as Failed
-                        </button>
-                    </div>
-                    
-                    <div class="bulk-action-group" role="group" aria-labelledby="dangerousActionsHeading">
-                        <h4 id="dangerousActionsHeading">Dangerous Actions</h4>
-                        <button onclick="bulkDeleteSelected()" class="btn btn-danger bulk-btn" id="bulkDeleteBtn" disabled aria-label="Permanently delete selected videos">
-                            🗑️ Delete Selected
-                        </button>
-                        <button onclick="bulkRemoveFiles()" class="btn btn-danger bulk-btn" id="bulkRemoveFilesBtn" disabled aria-label="Remove files but keep database entries">
-                            💥 Remove Files Only
-                        </button>
-                        <button onclick="showBulkVideoMergeModal()" class="btn btn-warning bulk-btn" id="bulkMergeBtn" disabled aria-label="Merge selected duplicate videos">
-                            🔀 Merge Videos
-                        </button>
-                    </div>
-                </div>
+            <!-- Streamlined Essential Actions Grid -->
+            <div class="bulk-actions-grid">
+                <button onclick="bulkDownloadSelected()" class="bulk-btn-compact btn-primary" id="bulkDownloadBtn" disabled>
+                    <iconify-icon icon="tabler:download"></iconify-icon>
+                    <span>Download</span>
+                </button>
                 
-                <!-- Edit Tab -->
-                <div id="bulkEditTab" class="tab-content">
-                    <div class="bulk-edit-form">
-                        <h4>Bulk Edit Properties</h4>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="bulkArtistChange">Change Artist:</label>
-                                <input type="text" id="bulkArtistChange" placeholder="New artist name...">
-                            </div>
-                            <div class="form-group">
-                                <label for="bulkYearChange">Change Year:</label>
-                                <input type="number" id="bulkYearChange" placeholder="YYYY" min="1900" max="2030">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="bulkStatusChange">Change Status:</label>
-                                <select id="bulkStatusChange">
-                                    <option value="">Keep Current</option>
-                                    <option value="WANTED">Wanted</option>
-                                    <option value="DOWNLOADING">Downloading</option>
-                                    <option value="DOWNLOADED">Downloaded</option>
-                                    <option value="IGNORED">Ignored</option>
-                                    <option value="FAILED">Failed</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="bulkPriorityChange">Priority:</label>
-                                <select id="bulkPriorityChange">
-                                    <option value="">Keep Current</option>
-                                    <option value="LOW">Low</option>
-                                    <option value="NORMAL">Normal</option>
-                                    <option value="HIGH">High</option>
-                                    <option value="URGENT">Urgent</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button onclick="applyBulkEdit()" class="btn btn-primary bulk-btn" id="bulkEditApplyBtn" disabled>
-                            💾 Apply Changes
-                        </button>
-                    </div>
-                </div>
+                <button onclick="bulkSetStatus('WANTED')" class="bulk-btn-compact btn-info" id="bulkWantedBtn" disabled>
+                    <iconify-icon icon="tabler:star"></iconify-icon>
+                    <span>Mark Wanted</span>
+                </button>
                 
-                <!-- Organize Tab -->
-                <div id="bulkOrganizeTab" class="tab-content">
-                    <div class="bulk-organize-form">
-                        <div class="bulk-action-group" role="group" aria-labelledby="playlistActionsHeading">
-                            <h4 id="playlistActionsHeading">Playlist Actions</h4>
-                            <div class="playlist-bulk-actions">
-                                <button onclick="showBulkAddToPlaylistModal()" class="btn btn-success bulk-btn" id="bulkAddToPlaylistBtn" disabled aria-label="Add selected videos to playlist">
-                                    <iconify-icon icon="tabler:playlist-add"></iconify-icon>
-                                    Add to Playlist
-                                </button>
-                                <button onclick="bulkCreatePlaylistFromSelection()" class="btn btn-info bulk-btn" id="bulkCreatePlaylistBtn" aria-label="Create new playlist (optionally with selected videos)">
-                                    <iconify-icon icon="tabler:playlist"></iconify-icon>
-                                    Create Playlist
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="bulk-action-group" role="group" aria-labelledby="fileOrgHeading">
-                            <h4 id="fileOrgHeading">File Organization</h4>
-                            <div class="organize-actions">
-                                <button onclick="bulkOrganizeFiles()" class="btn btn-primary bulk-btn" id="bulkOrganizeBtn" disabled>
-                                    📁 Organize Files
-                                </button>
-                                <button onclick="bulkVerifyFiles()" class="btn btn-info bulk-btn" id="bulkVerifyBtn" disabled>
-                                    🔍 Verify File Locations
-                                </button>
-                                <button onclick="bulkRefreshMetadata()" class="btn btn-secondary bulk-btn" id="bulkRefreshMetadataBtn" disabled>
-                                    🔄 Refresh Metadata
-                                </button>
-                            </div>
-                            <div class="organize-options">
-                                <label>
-                                    <input type="checkbox" id="bulkCreateFolders" checked>
-                                    Create artist folders if missing
-                                </label>
-                                <label>
-                                    <input type="checkbox" id="bulkRenameFiles" checked>
-                                    Rename files to match metadata
-                                </label>
-                                <label>
-                                    <input type="checkbox" id="bulkRemoveDuplicates">
-                                    Remove duplicate files
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <button onclick="bulkSetStatus('IGNORED')" class="bulk-btn-compact btn-secondary" id="bulkIgnoreBtn" disabled>
+                    <iconify-icon icon="tabler:x"></iconify-icon>
+                    <span>Ignore</span>
+                </button>
                 
-                <!-- Quality Tab -->
-                <div id="bulkQualityTab" class="tab-content">
-                    <div class="bulk-quality-form">
-                        <h4>Quality Control</h4>
-                        <div class="quality-actions">
-                            <button onclick="bulkCheckQuality()" class="btn btn-info bulk-btn" id="bulkQualityCheckBtn" disabled>
-                                🎯 Check Quality
-                            </button>
-                            <button onclick="bulkUpgradeQuality()" class="btn btn-warning bulk-btn" id="bulkUpgradeBtn" disabled>
-                                ⬆️ Upgrade Quality
-                            </button>
-                            <button onclick="bulkTranscode()" class="btn btn-secondary bulk-btn" id="bulkTranscodeBtn" disabled>
-                                🔄 Transcode Selected
-                            </button>
-                        </div>
-                        <div class="quality-options">
-                            <div class="form-group">
-                                <label for="bulkQualityProfile">Quality Profile:</label>
-                                <select id="bulkQualityProfile">
-                                    <option value="720p">720p (HD)</option>
-                                    <option value="1080p">1080p (Full HD)</option>
-                                    <option value="1440p">1440p (2K)</option>
-                                    <option value="2160p">2160p (4K)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="bulkFileFormat">File Format:</label>
-                                <select id="bulkFileFormat">
-                                    <option value="mp4">MP4</option>
-                                    <option value="mkv">MKV</option>
-                                    <option value="avi">AVI</option>
-                                    <option value="webm">WebM</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                <button onclick="showBulkAddToPlaylistModal()" class="bulk-btn-compact btn-success" id="bulkAddToPlaylistBtn" disabled>
+                    <iconify-icon icon="tabler:playlist-add"></iconify-icon>
+                    <span>Add to Playlist</span>
+                </button>
+                
+                <button onclick="bulkRefreshMetadata()" class="bulk-btn-compact btn-info" id="bulkRefreshMetadataBtn" disabled>
+                    <iconify-icon icon="tabler:refresh"></iconify-icon>
+                    <span>Refresh Metadata</span>
+                </button>
+                
+                <button onclick="bulkDeleteSelected()" class="bulk-btn-compact btn-danger" id="bulkDeleteBtn" disabled>
+                    <iconify-icon icon="tabler:trash"></iconify-icon>
+                    <span>Delete</span>
+                </button>
+                
+                <!-- Quick Edit Section -->
+                <div class="bulk-quick-edit">
+                    <input type="text" id="bulkArtistChange" placeholder="Change artist..." class="bulk-input-compact">
+                    <input type="number" id="bulkYearChange" placeholder="Year" min="1950" max="2030" class="bulk-input-compact">
+                    <button onclick="applyBulkEdit()" class="bulk-btn-compact btn-primary" id="bulkEditApplyBtn" disabled>
+                        <iconify-icon icon="tabler:check"></iconify-icon>
+                        <span>Apply</span>
+                    </button>
                 </div>
             </div>
             
             <div class="bulk-actions-footer">
-                <div class="bulk-progress" id="bulkProgress" style="display: none;">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="bulkProgressFill"></div>
-                    </div>
-                    <div class="progress-text" id="bulkProgressText">Processing...</div>
+                <div class="selected-count" id="bulkSelectedCount">0 videos selected</div>
+                <div class="bulk-actions-controls">
+                    <button onclick="selectAllVideos()" class="btn btn-outline btn-sm">Select All</button>
+                    <button onclick="clearSelection()" class="btn btn-outline btn-sm">Clear</button>
+                    <button onclick="closeBulkActionsPanel()" class="btn btn-secondary btn-sm">Close</button>
                 </div>
-                <div class="bulk-actions-buttons">
-                    <button onclick="selectByStatus()" class="btn btn-info">Select by Status</button>
-                    <button onclick="selectByArtist()" class="btn btn-info">Select by Artist</button>
-                    <button onclick="selectByYear()" class="btn btn-info">Select by Year</button>
-                    <button onclick="deselectAll()" class="btn btn-secondary">Deselect All</button>
-                    <button onclick="closeBulkActionsPanel()" class="btn btn-secondary">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Search Panel -->
-    <div id="searchPanel" class="search-panel" style="display: none;">
-        <div class="search-form">
-            <div class="search-row">
-                <div class="search-field">
-                    <label for="searchQuery">Search:</label>
-                    <input type="text" id="searchQuery" placeholder="Search videos and artists..." onkeyup="handleSearchKeyup(event)">
-                </div>
-                <div class="search-field">
-                    <label for="searchArtist">Artist:</label>
-                    <input type="text" id="searchArtist" placeholder="Filter by artist..." onkeyup="handleSearchKeyup(event)">
-                </div>
-                <div class="search-field">
-                    <label for="searchStatus">Status:</label>
-                    <select id="searchStatus" onchange="performSearch()">
-                        <option value="">All Statuses</option>
-                        <option value="WANTED">Wanted</option>
-                        <option value="DOWNLOADING">Downloading</option>
-                        <option value="DOWNLOADED">Downloaded</option>
-                        <option value="IGNORED">Ignored</option>
-                        <option value="FAILED">Failed</option>
-                    </select>
-                </div>
-                <div class="search-field">
-                    <label for="searchYear">Year:</label>
-                    <input type="number" id="searchYear" placeholder="e.g. 2023" min="1900" max="2030" onchange="performSearch()">
-                </div>
-                <div class="search-field">
-                    <label for="sortBy">Sort by:</label>
-                    <select id="sortBy" onchange="performSearch()">
-                        <option value="title">Title (A-Z)</option>
-                        <option value="artist_name">Artist Name</option>
-                        <option value="year">Year</option>
-                        <option value="created_at">Date Added</option>
-                        <option value="status">Status</option>
-                    </select>
-                </div>
-                <div class="search-field">
-                    <label for="sortOrder">Order:</label>
-                    <select id="sortOrder" onchange="performSearch()">
-                        <option value="asc">Ascending</option>
-                        <option value="desc">Descending</option>
-                    </select>
-                </div>
-            </div>
-            <div class="search-actions">
-                <button onclick="performSearch()" class="btn btn-primary">Search</button>
-                <button onclick="clearSearch()" class="btn btn-secondary">Clear</button>
-                <span id="searchResults" class="search-results-info"></span>
             </div>
         </div>
     </div>
@@ -612,14 +424,14 @@
 <script>
 // Global function definitions for immediate availability
 window.toggleSearchPanel = window.toggleSearchPanel || function() {
-    const searchPanel = document.getElementById('searchPanel');
+    const searchPanel = document.getElementById('videoSearchPanel');
     if (searchPanel) {
         const isVisible = searchPanel.style.display !== 'none';
         searchPanel.style.display = isVisible ? 'none' : 'block';
         
         // Focus on search input when panel is shown
         if (!isVisible) {
-            const searchInput = document.getElementById('searchQuery');
+            const searchInput = document.getElementById('videoSearchInput');
             if (searchInput) {
                 setTimeout(() => searchInput.focus(), 100);
             }
@@ -630,114 +442,13 @@ window.toggleSearchPanel = window.toggleSearchPanel || function() {
 window.handleSearchKeyup = window.handleSearchKeyup || function(event) {
     // Handle Enter key to trigger search
     if (event.key === 'Enter') {
-        if (typeof performSearch === 'function') {
-            performSearch();
+        if (typeof applyVideoFilters === 'function') {
+            applyVideoFilters();
         }
     }
     // Could add more keyup handling here (like auto-search after delay)
 };
 
-function performSearch() {
-    const query = document.getElementById('searchQuery').value.trim();
-    const artist = document.getElementById('searchArtist').value.trim();
-    const status = document.getElementById('searchStatus').value;
-    const year = document.getElementById('searchYear').value;
-    const sortBy = document.getElementById('sortBy').value || 'title';
-    const sortOrder = document.getElementById('sortOrder').value || 'asc';
-    
-    // Build search parameters
-    const params = new URLSearchParams();
-    if (query) params.append('q', query);
-    if (artist) params.append('artist', artist);
-    if (status) params.append('status', status);
-    if (year) params.append('year', year);
-    params.append('sort', sortBy);
-    params.append('order', sortOrder);
-    
-    // Show loading state
-    const resultsInfo = document.getElementById('searchResults');
-    resultsInfo.textContent = 'Searching...';
-    
-    // Perform search
-    fetch(`/api/videos/search?${params.toString()}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('🔍 Search API response:', data);
-            
-            if (data.error) {
-                showError('Search error: ' + data.error);
-                resultsInfo.textContent = '';
-                return;
-            }
-            
-            searchActive = true;
-            displaySearchResults(data);
-            updateSearchResultsInfo(data);
-        })
-        .catch(error => {
-            showEnhancedError(error, 'performing search');
-            resultsInfo.textContent = '';
-        });
-}
-
-function displaySearchResults(data) {
-    console.log('🎭 Search data received:', data);
-    console.log('🎭 Data.videos type:', typeof data?.videos, 'isArray:', Array.isArray(data?.videos));
-    
-    // Defensive null checks
-    if (!data) {
-        console.error('❌ No data received');
-        const grid = document.getElementById('videos-grid');
-        grid.innerHTML = '<p>Error: No search data received.</p>';
-        return;
-    }
-    
-    if (!data.videos) {
-        console.error('❌ No videos array in data:', Object.keys(data));
-        const grid = document.getElementById('videos-grid');
-        grid.innerHTML = '<p>Error: Invalid search response structure.</p>';
-        return;
-    }
-    
-    if (!Array.isArray(data.videos)) {
-        console.error('❌ data.videos is not an array:', typeof data.videos, data.videos);
-        const grid = document.getElementById('videos-grid');
-        grid.innerHTML = '<p>Error: Invalid videos data format.</p>';
-        return;
-    }
-    
-    console.log('🎭 Displaying search results:', data.videos.length, 'videos');
-    displayVideos(data.videos);
-    
-    // Hide pagination for search results
-    document.getElementById('topPagination').style.display = 'none';
-    document.getElementById('bottomPagination').style.display = 'none';
-}
-
-function updateSearchResultsInfo(data) {
-    const resultsInfo = document.getElementById('searchResults');
-    resultsInfo.textContent = `Found ${data.count} of ${data.total} videos`;
-}
-
-function clearSearch() {
-    // Clear search fields
-    document.getElementById('searchQuery').value = '';
-    document.getElementById('searchArtist').value = '';
-    document.getElementById('searchStatus').value = '';
-    document.getElementById('searchYear').value = '';
-    
-    // Clear results info
-    document.getElementById('searchResults').textContent = '';
-    
-    // Reload all videos
-    searchActive = false;
-    loadVideos();
-}
 
 // Enhanced error handling with categorization and actionable guidance
 function showEnhancedError(error, context = '') {
@@ -869,6 +580,8 @@ function applyVideoFilters() {
         duration_max: document.getElementById('videoDurationMax').value,
         date_from: document.getElementById('videoDateFrom').value,
         date_to: document.getElementById('videoDateTo').value,
+        year_from: document.getElementById('videoYearFrom').value,
+        year_to: document.getElementById('videoYearTo').value,
         artist: document.getElementById('videoArtistFilter').value,
         keywords: document.getElementById('videoKeywordsFilter').value,
         sort_by: document.getElementById('videoSortBy').value,
@@ -3524,12 +3237,8 @@ function refreshVideoDisplayThumbnail() {
         }
     }
     
-    // Also refresh the video list if we're currently searching
-    if (window.searchActive) {
-        performSearch();
-    } else {
-        loadVideos();
-    }
+    // Refresh the video list
+    loadVideos();
 }
 
 // Close thumbnail modal when clicking outside
@@ -4757,14 +4466,14 @@ window.refreshVideos = function() {
 
 // Toggle search panel visibility - make globally accessible
 window.toggleSearchPanel = function() {
-    const searchPanel = document.getElementById('searchPanel');
+    const searchPanel = document.getElementById('videoSearchPanel');
     if (searchPanel) {
         const isVisible = searchPanel.style.display !== 'none';
         searchPanel.style.display = isVisible ? 'none' : 'block';
         
         // Focus on search input when panel is shown
         if (!isVisible) {
-            const searchInput = document.getElementById('searchQuery');
+            const searchInput = document.getElementById('videoSearchInput');
             if (searchInput) {
                 setTimeout(() => searchInput.focus(), 100);
             }

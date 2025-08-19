@@ -25,6 +25,8 @@ from src.api.settings import settings_bp
 # External integration blueprints
 from src.api.spotify import spotify_bp
 from src.api.themes import themes_bp
+from src.api.musicbrainz import musicbrainz_bp
+from src.api.metadata_enrichment import metadata_enrichment_bp
 from src.api.two_factor import two_factor_bp
 from src.api.users import users_bp
 from src.api.video_discovery import video_discovery_bp
@@ -68,6 +70,8 @@ def register_routes(app):
     api_bp.register_blueprint(youtube_bp)
     api_bp.register_blueprint(youtube_playlists_bp)
     api_bp.register_blueprint(lastfm_bp)
+    api_bp.register_blueprint(musicbrainz_bp)
+    api_bp.register_blueprint(metadata_enrichment_bp)
     api_bp.register_blueprint(plex_bp)
     api_bp.register_blueprint(lidarr_bp, url_prefix="/lidarr")
 
