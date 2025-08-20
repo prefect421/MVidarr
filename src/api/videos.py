@@ -8,6 +8,7 @@ import subprocess
 import threading
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote, unquote
 
 from flask import Blueprint, Response, jsonify, render_template, request, send_file
 from sqlalchemy import and_, func, or_
@@ -22,6 +23,12 @@ from src.utils.performance_monitor import monitor_performance
 
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 logger = get_logger("mvidarr.api.videos")
+
+
+def public_endpoint(f):
+    """Decorator to mark an endpoint as public (no authentication required)"""
+    f._auth_protected = True  # Mark as already protected to skip auto-protection
+    return f
 
 
 def resolve_video_url(video, session):
@@ -2069,7 +2076,7 @@ def get_video_subtitles(video_id):
                     subtitles.append({
                         'language': language,
                         'filename': relative_name,
-                        'url': f'/api/videos/{video_id}/subtitles/{relative_name}',
+                        'url': f'/api/videos/{video_id}/subtitles/{quote(relative_name)}',
                         'format': subtitle_ext[1:]  # Remove the dot
                     })
 
@@ -2081,38 +2088,56 @@ def get_video_subtitles(video_id):
 
 
 @videos_bp.route("/<int:video_id>/subtitles/<subtitle_filename>", methods=["GET"])
+@public_endpoint
 def serve_video_subtitle(video_id, subtitle_filename):
     """Serve subtitle file for a video"""
     try:
+        # URL decode the subtitle filename
+        decoded_filename = unquote(subtitle_filename)
+        logger.info(f"Attempting to serve subtitle: {decoded_filename} for video {video_id}")
+        
         with get_db() as session:
             video = session.query(Video).filter(Video.id == video_id).first()
 
             if not video or not video.local_path:
+                logger.error(f"Video {video_id} not found or no local path")
                 return "Video not found or no local file", 404
 
             video_path = Path(video.local_path)
+            logger.info(f"Video path: {video_path}")
+            
+            # Handle relative paths by making them absolute
+            if not video_path.is_absolute():
+                video_path = Path.cwd() / video_path
+                logger.info(f"Converted to absolute path: {video_path}")
+            
             if not video_path.exists():
+                logger.error(f"Video file does not exist: {video_path}")
                 return "Video file not found", 404
 
             # Security check: ensure subtitle filename doesn't contain path traversal
-            if '..' in subtitle_filename or '/' in subtitle_filename or '\\' in subtitle_filename:
+            if '..' in decoded_filename or '/' in decoded_filename or '\\' in decoded_filename:
+                logger.error(f"Invalid subtitle filename (path traversal): {decoded_filename}")
                 return "Invalid subtitle filename", 400
 
             # Find subtitle file in the same directory as the video
             video_dir = video_path.parent
-            subtitle_path = video_dir / subtitle_filename
+            subtitle_path = video_dir / decoded_filename
+            logger.info(f"Subtitle path: {subtitle_path}")
 
             if not subtitle_path.exists():
+                logger.error(f"Subtitle file does not exist: {subtitle_path}")
                 return "Subtitle file not found", 404
 
             # Security check: ensure subtitle file is in the same directory as video
             if not str(subtitle_path).startswith(str(video_dir)):
+                logger.error(f"Subtitle file outside video directory: {subtitle_path}")
                 return "Subtitle file access denied", 403
 
             # Determine MIME type based on extension
             subtitle_ext = subtitle_path.suffix.lower()
             if subtitle_ext == '.srt':
-                mimetype = 'text/plain; charset=utf-8'
+                mimetype = 'text/srt; charset=utf-8'
             elif subtitle_ext == '.vtt':
                 mimetype = 'text/vtt; charset=utf-8'
             elif subtitle_ext in ['.ass', '.ssa']:
@@ -2120,17 +2145,27 @@ def serve_video_subtitle(video_id, subtitle_filename):
             else:
                 mimetype = 'text/plain; charset=utf-8'
 
-            logger.info(f"Serving subtitle {subtitle_filename} for video {video_id}")
+            logger.info(f"Serving subtitle {decoded_filename} for video {video_id} with MIME type {mimetype}")
             
-            return send_file(
+            response = send_file(
                 subtitle_path,
                 mimetype=mimetype,
                 as_attachment=False,
-                download_name=subtitle_filename
+                download_name=decoded_filename
             )
+            
+            # Add CORS headers to allow video player to access subtitles
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'GET'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+            
+            return response
 
     except Exception as e:
         logger.error(f"Failed to serve subtitle {subtitle_filename} for video {video_id}: {e}")
+        logger.error(f"Exception details: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return "Subtitle serving error", 500
 
 

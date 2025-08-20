@@ -62,6 +62,10 @@ def init_simple_auth_middleware(app):
         if request.path.startswith("/static/"):
             return
 
+        # Skip authentication check for subtitle files (needed for HTML5 video player)
+        if "/subtitles/" in request.path:
+            return
+
         # Check if authentication is required
         require_auth = SettingsService.get_bool("require_authentication", False)
 

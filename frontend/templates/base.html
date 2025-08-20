@@ -1441,18 +1441,41 @@
         // Load theme CSS variables
         async function loadThemeVariables(themeId) {
             try {
-                // First try to get it as a custom theme
-                let response = await fetch(`/api/themes/${themeId}`);
+                // List of built-in theme names
+                const builtInThemes = ['cyber', 'vaporwave', 'tardis', 'punk_77', 'mtv', 'lcars'];
+                
+                let response;
+                
+                if (builtInThemes.includes(themeId)) {
+                    // Handle built-in theme
+                    response = await fetch(`/api/themes/built-in/${themeId}/extract`, {
+                        method: 'POST'
+                    });
+                } else {
+                    // Handle custom theme
+                    response = await fetch(`/api/themes/${themeId}`);
+                }
                 
                 if (response.ok) {
                     const themeData = await response.json();
+                    
+                    // Handle different response formats
+                    let cssVariables;
                     if (themeData.theme_data) {
-                        Object.entries(themeData.theme_data).forEach(([cssVar, value]) => {
+                        cssVariables = themeData.theme_data; // Custom theme format
+                    } else if (themeData.variables) {
+                        cssVariables = themeData.variables; // Built-in theme format
+                    } else {
+                        cssVariables = themeData; // Direct format
+                    }
+                    
+                    if (cssVariables) {
+                        Object.entries(cssVariables).forEach(([cssVar, value]) => {
                             document.documentElement.style.setProperty(cssVar, value);
                         });
                     }
-                } else {
-                    // Try as built-in theme
+                } else if (!builtInThemes.includes(themeId)) {
+                    // If custom theme failed, try as built-in theme
                     response = await fetch(`/api/themes/built-in/${themeId}/extract`, {
                         method: 'POST'
                     });

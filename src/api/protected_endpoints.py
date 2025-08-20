@@ -59,6 +59,7 @@ def apply_authentication_protection(app):
             "/api/health",  # API health check
             "/static/",  # Static files
             "/favicon.ico",  # Favicon
+            "/subtitles/",  # Video subtitle files (for HTML5 video player)
         ]
 
         if any(pattern in rule_str for pattern in public_patterns):
@@ -97,7 +98,7 @@ def apply_authentication_protection(app):
             protection_applied = True
 
         # USER ENDPOINTS (Basic authentication required)
-        elif rule_str.startswith("/api/"):
+        elif rule_str.startswith("/api/") and "/subtitles/" not in rule_str:
             logger.info(f"Protecting USER endpoint: {rule_str}")
             endpoint = login_required(log_user_action(f"accessed {rule_str}")(endpoint))
             protection_applied = True
