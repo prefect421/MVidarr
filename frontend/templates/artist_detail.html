@@ -1697,10 +1697,7 @@ function renderArtistHeader(artist) {
                 </div>
                 ${artist.last_discovery ? `<p class="last-discovery">Last scan: ${new Date(artist.last_discovery).toLocaleString()}</p>` : ''}
             </div>
-            <div class="artist-header-actions">
-                <button onclick="discoverVideos()" class="btn btn-primary">Discover Videos</button>
-                <button onclick="showTab('settings')" class="btn btn-secondary">Settings</button>
-            </div>
+            <!-- Removed redundant header buttons - functionality available via tabs -->
         </div>
     `;
     document.getElementById('artistHeader').innerHTML = headerHtml;
