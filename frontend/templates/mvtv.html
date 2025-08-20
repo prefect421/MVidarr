@@ -1627,8 +1627,21 @@ async function loadCinematicVideoSubtitles(videoId) {
             cinematicVideoPlayer.appendChild(track);
         });
         
-        // Update CC button state
-        updateCinematicCcButtonState();
+        // Wait for video to load and then activate first track
+        const activateSubtitles = () => {
+            const tracks = cinematicVideoPlayer.textTracks;
+            if (tracks.length > 0) {
+                tracks[0].mode = 'showing';
+            }
+            updateCinematicCcButtonState();
+        };
+        
+        // Try to activate subtitles now, or wait for video to be ready
+        if (cinematicVideoPlayer.readyState >= 2) {
+            activateSubtitles();
+        } else {
+            cinematicVideoPlayer.addEventListener('loadeddata', activateSubtitles, { once: true });
+        }
         
     } catch (error) {
         console.error('Error loading cinematic subtitles:', error);
