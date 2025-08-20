@@ -1251,6 +1251,12 @@ class MvTVPlayer {
                 this.updateQueue();
             }
             
+            // Immediately update video info for the new current video
+            const currentVideo = this.playlist[this.currentIndex];
+            if (currentVideo) {
+                this.updateVideoInfo(currentVideo);
+            }
+            
             await this.loadVideo(0); // Always load index 0 since we removed preceding items
             // Auto-play if currently playing
             if (this.isPlaying) {
