@@ -282,7 +282,7 @@ async function uploadCookies(input) {
     // Show loading state
     uploadBtn.disabled = true;
     uploadBtn.classList.add('btn-loading');
-    uploadBtn.innerHTML = '<span class="loading-spinner loading-spinner-sm"></span> Uploading...';
+    uploadBtn.innerHTML = '<img src="{{ url_for("static", filename="MVidarr.png") }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 16px; height: 16px; margin-right: 8px;"> Uploading...';
     
     try {
         const formData = new FormData();
@@ -321,7 +321,7 @@ async function deleteCookies() {
     // Show loading state
     deleteBtn.disabled = true;
     deleteBtn.classList.add('btn-loading');
-    deleteBtn.innerHTML = '<span class="loading-spinner loading-spinner-sm"></span> Deleting...';
+    deleteBtn.innerHTML = '<img src="{{ url_for("static", filename="MVidarr.png") }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 16px; height: 16px; margin-right: 8px;"> Deleting...';
     
     try {
         const response = await fetch('/api/metube/cookies/delete', {

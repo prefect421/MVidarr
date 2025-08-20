@@ -215,7 +215,9 @@ class UIEnhancements {
         });
         
         overlay.innerHTML = `
-            <div class="loading-spinner loading-spinner-lg"></div>
+            <div class="loading-spinner loading-spinner-lg">
+                <img src="/static/MVidarr.png" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 48px; height: 48px;">
+            </div>
             <div style="color: white; font-size: var(--font-size-sm); font-weight: 500;">
                 ${this.escapeHtml(message)}
             </div>

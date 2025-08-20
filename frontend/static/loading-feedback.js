@@ -118,6 +118,10 @@ class LoadingManager {
         const spinner = document.createElement('div');
         spinner.className = `loading-spinner ${size}`;
         spinner.setAttribute('aria-label', message);
+        
+        // Add MVIDARR logo as spinner content
+        const logoSize = size === 'large' ? '48px' : size === 'small' ? '16px' : '24px';
+        spinner.innerHTML = `<img src="/static/MVidarr.png" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: ${logoSize}; height: ${logoSize};">`;
 
         if (element.tagName === 'BUTTON') {
             element.classList.add('loading');
@@ -169,6 +173,7 @@ class LoadingManager {
         
         const spinner = document.createElement('div');
         spinner.className = 'loading-spinner large';
+        spinner.innerHTML = '<img src="/static/MVidarr.png" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 48px; height: 48px;">';
         
         const text = document.createElement('div');
         text.textContent = message;

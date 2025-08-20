@@ -51,6 +51,7 @@ class YtDlpService:
         quality: str = "best",
         video_id: int = None,
         download_subtitles: bool = False,
+        subtitle_languages: str = "en,en-US",
         artist_folder_path: str = None,
     ) -> Dict:
         """
@@ -63,6 +64,7 @@ class YtDlpService:
             quality: Video quality preference
             video_id: Optional video ID for database tracking
             download_subtitles: Whether to download closed captions/subtitles
+            subtitle_languages: Language codes for subtitles (e.g., "en,en-US,fr")
             artist_folder_path: Optional custom folder path for the artist (overrides artist name)
 
         Returns:
@@ -158,6 +160,7 @@ class YtDlpService:
                 "quality": quality,
                 "video_id": video_id,
                 "download_subtitles": download_subtitles,
+                "subtitle_languages": subtitle_languages,
                 "status": "pending",
                 "progress": 0,
                 "output_dir": output_dir,
@@ -304,13 +307,15 @@ class YtDlpService:
 
                 # Add subtitle options if requested
                 if download_entry.get("download_subtitles", False):
+                    subtitle_langs = download_entry.get("subtitle_languages", "en,en-US")
                     cmd.extend(
                         [
-                            "--write-subs",  # Download subtitle files
+                            "--write-subs",  # Download subtitle files as separate .srt/.vtt files
                             "--write-auto-subs",  # Download auto-generated subtitles
                             "--sub-langs",
-                            "en,en-US",  # Prefer English subtitles
-                            "--embed-subs",  # Embed subtitles in video file
+                            subtitle_langs,  # Use configurable subtitle languages
+                            # Note: NOT using --embed-subs so subtitles remain as separate files
+                            # This allows users to toggle subtitles on/off in video players
                         ]
                     )
 
@@ -743,6 +748,7 @@ class YtDlpService:
                     quality=entry["quality"],
                     video_id=entry.get("video_id"),
                     download_subtitles=entry.get("download_subtitles", False),
+                    subtitle_languages=entry.get("subtitle_languages", "en,en-US"),
                     artist_folder_path=entry.get("artist_folder_path"),
                 )
 

@@ -1103,7 +1103,9 @@ function playVideo(videoId, title, localPath, videoUrl) {
                 <div class="video-loading">
                     <h3>🎬 Starting Video Stream...</h3>
                     <p>Transcoding video for browser playback using FFmpeg.</p>
-                    <div class="loading-spinner"></div>
+                    <div class="loading-spinner">
+                        <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
+                    </div>
                 </div>
             `;
             
@@ -1475,7 +1477,9 @@ function refreshVideoMetadata(id) {
         // Show enhanced loading state
         videoCard.innerHTML = `
             <div style="padding: 20px; text-align: center;">
-                <div class="loading-spinner"></div>
+                <div class="loading-spinner">
+                    <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
+                </div>
                 <p>Refreshing metadata from IMVDb and extracting technical data...</p>
                 <small style="color: var(--text-muted);">This may take a moment for video analysis</small>
             </div>
@@ -3933,7 +3937,7 @@ function previewMerge() {
     const groupsContainer = document.getElementById('mergeGroupsContainer');
     
     previewContainer.style.display = 'block';
-    groupsContainer.innerHTML = '<div class="loading-spinner"></div><p>Analyzing videos for merge...</p>';
+    groupsContainer.innerHTML = '<div class="loading-spinner"><img src="{{ url_for("static", filename="MVidarr.png") }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;"></div><p>Analyzing videos for merge...</p>';
     
     const requestData = {
         mode: mode,
@@ -4376,7 +4380,7 @@ async function loadVideos(page = 1, size = 50, resetPage = false) {
         // Show loading state
         const grid = document.getElementById('videos-grid');
         if (grid) {
-            grid.innerHTML = '<div class="loading-spinner">Loading videos...</div>';
+            grid.innerHTML = '<div class="loading-spinner"><img src="{{ url_for("static", filename="MVidarr.png") }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">Loading videos...</div>';
         }
         
         // Build API URL with pagination

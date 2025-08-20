@@ -361,7 +361,9 @@ class VideoVirtualizationIntegration {
         const loadingElement = document.createElement('div');
         loadingElement.className = 'virtual-loading';
         loadingElement.innerHTML = `
-            <div class="loading-spinner"></div>
+            <div class="loading-spinner">
+                <img src="/static/MVidarr.png" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
+            </div>
             <div>Loading videos...</div>
         `;
         

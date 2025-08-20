@@ -797,10 +797,19 @@ function renderVideoDetails(video) {
     const playerHtml = `
         <div class="video-player">
             ${video.local_path ? `
-                <video controls class="video-element">
+                <video id="videoElement" controls class="video-element" crossorigin="anonymous">
                     <source src="/api/videos/${video.id}/stream" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <div class="subtitle-controls">
+                    <button id="subtitleToggle" class="btn btn-secondary" onclick="toggleSubtitleMenu()">
+                        <iconify-icon icon="material-symbols:subtitles"></iconify-icon>
+                        Subtitles
+                    </button>
+                    <div id="subtitleMenu" class="subtitle-menu" style="display: none;">
+                        <div id="subtitleOptions">Loading subtitles...</div>
+                    </div>
+                </div>
             ` : `
                 <div class="video-thumbnail-large">
                     <img id="mainVideoThumbnail" src="${video.thumbnail_url || '/static/placeholder-video.png'}" alt="${video.title}">
@@ -812,6 +821,11 @@ function renderVideoDetails(video) {
         </div>
     `;
     document.getElementById('videoPlayerSection').innerHTML = playerHtml;
+    
+    // Load subtitles if video is available
+    if (video.local_path) {
+        loadVideoSubtitles(video.id);
+    }
     
     // Render video info
     const infoHtml = `
@@ -1200,7 +1214,7 @@ function confirmDeleteVideo() {
     // Show loading state
     const confirmBtn = document.getElementById('confirmDeleteBtn');
     const originalText = confirmBtn.innerHTML;
-    confirmBtn.innerHTML = '<div class="loading-spinner small"></div> Deleting...';
+    confirmBtn.innerHTML = '<img src="{{ url_for("static", filename="MVidarr.png") }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 16px; height: 16px; margin-right: 8px;"> Deleting...';
     confirmBtn.disabled = true;
     
     fetch(deleteUrl, {
@@ -1411,6 +1425,118 @@ window.onclick = function(event) {
         closeDeleteVideoModal();
     }
 }
+
+// Subtitle Management Functions
+let availableSubtitles = [];
+
+async function loadVideoSubtitles(videoId) {
+    try {
+        const response = await fetch(`/api/videos/${videoId}/subtitles`);
+        const data = await response.json();
+        availableSubtitles = data.subtitles || [];
+        
+        updateSubtitleMenu();
+        
+        // Load default subtitles if available
+        if (availableSubtitles.length > 0) {
+            loadSubtitleTrack(availableSubtitles[0]);
+        }
+    } catch (error) {
+        console.error('Failed to load subtitles:', error);
+        updateSubtitleMenu();
+    }
+}
+
+function updateSubtitleMenu() {
+    const subtitleOptions = document.getElementById('subtitleOptions');
+    if (!subtitleOptions) return;
+    
+    if (availableSubtitles.length === 0) {
+        subtitleOptions.innerHTML = '<div class="subtitle-option">No subtitles available</div>';
+        return;
+    }
+    
+    let optionsHtml = '<div class="subtitle-option" onclick="disableSubtitles()">Off</div>';
+    
+    availableSubtitles.forEach((subtitle, index) => {
+        const languageDisplay = subtitle.language === 'default' ? 'Default' : 
+                               subtitle.language.toUpperCase();
+        optionsHtml += `
+            <div class="subtitle-option" onclick="enableSubtitle(${index})">
+                ${languageDisplay} (${subtitle.format})
+            </div>
+        `;
+    });
+    
+    subtitleOptions.innerHTML = optionsHtml;
+}
+
+function toggleSubtitleMenu() {
+    const menu = document.getElementById('subtitleMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function enableSubtitle(index) {
+    if (index < 0 || index >= availableSubtitles.length) return;
+    
+    const subtitle = availableSubtitles[index];
+    loadSubtitleTrack(subtitle);
+    toggleSubtitleMenu();
+}
+
+function disableSubtitles() {
+    const videoElement = document.getElementById('videoElement');
+    if (videoElement) {
+        // Remove all existing tracks
+        const tracks = videoElement.querySelectorAll('track');
+        tracks.forEach(track => track.remove());
+        
+        // Disable text tracks
+        for (let i = 0; i < videoElement.textTracks.length; i++) {
+            videoElement.textTracks[i].mode = 'disabled';
+        }
+    }
+    toggleSubtitleMenu();
+}
+
+function loadSubtitleTrack(subtitle) {
+    const videoElement = document.getElementById('videoElement');
+    if (!videoElement) return;
+    
+    // Remove existing tracks
+    const existingTracks = videoElement.querySelectorAll('track');
+    existingTracks.forEach(track => track.remove());
+    
+    // Add new track
+    const track = document.createElement('track');
+    track.kind = 'subtitles';
+    track.src = subtitle.url;
+    track.srclang = subtitle.language === 'default' ? 'en' : subtitle.language;
+    track.label = subtitle.language === 'default' ? 'Default' : subtitle.language.toUpperCase();
+    track.default = true;
+    
+    videoElement.appendChild(track);
+    
+    // Enable the track
+    track.addEventListener('load', () => {
+        if (videoElement.textTracks.length > 0) {
+            videoElement.textTracks[0].mode = 'showing';
+        }
+    });
+}
+
+// Close subtitle menu when clicking outside
+document.addEventListener('click', (event) => {
+    const menu = document.getElementById('subtitleMenu');
+    const toggle = document.getElementById('subtitleToggle');
+    
+    if (menu && toggle && !menu.contains(event.target) && !toggle.contains(event.target)) {
+        menu.style.display = 'none';
+    }
+});
+
 </script>
 
 <style>
@@ -1521,6 +1647,63 @@ window.onclick = function(event) {
     display: inline-block;
     vertical-align: middle;
     margin-right: 5px;
+}
+
+/* Subtitle Controls Styles */
+.subtitle-controls {
+    position: relative;
+    margin-top: 10px;
+}
+
+.subtitle-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.subtitle-option {
+    padding: 10px 15px;
+    cursor: pointer;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+}
+
+.subtitle-option:hover {
+    background: var(--hover-bg);
+}
+
+.subtitle-option:last-child {
+    border-bottom: none;
+}
+
+.video-element {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Make sure the video container has proper positioning for subtitle controls */
+.video-player {
+    position: relative;
+}
+
+#subtitleToggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#subtitleToggle iconify-icon {
+    font-size: 18px;
 }
 </style>
 

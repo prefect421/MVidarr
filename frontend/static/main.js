@@ -144,7 +144,7 @@ function showElementLoading(element, message = 'Loading...') {
     const originalContent = element.innerHTML;
     element.innerHTML = `
         <div class="loading-spinner">
-            <div class="spinner"></div>
+            <img src="/static/MVidarr.png" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
             <p>${message}</p>
         </div>
     `;

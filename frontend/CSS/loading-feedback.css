@@ -47,6 +47,10 @@
 /* Loading Spinner */
 .loading-spinner {
     width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* MVIDARR Logo Spinner */
@@ -54,10 +58,9 @@
     animation: spin 1s linear infinite;
     display: inline-block;
 }
-    height: 24px;
-    border: 2px solid var(--bg-tertiary);
-    border-top: 2px solid var(--btn-primary-bg);
-    border-radius: 50%;
+
+/* Generic spinning class for any element */
+.spinning {
     animation: spin 1s linear infinite;
 }
 

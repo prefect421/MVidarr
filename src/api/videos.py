@@ -192,8 +192,9 @@ def _trigger_video_download(video_id):
                     "error": "Video has no URL to download and could not resolve one",
                 }
 
-            # Import ytdlp service
+            # Import ytdlp service and settings
             from src.services.ytdlp_service import ytdlp_service
+            from src.services.settings_service import settings
 
             # Check if video is already downloaded
             status_value = (
@@ -207,6 +208,10 @@ def _trigger_video_download(video_id):
             ):
                 return {"success": False, "error": "Video is already downloaded"}
 
+            # Read subtitle settings from database
+            download_subtitles = settings.get_bool("download_subtitles", False)
+            subtitle_languages = settings.get("subtitle_languages", "en,en-US")
+
             # Add download to yt-dlp queue
             result = ytdlp_service.add_music_video_download(
                 artist=artist_name,
@@ -214,6 +219,8 @@ def _trigger_video_download(video_id):
                 url=video_url,
                 quality="best",
                 video_id=video_id,
+                download_subtitles=download_subtitles,
+                subtitle_languages=subtitle_languages,
             )
 
             if result and result.get("success"):
@@ -611,9 +618,14 @@ def download_video(video_id):
                     400,
                 )
 
-            # Import ytdlp service
+            # Import ytdlp service and settings
             logger.info("Importing ytdlp service")
             from src.services.ytdlp_service import ytdlp_service
+            from src.services.settings_service import settings
+
+            # Read subtitle settings from database
+            download_subtitles = settings.get_bool("download_subtitles", False)
+            subtitle_languages = settings.get("subtitle_languages", "en,en-US")
 
             # Check if video is already downloaded
             logger.info(
@@ -645,6 +657,8 @@ def download_video(video_id):
                     url=video_url,
                     quality="best",
                     video_id=video_id,
+                    download_subtitles=download_subtitles,
+                    subtitle_languages=subtitle_languages,
                 )
                 logger.info(f"ytdlp_service result: {result}")
             except Exception as ytdlp_error:
@@ -2010,6 +2024,108 @@ def stream_video(video_id):
     except Exception as e:
         logger.error(f"Failed to stream video {video_id}: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/<int:video_id>/subtitles", methods=["GET"])
+def get_video_subtitles(video_id):
+    """Get available subtitle tracks for a video"""
+    try:
+        with get_db() as session:
+            video = session.query(Video).filter(Video.id == video_id).first()
+
+            if not video or not video.local_path:
+                return jsonify({"subtitles": []}), 200
+
+            video_path = Path(video.local_path)
+            if not video_path.exists():
+                return jsonify({"subtitles": []}), 200
+
+            # Look for subtitle files in the same directory
+            video_dir = video_path.parent
+            video_name_stem = video_path.stem
+            
+            subtitle_extensions = ['.srt', '.vtt', '.ass', '.ssa', '.sub']
+            subtitles = []
+
+            for subtitle_ext in subtitle_extensions:
+                # Look for subtitle files with the same base name
+                for subtitle_file in video_dir.glob(f"{video_name_stem}*{subtitle_ext}"):
+                    # Extract language from filename (e.g., video.en.srt -> en)
+                    relative_name = subtitle_file.name
+                    parts = relative_name.split('.')
+                    
+                    language = 'unknown'
+                    if len(parts) >= 3:  # video.en.srt
+                        language = parts[-2]
+                    elif len(parts) == 2:  # video.srt (assume default language)
+                        language = 'default'
+                    
+                    subtitles.append({
+                        'language': language,
+                        'filename': relative_name,
+                        'url': f'/api/videos/{video_id}/subtitles/{relative_name}',
+                        'format': subtitle_ext[1:]  # Remove the dot
+                    })
+
+            return jsonify({"subtitles": subtitles}), 200
+
+    except Exception as e:
+        logger.error(f"Failed to get subtitles for video {video_id}: {e}")
+        return jsonify({"subtitles": []}), 200
+
+
+@videos_bp.route("/<int:video_id>/subtitles/<subtitle_filename>", methods=["GET"])
+def serve_video_subtitle(video_id, subtitle_filename):
+    """Serve subtitle file for a video"""
+    try:
+        with get_db() as session:
+            video = session.query(Video).filter(Video.id == video_id).first()
+
+            if not video or not video.local_path:
+                return "Video not found or no local file", 404
+
+            video_path = Path(video.local_path)
+            if not video_path.exists():
+                return "Video file not found", 404
+
+            # Security check: ensure subtitle filename doesn't contain path traversal
+            if '..' in subtitle_filename or '/' in subtitle_filename or '\\' in subtitle_filename:
+                return "Invalid subtitle filename", 400
+
+            # Find subtitle file in the same directory as the video
+            video_dir = video_path.parent
+            subtitle_path = video_dir / subtitle_filename
+
+            if not subtitle_path.exists():
+                return "Subtitle file not found", 404
+
+            # Security check: ensure subtitle file is in the same directory as video
+            if not str(subtitle_path).startswith(str(video_dir)):
+                return "Subtitle file access denied", 403
+
+            # Determine MIME type based on extension
+            subtitle_ext = subtitle_path.suffix.lower()
+            if subtitle_ext == '.srt':
+                mimetype = 'text/plain; charset=utf-8'
+            elif subtitle_ext == '.vtt':
+                mimetype = 'text/vtt; charset=utf-8'
+            elif subtitle_ext in ['.ass', '.ssa']:
+                mimetype = 'text/plain; charset=utf-8'
+            else:
+                mimetype = 'text/plain; charset=utf-8'
+
+            logger.info(f"Serving subtitle {subtitle_filename} for video {video_id}")
+            
+            return send_file(
+                subtitle_path,
+                mimetype=mimetype,
+                as_attachment=False,
+                download_name=subtitle_filename
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to serve subtitle {subtitle_filename} for video {video_id}: {e}")
+        return "Subtitle serving error", 500
 
 
 @videos_bp.route("/recovery/fix-missing", methods=["POST"])
@@ -3454,6 +3570,13 @@ def bulk_download_videos():
         success_count = 0
         failed_count = 0
 
+        # Import settings service for subtitle configuration
+        from src.services.settings_service import settings
+
+        # Read subtitle settings from database once for all downloads
+        download_subtitles = settings.get_bool("download_subtitles", False)
+        subtitle_languages = settings.get("subtitle_languages", "en,en-US")
+
         with get_db() as session:
             for video_id in video_ids:
                 try:
@@ -3495,6 +3618,8 @@ def bulk_download_videos():
                         url=video_url,
                         quality="best",
                         video_id=video_id,
+                        download_subtitles=download_subtitles,
+                        subtitle_languages=subtitle_languages,
                     )
 
                     if result and result.get("success"):
@@ -3558,6 +3683,13 @@ def download_all_wanted_videos_internal(limit=50):
         success_count = 0
         failed_count = 0
         wanted_video_ids = []
+
+        # Import settings service for subtitle configuration
+        from src.services.settings_service import settings
+
+        # Read subtitle settings from database once for all downloads
+        download_subtitles = settings.get_bool("download_subtitles", False)
+        subtitle_languages = settings.get("subtitle_languages", "en,en-US")
 
         # First, get all wanted video IDs
         with get_db() as session:
@@ -3628,6 +3760,8 @@ def download_all_wanted_videos_internal(limit=50):
                         url=video_url,
                         quality="best",
                         video_id=video_id,
+                        download_subtitles=download_subtitles,
+                        subtitle_languages=subtitle_languages,
                     )
 
                     if result and result.get("success"):

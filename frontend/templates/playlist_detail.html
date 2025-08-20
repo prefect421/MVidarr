@@ -7,7 +7,9 @@
     
     <!-- Loading Indicator -->
     <div id="playlistDetailLoading" class="loading-container">
-        <div class="loading-spinner"></div>
+        <div class="loading-spinner">
+            <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
+        </div>
         <p>Loading playlist...</p>
     </div>
     
