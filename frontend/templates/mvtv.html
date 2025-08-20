@@ -1630,18 +1630,32 @@ async function loadCinematicVideoSubtitles(videoId) {
         // Wait for video to load and then activate first track
         const activateSubtitles = () => {
             const tracks = cinematicVideoPlayer.textTracks;
+            console.log('Activating subtitles. Available tracks:', tracks.length);
             if (tracks.length > 0) {
+                console.log('Setting first track to showing mode');
                 tracks[0].mode = 'showing';
+                
+                // Double check after setting the mode
+                setTimeout(() => {
+                    console.log('Track 0 mode after activation:', tracks[0].mode);
+                    updateCinematicCcButtonState();
+                }, 50);
+            } else {
+                console.log('No tracks available for activation');
+                updateCinematicCcButtonState();
             }
-            updateCinematicCcButtonState();
         };
         
-        // Try to activate subtitles now, or wait for video to be ready
-        if (cinematicVideoPlayer.readyState >= 2) {
-            activateSubtitles();
-        } else {
-            cinematicVideoPlayer.addEventListener('loadeddata', activateSubtitles, { once: true });
-        }
+        // Wait for tracks to be added before trying to activate
+        setTimeout(() => {
+            const tracks = cinematicVideoPlayer.textTracks;
+            if (tracks.length > 0) {
+                activateSubtitles();
+            } else {
+                console.log('No tracks loaded yet, waiting for loadeddata event');
+                cinematicVideoPlayer.addEventListener('loadeddata', activateSubtitles, { once: true });
+            }
+        }, 200);
         
     } catch (error) {
         console.error('Error loading cinematic subtitles:', error);
@@ -1652,8 +1666,17 @@ function toggleCinematicSubtitles() {
     const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
     const tracks = cinematicVideoPlayer.textTracks;
     
+    console.log('Toggle CC called. Available tracks:', tracks.length);
+    
     if (tracks.length === 0) {
-        return; // No subtitles available
+        console.log('No subtitle tracks available');
+        // Try to reload subtitles if there aren't any
+        if (mvtvPlayer.playlist && mvtvPlayer.playlist[mvtvPlayer.currentIndex]) {
+            const currentVideo = mvtvPlayer.playlist[mvtvPlayer.currentIndex];
+            console.log('Attempting to reload subtitles for video:', currentVideo.id);
+            loadCinematicVideoSubtitles(currentVideo.id);
+        }
+        return;
     }
     
     // Find the current active track
@@ -1661,6 +1684,7 @@ function toggleCinematicSubtitles() {
     let activeIndex = -1;
     
     for (let i = 0; i < tracks.length; i++) {
+        console.log(`Track ${i}: mode=${tracks[i].mode}, kind=${tracks[i].kind}, lang=${tracks[i].language}`);
         if (tracks[i].mode === 'showing') {
             activeTrack = tracks[i];
             activeIndex = i;
@@ -1670,13 +1694,18 @@ function toggleCinematicSubtitles() {
     
     if (activeTrack) {
         // Turn off current track
+        console.log('Turning off subtitle track', activeIndex);
         activeTrack.mode = 'disabled';
     } else {
         // Turn on first track
+        console.log('Turning on subtitle track 0');
         tracks[0].mode = 'showing';
     }
     
-    updateCinematicCcButtonState();
+    // Force update button state after a brief delay to ensure changes are processed
+    setTimeout(() => {
+        updateCinematicCcButtonState();
+    }, 100);
 }
 
 function updateCinematicCcButtonState() {
@@ -1684,31 +1713,43 @@ function updateCinematicCcButtonState() {
     const ccBtn = document.getElementById('cinematicCcBtn');
     const tracks = cinematicVideoPlayer.textTracks;
     
-    if (!ccBtn || tracks.length === 0) {
-        if (ccBtn) {
-            ccBtn.style.opacity = '0.5';
-            ccBtn.title = 'No subtitles available';
-        }
+    console.log('Updating CC button state. Tracks:', tracks.length, 'Button exists:', !!ccBtn);
+    
+    if (!ccBtn) {
+        console.log('CC button not found');
+        return;
+    }
+    
+    if (tracks.length === 0) {
+        console.log('No tracks available, disabling button');
+        ccBtn.style.opacity = '0.5';
+        ccBtn.style.color = '';
+        ccBtn.title = 'No subtitles available';
         return;
     }
     
     // Check if any track is showing
     let hasActiveTrack = false;
     for (let i = 0; i < tracks.length; i++) {
+        console.log(`Checking track ${i}: mode=${tracks[i].mode}`);
         if (tracks[i].mode === 'showing') {
             hasActiveTrack = true;
             break;
         }
     }
     
+    console.log('Has active track:', hasActiveTrack);
+    
     if (hasActiveTrack) {
         ccBtn.style.opacity = '1';
         ccBtn.style.color = 'var(--text-accent, #00d4ff)';
         ccBtn.title = 'Turn off closed captions';
+        console.log('CC button activated (subtitles ON)');
     } else {
         ccBtn.style.opacity = '0.7';
         ccBtn.style.color = '';
         ccBtn.title = tracks.length > 0 ? 'Turn on closed captions' : 'No subtitles available';
+        console.log('CC button deactivated (subtitles OFF)');
     }
 }
 
