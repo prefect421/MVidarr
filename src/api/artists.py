@@ -838,7 +838,7 @@ def get_artist_preview(imvdb_id):
 
         # Get artist's videos from IMVDb
         artist_name = artist_data.get("name", "")
-        videos_data = imvdb_service.search_artist_videos(artist_name, limit=20)
+        videos_data = imvdb_service.search_artist_videos(artist_name, limit=50)  # Increased from 20 to improve discovery
 
         # Process video data
         videos_list = []
@@ -1276,11 +1276,11 @@ def discover_artist_videos(artist_id):
             if videos_data and videos_data.get("videos"):
                 imvdb_videos = videos_data["videos"]
 
-            # Search for videos on YouTube (top 20 results)
+            # Search for videos on YouTube (top 50 results)
             youtube_videos = []
             try:
                 youtube_data = youtube_search_service.search_artist_videos(
-                    artist_name, limit=20
+                    artist_name, limit=50  # Increased from 20 to YouTube API maximum
                 )
                 if youtube_data and youtube_data.get("videos"):
                     youtube_videos = youtube_data["videos"]

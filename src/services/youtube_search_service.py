@@ -29,7 +29,7 @@ class YouTubeSearchService:
             logger.error(f"Failed to get YouTube API key from settings: {e}")
             return None
 
-    def search_artist_videos(self, artist_name: str, limit: int = 20) -> Dict:
+    def search_artist_videos(self, artist_name: str, limit: int = 50) -> Dict:
         """Search for music videos by artist name"""
         if not self.api_key:
             logger.warning("YouTube API key not configured, skipping YouTube search")

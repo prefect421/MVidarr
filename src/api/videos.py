@@ -37,6 +37,12 @@ def resolve_video_url(video, session):
     """
     if video.url:
         return video.url
+    
+    # Also check youtube_url field as fallback (but ensure it's complete)
+    if video.youtube_url and len(video.youtube_url.strip()) > 30:  # Valid YouTube URLs are longer than 30 chars
+        # Additional check: ensure URL has a video ID (not just ending with "?v=")
+        if not video.youtube_url.endswith('?v='):
+            return video.youtube_url
 
     try:
         import json
