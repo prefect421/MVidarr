@@ -1241,7 +1241,17 @@ class MvTVPlayer {
     
     async jumpToVideo(index) {
         if (index >= 0 && index < this.playlist.length) {
-            await this.loadVideo(index);
+            // Remove all songs before the clicked song from the queue
+            if (index > 0) {
+                console.log(`Removing ${index} songs before clicked song from queue`);
+                this.playlist.splice(0, index);
+                // Update current index since we removed items from the beginning
+                this.currentIndex = 0;
+                // Rebuild queue display with updated indices
+                this.updateQueue();
+            }
+            
+            await this.loadVideo(0); // Always load index 0 since we removed preceding items
             // Auto-play if currently playing
             if (this.isPlaying) {
                 this.videoPlayer.play();
