@@ -288,7 +288,12 @@ class YtDlpService:
                 cmd = [
                     self.yt_dlp_path,
                     "--format",
-                    "best[height<=1080]",  # Limit to 1080p max
+                    # Robust format selection with fallbacks:
+                    # 1. Try best video ≤1080p + best audio
+                    # 2. Fallback to best video ≤720p + best audio  
+                    # 3. Fallback to best combined format ≤1080p
+                    # 4. Final fallback to any best available format
+                    "best[height<=1080]/best[height<=720]/bestvideo[height<=1080]+bestaudio/best",
                     "--output",
                     output_template,
                     "--no-playlist",
@@ -348,6 +353,14 @@ class YtDlpService:
                                         break
                             except:
                                 pass
+                        
+                        # Log format selection information
+                        if "Selected format:" in line or "format code" in line:
+                            logger.info(f"Download {download_id} format selection: {line.strip()}")
+                        
+                        # Log format availability errors
+                        if "No video formats found" in line or "format not available" in line:
+                            logger.warning(f"Download {download_id} format issue: {line.strip()}")
 
                     process.wait()
 

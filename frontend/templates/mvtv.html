@@ -954,7 +954,7 @@ class MvTVPlayer {
         
         try {
             // Update status to show loading
-            this.updateStatus(`Loading: ${video.title}...`);
+            this.updatePlaybackStatus('loading', `Loading: ${video.title}...`);
             
             // Clear any existing subtitle tracks first
             this.clearSubtitleTracks();
@@ -980,7 +980,7 @@ class MvTVPlayer {
                     // Add to played indices
                     this.playedIndices.add(index);
                     
-                    this.updateStatus(`Ready: ${video.title}`);
+                    this.updatePlaybackStatus('ready', `Ready: ${video.title}`);
                     resolve();
                 };
                 
@@ -990,7 +990,7 @@ class MvTVPlayer {
                     this.videoPlayer.removeEventListener('abort', handleLoadAbort);
                     
                     console.error('Error loading video:', e);
-                    this.updateStatus(`Error loading: ${video.title}`);
+                    this.updatePlaybackStatus('error', `Error loading: ${video.title}`);
                     resolve(); // Don't reject, just continue
                 };
                 
@@ -1012,7 +1012,7 @@ class MvTVPlayer {
             
         } catch (error) {
             console.error('Error in loadVideo:', error);
-            this.updateStatus(`Error: Failed to load ${video.title}`);
+            this.updatePlaybackStatus('error', `Error: Failed to load ${video.title}`);
             
             // Update video info even on error to maintain UI consistency
             this.updateVideoInfo(video);
