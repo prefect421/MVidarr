@@ -803,6 +803,10 @@ body.light-theme .btn-danger {
                 <iconify-icon icon="mdi:pause" aria-hidden="true"></iconify-icon>
                 Pause
             </button>
+            <button class="btn btn-ghost" onclick="toggleCinematicSubtitles()" id="cinematicCcBtn" aria-label="Toggle closed captions" title="Toggle Closed Captions">
+                <iconify-icon icon="tabler:subtitles" aria-hidden="true"></iconify-icon>
+                CC
+            </button>
             <button class="btn btn-primary" onclick="cinematicNext()" aria-label="Next video">
                 <iconify-icon icon="mdi:skip-next" aria-hidden="true"></iconify-icon>
                 Next
@@ -1462,8 +1466,14 @@ function enterCinematicMode() {
     // Copy current video to cinematic player
     const currentVideo = mvtvPlayer.playlist[mvtvPlayer.currentIndex];
     if (currentVideo) {
+        // Clear existing subtitle tracks
+        clearCinematicSubtitleTracks();
+        
         cinematicVideoSource.src = `/api/videos/${currentVideo.id}/stream`;
         cinematicVideoPlayer.load();
+        
+        // Load subtitles
+        loadCinematicVideoSubtitles(currentVideo.id);
         
         // Pause main player first to avoid sync issues
         const currentTime = mvtvPlayer.videoPlayer.currentTime;
@@ -1560,7 +1570,7 @@ function cinematicPlayPause() {
     }
 }
 
-function syncToCinematicMode() {
+async function syncToCinematicMode() {
     if (!isCinematicMode) return;
     
     const currentVideo = mvtvPlayer.playlist[mvtvPlayer.currentIndex];
@@ -1569,8 +1579,15 @@ function syncToCinematicMode() {
     const cinematicVideoSource = document.getElementById('cinematicVideoSource');
     const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
     
+    // Clear existing subtitle tracks
+    clearCinematicSubtitleTracks();
+    
     cinematicVideoSource.src = `/api/videos/${currentVideo.id}/stream`;
     cinematicVideoPlayer.load();
+    
+    // Load subtitles for cinematic player
+    await loadCinematicVideoSubtitles(currentVideo.id);
+    
     cinematicVideoPlayer.play();
     
     // Update cinematic info
@@ -1579,6 +1596,111 @@ function syncToCinematicMode() {
     
     if (titleElement) titleElement.textContent = currentVideo.title;
     if (artistElement) artistElement.textContent = currentVideo.artist_name;
+}
+
+function clearCinematicSubtitleTracks() {
+    const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
+    const existingTracks = cinematicVideoPlayer.querySelectorAll('track');
+    existingTracks.forEach(track => track.remove());
+}
+
+async function loadCinematicVideoSubtitles(videoId) {
+    try {
+        const response = await fetch(`/api/videos/${videoId}/subtitles`);
+        if (!response.ok) return;
+        
+        const subtitles = await response.json();
+        if (!subtitles.success || !subtitles.subtitles || subtitles.subtitles.length === 0) {
+            return;
+        }
+        
+        const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
+        
+        subtitles.subtitles.forEach((subtitle, index) => {
+            const track = document.createElement('track');
+            track.kind = 'subtitles';
+            track.src = `/api/videos/${videoId}/subtitles/${subtitle.filename}`;
+            track.srclang = subtitle.language || 'en';
+            track.label = subtitle.label || subtitle.language || 'Subtitles';
+            
+            // Make first track default
+            if (index === 0) {
+                track.default = true;
+            }
+            
+            cinematicVideoPlayer.appendChild(track);
+        });
+        
+        // Update CC button state
+        updateCinematicCcButtonState();
+        
+    } catch (error) {
+        console.error('Error loading cinematic subtitles:', error);
+    }
+}
+
+function toggleCinematicSubtitles() {
+    const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
+    const tracks = cinematicVideoPlayer.textTracks;
+    
+    if (tracks.length === 0) {
+        return; // No subtitles available
+    }
+    
+    // Find the current active track
+    let activeTrack = null;
+    let activeIndex = -1;
+    
+    for (let i = 0; i < tracks.length; i++) {
+        if (tracks[i].mode === 'showing') {
+            activeTrack = tracks[i];
+            activeIndex = i;
+            break;
+        }
+    }
+    
+    if (activeTrack) {
+        // Turn off current track
+        activeTrack.mode = 'disabled';
+    } else {
+        // Turn on first track
+        tracks[0].mode = 'showing';
+    }
+    
+    updateCinematicCcButtonState();
+}
+
+function updateCinematicCcButtonState() {
+    const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
+    const ccBtn = document.getElementById('cinematicCcBtn');
+    const tracks = cinematicVideoPlayer.textTracks;
+    
+    if (!ccBtn || tracks.length === 0) {
+        if (ccBtn) {
+            ccBtn.style.opacity = '0.5';
+            ccBtn.title = 'No subtitles available';
+        }
+        return;
+    }
+    
+    // Check if any track is showing
+    let hasActiveTrack = false;
+    for (let i = 0; i < tracks.length; i++) {
+        if (tracks[i].mode === 'showing') {
+            hasActiveTrack = true;
+            break;
+        }
+    }
+    
+    if (hasActiveTrack) {
+        ccBtn.style.opacity = '1';
+        ccBtn.style.color = 'var(--text-accent, #00d4ff)';
+        ccBtn.title = 'Turn off closed captions';
+    } else {
+        ccBtn.style.opacity = '0.7';
+        ccBtn.style.color = '';
+        ccBtn.title = tracks.length > 0 ? 'Turn on closed captions' : 'No subtitles available';
+    }
 }
 
 // Keyboard shortcuts for cinematic mode
@@ -1599,6 +1721,11 @@ document.addEventListener('keydown', function(event) {
             case 'ArrowRight':
                 event.preventDefault();
                 cinematicNext();
+                break;
+            case 'c':
+            case 'C':
+                event.preventDefault();
+                toggleCinematicSubtitles();
                 break;
         }
     }
