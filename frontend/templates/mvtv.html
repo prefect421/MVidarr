@@ -112,6 +112,18 @@
     margin-bottom: 5px;
 }
 
+.video-info .artist-link {
+    color: var(--text-accent, #00d4ff);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.video-info .artist-link:hover {
+    color: var(--text-primary, #fff);
+    text-decoration: underline;
+    transform: translateY(-1px);
+}
+
 .video-info .genres {
     display: flex;
     gap: 8px;
@@ -564,6 +576,14 @@ body.light-theme .video-info h3 {
 
 body.light-theme .video-info .artist {
     color: #666;
+}
+
+body.light-theme .video-info .artist-link {
+    color: #667eea;
+}
+
+body.light-theme .video-info .artist-link:hover {
+    color: #333;
 }
 
 body.light-theme .playlist-queue {
@@ -1033,7 +1053,14 @@ class MvTVPlayer {
         const videoGenres = document.getElementById('videoGenres');
         
         videoTitle.textContent = video.title;
-        videoArtist.textContent = video.artist_name || 'Unknown Artist';
+        
+        // Make artist name clickable
+        const artistName = video.artist_name || 'Unknown Artist';
+        if (video.artist_id && artistName !== 'Unknown Artist') {
+            videoArtist.innerHTML = `<a href="/artist/${video.artist_id}" class="artist-link" title="View ${artistName} details">${artistName}</a>`;
+        } else {
+            videoArtist.textContent = artistName;
+        }
         
         // Update genres
         videoGenres.innerHTML = '';
