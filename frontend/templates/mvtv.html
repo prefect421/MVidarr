@@ -795,10 +795,6 @@ body.light-theme .btn-danger {
             <p class="artist text-secondary" id="cinematicVideoArtist">Artist Name</p>
         </div>
         <div class="cinematic-controls" role="toolbar" aria-label="Cinematic playback controls">
-            <button class="btn btn-primary" onclick="cinematicPrevious()" aria-label="Previous video">
-                <iconify-icon icon="mdi:skip-previous" aria-hidden="true"></iconify-icon>
-                Previous
-            </button>
             <button class="btn btn-secondary" onclick="cinematicPlayPause()" id="cinematicPlayPauseBtn" aria-label="Pause video">
                 <iconify-icon icon="mdi:pause" aria-hidden="true"></iconify-icon>
                 Pause
@@ -1713,10 +1709,6 @@ document.addEventListener('keydown', function(event) {
             case ' ':
                 event.preventDefault();
                 cinematicPlayPause();
-                break;
-            case 'ArrowLeft':
-                event.preventDefault();
-                cinematicPrevious();
                 break;
             case 'ArrowRight':
                 event.preventDefault();
