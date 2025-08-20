@@ -1602,16 +1602,24 @@ function clearCinematicSubtitleTracks() {
 
 async function loadCinematicVideoSubtitles(videoId) {
     try {
+        console.log('Loading cinematic subtitles for video:', videoId);
         const response = await fetch(`/api/videos/${videoId}/subtitles`);
-        if (!response.ok) return;
+        if (!response.ok) {
+            console.log('Cinematic subtitles API response not ok:', response.status);
+            return;
+        }
         
         const subtitles = await response.json();
+        console.log('Cinematic subtitles API response:', subtitles);
         if (!subtitles.success || !subtitles.subtitles || subtitles.subtitles.length === 0) {
+            console.log('No cinematic subtitles available or API failed');
             return;
         }
         
         const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
+        console.log('Cinematic video player found:', !!cinematicVideoPlayer);
         
+        console.log('Adding', subtitles.subtitles.length, 'subtitle tracks to cinematic player');
         subtitles.subtitles.forEach((subtitle, index) => {
             const track = document.createElement('track');
             track.kind = 'subtitles';
@@ -1619,13 +1627,23 @@ async function loadCinematicVideoSubtitles(videoId) {
             track.srclang = subtitle.language || 'en';
             track.label = subtitle.label || subtitle.language || 'Subtitles';
             
+            console.log(`Creating cinematic track ${index}:`, {
+                src: track.src,
+                language: track.srclang,
+                label: track.label
+            });
+            
             // Make first track default
             if (index === 0) {
                 track.default = true;
+                console.log('Set track 0 as default');
             }
             
             cinematicVideoPlayer.appendChild(track);
+            console.log(`Added track ${index} to cinematic player`);
         });
+        
+        console.log('All tracks added. Cinematic player textTracks.length:', cinematicVideoPlayer.textTracks.length);
         
         // Wait for video to load and then activate first track
         const activateSubtitles = () => {
