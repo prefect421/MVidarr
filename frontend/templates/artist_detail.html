@@ -1440,6 +1440,7 @@
                 <label><input type="radio" name="statusOption" value="DOWNLOADED"> <span class="status-badge status-downloaded">Downloaded</span></label>
                 <label><input type="radio" name="statusOption" value="FAILED"> <span class="status-badge status-failed">Failed</span></label>
                 <label><input type="radio" name="statusOption" value="IGNORED"> <span class="status-badge status-ignored">Ignored</span></label>
+                <label><input type="radio" name="statusOption" value="MONITORED"> <span class="status-badge status-monitored">Monitored</span></label>
             </div>
         </div>
         <div class="modal-actions">
@@ -4463,9 +4464,13 @@ function searchImvdbMatches() {
     })
     .catch(error => {
         console.error('Error searching IMVDb matches:', error);
-        showError('Error searching for IMVDb matches');
+        let errorMessage = 'Error searching for IMVDb matches';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
+        showError(errorMessage);
         if (statusDiv) {
-            statusDiv.innerHTML = '<div class="error-message">Search failed due to network error</div>';
+            statusDiv.innerHTML = `<div class="error-message">Search failed: ${error.message || 'Unknown error'}</div>`;
         }
     })
     .finally(() => {
@@ -4619,9 +4624,13 @@ function updateMetadataFromMatch(imvdbId) {
     })
     .catch(error => {
         console.error('Error updating metadata:', error);
-        showError('Error updating metadata from IMVDb');
+        let errorMessage = 'Error updating metadata from IMVDb';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
+        showError(errorMessage);
         if (statusDiv) {
-            statusDiv.innerHTML = '<div class="error-message">Update failed due to network error</div>';
+            statusDiv.innerHTML = `<div class="error-message">Update failed: ${error.message || 'Unknown error'}</div>`;
         }
     })
     .finally(() => {
@@ -4703,8 +4712,12 @@ function proceedUpdateMetadata() {
     })
     .catch(error => {
         console.error('Error updating metadata:', error);
-        showError('Error updating metadata from IMVDb');
-        statusDiv.innerHTML = '<div class="error-message">Update failed due to network error</div>';
+        let errorMessage = 'Error updating metadata from IMVDb';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
+        showError(errorMessage);
+        statusDiv.innerHTML = `<div class="error-message">Update failed: ${error.message || 'Unknown error'}</div>`;
     })
     .finally(() => {
         if (updateBtn) {
@@ -6863,16 +6876,6 @@ function bulkDownloadSelected() {
     showInfo(`Starting download for ${videoIds.length} selected videos...`);
 }
 
-function bulkUpdateStatus() {
-    if (selectedVideos.size === 0) {
-        showError('Please select videos to update status');
-        return;
-    }
-    
-    const videoIds = Array.from(selectedVideos);
-    // Implement bulk status update logic here
-    showInfo(`Updating status for ${videoIds.length} selected videos...`);
-}
 
 
 function bulkDeleteSelected() {

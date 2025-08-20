@@ -18,7 +18,7 @@ class IMVDbService:
     """Service for interacting with the IMVDb API"""
 
     def __init__(self):
-        self.base_url = "http://imvdb.com/api/v1"
+        self.base_url = "https://imvdb.com/api/v1"
         self.rate_limit_delay = 1.0  # Seconds between requests
         self.last_request_time = 0
 
@@ -79,8 +79,14 @@ class IMVDbService:
                 )
                 return None
 
+        except requests.exceptions.Timeout as e:
+            logger.error(f"IMVDb API request timed out: {e}")
+            return None
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Failed to connect to IMVDb API - check internet connection: {e}")
+            return None
         except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to connect to IMVDb API: {e}")
+            logger.error(f"IMVDb API request failed: {e}")
             return None
         except Exception as e:
             logger.error(f"Unexpected error in IMVDb request: {e}")
