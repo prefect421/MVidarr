@@ -747,16 +747,20 @@
                     <button onclick="selectAllVideos()" class="btn btn-secondary">Select All</button>
                     <button onclick="deselectAllVideos()" class="btn btn-secondary">Deselect All</button>
                     <button onclick="bulkDownloadSelected()" class="btn btn-primary" id="bulkDownloadBtn" disabled>
+                        <iconify-icon icon="tabler:download"></iconify-icon>
                         <span id="downloadBtnText">Download Selected</span>
                     </button>
                     <button onclick="bulkAddToPlaylist()" class="btn btn-success" id="bulkPlaylistBtn" disabled>
-                        <iconify-icon icon="tabler:playlist-add"></iconify-icon> Add to Playlist
+                        <iconify-icon icon="tabler:playlist-add"></iconify-icon>
+                        <span>Add to Playlist</span>
                     </button>
                     <button onclick="bulkUpdateStatus()" class="btn btn-secondary" id="bulkStatusBtn" disabled>
+                        <iconify-icon icon="tabler:edit"></iconify-icon>
                         <span id="statusBtnText">Update Status</span>
                     </button>
                     <button onclick="bulkDeleteSelected()" class="btn btn-danger" id="bulkDeleteBtn" disabled>
-                        🗑️ Delete Selected
+                        <iconify-icon icon="tabler:trash"></iconify-icon>
+                        <span>Delete Selected</span>
                     </button>
                 </div>
             </div>
@@ -2673,7 +2677,7 @@ function updateVideoSelectionButtons() {
     // Update button text
     bulkDownloadBtn.textContent = `Download Selected (${selectedVideos.size})`;
     bulkStatusBtn.textContent = `Update Status (${selectedVideos.size})`;
-    bulkDeleteBtn.textContent = `🗑️ Delete Selected (${selectedVideos.size})`;
+    bulkDeleteBtn.innerHTML = `<iconify-icon icon="tabler:trash"></iconify-icon><span>Delete Selected (${selectedVideos.size})</span>`;
     
     // Update selection info display
     if (hasSelection) {
@@ -3125,7 +3129,7 @@ function bulkDeleteSelected() {
     })
     .finally(() => {
         bulkDeleteBtn.disabled = false;
-        bulkDeleteBtn.textContent = `🗑️ Delete Selected (${selectedVideos.size})`;
+        bulkDeleteBtn.innerHTML = `<iconify-icon icon="tabler:trash"></iconify-icon><span>Delete Selected (${selectedVideos.size})</span>`;
     });
 }
 
