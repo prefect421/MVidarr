@@ -200,6 +200,92 @@
                 <strong>⚠️ Important:</strong> Only enable SSL enforcement if you have properly configured SSL termination at your reverse proxy (nginx, Apache, Cloudflare, etc.) or web server level. Enabling this without proper SSL setup will make the application inaccessible.
             </div>
         </div>
+
+        <div class="settings-section">
+            <h2>📄 Certificate Management</h2>
+            <div class="form-help">
+                <small>Manage SSL certificates for HTTPS connections. Upload certificate and private key files for custom SSL configuration.</small>
+            </div>
+            
+            <!-- Current Certificate Status -->
+            <div class="certificate-status">
+                <h3>Current Certificate Status</h3>
+                <div id="cert-status-info">
+                    <div class="status-item">
+                        <span class="status-label">Certificate:</span>
+                        <span id="cert-status" class="status-value">Not configured</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Private Key:</span>
+                        <span id="key-status" class="status-value">Not configured</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Expiry Date:</span>
+                        <span id="cert-expiry" class="status-value">N/A</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate Upload -->
+            <div class="certificate-upload">
+                <h3>Upload New Certificate</h3>
+                <div class="form-group">
+                    <label for="ssl-certificate-file">SSL Certificate (.crt, .pem):</label>
+                    <input type="file" id="ssl-certificate-file" name="ssl_certificate" accept=".crt,.pem,.cert" aria-describedby="cert-file-help">
+                    <div class="form-help" id="cert-file-help">
+                        <small>Upload your SSL certificate file (usually ends with .crt or .pem)</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="ssl-private-key-file">Private Key (.key, .pem):</label>
+                    <input type="file" id="ssl-private-key-file" name="ssl_private_key" accept=".key,.pem" aria-describedby="key-file-help">
+                    <div class="form-help" id="key-file-help">
+                        <small>Upload your private key file (usually ends with .key or .pem)</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="ssl-certificate-chain">Certificate Chain (Optional):</label>
+                    <input type="file" id="ssl-certificate-chain" name="ssl_certificate_chain" accept=".crt,.pem,.chain" aria-describedby="chain-file-help">
+                    <div class="form-help" id="chain-file-help">
+                        <small>Upload certificate chain file if required by your CA (intermediate certificates)</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate Actions -->
+            <div class="certificate-actions">
+                <button onclick="uploadCertificates()" class="btn btn-primary" id="upload-cert-btn">
+                    <iconify-icon icon="mdi:upload" aria-hidden="true"></iconify-icon>
+                    Upload Certificates
+                </button>
+                <button onclick="validateCertificate()" class="btn btn-info" id="validate-cert-btn">
+                    <iconify-icon icon="mdi:certificate" aria-hidden="true"></iconify-icon>
+                    Validate Certificate
+                </button>
+                <button onclick="downloadCertificate()" class="btn btn-secondary" id="download-cert-btn" style="display: none;">
+                    <iconify-icon icon="mdi:download" aria-hidden="true"></iconify-icon>
+                    Download Current Certificate
+                </button>
+                <button onclick="removeCertificates()" class="btn btn-danger" id="remove-cert-btn" style="display: none;">
+                    <iconify-icon icon="mdi:delete" aria-hidden="true"></iconify-icon>
+                    Remove Certificates
+                </button>
+            </div>
+
+            <!-- Certificate Upload Progress -->
+            <div id="cert-upload-progress" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="cert-progress-fill"></div>
+                </div>
+                <div class="progress-text" id="cert-progress-text">Uploading certificates...</div>
+            </div>
+
+            <!-- Certificate Validation Results -->
+            <div id="cert-validation-results" style="display: none;">
+                <h4>Certificate Validation Results</h4>
+                <div id="cert-validation-content"></div>
+            </div>
+        </div>
         
             </div>
         </div>
@@ -1515,6 +1601,9 @@ function updateUserCredentialsSection() {
 document.addEventListener('DOMContentLoaded', function() {
     // Load settings when page loads
     loadSettings();
+    
+    // Load certificate status
+    loadCertificateStatus();
     
     // Set up authentication toggle event listener
     const authToggle = document.getElementById('require_authentication');
@@ -3874,6 +3963,221 @@ The cookie file should contain YouTube authentication data including session tok
     `;
     
     alert(instructions);
+}
+
+// Certificate Management Functions
+async function uploadCertificates() {
+    const certFile = document.getElementById('ssl-certificate-file').files[0];
+    const keyFile = document.getElementById('ssl-private-key-file').files[0];
+    const chainFile = document.getElementById('ssl-certificate-chain').files[0];
+    
+    if (!certFile || !keyFile) {
+        showToast('Please select both certificate and private key files', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('certificate', certFile);
+    formData.append('private_key', keyFile);
+    if (chainFile) {
+        formData.append('certificate_chain', chainFile);
+    }
+    
+    // Show progress
+    const progressDiv = document.getElementById('cert-upload-progress');
+    const progressFill = document.getElementById('cert-progress-fill');
+    const progressText = document.getElementById('cert-progress-text');
+    const uploadBtn = document.getElementById('upload-cert-btn');
+    
+    progressDiv.style.display = 'block';
+    uploadBtn.disabled = true;
+    progressText.textContent = 'Uploading certificates...';
+    
+    try {
+        const response = await fetch('/api/security/certificates/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            progressFill.style.width = '100%';
+            progressText.textContent = 'Upload complete!';
+            showToast('Certificates uploaded successfully', 'success');
+            
+            // Refresh certificate status
+            await loadCertificateStatus();
+            
+            // Clear file inputs
+            document.getElementById('ssl-certificate-file').value = '';
+            document.getElementById('ssl-private-key-file').value = '';
+            document.getElementById('ssl-certificate-chain').value = '';
+            
+        } else {
+            throw new Error(result.error || 'Upload failed');
+        }
+        
+    } catch (error) {
+        console.error('Certificate upload error:', error);
+        showToast(`Upload failed: ${error.message}`, 'error');
+        progressText.textContent = 'Upload failed';
+    } finally {
+        uploadBtn.disabled = false;
+        setTimeout(() => {
+            progressDiv.style.display = 'none';
+            progressFill.style.width = '0%';
+        }, 2000);
+    }
+}
+
+async function validateCertificate() {
+    const validateBtn = document.getElementById('validate-cert-btn');
+    const resultsDiv = document.getElementById('cert-validation-results');
+    const resultsContent = document.getElementById('cert-validation-content');
+    
+    validateBtn.disabled = true;
+    validateBtn.textContent = 'Validating...';
+    
+    try {
+        const response = await fetch('/api/security/certificates/validate', {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const validation = result.validation;
+            let statusClass = validation.valid ? 'text-success' : 'text-danger';
+            
+            resultsContent.innerHTML = `
+                <div class="validation-result ${statusClass}">
+                    <strong>Status:</strong> ${validation.valid ? '✅ Valid' : '❌ Invalid'}
+                </div>
+                <div class="validation-details">
+                    <p><strong>Subject:</strong> ${validation.subject || 'N/A'}</p>
+                    <p><strong>Issuer:</strong> ${validation.issuer || 'N/A'}</p>
+                    <p><strong>Valid From:</strong> ${validation.not_before || 'N/A'}</p>
+                    <p><strong>Valid Until:</strong> ${validation.not_after || 'N/A'}</p>
+                    <p><strong>Days Until Expiry:</strong> ${validation.days_until_expiry || 'N/A'}</p>
+                    ${validation.alt_names ? `<p><strong>Alternative Names:</strong> ${validation.alt_names.join(', ')}</p>` : ''}
+                    ${validation.errors.length > 0 ? `<div class="validation-errors"><strong>Errors:</strong><ul>${validation.errors.map(err => `<li>${err}</li>`).join('')}</ul></div>` : ''}
+                </div>
+            `;
+            
+            resultsDiv.style.display = 'block';
+            
+        } else {
+            throw new Error(result.error || 'Validation failed');
+        }
+        
+    } catch (error) {
+        console.error('Certificate validation error:', error);
+        resultsContent.innerHTML = `<div class="text-danger">Validation failed: ${error.message}</div>`;
+        resultsDiv.style.display = 'block';
+    } finally {
+        validateBtn.disabled = false;
+        validateBtn.textContent = 'Validate Certificate';
+    }
+}
+
+async function downloadCertificate() {
+    try {
+        const response = await fetch('/api/security/certificates/download');
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'mvidarr-certificate.crt';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showToast('Certificate downloaded successfully', 'success');
+        } else {
+            const result = await response.json();
+            throw new Error(result.error || 'Download failed');
+        }
+        
+    } catch (error) {
+        console.error('Certificate download error:', error);
+        showToast(`Download failed: ${error.message}`, 'error');
+    }
+}
+
+async function removeCertificates() {
+    if (!confirm('Are you sure you want to remove the SSL certificates? This will disable HTTPS functionality.')) {
+        return;
+    }
+    
+    const removeBtn = document.getElementById('remove-cert-btn');
+    removeBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/security/certificates/remove', {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('Certificates removed successfully', 'success');
+            await loadCertificateStatus();
+        } else {
+            throw new Error(result.error || 'Removal failed');
+        }
+        
+    } catch (error) {
+        console.error('Certificate removal error:', error);
+        showToast(`Removal failed: ${error.message}`, 'error');
+    } finally {
+        removeBtn.disabled = false;
+    }
+}
+
+async function loadCertificateStatus() {
+    try {
+        const response = await fetch('/api/security/certificates/status');
+        const result = await response.json();
+        
+        if (result.success) {
+            const status = result.status;
+            
+            // Update status display
+            document.getElementById('cert-status').textContent = status.certificate_exists ? '✅ Configured' : '❌ Not configured';
+            document.getElementById('key-status').textContent = status.private_key_exists ? '✅ Configured' : '❌ Not configured';
+            document.getElementById('cert-expiry').textContent = status.expiry_date || 'N/A';
+            
+            // Show/hide action buttons based on certificate existence
+            const downloadBtn = document.getElementById('download-cert-btn');
+            const removeBtn = document.getElementById('remove-cert-btn');
+            
+            if (status.certificate_exists) {
+                downloadBtn.style.display = 'inline-block';
+                removeBtn.style.display = 'inline-block';
+            } else {
+                downloadBtn.style.display = 'none';
+                removeBtn.style.display = 'none';
+            }
+            
+            // Update status styling
+            const certStatusEl = document.getElementById('cert-status');
+            const keyStatusEl = document.getElementById('key-status');
+            
+            certStatusEl.className = `status-value ${status.certificate_exists ? 'text-success' : 'text-warning'}`;
+            keyStatusEl.className = `status-value ${status.private_key_exists ? 'text-success' : 'text-warning'}`;
+            
+        } else {
+            console.error('Failed to load certificate status:', result.error);
+        }
+        
+    } catch (error) {
+        console.error('Error loading certificate status:', error);
+    }
 }
 
 </script>
@@ -7237,6 +7541,178 @@ document.addEventListener('keydown', function(event) {
     
     .blacklist-stats {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Certificate Management Styles */
+.certificate-status {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.certificate-status h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-secondary);
+}
+
+.status-item:last-child {
+    border-bottom: none;
+}
+
+.status-label {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.status-value {
+    font-weight: bold;
+}
+
+.status-value.text-success {
+    color: var(--success, #28a745);
+}
+
+.status-value.text-warning {
+    color: var(--warning, #ffc107);
+}
+
+.status-value.text-danger {
+    color: var(--danger, #dc3545);
+}
+
+.certificate-upload {
+    margin-bottom: 1.5rem;
+}
+
+.certificate-upload h3 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.certificate-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.certificate-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: var(--bg-tertiary);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.validation-result {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.validation-result.text-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border: 1px solid var(--success, #28a745);
+}
+
+.validation-result.text-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--danger, #dc3545);
+}
+
+.validation-details p {
+    margin: 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.validation-errors {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: rgba(220, 53, 69, 0.05);
+    border-radius: 6px;
+}
+
+.validation-errors ul {
+    margin: 0.5rem 0 0 0;
+    padding-left: 1.5rem;
+}
+
+.validation-errors li {
+    color: var(--danger, #dc3545);
+    margin-bottom: 0.25rem;
+}
+
+/* File input styling */
+input[type="file"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 2px dashed var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+input[type="file"]:hover {
+    border-color: var(--primary);
+    background: var(--bg-hover);
+}
+
+input[type="file"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .certificate-actions {
+        flex-direction: column;
+    }
+    
+    .certificate-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .status-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
     }
 }
 </style>
