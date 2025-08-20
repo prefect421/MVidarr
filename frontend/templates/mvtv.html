@@ -1256,6 +1256,26 @@ async function loadFilterOptions() {
             console.log('No playlists found or API error:', playlistsData);
         }
         
+        // Auto-select playlist if specified in URL parameters
+        if (window.autoSelectPlaylist) {
+            const playlistToSelect = window.autoSelectPlaylist;
+            const playlistOption = Array.from(playlistFilter.options).find(option => option.value === playlistToSelect);
+            if (playlistOption) {
+                playlistFilter.value = playlistToSelect;
+                console.log(`Auto-selected playlist ${playlistToSelect} from URL parameter`);
+                // Update page title to indicate playlist is loaded
+                document.title = `MVidarr - MvTV - ${playlistOption.textContent}`;
+                // Auto-trigger playlist loading
+                setTimeout(() => {
+                    applyPlaylistFilter();
+                }, 100);
+            } else {
+                console.warn(`Playlist ${playlistToSelect} not found in available playlists`);
+            }
+            // Clear the flag
+            delete window.autoSelectPlaylist;
+        }
+        
         // Load artists (load all artists for search functionality)
         const artistsResponse = await fetch('/api/artists');
         const artistsData = await artistsResponse.json();
@@ -1534,7 +1554,21 @@ let mvtvPlayer;
 document.addEventListener('DOMContentLoaded', function() {
     loadFilterOptions();
     mvtvPlayer = new MvTVPlayer();
+    
+    // Check for URL parameters and auto-apply filters
+    checkUrlParameters();
 });
+
+function checkUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const playlistId = urlParams.get('playlist');
+    
+    if (playlistId) {
+        console.log(`URL parameter detected: playlist=${playlistId}`);
+        // Store the playlist ID to be applied after filters load
+        window.autoSelectPlaylist = playlistId;
+    }
+}
 
 // Filter Panel Toggle Function
 function toggleFilterPanel() {
