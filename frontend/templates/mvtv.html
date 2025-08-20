@@ -1611,16 +1611,22 @@ async function loadCinematicVideoSubtitles(videoId) {
         
         const subtitles = await response.json();
         console.log('Cinematic subtitles API response:', subtitles);
-        if (!subtitles.success || !subtitles.subtitles || subtitles.subtitles.length === 0) {
+        
+        // Handle different API response formats
+        let subtitleArray = subtitles.subtitles || subtitles;
+        
+        if (!subtitleArray || subtitleArray.length === 0) {
             console.log('No cinematic subtitles available or API failed');
             return;
         }
         
+        console.log('Found', subtitleArray.length, 'cinematic subtitle tracks');
+        
         const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
         console.log('Cinematic video player found:', !!cinematicVideoPlayer);
         
-        console.log('Adding', subtitles.subtitles.length, 'subtitle tracks to cinematic player');
-        subtitles.subtitles.forEach((subtitle, index) => {
+        console.log('Adding', subtitleArray.length, 'subtitle tracks to cinematic player');
+        subtitleArray.forEach((subtitle, index) => {
             const track = document.createElement('track');
             track.kind = 'subtitles';
             track.src = `/api/videos/${videoId}/subtitles/${subtitle.filename}`;
