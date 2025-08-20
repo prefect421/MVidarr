@@ -812,6 +812,11 @@ class MvTVPlayer {
             this.showError('Error playing video. Skipping to next...');
             setTimeout(() => this.nextVideo(), 2000);
         });
+        
+        this.videoPlayer.addEventListener('abort', (e) => {
+            console.log('Video loading aborted (normal when switching videos quickly)');
+            // Don't treat abort as an error - it's normal when switching videos
+        });
     }
     
     async loadVideos() {
@@ -906,7 +911,7 @@ class MvTVPlayer {
                 }
                 
                 this.updateQueue();
-                this.loadVideo(0);
+                await this.loadVideo(0);
             } else {
                 this.showError('No videos found matching your criteria.');
             }
@@ -941,26 +946,84 @@ class MvTVPlayer {
         }
     }
     
-    loadVideo(index) {
+    async loadVideo(index) {
         if (index < 0 || index >= this.playlist.length) return;
         
         const video = this.playlist[index];
         this.currentIndex = index;
         
-        // Update video source
-        this.videoSource.src = `/api/videos/${video.id}/stream`;
-        this.videoPlayer.load();
-        
-        // Load subtitles for this video
-        loadVideoSubtitles(video.id);
-        
-        // Update video info
-        this.updateVideoInfo(video);
-        this.updateQueue();
-        this.updatePosition();
-        
-        // Add to played indices
-        this.playedIndices.add(index);
+        try {
+            // Update status to show loading
+            this.updateStatus(`Loading: ${video.title}...`);
+            
+            // Clear any existing subtitle tracks first
+            this.clearSubtitleTracks();
+            
+            // Load subtitles for this video first, then update video source
+            await loadVideoSubtitles(video.id);
+            
+            // Update video source after subtitles are loaded
+            this.videoSource.src = `/api/videos/${video.id}/stream`;
+            
+            // Handle video loading with proper error handling
+            return new Promise((resolve, reject) => {
+                const handleLoadSuccess = () => {
+                    this.videoPlayer.removeEventListener('loadeddata', handleLoadSuccess);
+                    this.videoPlayer.removeEventListener('error', handleLoadError);
+                    this.videoPlayer.removeEventListener('abort', handleLoadAbort);
+                    
+                    // Update video info
+                    this.updateVideoInfo(video);
+                    this.updateQueue();
+                    this.updatePosition();
+                    
+                    // Add to played indices
+                    this.playedIndices.add(index);
+                    
+                    this.updateStatus(`Ready: ${video.title}`);
+                    resolve();
+                };
+                
+                const handleLoadError = (e) => {
+                    this.videoPlayer.removeEventListener('loadeddata', handleLoadSuccess);
+                    this.videoPlayer.removeEventListener('error', handleLoadError);
+                    this.videoPlayer.removeEventListener('abort', handleLoadAbort);
+                    
+                    console.error('Error loading video:', e);
+                    this.updateStatus(`Error loading: ${video.title}`);
+                    resolve(); // Don't reject, just continue
+                };
+                
+                const handleLoadAbort = (e) => {
+                    this.videoPlayer.removeEventListener('loadeddata', handleLoadSuccess);
+                    this.videoPlayer.removeEventListener('error', handleLoadError);
+                    this.videoPlayer.removeEventListener('abort', handleLoadAbort);
+                    
+                    console.log('Video loading aborted (likely due to switching videos)');
+                    resolve(); // Don't reject, this is normal when switching videos quickly
+                };
+                
+                this.videoPlayer.addEventListener('loadeddata', handleLoadSuccess);
+                this.videoPlayer.addEventListener('error', handleLoadError);
+                this.videoPlayer.addEventListener('abort', handleLoadAbort);
+                
+                this.videoPlayer.load();
+            });
+            
+        } catch (error) {
+            console.error('Error in loadVideo:', error);
+            this.updateStatus(`Error: Failed to load ${video.title}`);
+            
+            // Update video info even on error to maintain UI consistency
+            this.updateVideoInfo(video);
+            this.updateQueue();
+            this.updatePosition();
+        }
+    }
+    
+    clearSubtitleTracks() {
+        const existingTracks = this.videoPlayer.querySelectorAll('track');
+        existingTracks.forEach(track => track.remove());
     }
     
     updateVideoInfo(video) {
@@ -1063,7 +1126,7 @@ class MvTVPlayer {
         this.videoPlayer.pause();
     }
     
-    nextVideo() {
+    async nextVideo() {
         if (this.playlist.length === 0) return;
         
         let nextIndex;
@@ -1089,7 +1152,7 @@ class MvTVPlayer {
             nextIndex = (this.currentIndex + 1) % this.playlist.length;
         }
         
-        this.loadVideo(nextIndex);
+        await this.loadVideo(nextIndex);
         
         // Auto-play if currently playing
         if (this.isPlaying) {
@@ -1097,7 +1160,7 @@ class MvTVPlayer {
         }
     }
     
-    previousVideo() {
+    async previousVideo() {
         if (this.playlist.length === 0) return;
         
         let prevIndex;
@@ -1113,7 +1176,7 @@ class MvTVPlayer {
             }
         }
         
-        this.loadVideo(prevIndex);
+        await this.loadVideo(prevIndex);
         
         // Auto-play if currently playing
         if (this.isPlaying) {
@@ -1131,7 +1194,7 @@ class MvTVPlayer {
         this.playedIndices.add(this.currentIndex);
     }
     
-    removeFromQueue(index) {
+    async removeFromQueue(index) {
         this.playlist.splice(index, 1);
         
         // Adjust current index if necessary
@@ -1143,7 +1206,7 @@ class MvTVPlayer {
                 this.currentIndex = 0;
             }
             if (this.playlist.length > 0) {
-                this.loadVideo(this.currentIndex);
+                await this.loadVideo(this.currentIndex);
             }
         }
         
@@ -1496,16 +1559,22 @@ let availableSubtitles = [];
 
 async function loadVideoSubtitles(videoId) {
     try {
+        console.log(`Loading subtitles for video ${videoId}`);
         const response = await fetch(`/api/videos/${videoId}/subtitles`);
         const data = await response.json();
         availableSubtitles = data.subtitles || [];
         
+        console.log(`Found ${availableSubtitles.length} subtitle tracks for video ${videoId}:`, availableSubtitles);
+        
         // Automatically load all available subtitle tracks for native video controls
         if (availableSubtitles.length > 0) {
             loadAllSubtitleTracks();
+        } else {
+            console.log(`No subtitles available for video ${videoId}`);
         }
     } catch (error) {
         console.error('Failed to load subtitles:', error);
+        availableSubtitles = [];
     }
 }
 
@@ -1515,11 +1584,7 @@ function loadAllSubtitleTracks() {
     
     console.log('Loading subtitle tracks for MvTV:', availableSubtitles);
     
-    // Remove existing tracks
-    const existingTracks = videoElement.querySelectorAll('track');
-    existingTracks.forEach(track => track.remove());
-    
-    // Add all available subtitle tracks
+    // Add all available subtitle tracks (clearing is handled by the player class)
     availableSubtitles.forEach((subtitle, index) => {
         const track = document.createElement('track');
         track.kind = 'subtitles';
@@ -1650,6 +1715,16 @@ document.addEventListener('click', (event) => {
     
     if (menu && toggle && !menu.contains(event.target) && !toggle.contains(event.target)) {
         menu.style.display = 'none';
+    }
+});
+
+// Handle unhandled promise rejections (especially from video loading aborts)
+window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.name === 'AbortError' || 
+        (event.reason && event.reason.message && event.reason.message.includes('aborted'))) {
+        // This is likely a video loading abort - prevent it from showing as an error
+        console.log('Video loading aborted (handled):', event.reason.message);
+        event.preventDefault();
     }
 });
 

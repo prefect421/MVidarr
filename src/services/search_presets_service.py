@@ -577,7 +577,7 @@ class SearchPresetsService:
                 user_id=user_id,
                 event_type=event_type,
                 preset_id=preset_id,
-                metadata=metadata,
+                metadata=event_metadata,
             )
 
             db.add(analytics_event)

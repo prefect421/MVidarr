@@ -4500,6 +4500,33 @@ body {
     flex: 1;
 }
 
+.external-links a {
+    display: inline-block;
+    margin-right: 0.5rem;
+    text-decoration: none;
+    font-size: 1.2rem;
+    transition: transform 0.2s ease;
+}
+
+.external-links a:hover {
+    transform: scale(1.2);
+}
+
+.metadata-value.biography {
+    font-style: italic;
+    line-height: 1.4;
+    color: #e0e0e0;
+}
+
+.metadata-value a {
+    color: #00d4ff;
+    text-decoration: none;
+}
+
+.metadata-value a:hover {
+    text-decoration: underline;
+}
+
 .activity-item {
     display: flex;
     justify-content: space-between;

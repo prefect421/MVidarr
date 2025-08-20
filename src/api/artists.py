@@ -1110,14 +1110,15 @@ def get_artist_detailed(artist_id):
             stats = {
                 "total_videos": len(videos),
                 "downloaded_videos": len(
-                    [v for v in videos if v.status == "DOWNLOADED"]
+                    [v for v in videos if v.status == VideoStatus.DOWNLOADED]
                 ),
-                "wanted_videos": len([v for v in videos if v.status == "WANTED"]),
+                "wanted_videos": len([v for v in videos if v.status == VideoStatus.WANTED]),
                 "downloading_videos": len(
-                    [v for v in videos if v.status == "DOWNLOADING"]
+                    [v for v in videos if v.status == VideoStatus.DOWNLOADING]
                 ),
-                "failed_videos": len([v for v in videos if v.status == "FAILED"]),
-                "ignored_videos": len([v for v in videos if v.status == "IGNORED"]),
+                "failed_videos": len([v for v in videos if v.status == VideoStatus.FAILED]),
+                "ignored_videos": len([v for v in videos if v.status == VideoStatus.IGNORED]),
+                "monitored_videos": len([v for v in videos if v.status == VideoStatus.MONITORED]),
                 "latest_video_date": None,
                 "earliest_video_date": None,
                 "total_duration": 0,
