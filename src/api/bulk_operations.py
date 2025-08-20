@@ -3,7 +3,7 @@ Bulk Operations API endpoints for MVidarr 0.9.7 - Issue #74
 Provides comprehensive bulk operations with background processing, progress tracking, and undo/redo.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
 from flask import Blueprint, g, jsonify, request
@@ -11,6 +11,7 @@ from marshmallow import Schema, ValidationError, fields
 
 from src.database.bulk_models import BulkOperationStatus, BulkOperationType
 from src.database.connection import get_db
+from src.middleware.simple_auth_middleware import auth_required
 from src.services.bulk_operations_service import bulk_operations_service
 from src.utils.logger import get_logger
 
@@ -39,6 +40,7 @@ class BulkOperationUpdateSchema(Schema):
 
 
 @bulk_operations_bp.route("/operations", methods=["POST"])
+@auth_required
 def create_bulk_operation():
     """
     Create a new bulk operation
@@ -117,6 +119,7 @@ def create_bulk_operation():
 
 
 @bulk_operations_bp.route("/operations/<int:operation_id>", methods=["GET"])
+@auth_required
 def get_bulk_operation(operation_id: int):
     """
     Get a specific bulk operation
@@ -166,6 +169,7 @@ def get_bulk_operation(operation_id: int):
 
 
 @bulk_operations_bp.route("/operations/<int:operation_id>", methods=["PUT"])
+@auth_required
 def update_bulk_operation(operation_id: int):
     """
     Update a bulk operation (start, cancel, undo)
@@ -222,6 +226,7 @@ def update_bulk_operation(operation_id: int):
 
 
 @bulk_operations_bp.route("/operations", methods=["GET"])
+@auth_required
 def list_bulk_operations():
     """
     List bulk operations for the current user
@@ -261,6 +266,7 @@ def list_bulk_operations():
 
 
 @bulk_operations_bp.route("/operations/<int:operation_id>/progress", methods=["GET"])
+@auth_required
 def get_operation_progress(operation_id: int):
     """
     Get real-time progress for a bulk operation
@@ -310,6 +316,7 @@ def get_operation_progress(operation_id: int):
 
 
 @bulk_operations_bp.route("/operations/<int:operation_id>/audit", methods=["GET"])
+@auth_required
 def get_operation_audit(operation_id: int):
     """
     Get audit trail for a bulk operation
@@ -353,6 +360,7 @@ def get_operation_audit(operation_id: int):
 
 
 @bulk_operations_bp.route("/templates", methods=["GET"])
+@auth_required
 def list_operation_templates():
     """
     List available bulk operation templates
@@ -410,6 +418,7 @@ def list_operation_templates():
 
 
 @bulk_operations_bp.route("/preview", methods=["POST"])
+@auth_required
 def preview_bulk_operation():
     """
     Preview a bulk operation without executing it
@@ -473,6 +482,7 @@ def preview_bulk_operation():
 
 
 @bulk_operations_bp.route("/stats", methods=["GET"])
+@auth_required
 def get_bulk_operation_stats():
     """
     Get bulk operation statistics for the current user
