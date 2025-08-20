@@ -338,6 +338,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.queue-item:hover {
+    background: var(--bg-hover, #2a2a2a);
+    border-color: var(--text-accent, #00d4ff);
+    transform: translateX(2px);
+}
+
+.queue-item-content {
+    flex-grow: 1;
+    pointer-events: none; /* Prevent text selection interfering with clicks */
 }
 
 .queue-item.current {
@@ -549,6 +562,11 @@ body.light-theme .queue-item {
     background: white;
     border: 1px solid #e1e5e9;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .queue-item:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
 }
 
 body.light-theme .queue-item.current {
@@ -1097,12 +1115,12 @@ class MvTVPlayer {
         }
         
         queueList.innerHTML = nextVideos.map((video, i) => `
-            <div class="queue-item ${i === 0 ? 'current' : ''}">
-                <div>
+            <div class="queue-item ${i === 0 ? 'current' : ''}" onclick="mvtvPlayer.jumpToVideo(${video.index})" title="Click to play this video">
+                <div class="queue-item-content">
                     <div class="title">${video.title}</div>
                     <div class="artist">${video.artist_name || 'Unknown Artist'}</div>
                 </div>
-                <button class="remove-btn" onclick="mvtvPlayer.removeFromQueue(${video.index})">×</button>
+                <button class="remove-btn" onclick="event.stopPropagation(); mvtvPlayer.removeFromQueue(${video.index})" title="Remove from queue">×</button>
             </div>
         `).join('');
     }
@@ -1221,6 +1239,16 @@ class MvTVPlayer {
         this.playedIndices.add(this.currentIndex);
     }
     
+    async jumpToVideo(index) {
+        if (index >= 0 && index < this.playlist.length) {
+            await this.loadVideo(index);
+            // Auto-play if currently playing
+            if (this.isPlaying) {
+                this.videoPlayer.play();
+            }
+        }
+    }
+
     async removeFromQueue(index) {
         this.playlist.splice(index, 1);
         
