@@ -462,30 +462,34 @@ class MetadataEnrichmentService:
             logger.error(f"Error getting IMVDb metadata: {e}")
             return None
 
-    async def _get_musicbrainz_metadata(self, artist_data: Dict) -> Optional[ArtistMetadata]:
+    async def _get_musicbrainz_metadata(
+        self, artist_data: Dict
+    ) -> Optional[ArtistMetadata]:
         """Get enhanced metadata from MusicBrainz"""
         try:
             # Check if we have a MusicBrainz ID from Last.fm or elsewhere
             mbid = None
-            
+
             # Try to get MBID from existing data sources if available
             # This could come from Last.fm data or stored metadata
             with get_db() as session:
-                artist = session.query(Artist).filter(Artist.id == artist_data["id"]).first()
+                artist = (
+                    session.query(Artist).filter(Artist.id == artist_data["id"]).first()
+                )
                 if artist and artist.imvdb_metadata:
                     # Check if we have stored MBID in metadata
                     stored_mbid = artist.imvdb_metadata.get("musicbrainz_id")
                     if stored_mbid:
                         mbid = stored_mbid
-            
+
             # Get metadata from MusicBrainz
             mb_metadata = self.musicbrainz.get_artist_metadata_for_enrichment(
                 artist_data["name"], mbid
             )
-            
+
             if not mb_metadata:
                 return None
-            
+
             # Convert to ArtistMetadata format
             metadata = ArtistMetadata(
                 name=mb_metadata.get("name", artist_data["name"]),
@@ -495,7 +499,7 @@ class MetadataEnrichmentService:
                 mbid=mb_metadata.get("mbid"),
                 raw_data=mb_metadata.get("raw_data", {}),
             )
-            
+
             # Add additional MusicBrainz-specific fields if available
             if mb_metadata.get("formed_year"):
                 metadata.raw_data["formed_year"] = mb_metadata["formed_year"]
@@ -507,9 +511,9 @@ class MetadataEnrichmentService:
                 metadata.raw_data["type"] = mb_metadata["type"]
             if mb_metadata.get("external_urls"):
                 metadata.raw_data["external_urls"] = mb_metadata["external_urls"]
-            
+
             return metadata
-            
+
         except Exception as e:
             logger.error(f"Error getting MusicBrainz metadata: {e}")
             return None
@@ -676,7 +680,7 @@ class MetadataEnrichmentService:
         if metadata.imvdb_id and artist.imvdb_id != metadata.imvdb_id:
             artist.imvdb_id = metadata.imvdb_id
             updated_fields["imvdb_id"] = metadata.imvdb_id
-        
+
         # Store MusicBrainz ID in metadata JSON since there's no dedicated field
         if metadata.mbid:
             if not artist.imvdb_metadata:
@@ -1114,160 +1118,201 @@ class MetadataEnrichmentService:
         try:
             with get_db() as session:
                 video = session.query(Video).filter(Video.id == video_id).first()
-                
+
                 if not video:
                     return EnrichmentResult(
-                        video_id=video_id,
-                        success=False,
-                        errors=["Video not found"]
+                        video_id=video_id, success=False, errors=["Video not found"]
                     )
-                
+
                 if not video.artist:
                     return EnrichmentResult(
                         video_id=video_id,
                         success=False,
-                        errors=["No artist associated with video"]
+                        errors=["No artist associated with video"],
                     )
-                
+
                 # Extract data before API calls
                 artist_name = video.artist.name
                 video_title = video.title
                 current_imvdb_id = video.imvdb_id
-                
+
                 logger.info(f"Enriching video metadata: {video_title} by {artist_name}")
-                
+
                 # Collect metadata from multiple sources
                 metadata_sources = {}
                 updated_fields = []
                 errors = []
-                
+
                 # 1. IMVDb enrichment (primary video metadata source)
                 try:
                     if not current_imvdb_id or force_refresh:
                         # Search for video on IMVDb
-                        search_results = imvdb_service.search_videos(artist_name, video_title)
-                        
+                        search_results = imvdb_service.search_videos(
+                            artist_name, video_title
+                        )
+
                         if search_results and len(search_results) > 0:
                             best_match = search_results[0]
-                            imvdb_id = best_match.get('id')
-                            
+                            imvdb_id = best_match.get("id")
+
                             if imvdb_id:
                                 # Get detailed video metadata
-                                video_details = imvdb_service.get_video_by_id(str(imvdb_id))
+                                video_details = imvdb_service.get_video_by_id(
+                                    str(imvdb_id)
+                                )
                                 if video_details:
-                                    metadata_sources['imvdb'] = video_details
-                                    
+                                    metadata_sources["imvdb"] = video_details
+
                                     # Update video with IMVDb metadata
                                     if not current_imvdb_id:
                                         video.imvdb_id = str(imvdb_id)
-                                        updated_fields.append('imvdb_id')
-                                    
-                                    if video_details.get('year') and not video.year:
-                                        video.year = video_details['year']
-                                        updated_fields.append('year')
-                                    
-                                    if video_details.get('directors') and not video.directors:
-                                        video.directors = ', '.join(video_details['directors'])
-                                        updated_fields.append('directors')
-                                    
-                                    if video_details.get('producers') and not video.producers:
-                                        video.producers = ', '.join(video_details['producers'])
-                                        updated_fields.append('producers')
-                                        
+                                        updated_fields.append("imvdb_id")
+
+                                    if video_details.get("year") and not video.year:
+                                        video.year = video_details["year"]
+                                        updated_fields.append("year")
+
+                                    if (
+                                        video_details.get("directors")
+                                        and not video.directors
+                                    ):
+                                        video.directors = ", ".join(
+                                            video_details["directors"]
+                                        )
+                                        updated_fields.append("directors")
+
+                                    if (
+                                        video_details.get("producers")
+                                        and not video.producers
+                                    ):
+                                        video.producers = ", ".join(
+                                            video_details["producers"]
+                                        )
+                                        updated_fields.append("producers")
+
                                     # Additional metadata fields
-                                    if video_details.get('genre') and not video.genres:
+                                    if video_details.get("genre") and not video.genres:
                                         # Store as JSON list for consistency with model
-                                        video.genres = [video_details['genre']] if isinstance(video_details['genre'], str) else video_details['genre']
-                                        updated_fields.append('genres')
-                                        
-                                    if video_details.get('album') and not video.album:
-                                        video.album = video_details['album']
-                                        updated_fields.append('album')
+                                        video.genres = (
+                                            [video_details["genre"]]
+                                            if isinstance(video_details["genre"], str)
+                                            else video_details["genre"]
+                                        )
+                                        updated_fields.append("genres")
+
+                                    if video_details.get("album") and not video.album:
+                                        video.album = video_details["album"]
+                                        updated_fields.append("album")
                 except Exception as e:
                     errors.append(f"IMVDb enrichment failed: {str(e)}")
                     logger.warning(f"IMVDb enrichment failed for video {video_id}: {e}")
-                
+
                 # 2. Spotify enrichment (for track metadata)
                 try:
                     if video.artist.spotify_id:
                         # Search for track on Spotify
-                        track_search = spotify_service.search_tracks(f"{video_title} {artist_name}")
-                        
-                        if track_search and track_search.get('tracks', {}).get('items'):
-                            best_track = track_search['tracks']['items'][0]
-                            metadata_sources['spotify'] = best_track
-                            
+                        track_search = spotify_service.search_tracks(
+                            f"{video_title} {artist_name}"
+                        )
+
+                        if track_search and track_search.get("tracks", {}).get("items"):
+                            best_track = track_search["tracks"]["items"][0]
+                            metadata_sources["spotify"] = best_track
+
                             # Update with Spotify metadata
-                            if best_track.get('album', {}).get('name') and not video.album:
-                                video.album = best_track['album']['name']
-                                updated_fields.append('album')
-                            
-                            if best_track.get('album', {}).get('release_date') and not video.year:
-                                release_year = best_track['album']['release_date'].split('-')[0]
+                            if (
+                                best_track.get("album", {}).get("name")
+                                and not video.album
+                            ):
+                                video.album = best_track["album"]["name"]
+                                updated_fields.append("album")
+
+                            if (
+                                best_track.get("album", {}).get("release_date")
+                                and not video.year
+                            ):
+                                release_year = best_track["album"][
+                                    "release_date"
+                                ].split("-")[0]
                                 try:
                                     video.year = int(release_year)
-                                    updated_fields.append('year')
+                                    updated_fields.append("year")
                                 except ValueError:
                                     pass
-                            
+
                             # Add genres from Spotify
-                            if best_track.get('album', {}).get('genres') and not video.genres:
+                            if (
+                                best_track.get("album", {}).get("genres")
+                                and not video.genres
+                            ):
                                 # Store as JSON list for consistency with model
-                                video.genres = best_track['album']['genres'][:3]  # Limit to 3 genres
-                                updated_fields.append('genres')
-                                
+                                video.genres = best_track["album"]["genres"][
+                                    :3
+                                ]  # Limit to 3 genres
+                                updated_fields.append("genres")
+
                 except Exception as e:
                     errors.append(f"Spotify enrichment failed: {str(e)}")
-                    logger.warning(f"Spotify enrichment failed for video {video_id}: {e}")
-                
+                    logger.warning(
+                        f"Spotify enrichment failed for video {video_id}: {e}"
+                    )
+
                 # 3. Last.fm enrichment (for additional track info)
                 try:
                     if video.artist.lastfm_name:
                         # Get track info from Last.fm
-                        track_info = lastfm_service.get_track_info(video.artist.lastfm_name, video_title)
-                        
+                        track_info = lastfm_service.get_track_info(
+                            video.artist.lastfm_name, video_title
+                        )
+
                         if track_info:
-                            metadata_sources['lastfm'] = track_info
-                            
+                            metadata_sources["lastfm"] = track_info
+
                             # Update with Last.fm metadata
-                            if track_info.get('album', {}).get('title') and not video.album:
-                                video.album = track_info['album']['title']
-                                updated_fields.append('album')
-                            
+                            if (
+                                track_info.get("album", {}).get("title")
+                                and not video.album
+                            ):
+                                video.album = track_info["album"]["title"]
+                                updated_fields.append("album")
+
                             # Add tags as genre if not present
-                            if track_info.get('toptags', {}).get('tag') and not video.genres:
-                                tags = track_info['toptags']['tag']
+                            if (
+                                track_info.get("toptags", {}).get("tag")
+                                and not video.genres
+                            ):
+                                tags = track_info["toptags"]["tag"]
                                 if isinstance(tags, list):
-                                    genre_tags = [tag['name'] for tag in tags[:3]]  # Top 3 tags
+                                    genre_tags = [
+                                        tag["name"] for tag in tags[:3]
+                                    ]  # Top 3 tags
                                     video.genres = genre_tags  # Store as JSON list
-                                    updated_fields.append('genres')
-                                
+                                    updated_fields.append("genres")
+
                 except Exception as e:
                     errors.append(f"Last.fm enrichment failed: {str(e)}")
-                    logger.warning(f"Last.fm enrichment failed for video {video_id}: {e}")
-                
+                    logger.warning(
+                        f"Last.fm enrichment failed for video {video_id}: {e}"
+                    )
+
                 # Update enrichment timestamp
                 video.last_enriched = datetime.utcnow()
-                updated_fields.append('last_enriched')
-                
+                updated_fields.append("last_enriched")
+
                 # Commit changes
                 session.commit()
-                
+
                 return EnrichmentResult(
                     video_id=video_id,
                     success=True,
                     enriched_fields=updated_fields,
                     metadata_sources=list(metadata_sources.keys()),
-                    errors=errors if errors else None
+                    errors=errors if errors else None,
                 )
-                
+
         except Exception as e:
             logger.error(f"Failed to enrich video {video_id}: {e}")
-            return EnrichmentResult(
-                video_id=video_id,
-                success=False,
-                errors=[str(e)]
-            )
+            return EnrichmentResult(video_id=video_id, success=False, errors=[str(e)])
 
     def get_enrichment_stats(self) -> Dict:
         """Get statistics about metadata enrichment"""
@@ -1294,7 +1339,7 @@ class MetadataEnrichmentService:
                     .filter(Artist.imvdb_id != "")
                     .count()
                 )
-                
+
                 # Count artists with MusicBrainz IDs (stored in JSON metadata)
                 with_musicbrainz = (
                     session.query(Artist)

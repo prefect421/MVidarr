@@ -81,7 +81,10 @@ def add_music_video_download():
 
         # Read subtitle language settings if not provided in request
         from src.services.settings_service import settings
-        subtitle_languages = data.get("subtitle_languages") or settings.get("subtitle_languages", "en,en-US")
+
+        subtitle_languages = data.get("subtitle_languages") or settings.get(
+            "subtitle_languages", "en,en-US"
+        )
 
         result = ytdlp_service.add_music_video_download(
             artist=artist,

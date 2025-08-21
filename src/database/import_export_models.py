@@ -4,29 +4,42 @@ Comprehensive data portability and backup management system.
 """
 
 import json
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field, asdict
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, Boolean, JSON, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+)
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import (
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.orm import relationship
 
 from src.database.connection import Base
 
 
 class ExportFormat(Enum):
     """Supported export formats"""
+
     JSON = "json"
-    CSV = "csv"  
+    CSV = "csv"
     XML = "xml"
     YAML = "yaml"
 
 
 class ExportType(Enum):
     """Types of exports"""
+
     FULL_LIBRARY = "full_library"
     ARTISTS_ONLY = "artists_only"
     VIDEOS_ONLY = "videos_only"
@@ -37,6 +50,7 @@ class ExportType(Enum):
 
 class ImportMode(Enum):
     """Import operation modes"""
+
     REPLACE_ALL = "replace_all"  # Replace entire database
     MERGE_UPDATE = "merge_update"  # Merge with existing data, update conflicts
     MERGE_SKIP = "merge_skip"  # Merge with existing data, skip conflicts
@@ -45,6 +59,7 @@ class ImportMode(Enum):
 
 class ProcessingStatus(Enum):
     """Status of import/export operations"""
+
     PENDING = "pending"
     RUNNING = "running"
     PAUSED = "paused"
@@ -55,6 +70,7 @@ class ProcessingStatus(Enum):
 
 class ValidationLevel(Enum):
     """Import validation levels"""
+
     STRICT = "strict"  # Fail on any validation error
     MODERATE = "moderate"  # Fix minor issues, fail on major ones
     PERMISSIVE = "permissive"  # Auto-fix as many issues as possible
@@ -63,6 +79,7 @@ class ValidationLevel(Enum):
 @dataclass
 class ExportOptions:
     """Configuration options for export operations"""
+
     format: ExportFormat = ExportFormat.JSON
     export_type: ExportType = ExportType.FULL_LIBRARY
     include_file_paths: bool = False  # Include local file paths
@@ -88,6 +105,7 @@ class ExportOptions:
 @dataclass
 class ImportOptions:
     """Configuration options for import operations"""
+
     mode: ImportMode = ImportMode.MERGE_UPDATE
     validation_level: ValidationLevel = ValidationLevel.MODERATE
     overwrite_duplicates: bool = False  # Overwrite existing records with same ID
@@ -104,9 +122,10 @@ class ImportOptions:
     progress_callback: Optional[Any] = None  # Progress reporting function
 
 
-@dataclass 
+@dataclass
 class ValidationError:
     """Single validation error record"""
+
     record_type: str
     record_id: Optional[str]
     field_name: str
@@ -119,6 +138,7 @@ class ValidationError:
 @dataclass
 class ValidationResult:
     """Result of import data validation"""
+
     is_valid: bool
     total_records: int
     valid_records: int
@@ -127,11 +147,12 @@ class ValidationResult:
     errors: List[ValidationError] = field(default_factory=list)
     warnings: List[ValidationError] = field(default_factory=list)
     processing_time: float = 0.0
-    
-    
+
+
 @dataclass
 class ProcessingProgress:
     """Progress tracking for import/export operations"""
+
     current_phase: str  # parsing, validation, processing, cleanup
     total_phases: int
     current_phase_progress: float  # 0.0 to 100.0
@@ -148,42 +169,43 @@ class ProcessingProgress:
 
 class ExportOperation(Base):
     """Track export operations"""
+
     __tablename__ = "export_operations"
-    
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     operation_name = Column(String(255), nullable=False)
     export_type = Column(SQLEnum(ExportType), nullable=False)
     export_format = Column(SQLEnum(ExportFormat), nullable=False)
     status = Column(SQLEnum(ProcessingStatus), default=ProcessingStatus.PENDING)
-    
+
     # Export configuration
     export_options = Column(JSON, nullable=True)  # Serialized ExportOptions
-    
+
     # File information
     output_filename = Column(String(255), nullable=True)
     output_size_bytes = Column(Integer, nullable=True)
     output_compressed = Column(Boolean, default=False)
     output_encrypted = Column(Boolean, default=False)
-    
+
     # Progress tracking
     total_records = Column(Integer, default=0)
     processed_records = Column(Integer, default=0)
     progress_percentage = Column(Integer, default=0)
-    
+
     # Timing
     created_at = Column(DateTime, default=datetime.utcnow)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     estimated_completion = Column(DateTime, nullable=True)
-    
+
     # Results
     result_data = Column(JSON, nullable=True)  # Export statistics
     error_log = Column(JSON, nullable=True)  # List of errors
-    
+
     # Relationships
     user = relationship("User", backref="export_operations")
-    
+
     def to_dict(self):
         """Convert to dictionary"""
         return {
@@ -198,66 +220,71 @@ class ExportOperation(Base):
             "output_filename": self.output_filename,
             "output_size_bytes": self.output_size_bytes,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (
+                self.completed_at.isoformat() if self.completed_at else None
+            ),
             "result_data": self.result_data,
-            "error_count": len(self.error_log) if self.error_log else 0
+            "error_count": len(self.error_log) if self.error_log else 0,
         }
 
 
 class ImportOperation(Base):
     """Track import operations"""
+
     __tablename__ = "import_operations"
-    
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     operation_name = Column(String(255), nullable=False)
     import_mode = Column(SQLEnum(ImportMode), nullable=False)
     validation_level = Column(SQLEnum(ValidationLevel), nullable=False)
     status = Column(SQLEnum(ProcessingStatus), default=ProcessingStatus.PENDING)
-    
-    # Import configuration  
+
+    # Import configuration
     import_options = Column(JSON, nullable=True)  # Serialized ImportOptions
-    
+
     # Source file information
     source_filename = Column(String(255), nullable=False)
     source_size_bytes = Column(Integer, nullable=True)
     source_format = Column(SQLEnum(ExportFormat), nullable=True)
     source_encrypted = Column(Boolean, default=False)
-    
+
     # Validation results
     validation_data = Column(JSON, nullable=True)  # Serialized ValidationResult
-    
+
     # Progress tracking
     total_records = Column(Integer, default=0)
     processed_records = Column(Integer, default=0)
     successful_records = Column(Integer, default=0)
     failed_records = Column(Integer, default=0)
     progress_percentage = Column(Integer, default=0)
-    
+
     # Timing
     created_at = Column(DateTime, default=datetime.utcnow)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     estimated_completion = Column(DateTime, nullable=True)
-    
+
     # Results
     result_data = Column(JSON, nullable=True)  # Import statistics
     error_log = Column(JSON, nullable=True)  # List of errors and warnings
-    
+
     # Backup information (if backup was created before import)
     backup_filename = Column(String(255), nullable=True)
     backup_created = Column(Boolean, default=False)
-    
+
     # Relationships
     user = relationship("User", backref="import_operations")
-    
+
     def to_dict(self):
         """Convert to dictionary"""
         return {
             "id": self.id,
             "operation_name": self.operation_name,
             "import_mode": self.import_mode.value if self.import_mode else None,
-            "validation_level": self.validation_level.value if self.validation_level else None,
+            "validation_level": (
+                self.validation_level.value if self.validation_level else None
+            ),
             "status": self.status.value if self.status else None,
             "progress_percentage": self.progress_percentage,
             "total_records": self.total_records,
@@ -267,54 +294,59 @@ class ImportOperation(Base):
             "source_filename": self.source_filename,
             "source_size_bytes": self.source_size_bytes,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (
+                self.completed_at.isoformat() if self.completed_at else None
+            ),
             "validation_data": self.validation_data,
             "backup_created": self.backup_created,
-            "error_count": len(self.error_log) if self.error_log else 0
+            "error_count": len(self.error_log) if self.error_log else 0,
         }
 
 
 class BackupSchedule(Base):
     """Automated backup scheduling configuration"""
+
     __tablename__ = "backup_schedules"
-    
+
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    
+
     # Schedule configuration
     enabled = Column(Boolean, default=True)
     frequency = Column(String(50), nullable=False)  # daily, weekly, monthly, custom
-    schedule_expression = Column(String(255), nullable=True)  # Cron expression for custom
-    
+    schedule_expression = Column(
+        String(255), nullable=True
+    )  # Cron expression for custom
+
     # Backup configuration
     export_options = Column(JSON, nullable=True)  # Serialized ExportOptions
     retention_days = Column(Integer, default=30)  # Keep backups for N days
     max_backups = Column(Integer, default=10)  # Maximum number of backups to keep
-    
+
     # Storage configuration
     backup_directory = Column(String(500), nullable=False)
     filename_template = Column(String(255), default="mvidarr_backup_{timestamp}.json")
-    
+
     # Status tracking
     last_backup_at = Column(DateTime, nullable=True)
     last_backup_status = Column(String(50), nullable=True)  # success, failed, skipped
     last_backup_filename = Column(String(255), nullable=True)
     last_backup_size = Column(Integer, nullable=True)
     next_scheduled_at = Column(DateTime, nullable=True)
-    
+
     # Error handling
     consecutive_failures = Column(Integer, default=0)
     max_consecutive_failures = Column(Integer, default=3)
     notify_on_failure = Column(Boolean, default=True)
     notification_email = Column(String(255), nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
     user = relationship("User", backref="backup_schedules")
-    
+
     def to_dict(self):
         """Convert to dictionary"""
         return {
@@ -327,19 +359,25 @@ class BackupSchedule(Base):
             "max_backups": self.max_backups,
             "backup_directory": self.backup_directory,
             "filename_template": self.filename_template,
-            "last_backup_at": self.last_backup_at.isoformat() if self.last_backup_at else None,
+            "last_backup_at": (
+                self.last_backup_at.isoformat() if self.last_backup_at else None
+            ),
             "last_backup_status": self.last_backup_status,
-            "next_scheduled_at": self.next_scheduled_at.isoformat() if self.next_scheduled_at else None,
+            "next_scheduled_at": (
+                self.next_scheduled_at.isoformat() if self.next_scheduled_at else None
+            ),
             "consecutive_failures": self.consecutive_failures,
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
 
 # Data export/import schema definitions using dataclasses
 
+
 @dataclass
 class ExportedArtist:
     """Exportable artist data"""
+
     id: int
     name: str
     imvdb_id: Optional[str] = None
@@ -355,7 +393,7 @@ class ExportedArtist:
     imvdb_metadata: Optional[Dict[str, Any]] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-    
+
     # Statistics (computed fields)
     video_count: int = 0
     downloaded_count: int = 0
@@ -364,6 +402,7 @@ class ExportedArtist:
 @dataclass
 class ExportedVideo:
     """Exportable video data"""
+
     id: int
     artist_id: int
     title: str
@@ -388,7 +427,7 @@ class ExportedVideo:
     imvdb_metadata: Optional[Dict[str, Any]] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-    
+
     # FFmpeg metadata (extracted from video_metadata)
     width: Optional[int] = None
     height: Optional[int] = None
@@ -397,7 +436,7 @@ class ExportedVideo:
     fps: Optional[float] = None
     bitrate: Optional[int] = None
     ffmpeg_extracted: bool = False
-    
+
     # File information (optional)
     local_path: Optional[str] = None
     file_size: Optional[int] = None
@@ -406,6 +445,7 @@ class ExportedVideo:
 @dataclass
 class ExportedPlaylist:
     """Exportable playlist data"""
+
     id: int
     name: str
     description: Optional[str] = None
@@ -418,7 +458,7 @@ class ExportedPlaylist:
     thumbnail_url: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-    
+
     # Playlist entries
     entries: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -426,6 +466,7 @@ class ExportedPlaylist:
 @dataclass
 class ExportedSetting:
     """Exportable application setting"""
+
     key: str
     value: Optional[str] = None
     description: Optional[str] = None
@@ -436,6 +477,7 @@ class ExportedSetting:
 @dataclass
 class ExportManifest:
     """Export file metadata and manifest"""
+
     export_version: str = "1.0"
     mvidarr_version: str = "0.9.7"
     export_timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
@@ -443,25 +485,25 @@ class ExportManifest:
     export_format: str = "json"
     compression_enabled: bool = False
     encryption_enabled: bool = False
-    
+
     # Data counts
     total_records: int = 0
     artists_count: int = 0
     videos_count: int = 0
     playlists_count: int = 0
     settings_count: int = 0
-    
+
     # Export options used
     includes_file_paths: bool = False
     includes_thumbnails: bool = True
     includes_metadata: bool = True
     includes_user_data: bool = False
     anonymized_users: bool = False
-    
+
     # Data integrity
     checksum: Optional[str] = None
     file_size_bytes: int = 0
-    
+
     # Export source
     exported_by_user: Optional[str] = None
     export_hostname: Optional[str] = None
@@ -470,34 +512,37 @@ class ExportManifest:
 @dataclass
 class ExportData:
     """Complete export data structure"""
+
     manifest: ExportManifest
     artists: List[ExportedArtist] = field(default_factory=list)
     videos: List[ExportedVideo] = field(default_factory=list)
     playlists: List[ExportedPlaylist] = field(default_factory=list)
     settings: List[ExportedSetting] = field(default_factory=list)
     blacklist: List[Dict[str, Any]] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return asdict(self)
-        
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ExportData':
+    def from_dict(cls, data: Dict[str, Any]) -> "ExportData":
         """Create from dictionary"""
-        manifest_data = data.get('manifest', {})
+        manifest_data = data.get("manifest", {})
         manifest = ExportManifest(**manifest_data)
-        
-        artists = [ExportedArtist(**artist) for artist in data.get('artists', [])]
-        videos = [ExportedVideo(**video) for video in data.get('videos', [])]
-        playlists = [ExportedPlaylist(**playlist) for playlist in data.get('playlists', [])]
-        settings = [ExportedSetting(**setting) for setting in data.get('settings', [])]
-        blacklist = data.get('blacklist', [])
-        
+
+        artists = [ExportedArtist(**artist) for artist in data.get("artists", [])]
+        videos = [ExportedVideo(**video) for video in data.get("videos", [])]
+        playlists = [
+            ExportedPlaylist(**playlist) for playlist in data.get("playlists", [])
+        ]
+        settings = [ExportedSetting(**setting) for setting in data.get("settings", [])]
+        blacklist = data.get("blacklist", [])
+
         return cls(
             manifest=manifest,
             artists=artists,
             videos=videos,
             playlists=playlists,
             settings=settings,
-            blacklist=blacklist
+            blacklist=blacklist,
         )

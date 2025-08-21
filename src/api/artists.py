@@ -190,31 +190,48 @@ def get_artists():
 
                 if date_from:
                     from datetime import datetime
+
                     date_from_dt = datetime.strptime(date_from, "%Y-%m-%d")
                     filtered_results = [
                         r
                         for r in filtered_results
-                        if r[0].created_at and r[0].created_at.date() >= date_from_dt.date()
+                        if r[0].created_at
+                        and r[0].created_at.date() >= date_from_dt.date()
                     ]
 
                 if date_to:
                     from datetime import datetime
+
                     date_to_dt = datetime.strptime(date_to, "%Y-%m-%d")
                     filtered_results = [
                         r
                         for r in filtered_results
-                        if r[0].created_at and r[0].created_at.date() <= date_to_dt.date()
+                        if r[0].created_at
+                        and r[0].created_at.date() <= date_to_dt.date()
                     ]
 
                 if keywords:
-                    keyword_list = [k.strip().lower() for k in keywords.split(",") if k.strip()]
+                    keyword_list = [
+                        k.strip().lower() for k in keywords.split(",") if k.strip()
+                    ]
                     filtered_results = [
                         r
                         for r in filtered_results
                         if any(
-                            keyword in r[0].name.lower() or 
-                            (r[0].keywords and any(keyword in str(kw).lower() for kw in r[0].keywords)) or
-                            (r[0].genres and any(keyword in str(genre).lower() for genre in r[0].genres))
+                            keyword in r[0].name.lower()
+                            or (
+                                r[0].keywords
+                                and any(
+                                    keyword in str(kw).lower() for kw in r[0].keywords
+                                )
+                            )
+                            or (
+                                r[0].genres
+                                and any(
+                                    keyword in str(genre).lower()
+                                    for genre in r[0].genres
+                                )
+                            )
                             for keyword in keyword_list
                         )
                     ]
@@ -253,24 +270,32 @@ def get_artists():
                 if min_videos and min_videos.strip():
                     try:
                         min_videos_int = int(min_videos)
-                        query = query.filter(func.coalesce(video_count_subquery.c.video_count, 0) >= min_videos_int)
+                        query = query.filter(
+                            func.coalesce(video_count_subquery.c.video_count, 0)
+                            >= min_videos_int
+                        )
                     except ValueError:
                         logger.warning(f"Invalid min_videos value: {min_videos}")
 
                 if max_videos and max_videos.strip():
                     try:
                         max_videos_int = int(max_videos)
-                        query = query.filter(func.coalesce(video_count_subquery.c.video_count, 0) <= max_videos_int)
+                        query = query.filter(
+                            func.coalesce(video_count_subquery.c.video_count, 0)
+                            <= max_videos_int
+                        )
                     except ValueError:
                         logger.warning(f"Invalid max_videos value: {max_videos}")
 
                 if date_from:
                     from datetime import datetime
+
                     date_from_dt = datetime.strptime(date_from, "%Y-%m-%d")
                     query = query.filter(Artist.created_at >= date_from_dt)
 
                 if date_to:
                     from datetime import datetime
+
                     date_to_dt = datetime.strptime(date_to, "%Y-%m-%d")
                     # Add one day to include the entire date_to day
                     date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
@@ -973,7 +998,9 @@ def get_artist_preview(imvdb_id):
 
         # Get artist's videos from IMVDb
         artist_name = artist_data.get("name", "")
-        videos_data = imvdb_service.search_artist_videos(artist_name, limit=50)  # Increased from 20 to improve discovery
+        videos_data = imvdb_service.search_artist_videos(
+            artist_name, limit=50
+        )  # Increased from 20 to improve discovery
 
         # Process video data
         videos_list = []
@@ -1247,13 +1274,21 @@ def get_artist_detailed(artist_id):
                 "downloaded_videos": len(
                     [v for v in videos if v.status == VideoStatus.DOWNLOADED]
                 ),
-                "wanted_videos": len([v for v in videos if v.status == VideoStatus.WANTED]),
+                "wanted_videos": len(
+                    [v for v in videos if v.status == VideoStatus.WANTED]
+                ),
                 "downloading_videos": len(
                     [v for v in videos if v.status == VideoStatus.DOWNLOADING]
                 ),
-                "failed_videos": len([v for v in videos if v.status == VideoStatus.FAILED]),
-                "ignored_videos": len([v for v in videos if v.status == VideoStatus.IGNORED]),
-                "monitored_videos": len([v for v in videos if v.status == VideoStatus.MONITORED]),
+                "failed_videos": len(
+                    [v for v in videos if v.status == VideoStatus.FAILED]
+                ),
+                "ignored_videos": len(
+                    [v for v in videos if v.status == VideoStatus.IGNORED]
+                ),
+                "monitored_videos": len(
+                    [v for v in videos if v.status == VideoStatus.MONITORED]
+                ),
                 "latest_video_date": None,
                 "earliest_video_date": None,
                 "total_duration": 0,
@@ -2605,6 +2640,7 @@ def update_artist_settings(artist_id):
                 else:
                     artist.imvdb_metadata["musicbrainz_id"] = str(new_mbid).strip()
                 from sqlalchemy.orm.attributes import flag_modified
+
                 flag_modified(artist, "imvdb_metadata")
 
             # Handle Spotify ID updates

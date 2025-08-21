@@ -25,8 +25,12 @@ class LastFmService:
 
     def __init__(self):
         # Try environment variables first, then settings
-        self.api_key = os.getenv("LASTFM_API_KEY") or SettingsService.get("lastfm_api_key")
-        self.api_secret = os.getenv("LASTFM_API_SECRET") or SettingsService.get("lastfm_api_secret")
+        self.api_key = os.getenv("LASTFM_API_KEY") or SettingsService.get(
+            "lastfm_api_key"
+        )
+        self.api_secret = os.getenv("LASTFM_API_SECRET") or SettingsService.get(
+            "lastfm_api_secret"
+        )
         self.base_url = "https://ws.audioscrobbler.com/2.0/"
         self.session_key = None
         self.username = None

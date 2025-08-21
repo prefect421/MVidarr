@@ -29,12 +29,17 @@ def search_artist():
         # Search MusicBrainz for artists
         results = musicbrainz_service.search_artist(query)
 
-        return jsonify({
-            "success": True,
-            "query": query,
-            "results": results,
-            "count": len(results)
-        }), 200
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "query": query,
+                    "results": results,
+                    "count": len(results),
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         logger.error(f"Failed to search MusicBrainz artists: {e}")
@@ -55,11 +60,7 @@ def get_artist_details(mbid: str):
         if not artist_data:
             return jsonify({"error": "Artist not found in MusicBrainz"}), 404
 
-        return jsonify({
-            "success": True,
-            "mbid": mbid,
-            "artist": artist_data
-        }), 200
+        return jsonify({"success": True, "mbid": mbid, "artist": artist_data}), 200
 
     except Exception as e:
         logger.error(f"Failed to get MusicBrainz artist details for {mbid}: {e}")
@@ -72,19 +73,26 @@ def test_connection():
     """Test MusicBrainz API connectivity"""
     try:
         is_connected = musicbrainz_service.test_connection()
-        
-        return jsonify({
-            "success": is_connected,
-            "service": "MusicBrainz",
-            "status": "connected" if is_connected else "disconnected",
-            "enabled": musicbrainz_service.enabled
-        }), 200 if is_connected else 503
+
+        return jsonify(
+            {
+                "success": is_connected,
+                "service": "MusicBrainz",
+                "status": "connected" if is_connected else "disconnected",
+                "enabled": musicbrainz_service.enabled,
+            }
+        ), (200 if is_connected else 503)
 
     except Exception as e:
         logger.error(f"MusicBrainz connection test failed: {e}")
-        return jsonify({
-            "success": False,
-            "service": "MusicBrainz",
-            "status": "error",
-            "error": str(e)
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "service": "MusicBrainz",
+                    "status": "error",
+                    "error": str(e),
+                }
+            ),
+            500,
+        )

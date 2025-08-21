@@ -16,7 +16,9 @@ from src.api.health import health_bp
 from src.api.imvdb import imvdb_bp
 from src.api.lastfm import lastfm_bp
 from src.api.lidarr import lidarr_bp
+from src.api.metadata_enrichment import metadata_enrichment_bp
 from src.api.metube import metube_bp
+from src.api.musicbrainz import musicbrainz_bp
 
 # OpenAPI documentation
 from src.api.openapi import openapi_bp
@@ -29,8 +31,6 @@ from src.api.settings import settings_bp
 # External integration blueprints
 from src.api.spotify import spotify_bp
 from src.api.themes import themes_bp
-from src.api.musicbrainz import musicbrainz_bp
-from src.api.metadata_enrichment import metadata_enrichment_bp
 from src.api.two_factor import two_factor_bp
 from src.api.users import users_bp
 from src.api.video_discovery import video_discovery_bp

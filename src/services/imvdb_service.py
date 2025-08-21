@@ -83,7 +83,9 @@ class IMVDbService:
             logger.error(f"IMVDb API request timed out: {e}")
             return None
         except requests.exceptions.ConnectionError as e:
-            logger.error(f"Failed to connect to IMVDb API - check internet connection: {e}")
+            logger.error(
+                f"Failed to connect to IMVDb API - check internet connection: {e}"
+            )
             return None
         except requests.exceptions.RequestException as e:
             logger.error(f"IMVDb API request failed: {e}")

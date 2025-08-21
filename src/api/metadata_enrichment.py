@@ -106,7 +106,7 @@ def enrich_video_metadata(video_id: int):
                         "metadata_sources": result.metadata_sources,
                         "errors": result.errors,
                         "processing_time": result.processing_time,
-                        "message": f"Video metadata enriched from {', '.join(result.metadata_sources)}"
+                        "message": f"Video metadata enriched from {', '.join(result.metadata_sources)}",
                     }
                 ),
                 200,
@@ -746,12 +746,16 @@ def get_blank_metadata_report(artist_id: int):
     try:
         validation_service = metadata_validation_service
         report = validation_service.get_blank_metadata_report(artist_id)
-        
+
         if "error" in report:
-            return jsonify(report), 404 if "not found" in report["error"].lower() else 500
-            
+            return jsonify(report), (
+                404 if "not found" in report["error"].lower() else 500
+            )
+
         return jsonify(report), 200
-        
+
     except Exception as e:
-        logger.error(f"Failed to generate blank metadata report for artist {artist_id}: {e}")
+        logger.error(
+            f"Failed to generate blank metadata report for artist {artist_id}: {e}"
+        )
         return jsonify({"error": str(e)}), 500

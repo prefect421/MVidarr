@@ -290,7 +290,7 @@ class YtDlpService:
                     "--format",
                     # Robust format selection with fallbacks:
                     # 1. Try best video ≤1080p + best audio
-                    # 2. Fallback to best video ≤720p + best audio  
+                    # 2. Fallback to best video ≤720p + best audio
                     # 3. Fallback to best combined format ≤1080p
                     # 4. Final fallback to any best available format
                     "best[height<=1080]/best[height<=720]/bestvideo[height<=1080]+bestaudio/best",
@@ -312,7 +312,9 @@ class YtDlpService:
 
                 # Add subtitle options if requested
                 if download_entry.get("download_subtitles", False):
-                    subtitle_langs = download_entry.get("subtitle_languages", "en,en-US")
+                    subtitle_langs = download_entry.get(
+                        "subtitle_languages", "en,en-US"
+                    )
                     cmd.extend(
                         [
                             "--write-subs",  # Download subtitle files as separate .srt/.vtt files
@@ -353,14 +355,21 @@ class YtDlpService:
                                         break
                             except:
                                 pass
-                        
+
                         # Log format selection information
                         if "Selected format:" in line or "format code" in line:
-                            logger.info(f"Download {download_id} format selection: {line.strip()}")
-                        
+                            logger.info(
+                                f"Download {download_id} format selection: {line.strip()}"
+                            )
+
                         # Log format availability errors
-                        if "No video formats found" in line or "format not available" in line:
-                            logger.warning(f"Download {download_id} format issue: {line.strip()}")
+                        if (
+                            "No video formats found" in line
+                            or "format not available" in line
+                        ):
+                            logger.warning(
+                                f"Download {download_id} format issue: {line.strip()}"
+                            )
 
                     process.wait()
 

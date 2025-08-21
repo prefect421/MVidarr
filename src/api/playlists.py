@@ -690,57 +690,76 @@ def upload_playlist_thumbnail(playlist_id):
 
             # Download thumbnail using thumbnail service
             thumbnail_service = ThumbnailService()
-            
+
             try:
                 downloaded_path = thumbnail_service.download_playlist_thumbnail(
                     playlist.name, thumbnail_url
                 )
-                
+
                 if not downloaded_path:
-                    return jsonify({"error": "Failed to download thumbnail from URL"}), 400
+                    return (
+                        jsonify({"error": "Failed to download thumbnail from URL"}),
+                        400,
+                    )
 
                 # Convert absolute path to relative path for storage
                 # Get relative path from thumbnails directory
                 from pathlib import Path
+
                 abs_path = Path(downloaded_path)
                 thumbnails_dir = thumbnail_service.thumbnails_dir
-                
+
                 try:
                     relative_path = abs_path.relative_to(thumbnails_dir)
                     # Store relative path in database
                     playlist.thumbnail_url = f"/thumbnails/{relative_path}"
                     session.commit()
 
-                    logger.info(f"Thumbnail uploaded for playlist {playlist_id} by user {user.username}")
-                    
+                    logger.info(
+                        f"Thumbnail uploaded for playlist {playlist_id} by user {user.username}"
+                    )
+
                     playlist_data = playlist.to_dict()
                     playlist_data["can_modify"] = playlist.can_modify(user)
-                    
-                    return jsonify({
-                        "success": True, 
-                        "message": "Thumbnail uploaded successfully",
-                        "playlist": playlist_data,
-                        "thumbnail_path": playlist.thumbnail_url
-                    })
-                    
+
+                    return jsonify(
+                        {
+                            "success": True,
+                            "message": "Thumbnail uploaded successfully",
+                            "playlist": playlist_data,
+                            "thumbnail_path": playlist.thumbnail_url,
+                        }
+                    )
+
                 except ValueError:
                     # If path is not relative to thumbnails dir, store absolute path
-                    playlist.thumbnail_url = f"/thumbnails/playlists/{Path(downloaded_path).name}"
+                    playlist.thumbnail_url = (
+                        f"/thumbnails/playlists/{Path(downloaded_path).name}"
+                    )
                     session.commit()
 
                     playlist_data = playlist.to_dict()
                     playlist_data["can_modify"] = playlist.can_modify(user)
-                    
-                    return jsonify({
-                        "success": True,
-                        "message": "Thumbnail uploaded successfully", 
-                        "playlist": playlist_data,
-                        "thumbnail_path": playlist.thumbnail_url
-                    })
+
+                    return jsonify(
+                        {
+                            "success": True,
+                            "message": "Thumbnail uploaded successfully",
+                            "playlist": playlist_data,
+                            "thumbnail_path": playlist.thumbnail_url,
+                        }
+                    )
 
             except Exception as download_error:
                 logger.error(f"Failed to download thumbnail: {download_error}")
-                return jsonify({"error": f"Failed to download thumbnail: {str(download_error)}"}), 400
+                return (
+                    jsonify(
+                        {
+                            "error": f"Failed to download thumbnail: {str(download_error)}"
+                        }
+                    ),
+                    400,
+                )
 
     except Exception as e:
         logger.error(f"Failed to upload thumbnail for playlist {playlist_id}: {e}")
@@ -757,18 +776,29 @@ def upload_playlist_thumbnail_file(playlist_id):
             return jsonify({"error": "User not found"}), 401
 
         # Check if file was uploaded
-        if 'file' not in request.files:
+        if "file" not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
-            
-        file = request.files['file']
-        if file.filename == '':
+
+        file = request.files["file"]
+        if file.filename == "":
             return jsonify({"error": "No file selected"}), 400
-            
+
         # Validate file type
-        allowed_extensions = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
-        file_ext = '.' + file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        allowed_extensions = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+        file_ext = (
+            "." + file.filename.rsplit(".", 1)[1].lower()
+            if "." in file.filename
+            else ""
+        )
         if file_ext not in allowed_extensions:
-            return jsonify({"error": "Invalid file type. Please upload JPG, PNG, WebP, or GIF images."}), 400
+            return (
+                jsonify(
+                    {
+                        "error": "Invalid file type. Please upload JPG, PNG, WebP, or GIF images."
+                    }
+                ),
+                400,
+            )
 
         with get_db() as session:
             playlist = (
@@ -787,62 +817,76 @@ def upload_playlist_thumbnail_file(playlist_id):
 
             # Upload using thumbnail service
             thumbnail_service = ThumbnailService()
-            
+
             try:
                 upload_result = thumbnail_service.upload_manual_thumbnail(
                     file_data=file_data,
                     filename=file.filename,
                     entity_type="playlist",
                     entity_id=playlist.id,
-                    entity_name=playlist.name
+                    entity_name=playlist.name,
                 )
-                
+
                 if not upload_result:
                     return jsonify({"error": "Failed to process thumbnail file"}), 400
 
                 # Convert absolute path to relative path for storage
                 from pathlib import Path
-                primary_path = Path(upload_result['primary_path'])
+
+                primary_path = Path(upload_result["primary_path"])
                 thumbnails_dir = thumbnail_service.thumbnails_dir
-                
+
                 try:
                     relative_path = primary_path.relative_to(thumbnails_dir)
                     # Store relative path in database
                     playlist.thumbnail_url = f"/thumbnails/{relative_path}"
                     session.commit()
 
-                    logger.info(f"Thumbnail file uploaded for playlist {playlist_id} by user {user.username}")
-                    
+                    logger.info(
+                        f"Thumbnail file uploaded for playlist {playlist_id} by user {user.username}"
+                    )
+
                     playlist_data = playlist.to_dict()
                     playlist_data["can_modify"] = playlist.can_modify(user)
-                    
-                    return jsonify({
-                        "success": True, 
-                        "message": "Thumbnail uploaded successfully",
-                        "playlist": playlist_data,
-                        "thumbnail_path": playlist.thumbnail_url,
-                        "upload_info": upload_result['metadata']
-                    })
-                    
+
+                    return jsonify(
+                        {
+                            "success": True,
+                            "message": "Thumbnail uploaded successfully",
+                            "playlist": playlist_data,
+                            "thumbnail_path": playlist.thumbnail_url,
+                            "upload_info": upload_result["metadata"],
+                        }
+                    )
+
                 except ValueError:
                     # If path is not relative to thumbnails dir, use filename
-                    playlist.thumbnail_url = f"/thumbnails/playlists/medium/{primary_path.name}"
+                    playlist.thumbnail_url = (
+                        f"/thumbnails/playlists/medium/{primary_path.name}"
+                    )
                     session.commit()
 
                     playlist_data = playlist.to_dict()
                     playlist_data["can_modify"] = playlist.can_modify(user)
-                    
-                    return jsonify({
-                        "success": True,
-                        "message": "Thumbnail uploaded successfully", 
-                        "playlist": playlist_data,
-                        "thumbnail_path": playlist.thumbnail_url,
-                        "upload_info": upload_result['metadata']
-                    })
+
+                    return jsonify(
+                        {
+                            "success": True,
+                            "message": "Thumbnail uploaded successfully",
+                            "playlist": playlist_data,
+                            "thumbnail_path": playlist.thumbnail_url,
+                            "upload_info": upload_result["metadata"],
+                        }
+                    )
 
             except Exception as upload_error:
                 logger.error(f"Failed to upload thumbnail file: {upload_error}")
-                return jsonify({"error": f"Failed to process thumbnail: {str(upload_error)}"}), 400
+                return (
+                    jsonify(
+                        {"error": f"Failed to process thumbnail: {str(upload_error)}"}
+                    ),
+                    400,
+                )
 
     except Exception as e:
         logger.error(f"Failed to upload thumbnail file for playlist {playlist_id}: {e}")

@@ -396,15 +396,22 @@ class DatabasePerformanceOptimizer:
         if filters.get("keywords"):
             keywords = filters["keywords"].strip()
             if keywords:
-                keyword_list = [k.strip().lower() for k in keywords.split(",") if k.strip()]
+                keyword_list = [
+                    k.strip().lower() for k in keywords.split(",") if k.strip()
+                ]
                 if keyword_list:
                     from sqlalchemy import func, or_
+
                     # Create OR conditions for each keyword
                     keyword_conditions = []
                     for keyword in keyword_list:
-                        keyword_conditions.append(func.lower(Video.title).contains(keyword))
+                        keyword_conditions.append(
+                            func.lower(Video.title).contains(keyword)
+                        )
                         # Only search description if it exists
-                        keyword_conditions.append(func.lower(Video.description).contains(keyword))
+                        keyword_conditions.append(
+                            func.lower(Video.description).contains(keyword)
+                        )
                     query = query.filter(or_(*keyword_conditions))
 
         # Year range filters (from frontend - year_from/year_to)

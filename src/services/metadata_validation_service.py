@@ -86,45 +86,61 @@ class MetadataValidationService:
 
                 # Eagerly load all needed data to avoid session issues
                 artist_data = {
-                    'id': artist.id,
-                    'name': artist.name,
-                    'spotify_id': artist.spotify_id,
-                    'lastfm_name': artist.lastfm_name,
-                    'imvdb_id': artist.imvdb_id,
-                    'genres': artist.genres,
-                    'imvdb_metadata': artist.imvdb_metadata,
-                    'created_at': artist.created_at,
-                    'updated_at': artist.updated_at,
+                    "id": artist.id,
+                    "name": artist.name,
+                    "spotify_id": artist.spotify_id,
+                    "lastfm_name": artist.lastfm_name,
+                    "imvdb_id": artist.imvdb_id,
+                    "genres": artist.genres,
+                    "imvdb_metadata": artist.imvdb_metadata,
+                    "created_at": artist.created_at,
+                    "updated_at": artist.updated_at,
                 }
 
                 result = ValidationResult(artist_id=artist_id, is_valid=True)
 
                 # Check external IDs coverage
                 try:
-                    external_ids_score = self._validate_external_ids(artist_data, result)
+                    external_ids_score = self._validate_external_ids(
+                        artist_data, result
+                    )
                 except Exception as e:
-                    logger.error(f"Error in _validate_external_ids for artist {artist_id}: {e}")
+                    logger.error(
+                        f"Error in _validate_external_ids for artist {artist_id}: {e}"
+                    )
                     external_ids_score = 0.0
 
                 # Check metadata richness
                 try:
-                    richness_score = self._validate_metadata_richness(artist_data, result)
+                    richness_score = self._validate_metadata_richness(
+                        artist_data, result
+                    )
                 except Exception as e:
-                    logger.error(f"Error in _validate_metadata_richness for artist {artist_id}: {e}")
+                    logger.error(
+                        f"Error in _validate_metadata_richness for artist {artist_id}: {e}"
+                    )
                     richness_score = 0.0
 
                 # Check metadata freshness
                 try:
-                    freshness_score = self._validate_metadata_freshness(artist_data, result)
+                    freshness_score = self._validate_metadata_freshness(
+                        artist_data, result
+                    )
                 except Exception as e:
-                    logger.error(f"Error in _validate_metadata_freshness for artist {artist_id}: {e}")
+                    logger.error(
+                        f"Error in _validate_metadata_freshness for artist {artist_id}: {e}"
+                    )
                     freshness_score = 0.0
 
                 # Check enrichment confidence
                 try:
-                    confidence_score = self._validate_enrichment_confidence(artist_data, result)
+                    confidence_score = self._validate_enrichment_confidence(
+                        artist_data, result
+                    )
                 except Exception as e:
-                    logger.error(f"Error in _validate_enrichment_confidence for artist {artist_id}: {e}")
+                    logger.error(
+                        f"Error in _validate_enrichment_confidence for artist {artist_id}: {e}"
+                    )
                     confidence_score = 0.0
 
                 # Calculate overall data quality score
@@ -136,7 +152,9 @@ class MetadataValidationService:
                         + confidence_score * self.quality_weights["confidence_score"]
                     )
                 except Exception as e:
-                    logger.error(f"Error calculating data quality score for artist {artist_id}: {e}")
+                    logger.error(
+                        f"Error calculating data quality score for artist {artist_id}: {e}"
+                    )
                     result.data_quality_score = 0.0
 
                 # Determine if validation passes
@@ -170,24 +188,26 @@ class MetadataValidationService:
                 needs_enrichment=True,
             )
 
-    def _validate_external_ids(self, artist_data: Dict, result: ValidationResult) -> float:
+    def _validate_external_ids(
+        self, artist_data: Dict, result: ValidationResult
+    ) -> float:
         """Validate external ID coverage"""
         score = 0.0
         total_sources = 3  # Spotify, Last.fm, IMVDb
 
-        if artist_data.get('spotify_id'):
+        if artist_data.get("spotify_id"):
             score += 1 / total_sources
         else:
             result.issues.append("Missing Spotify ID")
             result.recommendations.append("Link artist to Spotify for better metadata")
 
-        if artist_data.get('lastfm_name'):
+        if artist_data.get("lastfm_name"):
             score += 1 / total_sources
         else:
             result.issues.append("Missing Last.fm name")
             result.recommendations.append("Add Last.fm integration for listening data")
 
-        if artist_data.get('imvdb_id'):
+        if artist_data.get("imvdb_id"):
             score += 1 / total_sources
         else:
             result.issues.append("Missing IMVDb ID")
@@ -203,7 +223,7 @@ class MetadataValidationService:
         total_fields = 6
 
         # Check for genres - this can exist independently of enriched metadata
-        if artist_data.get('genres') and artist_data.get('genres', '').strip():
+        if artist_data.get("genres") and artist_data.get("genres", "").strip():
             score += 1 / total_fields
         else:
             result.issues.append("Missing genre information")
@@ -212,7 +232,7 @@ class MetadataValidationService:
             )
 
         # Check for enriched metadata - handle None and empty dict cases properly
-        enriched_data = artist_data.get('imvdb_metadata') or {}
+        enriched_data = artist_data.get("imvdb_metadata") or {}
 
         if not enriched_data:
             result.issues.append("No enriched metadata found")
@@ -267,80 +287,96 @@ class MetadataValidationService:
         try:
             with get_db() as session:
                 artist = session.query(Artist).filter(Artist.id == artist_id).first()
-                
+
                 if not artist:
                     return {"error": "Artist not found"}
-                
+
                 # Core fields to check
                 blank_fields = []
                 recommendations = []
-                
+
                 # Check basic artist fields
                 if not artist.genres or not artist.genres.strip():
-                    blank_fields.append({
-                        "field": "genres",
-                        "description": "Music genres for categorization",
-                        "priority": "high",
-                        "action": "Add genres manually or run enrichment"
-                    })
-                
+                    blank_fields.append(
+                        {
+                            "field": "genres",
+                            "description": "Music genres for categorization",
+                            "priority": "high",
+                            "action": "Add genres manually or run enrichment",
+                        }
+                    )
+
                 # Check external service IDs
                 if not artist.spotify_id:
-                    blank_fields.append({
-                        "field": "spotify_id", 
-                        "description": "Spotify artist ID for enhanced metadata",
-                        "priority": "high",
-                        "action": "Link artist to Spotify via enrichment"
-                    })
-                
+                    blank_fields.append(
+                        {
+                            "field": "spotify_id",
+                            "description": "Spotify artist ID for enhanced metadata",
+                            "priority": "high",
+                            "action": "Link artist to Spotify via enrichment",
+                        }
+                    )
+
                 if not artist.lastfm_name:
-                    blank_fields.append({
-                        "field": "lastfm_name",
-                        "description": "Last.fm artist name for biography and stats", 
-                        "priority": "medium",
-                        "action": "Link artist to Last.fm via enrichment"
-                    })
-                
+                    blank_fields.append(
+                        {
+                            "field": "lastfm_name",
+                            "description": "Last.fm artist name for biography and stats",
+                            "priority": "medium",
+                            "action": "Link artist to Last.fm via enrichment",
+                        }
+                    )
+
                 if not artist.imvdb_id:
-                    blank_fields.append({
-                        "field": "imvdb_id",
-                        "description": "IMVDb ID for video database integration",
-                        "priority": "medium", 
-                        "action": "Link artist to IMVDb via video discovery"
-                    })
-                
+                    blank_fields.append(
+                        {
+                            "field": "imvdb_id",
+                            "description": "IMVDb ID for video database integration",
+                            "priority": "medium",
+                            "action": "Link artist to IMVDb via video discovery",
+                        }
+                    )
+
                 # Check enriched metadata
                 enriched_data = artist.imvdb_metadata or {}
-                
+
                 if not enriched_data.get("biography"):
-                    blank_fields.append({
-                        "field": "biography",
-                        "description": "Artist biography and background information",
-                        "priority": "medium",
-                        "action": "Run Last.fm enrichment to get biography"
-                    })
-                
+                    blank_fields.append(
+                        {
+                            "field": "biography",
+                            "description": "Artist biography and background information",
+                            "priority": "medium",
+                            "action": "Run Last.fm enrichment to get biography",
+                        }
+                    )
+
                 if not enriched_data.get("images"):
-                    blank_fields.append({
-                        "field": "images", 
-                        "description": "Artist images and photos",
-                        "priority": "low",
-                        "action": "Run Spotify enrichment to get artist images"
-                    })
-                
+                    blank_fields.append(
+                        {
+                            "field": "images",
+                            "description": "Artist images and photos",
+                            "priority": "low",
+                            "action": "Run Spotify enrichment to get artist images",
+                        }
+                    )
+
                 if not enriched_data.get("related_artists"):
-                    blank_fields.append({
-                        "field": "related_artists",
-                        "description": "Related artists for music discovery",
-                        "priority": "low", 
-                        "action": "Run Spotify enrichment to get related artists"
-                    })
-                
+                    blank_fields.append(
+                        {
+                            "field": "related_artists",
+                            "description": "Related artists for music discovery",
+                            "priority": "low",
+                            "action": "Run Spotify enrichment to get related artists",
+                        }
+                    )
+
                 # Calculate completion percentage
                 total_fields = 7  # Total important fields we're checking
                 missing_count = len(blank_fields)
-                completion_percentage = ((total_fields - missing_count) / total_fields) * 100
-                
+                completion_percentage = (
+                    (total_fields - missing_count) / total_fields
+                ) * 100
+
                 return {
                     "success": True,
                     "artist_name": artist.name,
@@ -350,12 +386,14 @@ class MetadataValidationService:
                     "next_steps": [
                         "Click 'Enrich Metadata' to automatically fill missing fields",
                         "Manually add genres and biography if enrichment doesn't find them",
-                        "Link to external services via the External Services section"
-                    ]
+                        "Link to external services via the External Services section",
+                    ],
                 }
-                
+
         except Exception as e:
-            logger.error(f"Error generating blank metadata report for artist {artist_id}: {e}")
+            logger.error(
+                f"Error generating blank metadata report for artist {artist_id}: {e}"
+            )
             return {"error": f"Failed to generate report: {str(e)}"}
 
     def _validate_metadata_freshness(
@@ -363,7 +401,7 @@ class MetadataValidationService:
     ) -> float:
         """Validate metadata freshness"""
         # Handle None metadata case gracefully
-        enriched_data = artist_data.get('imvdb_metadata') or {}
+        enriched_data = artist_data.get("imvdb_metadata") or {}
 
         if not enriched_data:
             result.issues.append("No metadata available for freshness check")
@@ -399,7 +437,7 @@ class MetadataValidationService:
     ) -> float:
         """Validate enrichment confidence score"""
         # Handle None metadata case gracefully
-        enriched_data = artist_data.get('imvdb_metadata') or {}
+        enriched_data = artist_data.get("imvdb_metadata") or {}
 
         if not enriched_data:
             result.confidence_score = 0.0
@@ -585,8 +623,10 @@ class MetadataValidationService:
                             "artist_id": artist_info["id"],
                             "artist_name": artist_info["name"],
                         }
-                        
-                        logger.info(f"Processing validation for artist {artist_info['id']}: {artist_info['name']}")
+
+                        logger.info(
+                            f"Processing validation for artist {artist_info['id']}: {artist_info['name']}"
+                        )
                         validation = self.validate_artist_metadata(artist_info["id"])
                         validation_results.append(
                             {
@@ -596,20 +636,24 @@ class MetadataValidationService:
                                 "confidence_score": validation.confidence_score,
                                 "needs_enrichment": validation.needs_enrichment,
                                 "issues_count": len(validation.issues),
-                                "recommendations_count": len(validation.recommendations),
+                                "recommendations_count": len(
+                                    validation.recommendations
+                                ),
                             }
                         )
                         quality_scores.append(validation.data_quality_score)
-                        
+
                         # Count issues
                         for issue in validation.issues:
                             issue_type = issue.split(":")[0] if ":" in issue else issue
                             issues_summary[issue_type] = (
                                 issues_summary.get(issue_type, 0) + 1
                             )
-                        
+
                     except Exception as e:
-                        logger.error(f"Error processing validation for artist {artist_info['id']}: {e}")
+                        logger.error(
+                            f"Error processing validation for artist {artist_info['id']}: {e}"
+                        )
                         # Add a default failed validation result
                         validation_results.append(
                             {
@@ -625,7 +669,9 @@ class MetadataValidationService:
                         )
                         quality_scores.append(0.0)
                         # Add a generic issue for failed validation
-                        issues_summary["Validation Error"] = issues_summary.get("Validation Error", 0) + 1
+                        issues_summary["Validation Error"] = (
+                            issues_summary.get("Validation Error", 0) + 1
+                        )
 
                 # Calculate statistics
                 total_artists = len(validation_results)
