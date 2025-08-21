@@ -362,7 +362,34 @@
             </div>
         </div>
 
-
+        <div class="settings-section">
+            <h2>Last.fm Integration</h2>
+            <div class="form-group">
+                <label for="lastfm_enabled">Enable Last.fm Integration:</label>
+                <select id="lastfm_enabled" name="lastfm_enabled">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="lastfm_api_key">Last.fm API Key:</label>
+                <input type="password" id="lastfm_api_key" name="lastfm_api_key" placeholder="Get from https://www.last.fm/api/account/create">
+            </div>
+            <div class="form-group">
+                <label for="lastfm_api_secret">Last.fm API Secret:</label>
+                <input type="password" id="lastfm_api_secret" name="lastfm_api_secret">
+            </div>
+            <div class="form-group">
+                <label for="lastfm_username">Connected Username:</label>
+                <input type="text" id="lastfm_username" name="lastfm_username" placeholder="Connected Last.fm username" readonly>
+            </div>
+            <div class="integration-actions">
+                <button onclick="testLastfmIntegration()" class="btn btn-info">Test Connection</button>
+                <button onclick="authorizeLastfm()" class="btn btn-success">Authorize</button>
+                <button onclick="syncLastfmHistory()" class="btn btn-secondary">Sync Listening History</button>
+                <a href="/lastfm" class="btn btn-primary">🎵 Last.fm Manager</a>
+            </div>
+        </div>
 
         <div class="settings-section">
             <h2>Lidarr Integration</h2>
@@ -2727,7 +2754,65 @@ function importSpotifyPlaylists() {
     });
 }
 
+// Last.fm Integration Functions
+function testLastfmIntegration() {
+    showIntegrationLoading('Last.fm');
+    
+    fetch('/api/lastfm/test', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSuccessMessage('Last.fm integration test passed! API credentials are valid.');
+        } else {
+            showErrorMessage('Last.fm integration test failed: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error testing Last.fm integration:', error);
+        showErrorMessage('Last.fm integration test failed: ' + error.message);
+    });
+}
 
+function authorizeLastfm() {
+    fetch('/api/lastfm/auth/url', {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.auth_url) {
+            window.open(data.auth_url, '_blank');
+            showInfoMessage('Please complete authorization in the new window, then test the connection.');
+        } else {
+            showErrorMessage('Failed to get Last.fm authorization URL: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error authorizing Last.fm:', error);
+        showErrorMessage('Last.fm authorization failed: ' + error.message);
+    });
+}
+
+function syncLastfmHistory() {
+    showIntegrationLoading('Last.fm');
+    
+    fetch('/api/lastfm/sync-history', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage(`Last.fm listening history synced successfully! ${data.tracks_processed || 0} tracks processed.`);
+        } else {
+            showErrorMessage('Last.fm history sync failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error syncing Last.fm history:', error);
+        showErrorMessage('Last.fm history sync failed: ' + error.message);
+    });
+}
 
 function testLidarrIntegration() {
     showIntegrationLoading('Lidarr');
@@ -6507,8 +6592,15 @@ async function exportAllThemes() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to export themes');
+            let errorMessage = 'Failed to export themes';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (jsonError) {
+                // If response isn't JSON, use status text or generic message
+                errorMessage = response.statusText || `HTTP ${response.status}: ${errorMessage}`;
+            }
+            throw new Error(errorMessage);
         }
 
         // Create a blob from the response and trigger download
@@ -6557,8 +6649,15 @@ async function exportCurrentTheme() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to export theme');
+            let errorMessage = 'Failed to export theme';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (jsonError) {
+                // If response isn't JSON, use status text or generic message
+                errorMessage = response.statusText || `HTTP ${response.status}: ${errorMessage}`;
+            }
+            throw new Error(errorMessage);
         }
 
         // Create a blob from the response and trigger download

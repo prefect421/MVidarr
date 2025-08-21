@@ -793,3 +793,37 @@ When merging duplicate videos, playlist entries are now intelligently handled:
 
 **Video Management Status:** 🎯 **100% COMPLETE** - Enhanced icon-based actions, comprehensive delete with blacklist, and FFmpeg metadata integration fully implemented
 
+## MvTV Player Enhancements
+
+### Queue Navigation Improvements ✅ COMPLETE
+**Updated:** August 20, 2025  
+**Status:** ✅ IMPLEMENTED
+
+#### Enhanced Queue Song Interaction
+- **Clickable Queue Songs:** Queue items are now clickable to jump directly to that song
+- **Smart Queue Management:** Clicking a song removes all preceding songs from queue
+- **Immediate UI Updates:** Song title and artist display update instantly when jumping
+- **Seamless Playback:** Maintains playback state when switching between queue songs
+
+#### Technical Implementation
+- **Location:** `frontend/templates/mvtv.html` - `jumpToVideo()` method
+- **Queue Modification:** `playlist.splice(0, index)` removes preceding songs
+- **Immediate Updates:** `updateVideoInfo()` called before async video loading
+- **Index Management:** Current index reset to 0 after queue modification
+- **Playback Continuity:** Auto-resumes playback if already playing
+
+#### User Experience Improvements
+- **Intuitive Navigation:** Click any queue song to play it immediately
+- **Visual Feedback:** Queue updates instantly to show new order
+- **No Interruption:** Smooth transition between songs without pause
+- **Consistent Display:** Title and artist always reflect currently selected song
+
+#### Previous Enhancements (Completed Earlier)
+- ✅ **Enhanced Queue Clicking:** Made all queue songs clickable for navigation
+- ✅ **Subtitle Management:** Fixed CC files being shared between different videos
+- ✅ **Cinematic Controls:** Added complete CC controls to cinematic player
+- ✅ **Artist Links:** Made artist names clickable throughout MvTV interface
+- ✅ **Clean Interface:** Removed redundant controls and streamlined player
+
+**MvTV Player Status:** 🎯 **100% COMPLETE** - All queue navigation, subtitle management, and user interface enhancements fully implemented
+
