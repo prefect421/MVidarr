@@ -5,6 +5,7 @@ API routes registration for MVidarr
 from flask import Blueprint
 
 from src.api.admin_interface import admin_bp
+from src.api.advanced_search import advanced_search_bp
 from src.api.artists import artists_bp
 from src.api.auth import auth_bp
 from src.api.bulk_operations import bulk_operations_bp
@@ -69,6 +70,7 @@ def register_routes(app):
     api_bp.register_blueprint(vlc_bp)
     api_bp.register_blueprint(optimization_bp)
     api_bp.register_blueprint(genres_bp)
+    api_bp.register_blueprint(advanced_search_bp)
 
     # Register external integration blueprints
     api_bp.register_blueprint(spotify_bp)
