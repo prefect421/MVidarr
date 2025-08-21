@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from src.database.connection import get_db
 from src.database.models import Artist, Video, VideoStatus
 from src.services.imvdb_service import imvdb_service
+from src.services.settings_service import SettingsService
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.services.lastfm")
@@ -23,8 +24,9 @@ class LastFmService:
     """Service for Last.fm integration and listening history"""
 
     def __init__(self):
-        self.api_key = os.getenv("LASTFM_API_KEY")
-        self.api_secret = os.getenv("LASTFM_API_SECRET")
+        # Try environment variables first, then settings
+        self.api_key = os.getenv("LASTFM_API_KEY") or SettingsService.get("lastfm_api_key")
+        self.api_secret = os.getenv("LASTFM_API_SECRET") or SettingsService.get("lastfm_api_secret")
         self.base_url = "https://ws.audioscrobbler.com/2.0/"
         self.session_key = None
         self.username = None
@@ -102,6 +104,10 @@ class LastFmService:
         except requests.RequestException as e:
             logger.error(f"Last.fm API request failed: {e}")
             raise
+
+    def call_api(self, method: str, params: Dict = None) -> Dict:
+        """Generic API call method for testing and direct calls"""
+        return self._make_request(method, params)
 
     def get_user_info(self, username: str = None) -> Dict:
         """Get user information"""

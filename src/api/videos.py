@@ -376,9 +376,12 @@ def search_videos():
         # Get search parameters
         filters = {
             "query": request.args.get("q", "").strip(),
-            "artist_name": request.args.get("artist", "").strip(),
+            "artist_name": request.args.get("artist_name", "").strip(),
+            "artist": request.args.get("artist", "").strip(),
             "status": request.args.get("status", "").strip(),
             "year": request.args.get("year", "").strip(),
+            "year_from": request.args.get("year_from", "").strip(),
+            "year_to": request.args.get("year_to", "").strip(),
             "genre": request.args.get("genre", "").strip(),
             "quality": request.args.get("quality", "").strip(),
             "has_thumbnail": request.args.get("has_thumbnail", "").strip(),
@@ -402,6 +405,7 @@ def search_videos():
             need_artist_join = (
                 filters["query"]
                 or filters["artist_name"]
+                or filters["artist"]
                 or filters["sort_by"] in ["artist_name", "artist"]
             )
 
@@ -432,15 +436,105 @@ def search_videos():
                             f"Invalid video status filter: {filters['status']}"
                         )
                         pass
+                        
                 if filters["source"]:
                     if filters["source"] == "youtube":
                         videos_query = videos_query.filter(Video.youtube_id.isnot(None))
                     elif filters["source"] == "imvdb":
                         videos_query = videos_query.filter(Video.imvdb_id.isnot(None))
+                    elif filters["source"] == "manual":
+                        videos_query = videos_query.filter(
+                            and_(Video.youtube_id.is_(None), Video.imvdb_id.is_(None))
+                        )
+                        
                 if filters["quality"]:
                     videos_query = videos_query.filter(
                         Video.quality == filters["quality"]
                     )
+                    
+                # Year filters - handle both single year and year range
+                if filters["year"]:
+                    try:
+                        year_int = int(filters["year"])
+                        videos_query = videos_query.filter(Video.year == year_int)
+                    except ValueError:
+                        pass
+                        
+                # Year range filters (from frontend)
+                year_from = request.args.get("year_from", "").strip()
+                year_to = request.args.get("year_to", "").strip()
+                if year_from:
+                    try:
+                        year_from_int = int(year_from)
+                        videos_query = videos_query.filter(Video.year >= year_from_int)
+                    except ValueError:
+                        pass
+                if year_to:
+                    try:
+                        year_to_int = int(year_to)
+                        videos_query = videos_query.filter(Video.year <= year_to_int)
+                    except ValueError:
+                        pass
+                        
+                # Duration filters
+                if filters["duration_min"]:
+                    try:
+                        duration_min = int(filters["duration_min"]) * 60  # Convert minutes to seconds
+                        videos_query = videos_query.filter(Video.duration >= duration_min)
+                    except (ValueError, TypeError):
+                        pass
+                        
+                if filters["duration_max"]:
+                    try:
+                        duration_max = int(filters["duration_max"]) * 60  # Convert minutes to seconds
+                        videos_query = videos_query.filter(Video.duration <= duration_max)
+                    except (ValueError, TypeError):
+                        pass
+                        
+                # Date range filters
+                if filters["date_from"]:
+                    try:
+                        from datetime import datetime
+                        date_from = datetime.strptime(filters["date_from"], "%Y-%m-%d")
+                        videos_query = videos_query.filter(Video.created_at >= date_from)
+                    except ValueError:
+                        pass
+                        
+                if filters["date_to"]:
+                    try:
+                        from datetime import datetime
+                        date_to = datetime.strptime(filters["date_to"], "%Y-%m-%d")
+                        videos_query = videos_query.filter(Video.created_at <= date_to)
+                    except ValueError:
+                        pass
+                        
+                # Thumbnail filter
+                if filters["has_thumbnail"]:
+                    has_thumbnail_bool = filters["has_thumbnail"].lower() in ["true", "1", "yes"]
+                    if has_thumbnail_bool:
+                        videos_query = videos_query.filter(Video.thumbnail_path.isnot(None))
+                    else:
+                        videos_query = videos_query.filter(Video.thumbnail_path.is_(None))
+                        
+                # Genre filter
+                if filters["genre"]:
+                    genre = filters["genre"]
+                    videos_query = videos_query.filter(Video.genres.contains(f'"{genre}"'))
+                    
+                # Keywords filter - search in video title and description
+                if filters["keywords"]:
+                    keywords = filters["keywords"].strip()
+                    if keywords:
+                        keyword_list = [k.strip().lower() for k in keywords.split(",") if k.strip()]
+                        if keyword_list:
+                            # Create OR conditions for each keyword
+                            keyword_conditions = []
+                            for keyword in keyword_list:
+                                keyword_conditions.append(func.lower(Video.title).contains(keyword))
+                                if Video.description:
+                                    keyword_conditions.append(func.lower(Video.description).contains(keyword))
+                            videos_query = videos_query.filter(or_(*keyword_conditions))
+                        
                 if filters["query"]:
                     from sqlalchemy import or_
 
@@ -455,6 +549,11 @@ def search_videos():
                         videos_query = videos_query.filter(
                             Video.title.contains(filters["query"])
                         )
+                        
+                # Artist name filter (handle both 'artist' and 'artist_name' params)
+                artist_filter = filters["artist_name"] or request.args.get("artist", "").strip()
+                if artist_filter and need_artist_join:
+                    videos_query = videos_query.filter(Artist.name.contains(artist_filter))
 
             # Apply sorting with performance consideration
             sort_by = filters["sort_by"]

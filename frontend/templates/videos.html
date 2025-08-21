@@ -198,7 +198,7 @@
         </div>
         
         <div class="search-results-info" id="videoResultsInfo" role="status" aria-live="polite">
-            <span id="videoResultsCount">Loading videos...</span>
+            <span id="videoResultsCount">Select filters to search videos</span>
         </div>
     </div>
     
@@ -252,6 +252,14 @@
                 </div>
             </div>
             
+            <!-- Bulk Progress Indicator -->
+            <div id="bulkProgress" class="bulk-progress" style="display: none;">
+                <div class="progress-bar">
+                    <div id="bulkProgressFill" class="progress-fill"></div>
+                </div>
+                <div id="bulkProgressText" class="progress-text">Ready</div>
+            </div>
+            
             <div class="bulk-actions-footer">
                 <div class="selected-count" id="bulkSelectedCount">0 videos selected</div>
                 <div class="bulk-actions-controls">
@@ -293,7 +301,9 @@
     </div>
 
     <div class="videos-grid" id="videos-grid">
-        <p>Loading videos...</p>
+        <div class="empty-state">
+            <p>No videos loaded yet. Use filters above or <button onclick="loadVideos()" class="btn-link">load all videos</button>.</p>
+        </div>
     </div>
 
     <!-- Pagination Controls Bottom -->
@@ -656,6 +666,9 @@ function displaySearchResults(data) {
     } else {
         grid.innerHTML = '<p>No videos found matching your search criteria.</p>';
     }
+    
+    // Update pagination controls with filtered results
+    updatePagination(data);
 }
 
 function toggleVideoAdvancedFilters() {
@@ -682,6 +695,8 @@ function clearAllVideoFilters() {
     document.getElementById('videoDurationMax').value = '';
     document.getElementById('videoDateFrom').value = '';
     document.getElementById('videoDateTo').value = '';
+    document.getElementById('videoYearFrom').value = '';
+    document.getElementById('videoYearTo').value = '';
     document.getElementById('videoArtistFilter').value = '';
     document.getElementById('videoKeywordsFilter').value = '';
     document.getElementById('videoSortBy').value = 'title';
@@ -695,13 +710,19 @@ function clearAllVideoFilters() {
 
 function updateVideoFilterCount() {
     const filterCount = document.getElementById('videoFilterCount');
+    if (!filterCount) {
+        // Element may not be accessible if search panel is hidden, this is normal
+        return;
+    }
+    
     let activeFilters = 0;
     
     // Count active filters
     const filterElements = [
         'videoStatusFilter', 'videoQualityFilter', 'videoThumbnailFilter',
         'videoSourceFilter', 'videoGenreFilter', 'videoDurationMin', 'videoDurationMax',
-        'videoDateFrom', 'videoDateTo', 'videoArtistFilter', 'videoKeywordsFilter'
+        'videoDateFrom', 'videoDateTo', 'videoYearFrom', 'videoYearTo',
+        'videoArtistFilter', 'videoKeywordsFilter'
     ];
     
     filterElements.forEach(id => {
@@ -1534,7 +1555,10 @@ function refreshVideoMetadata(id) {
         `;
         
         fetch(`/api/videos/${id}/refresh-metadata`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
         .then(response => {
             if (response.status === 409) {
@@ -1585,6 +1609,15 @@ function refreshVideoMetadata(id) {
             // Restore original content on error
             videoCard.innerHTML = originalContent;
         });
+        
+        // Add a timeout to prevent cards getting stuck indefinitely
+        setTimeout(() => {
+            if (videoCard && videoCard.innerHTML.includes('Refreshing metadata')) {
+                console.warn(`Metadata refresh for video ${id} timed out`);
+                videoCard.innerHTML = originalContent;
+                showWarning('Metadata refresh timed out. Please try again.');
+            }
+        }, 60000); // 60 second timeout
     });
 }
 
@@ -1629,12 +1662,11 @@ function updateSingleVideoCard(videoId) {
                     </div>
                 </div>
                 <div class="video-info">
-                    <h3>${video.title}</h3>
-                    <p>Artist: ${video.artist ? (video.artist.id ? `<a href="/artist/${video.artist.id}" class="artist-link">${video.artist.name}</a>` : video.artist.name) : 'Unknown'}</p>
+                    <h3>${escapeHtml(video.title)}</h3>
+                    <p>Artist: ${video.artist_id ? `<a href="/artist/${video.artist_id}" class="artist-link">${escapeHtml(video.artist_name || 'Unknown')}</a>` : escapeHtml(video.artist_name || 'Unknown')}</p>
                     <p>Status: <span class="status-${video.status ? video.status.toLowerCase() : 'unknown'}">${video.status || 'Unknown'}</span></p>
-                    <p>Year: ${video.year || 'Unknown'}</p>
-                    ${video.directors ? `<p>Directors: ${video.directors}</p>` : ''}
-                    ${video.producers ? `<p>Producers: ${video.producers}</p>` : ''}
+                    ${video.year ? `<p>Year: ${video.year}</p>` : ''}
+                    ${video.genres && video.genres.length > 0 ? `<p>Genres: ${video.genres.join(', ')}</p>` : ''}
                     <div class="video-metadata">
                         ${video.quality ? `<span class="metadata-item quality">📺 ${video.quality}</span>` : ''}
                         ${video.duration ? `<span class="metadata-item duration">⏱️ ${formatDuration(video.duration)}</span>` : ''}
@@ -2147,8 +2179,15 @@ function updateSelectedCount() {
     const selectedCheckboxes = document.querySelectorAll('.video-checkbox:checked');
     const count = selectedCheckboxes.length;
     
-    document.getElementById('selectedCount').textContent = count;
-    document.getElementById('deleteSelectedBtn').disabled = count === 0;
+    const selectedCountEl = document.getElementById('selectedCount');
+    if (selectedCountEl) {
+        selectedCountEl.textContent = count;
+    }
+    
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.disabled = count === 0;
+    }
     
     // Update playlist bulk action buttons
     const addToPlaylistBtn = document.getElementById('bulkAddToPlaylistBtn');
@@ -2160,6 +2199,9 @@ function updateSelectedCount() {
     if (createPlaylistBtn) {
         createPlaylistBtn.disabled = false; // Always enabled - can create playlist with or without videos
     }
+    
+    // Update all bulk button states
+    updateBulkButtonStates();
     
     // Update select all checkbox state
     const selectAllCheckbox = document.getElementById('selectAllVideos');
@@ -3354,7 +3396,7 @@ function switchBulkTab(tabName) {
 
 function updateBulkButtonStates() {
     const selectedCount = document.querySelectorAll('.video-checkbox:checked').length;
-    const bulkButtons = document.querySelectorAll('.bulk-btn');
+    const bulkButtons = document.querySelectorAll('.bulk-btn, .bulk-btn-compact');
     
     bulkButtons.forEach(button => {
         if (button.id === 'bulkMergeBtn') {
@@ -3365,6 +3407,12 @@ function updateBulkButtonStates() {
             button.disabled = selectedCount === 0;
         }
     });
+    
+    // Update the bulk selected count display
+    const bulkSelectedCount = document.getElementById('bulkSelectedCount');
+    if (bulkSelectedCount) {
+        bulkSelectedCount.textContent = `${selectedCount} video${selectedCount !== 1 ? 's' : ''} selected`;
+    }
 }
 
 function getSelectedVideoIds() {
@@ -4716,6 +4764,33 @@ async function loadPlaylistsIntoSelect() {
     }
 }
 
+function addSingleVideoToPlaylist(videoId) {
+    // Create a temporary checkbox to simulate selection for bulk function
+    const existingSelection = document.querySelectorAll('.video-checkbox:checked');
+    
+    // First uncheck all existing selections to avoid adding extra videos
+    existingSelection.forEach(checkbox => checkbox.checked = false);
+    
+    // Find and check the specific video
+    const videoCheckbox = document.querySelector(`.video-checkbox[value="${videoId}"]`);
+    if (!videoCheckbox) {
+        showErrorMessage('Video not found for playlist addition.');
+        return;
+    }
+    
+    videoCheckbox.checked = true;
+    
+    // Use the existing bulk function
+    showBulkAddToPlaylistModal();
+    
+    // Restore original selection after modal is shown
+    setTimeout(() => {
+        videoCheckbox.checked = false;
+        existingSelection.forEach(checkbox => checkbox.checked = true);
+        updateSelectedCount();
+    }, 100);
+}
+
 async function addVideosToPlaylist() {
     const playlistSelect = document.getElementById('playlistSelect');
     const selectedPlaylistId = playlistSelect.value;
@@ -5609,6 +5684,50 @@ function performVideoMerge(currentVideoId, duplicateVideoId) {
     flex: 1;
     font-size: 0.9em;
     line-height: 1.4;
+}
+
+/* Bulk Progress Styles */
+.bulk-progress {
+    margin: 15px 0;
+    padding: 10px;
+    background: var(--surface-light);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--surface-dark);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.progress-main {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.progress-details {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    opacity: 0.8;
 }
 </style>
 

@@ -1581,19 +1581,49 @@
         
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
-                fetch('/auth/dynamic-logout', { 
+                // Try different logout endpoints based on which auth system is active
+                let logoutEndpoint = '/simple-auth/logout';
+                
+                // Try simple auth logout first (since we're running simple auth mode)
+                fetch('/simple-auth/logout', { 
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 })
                     .then(response => {
-                        console.log('Logout response status:', response.status);
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
+                        console.log('Simple auth logout response status:', response.status);
+                        
+                        // If simple auth returns 404, try dynamic logout
+                        if (response.status === 404) {
+                            console.log('Simple auth logout not found, trying dynamic logout');
+                            logoutEndpoint = '/auth/dynamic-logout';
+                            return fetch('/auth/dynamic-logout', { 
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            });
                         }
-                        return response.json();
+                        
+                        // If still 404, try full auth system
+                        if (response.status === 404) {
+                            console.log('Dynamic logout not found, trying full auth logout');
+                            logoutEndpoint = '/auth/logout';
+                            return fetch('/auth/logout', { 
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            });
+                        }
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status} from ${logoutEndpoint}`);
+                        }
+                        return response;
                     })
+                    .then(response => response.json())
                     .then(data => {
                         console.log('Logout response data:', data);
                         if (data.success) {
@@ -1602,8 +1632,14 @@
                             if (userMenu) {
                                 userMenu.style.display = 'none';
                             }
-                            // Redirect to login page
-                            window.location.href = '/simple-login';
+                            // Redirect based on auth system
+                            if (logoutEndpoint === '/simple-auth/logout') {
+                                window.location.href = '/simple-auth/login';
+                            } else if (logoutEndpoint === '/auth/dynamic-logout') {
+                                window.location.href = '/simple-login';
+                            } else {
+                                window.location.href = '/';
+                            }
                         } else {
                             console.error('Logout failed - response indicates failure:', data);
                             alert('Logout failed: ' + (data.error || data.message || 'Unknown error'));

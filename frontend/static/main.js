@@ -451,13 +451,42 @@ class AuthManager {
     
     static async logout() {
         try {
-            const response = await fetch('/auth/logout', { method: 'POST' });
+            // Try different logout endpoints based on which auth system is active
+            let response;
+            let logoutEndpoint = '/simple-auth/logout';
+            
+            // First try simple auth system (since we're running simple auth mode)
+            response = await fetch('/simple-auth/logout', { method: 'POST' });
+            
+            // If simple auth returns 404, try dynamic auth system
+            if (response.status === 404) {
+                console.log('Simple auth logout not found, trying dynamic logout');
+                response = await fetch('/auth/dynamic-logout', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                logoutEndpoint = '/auth/dynamic-logout';
+            }
+            
+            // If still 404, try full auth system
+            if (response.status === 404) {
+                console.log('Dynamic logout not found, trying full auth logout');
+                response = await fetch('/auth/logout', { method: 'POST' });
+                logoutEndpoint = '/auth/logout';
+            }
+            
             if (response.ok) {
                 showSuccess('Logged out successfully');
-                // Reload page to trigger redirect to login if auth is still required
-                setTimeout(() => window.location.reload(), 1000);
+                // Redirect based on auth system
+                if (logoutEndpoint === '/simple-auth/logout') {
+                    setTimeout(() => window.location.href = '/simple-auth/login', 1000);
+                } else if (logoutEndpoint === '/auth/dynamic-logout') {
+                    setTimeout(() => window.location.href = '/simple-login', 1000);
+                } else {
+                    setTimeout(() => window.location.reload(), 1000);
+                }
             } else {
-                showError('Logout failed');
+                showError(`Logout failed: HTTP ${response.status}`);
             }
         } catch (error) {
             console.error('Logout error:', error);

@@ -278,20 +278,52 @@ class MVidarrCore {
         if (!confirm('Are you sure you want to logout?')) return;
         
         try {
-            const response = await fetch('/auth/dynamic-logout', { 
+            // Try different logout endpoints based on which auth system is active
+            let logoutEndpoint = '/simple-auth/logout';
+            let response;
+            
+            // First try simple auth logout (since we're running simple auth mode)
+            response = await fetch('/simple-auth/logout', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
             });
             
+            // If simple auth returns 404, try dynamic logout
+            if (response.status === 404) {
+                console.log('Simple auth logout not found, trying dynamic logout');
+                response = await fetch('/auth/dynamic-logout', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                logoutEndpoint = '/auth/dynamic-logout';
+            }
+            
+            // If still 404, try full auth system
+            if (response.status === 404) {
+                console.log('Dynamic logout not found, trying full auth logout');
+                response = await fetch('/auth/logout', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                logoutEndpoint = '/auth/logout';
+            }
+            
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+                throw new Error(`HTTP ${response.status} from ${logoutEndpoint}`);
             }
             
             const data = await response.json();
             
             if (data.success) {
                 this.hideUserMenu();
-                window.location.href = '/simple-login';
+                // Redirect based on auth system
+                if (logoutEndpoint === '/simple-auth/logout') {
+                    window.location.href = '/simple-auth/login';
+                } else if (logoutEndpoint === '/auth/dynamic-logout') {
+                    window.location.href = '/simple-login';
+                } else {
+                    window.location.href = '/';
+                }
             } else {
                 console.error('Logout failed:', data);
                 alert('Logout failed: ' + (data.error || data.message || 'Unknown error'));

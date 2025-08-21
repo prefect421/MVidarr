@@ -33,7 +33,7 @@
             <div class="feature-card" onclick="showEnhancedSearch()">
                 <iconify-icon icon="tabler:search"></iconify-icon>
                 <h3>Smart Search</h3>
-                <p>Search across IMVDb, Spotify, Last.fm, and Wikipedia simultaneously</p>
+                <p>Search across Spotify, Last.fm, and Wikipedia simultaneously</p>
             </div>
             
             <div class="feature-card" onclick="showDuplicateDetection()">
@@ -124,7 +124,7 @@
     <div id="searchStatus" class="search-status" style="display: none;">
         <div class="loading-spinner">
             <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 20px; height: 20px;">
-            <span id="searchStatusText">Searching IMVDb & YouTube...</span>
+            <span id="searchStatusText">Searching YouTube...</span>
         </div>
     </div>
 
@@ -133,15 +133,6 @@
         <div class="results-header">
             <h2 id="resultsTitle">Search Results</h2>
             <p id="resultsCount" class="results-count"></p>
-        </div>
-
-        <!-- IMVDb Results -->
-        <div id="imvdbResults" class="results-section" style="display: none;">
-            <h3 class="section-title">
-                <iconify-icon icon="tabler:video"></iconify-icon>
-                IMVDb Results
-            </h3>
-            <div id="imvdbResultsList" class="results-grid"></div>
         </div>
 
         <!-- YouTube Results -->
@@ -787,9 +778,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchStatusText = document.getElementById('searchStatusText');
     const resultsTitle = document.getElementById('resultsTitle');
     const resultsCount = document.getElementById('resultsCount');
-    const imvdbResults = document.getElementById('imvdbResults');
     const youtubeResults = document.getElementById('youtubeResults');
-    const imvdbResultsList = document.getElementById('imvdbResultsList');
     const youtubeResultsList = document.getElementById('youtubeResultsList');
     const noResults = document.getElementById('noResults');
 
@@ -826,19 +815,13 @@ document.addEventListener('DOMContentLoaded', function() {
         hideResults();
 
         try {
-            // Search both IMVDb and YouTube
-            const [imvdbData, youtubeData] = await Promise.all([
-                searchIMVDb(query),
-                searchYouTube(query)
-            ]);
+            // Search YouTube only
+            const youtubeData = await searchYouTube(query);
 
-            console.log('🎬 IMVDb results:', imvdbData.length);
             console.log('📺 YouTube results:', youtubeData.length);
 
-            const totalResults = imvdbData.length + youtubeData.length;
-            
-            if (totalResults > 0) {
-                displayResults(query, imvdbData, youtubeData);
+            if (youtubeData.length > 0) {
+                displayResults(query, [], youtubeData);
             } else {
                 showNoResults();
             }
@@ -848,51 +831,6 @@ document.addEventListener('DOMContentLoaded', function() {
             showError('Search failed. Please try again.');
         } finally {
             showSearchStatus(false);
-        }
-    }
-
-    async function searchIMVDb(query) {
-        try {
-            const response = await fetch(`/api/imvdb/search-videos?q=${encodeURIComponent(query)}`);
-            if (!response.ok) {
-                console.warn('⚠️ IMVDb search failed:', response.status);
-                return [];
-            }
-            
-            const data = await response.json();
-            const videos = data.results || [];
-            
-            return videos.map(video => {
-                let artistName = 'Unknown Artist';
-                if (video.artists && video.artists.length > 0) {
-                    artistName = video.artists[0].name;
-                } else if (video.artist_name) {
-                    artistName = video.artist_name;
-                } else if (video.artist) {
-                    artistName = video.artist;
-                }
-                
-                let thumbnailUrl = '';
-                if (video.image) {
-                    thumbnailUrl = video.image.o || video.image.thumbnail || video.image.url || '';
-                } else if (video.thumbnail) {
-                    thumbnailUrl = video.thumbnail;
-                }
-                
-                return {
-                    id: video.id,
-                    title: video.song_title || video.title || 'Unknown Title',
-                    artist: artistName,
-                    source: 'IMVDb',
-                    sourceIcon: '🎬',
-                    thumbnail: thumbnailUrl,
-                    year: video.year,
-                    url: video.permalink || video.url || ''
-                };
-            });
-        } catch (error) {
-            console.error('❌ IMVDb search error:', error);
-            return [];
         }
     }
 
@@ -935,20 +873,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayResults(query, imvdbData, youtubeData) {
-        const totalResults = imvdbData.length + youtubeData.length;
+        const totalResults = youtubeData.length;
         
         resultsTitle.textContent = `Search Results for "${query}"`;
         resultsCount.textContent = `Found ${totalResults} results`;
         
-        // Display IMVDb results
-        if (imvdbData.length > 0) {
-            imvdbResultsList.innerHTML = imvdbData.map(video => createResultCard(video)).join('');
-            imvdbResults.style.display = 'block';
-        } else {
-            imvdbResults.style.display = 'none';
-        }
-        
-        // Display YouTube results
+        // Display YouTube results only
         if (youtubeData.length > 0) {
             youtubeResultsList.innerHTML = youtubeData.map(video => createResultCard(video)).join('');
             youtubeResults.style.display = 'block';
@@ -1043,14 +973,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function hideResults() {
         searchResults.style.display = 'none';
-        imvdbResults.style.display = 'none';
         youtubeResults.style.display = 'none';
         noResults.style.display = 'none';
     }
 
     function showNoResults() {
         searchResults.style.display = 'block';
-        imvdbResults.style.display = 'none';
         youtubeResults.style.display = 'none';
         noResults.style.display = 'block';
     }

@@ -1,7 +1,7 @@
 {
   "version": "0.9.7-dev",
-  "build_date": "2025-08-19T21:15:43.364755",
-  "git_commit": "14d7ce2",
+  "build_date": "2025-08-21T16:41:40.539869",
+  "git_commit": "15c1194",
   "git_branch": "dev",
   "release_name": "Performance & Integration",
   "features": [
@@ -62,6 +62,10 @@
     "[COMPLETED] Critical UI Bug Fix - Search Panel Visibility resolved by correcting element targeting",
     "[COMPLETED] Major HTML Structure Fix - Videos and pagination properly extracted from bulkActionsPanel",
     "[COMPLETED] Playlist Thumbnail Assignment - Users can now assign custom thumbnails to playlists via URL",
+    "[COMPLETED] Video Filtering UI Improvements - Removed persistent loading text and improved empty state messaging",
+    "[COMPLETED] Pagination Integration with Filters - Pagination now updates correctly when filters are applied",
+    "[COMPLETED] Bulk Operations Progress Fix - Added missing HTML elements and CSS for bulk progress indicators",
+    "[COMPLETED] Video Filter Count Badge Fix - Resolved console warnings when search panel is hidden",
     "[PLANNED] Advanced Performance Analytics with real-time monitoring dashboard",
     "[PLANNED] Enhanced API Integration with external service extensions",
     "[PLANNED] Mobile-Responsive Design with touch-optimized interfaces",

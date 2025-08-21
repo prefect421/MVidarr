@@ -807,11 +807,91 @@ function setupModal() {
 }
 
 function showAddArtistModal() {
-    document.getElementById('addArtistModal').style.display = 'block';
+    const modal = document.getElementById('addArtistModal');
+    console.log('Showing Add Artist modal');
+    
+    // Show the modal using our proven overlay approach
+    modal.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        z-index: 9999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    `;
+    
+    // Ensure modal content is visible
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.cssText = `
+            background: var(--bg-secondary, #2d2d2d) !important;
+            color: var(--text-primary, #fff) !important;
+            padding: 20px !important;
+            border-radius: 12px !important;
+            width: 90% !important;
+            max-width: 600px !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+            position: relative !important;
+            border: 1px solid var(--border-primary, #444) !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        `;
+        
+        // Ensure all content inside is visible
+        const elements = modalContent.querySelectorAll('*');
+        elements.forEach(element => {
+            // Don't style input elements too aggressively
+            if (!element.matches('input, button, select, textarea')) {
+                element.style.visibility = 'visible';
+                element.style.opacity = '1';
+            }
+        });
+        
+        // Specifically style form elements for visibility
+        const inputs = modalContent.querySelectorAll('input, button, select, textarea');
+        inputs.forEach(input => {
+            if (input.type !== 'checkbox') {
+                input.style.backgroundColor = 'var(--input-bg, #333)';
+                input.style.color = 'var(--input-text, #fff)';
+                input.style.border = '1px solid var(--input-border, #555)';
+                input.style.padding = '8px';
+                input.style.borderRadius = '4px';
+            }
+        });
+        
+        // Style buttons
+        const buttons = modalContent.querySelectorAll('button');
+        buttons.forEach(button => {
+            if (button.classList.contains('btn-primary')) {
+                button.style.backgroundColor = 'var(--accent-color, #00d4ff)';
+                button.style.color = 'var(--text-primary, #fff)';
+            } else {
+                button.style.backgroundColor = 'var(--bg-tertiary, #555)';
+                button.style.color = 'var(--text-primary, #fff)';
+            }
+            button.style.border = 'none';
+            button.style.padding = '8px 16px';
+            button.style.borderRadius = '4px';
+            button.style.cursor = 'pointer';
+        });
+    }
+    
+    modal.classList.add('show');
+    console.log('Add Artist modal displayed with enhanced visibility');
 }
 
 function hideAddArtistModal() {
-    document.getElementById('addArtistModal').style.display = 'none';
+    const modal = document.getElementById('addArtistModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none'; // Hide the modal
+    
+    // Reset form content
     document.getElementById('addArtistForm').reset();
     document.getElementById('addArtistSearchInput').value = '';
     document.getElementById('addArtistSearchResults').innerHTML = '<p>Enter a search term to find artists from IMVDb</p>';
@@ -1298,11 +1378,11 @@ function proceedAddArtistFromImvdb(imvdbId, artistName) {
 }
 
 function showDiscoveryModal() {
-    document.getElementById('discoveryModal').style.display = 'block';
+    document.getElementById('discoveryModal').classList.add('show');
 }
 
 function hideDiscoveryModal() {
-    document.getElementById('discoveryModal').style.display = 'none';
+    document.getElementById('discoveryModal').classList.remove('show');
     document.getElementById('discoverySearchInput').value = '';
     document.getElementById('discoveryResults').innerHTML = '<p>Enter a search term to discover artists from IMVDb</p>';
 }
@@ -3212,19 +3292,40 @@ function updateArtistPagination(data) {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
+    /* Use flexbox for perfect centering when visible */
+    align-items: center;
+    justify-content: center;
+}
+
+/* Simple, clean modal CSS */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal.show {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .modal-content {
     background: var(--bg-secondary, #2d2d2d);
-    margin: 5% auto;
     padding: 20px;
     border: 1px solid var(--border-primary, #444);
     border-radius: 12px;
     width: 90%;
     max-width: 600px;
+    max-height: 90vh;
     color: var(--text-primary, #fff);
-    max-height: 80vh;
     overflow-y: auto;
+    position: relative;
 }
 
 .large-modal {
@@ -3404,8 +3505,9 @@ function updateArtistPagination(data) {
     
     .modal-content {
         width: 95%;
-        margin: 10px auto;
+        margin: 10px; /* Use all-sides margin for breathing room */
         padding: 15px;
+        max-height: 95vh; /* Reduce max height on mobile for better fit */
     }
     
     .search-container {

@@ -764,7 +764,7 @@ function checkLastFmStatus() {
             if (!data.configured) {
                 statusEl.className = 'status-indicator status-not-configured';
                 statusText.textContent = 'Not Configured';
-                showInfo('Last.fm integration not configured. Please set LASTFM_API_KEY and LASTFM_API_SECRET environment variables.');
+                showInfo('Last.fm integration not configured. Please set Last.fm API key and secret in Settings.');
                 return;
             }
             

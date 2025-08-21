@@ -549,7 +549,7 @@
 
         <div class="settings-section">
             <h2>Video Discovery</h2>
-            <p class="section-description">Automatically discover new videos for monitored artists using IMVDb</p>
+            <p class="section-description">Automatically discover new videos for monitored artists</p>
             
             <div class="form-group">
                 <label for="auto_discovery_schedule_enabled">Enable Video Discovery:</label>
@@ -3372,11 +3372,31 @@ function revokeAllSessions() {
 
 function logoutUser() {
     if (confirm('Are you sure you want to logout?')) {
+        // Try to detect which auth system is active by checking available endpoints
+        let logoutEndpoint = '/auth/logout';
+        
         fetch('/auth/logout', { method: 'POST' })
+            .then(response => {
+                // If full auth returns 404, try dynamic/simple auth system
+                if (response.status === 404) {
+                    console.log('Full auth logout not found, trying dynamic logout');
+                    logoutEndpoint = '/auth/dynamic-logout';
+                    return fetch('/auth/dynamic-logout', { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
+                return response;
+            })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = '/auth/login';
+                    // Redirect based on auth system
+                    if (logoutEndpoint === '/auth/dynamic-logout') {
+                        window.location.href = '/simple-login';
+                    } else {
+                        window.location.href = '/auth/login';
+                    }
                 } else {
                     showError('Logout failed');
                 }

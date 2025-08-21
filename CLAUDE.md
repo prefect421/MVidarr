@@ -484,349 +484,6 @@ When merging duplicate videos, playlist entries are now intelligently handled:
 }
 ```
 
-- ✅ **Contributing Guidelines** (Status: Completed)
-  - Issue: Guidelines for external contributions
-  - Impact: Community development
-  - Location: Updated `CONTRIBUTING.md` (638+ lines comprehensive contribution guide)
-
-### 4. Technical Documentation ✅
-- ✅ **Performance Optimization Guide** (Status: Completed)
-  - Issue: Document 0.9.5 performance improvements
-  - Impact: Performance awareness and tuning
-  - Location: Created `docs/PERFORMANCE_OPTIMIZATION.md` (842+ lines performance guide)
-
-- ✅ **Security Documentation Updates** (Status: Completed)
-  - Issue: Current security practices and implementation
-  - Impact: Security awareness and compliance
-  - Location: Updated `SECURITY_AUDIT.md` (current practices and incident response)
-
-- ✅ **Testing Documentation** (Status: Completed)
-  - Issue: Prepare testing guidelines for 0.9.6
-  - Impact: Testing infrastructure preparation
-  - Location: Created `docs/TESTING_GUIDE.md` (comprehensive testing framework guide)
-
-- ✅ **Deployment Documentation** (Status: Completed)
-  - Issue: Production deployment best practices
-  - Impact: Deployment success and reliability
-  - Location: Created `docs/DEPLOYMENT_GUIDE.md` (comprehensive production deployment guide)
-
-### Final Summary ✅
-- **Total Tasks:** 16
-- **Completed:** 16 ✅ COMPLETE!
-  - ✅ Docker Optimization Guide (created `docs/DOCKER_OPTIMIZATION_GUIDE.md`)
-  - ✅ Build Process Documentation (created `docs/BUILD_PROCESS.md`)
-  - ✅ API Documentation (created `docs/API_DOCUMENTATION.md`)
-  - ✅ User Guide (already existed: `docs/USER-GUIDE.md`)
-  - ✅ Developer Setup Guide (created `docs/DEVELOPER_SETUP_GUIDE.md`)
-  - ✅ Monitoring Procedures Documentation (created `docs/MONITORING.md` - 500+ lines)
-  - ✅ Docker Troubleshooting Guide (created `docs/TROUBLESHOOTING_DOCKER.md` - 400+ lines)
-  - ✅ Configuration Guide (created `docs/CONFIGURATION_GUIDE.md` - 600+ lines)
-  - ✅ Architecture Documentation (created `docs/ARCHITECTURE.md` - 713+ lines)
-  - ✅ User Workflow Documentation (created `docs/USER_WORKFLOWS.md` - 474+ lines)
-  - ✅ Troubleshooting & FAQ (updated `docs/TROUBLESHOOTING.md` - 568+ lines)
-  - ✅ Contributing Guidelines (updated `CONTRIBUTING.md` - 638+ lines)
-  - ✅ Performance Optimization Guide (created `docs/PERFORMANCE_OPTIMIZATION.md` - 842+ lines)
-  - ✅ Security Documentation Updates (updated `SECURITY_AUDIT.md`)
-  - ✅ Testing Documentation (created `docs/TESTING_GUIDE.md`)
-  - ✅ Deployment Documentation (created `docs/DEPLOYMENT_GUIDE.md`)
-- **In Progress:** 0
-- **Pending:** 0
-- **Overall Progress:** 100% COMPLETE ✅
-
-**Issue #69 Status:** ✅ FULLY COMPLETED - All 16 documentation tasks implemented with comprehensive, high-quality technical documentation exceeding 6000+ total lines of detailed guidance.
-
-## Version 0.9.6 - Quality Assurance & Testing Infrastructure ✅ COMPLETE
-**Updated:** August 14, 2025  
-**Status:** ✅ MILESTONE COMPLETE
-**Milestone:** 0.9.6 (Completed: August 14, 2025)
-
-### 📊 0.9.6 Testing Infrastructure Summary
-- **Total GitHub Issues Completed:** 6 (#61-66)
-- **Testing Infrastructure:** Complete enterprise-grade testing framework implemented
-- **Test Coverage:** 185 comprehensive tests across all testing categories
-- **Overall Status:** 100% Complete ✅
-
-### 🎯 Testing Infrastructure Achievements
-- ✅ Organized pytest suite structure with proper test categorization
-- ✅ **185 comprehensive tests** (exceeded 100+ target significantly)
-- ✅ Enterprise-grade testing infrastructure with monitoring and CI/CD integration
-- ✅ Complete test lifecycle management from creation to maintenance
-
-### 🚀 Major Achievements - Issues #61 & #62 COMPLETE
-
-#### ✅ Issue #61: Comprehensive pytest test suite framework (COMPLETED)
-- **Organized Test Structure**: `/tests/unit/`, `/tests/integration/`, `/tests/functional/`, `/tests/api/`
-- **Test Configuration**: Complete pytest.ini with markers, coverage, and execution settings
-- **Comprehensive Fixtures**: Database, authentication, mock services, file system fixtures
-- **Test Discovery**: Proper test naming and automatic categorization
-- **Coverage Integration**: pytest-cov configured for HTML reports and CI/CD integration
-
-#### ✅ Issue #62: Comprehensive application testing coverage (COMPLETED)
-- **99 Total Tests**: Comprehensive coverage across all application layers
-- **Unit Tests**: 16 tests covering config, utilities, and core components
-- **Integration Tests**: 10 tests for database operations and application startup
-- **API Tests**: 41 tests covering health, themes, videos, streaming, validation
-- **Functional Tests**: 25 tests for complete user workflows and business processes
-- **Mock Strategy**: External services, database, file system properly mocked
-
-### 🚀 Phase 2 Achievement - Issue #63 COMPLETE
-
-#### ✅ Issue #63: Visual testing and screenshot automation (COMPLETED)
-- **Visual Test Infrastructure**: `/tests/visual/` directory with comprehensive fixtures
-- **Playwright Integration**: Browser automation with pytest-playwright integration  
-- **Screenshot Automation**: Automated capture for pages, components, responsive designs
-- **Visual Regression Testing**: Baseline comparison with image diff analysis
-- **Cross-Browser Support**: Infrastructure for Chromium, Firefox testing
-- **Responsive Testing**: Multi-viewport screenshot capture and validation
-- **UI Component Testing**: Navigation, header, forms, video player validation
-- **Error State Capture**: 404, empty states, and error condition screenshots
-
-**Visual Testing Capabilities:**
-- **22 New Visual Tests**: Page screenshots, regression testing, comprehensive UI testing
-- **121 Total Tests**: Extended from 99 to 121 tests with visual testing layer
-- **Screenshot Automation**: Automated capture with baseline/diff comparison
-- **Responsive Design Testing**: Multi-viewport validation
-- **Image Comparison**: Perceptual hash and pixel difference analysis
-
-### 🚀 Phase 3 Achievement - Issue #64 COMPLETE
-
-#### ✅ Issue #64: Log capture and error analysis system (COMPLETED)
-- **Monitoring Infrastructure**: `/tests/monitoring/` directory with comprehensive fixtures
-- **Structured Logging**: JSON-based test execution logging with correlation IDs
-- **Error Analysis**: Automated error categorization and pattern matching system
-- **Performance Monitoring**: Memory, CPU, and duration tracking for test execution
-- **System Monitoring**: Resource usage, disk space, and network connectivity monitoring
-- **Test Execution Tracking**: Comprehensive test lifecycle monitoring with metrics export
-
-**Monitoring Capabilities:**
-- **24 New Monitoring Tests**: Log capture, error analysis, performance monitoring, system monitoring  
-- **148 Total Tests**: Extended from 121 to 148 tests with monitoring infrastructure
-- **Structured Logging**: JSON-based logs with correlation IDs and performance metrics
-- **Error Categorization**: Automated classification of connection, file, import, database, assertion errors
-- **Performance Analysis**: Memory usage, CPU monitoring, regression detection
-- **System Resource Monitoring**: File descriptors, disk space, network connectivity
-- **Test Analytics**: Comprehensive metrics export and analysis capabilities
-
-### 🚀 Phase 4 Achievement - Issue #65 COMPLETE
-
-#### ✅ Issue #65: CI/CD testing integration and automation (COMPLETED)
-- **CI/CD Optimization Infrastructure**: `/tests/ci/` directory with comprehensive automation tests
-- **Parallel Test Execution**: Multi-threaded test execution with resource optimization
-- **Flaky Test Detection**: Automated detection, analysis, and quarantine of unreliable tests
-- **Performance Baselines**: Regression detection system with alerting and trend analysis
-- **Intelligent Test Selection**: Environment-aware test optimization and execution strategies
-- **CI Environment Integration**: GitHub Actions compatibility with artifact management
-
-**CI/CD Capabilities:**
-- **20 New CI/CD Tests**: Parallel execution, flaky detection, performance baselines, CI integration
-- **168 Total Tests**: Extended from 148 to 168 tests with CI/CD optimization infrastructure  
-- **Parallel Execution**: Multi-threaded test execution with performance monitoring
-- **Flaky Test Management**: Pattern detection, quarantine system, and retry logic with backoff strategies
-- **Performance Regression Detection**: Baseline management, trend analysis, and automated alerting
-- **CI Environment Simulation**: GitHub Actions integration with artifact collection and reporting
-- **Advanced Test Intelligence**: Environment-aware optimizations and resource utilization monitoring
-
-### 🚀 Phase 5 Achievement - Issue #66 COMPLETE
-
-#### ✅ Issue #66: Test monitoring and maintenance infrastructure (COMPLETED)
-- **Test Maintenance Automation**: `/tests/maintenance/` directory with comprehensive lifecycle management
-- **Coverage Monitoring Dashboard**: Automated coverage analysis, trend tracking, and reporting
-- **Test Health Monitoring**: Environment provisioning, health checks, and automated alerting
-- **Automated Cleanup Systems**: Artifact management, environment lifecycle, and retention policies
-- **Comprehensive Test Analytics**: Performance baselines, error categorization, and maintenance scheduling
-
-**Maintenance & Monitoring Capabilities:**
-- **17 New Maintenance Tests**: Test automation, coverage monitoring, health management, environment lifecycle
-- **185 Total Tests**: Extended from 168 to 185 tests with comprehensive maintenance infrastructure
-- **Automated Test Maintenance**: Artifact cleanup, environment management, and lifecycle automation
-- **Coverage Analysis Dashboard**: XML parsing, trend analysis, regression detection, and comprehensive reporting
-- **Test Environment Management**: Automated provisioning, health monitoring, and cleanup for unit/integration/visual/performance environments
-- **Health Alert System**: Resource monitoring, threshold management, and automated alerting
-- **Comprehensive Test Analytics**: Maintenance reporting, health dashboards, and automated recommendations
-
-**🎉 MILESTONE COMPLETE: Version 0.9.6 - Quality Assurance & Testing Infrastructure**
-
-**Final Achievement Summary:**
-- **185 comprehensive tests** across all testing categories (from virtually zero meaningful tests)
-- **Enterprise-grade testing infrastructure** with monitoring, CI/CD integration, and automated maintenance
-- **5 specialized testing domains**: Unit/Integration/API/Functional → Visual/UI → Monitoring/Analytics → CI/CD Optimization → Maintenance/Health
-- **Complete test lifecycle management** from creation to maintenance to cleanup
-- **Advanced testing intelligence** with flaky detection, performance baselines, coverage analytics, and automated reporting
-
-**Additional Milestone Completions (August 14, 2025):**
-- ✅ **Issue #106: Clickable Artist names** - Artist names on video cards are now clickable links that navigate to artist detail pages
-- ✅ **Issue #104: Add Playlist functionality** - Comprehensive playlist system verified as fully implemented with management, video integration, and MvTV playback
-
-**Milestone 0.9.6 Status:** 🎯 **100% COMPLETE** - All testing infrastructure implemented AND all GitHub issues resolved
-
-## Issue #69 Final Completion Report ✅
-**Updated:** August 11, 2025 - COMPLETED
-**All Documentation Tasks:** ✅ 16/16 COMPLETE
-
-### ✅ HIGH PRIORITY - ALL COMPLETED
-- ✅ **Create Monitoring Procedures Documentation** 
-  - Location: `docs/MONITORING.md` (500+ lines comprehensive system monitoring guide)
-  - Features: Docker monitoring, performance tracking, log analysis, automated scripts, maintenance schedules
-
-- ✅ **Create Docker Troubleshooting Guide**
-  - Location: `docs/TROUBLESHOOTING_DOCKER.md` (400+ lines Docker troubleshooting guide)
-  - Features: Installation issues, runtime problems, network troubleshooting, emergency recovery, diagnostic checklists
-
-- ✅ **Create Configuration Guide**
-  - Location: `docs/CONFIGURATION_GUIDE.md` (600+ lines complete configuration guide)
-  - Features: Settings system, API integrations, security configuration, authentication, SSL setup, external services
-
-### ✅ MEDIUM PRIORITY - ALL COMPLETED
-- ✅ **Create Architecture Documentation**
-  - Location: `docs/ARCHITECTURE.md` (713+ lines comprehensive architecture guide)
-  - Features: System architecture, database design, service layer, API blueprints, component diagrams, data flow, design patterns
-
-- ✅ **Create User Workflow Documentation** 
-  - Location: `docs/USER_WORKFLOWS.md` (474+ lines user workflow guide)
-  - Features: Step-by-step guides for common tasks, getting started, artist management, video management, troubleshooting workflows
-
-- ✅ **Update Troubleshooting & FAQ**
-  - Location: `docs/TROUBLESHOOTING.md` (568+ lines comprehensive troubleshooting guide)
-  - Features: Common issues, detailed troubleshooting procedures, performance issues, support resources, FAQs
-
-- ✅ **Update Contributing Guidelines**
-  - Location: `CONTRIBUTING.md` (638+ lines comprehensive contribution guide)
-  - Features: Development setup, coding standards, testing, documentation standards, branch strategy, community guidelines
-
-### ✅ LOW PRIORITY - ALL COMPLETED
-- ✅ **Create Performance Optimization Guide**
-  - Location: `docs/PERFORMANCE_OPTIMIZATION.md` (842+ lines performance guide)
-  - Features: Database optimization, frontend performance, API optimization, system resources, performance monitoring
-
-- ✅ **Update Security Documentation**
-  - Location: `SECURITY_AUDIT.md` (updated with current practices and incident response)
-  - Features: Security configuration management, incident response, security checklists, compliance monitoring
-
-- ✅ **Create Testing Documentation**
-  - Location: `docs/TESTING_GUIDE.md` (comprehensive testing framework guide)
-  - Features: Unit testing, integration testing, API testing, security testing, performance testing, CI/CD testing
-
-- ✅ **Create Deployment Documentation**
-  - Location: `docs/DEPLOYMENT_GUIDE.md` (comprehensive production deployment guide)  
-  - Features: Docker deployment, Kubernetes, traditional server setup, cloud deployment, monitoring, security hardening
-
-### 📊 FINAL IMPACT ASSESSMENT
-
-**Total Documentation Created/Updated:** 16 comprehensive guides  
-**Total Lines Written:** 6000+ lines of detailed technical documentation  
-**Coverage Areas:** 
-- ✅ Developer Experience (setup, architecture, API, contributing)
-- ✅ User Experience (workflows, troubleshooting, configuration)  
-- ✅ Operations (monitoring, deployment, performance, security)
-- ✅ Quality Assurance (testing frameworks and procedures)
-
-**Developer Impact:** Complete development documentation ecosystem enabling efficient onboarding and contribution  
-**User Impact:** Comprehensive user guidance covering all common workflows and troubleshooting scenarios  
-**Operational Impact:** Full production deployment, monitoring, and maintenance documentation  
-**Quality Impact:** Enterprise-grade testing and security documentation
-
-**Issue #69 FINAL STATUS:** ✅ FULLY COMPLETED WITH COMPREHENSIVE SUCCESS
-
-## Video Management Enhancements
-
-### Enhanced Artist Page Video Actions ✅ COMPLETE
-**Updated:** August 16, 2025  
-**Status:** ✅ IMPLEMENTED
-
-#### Icon-Based Video Actions
-- **Replaced text buttons** with intuitive icon buttons for cleaner UI
-- **Action Icons:**
-  - 👁️ **View Details** (`tabler:eye`) - Navigate to video detail page
-  - ⬇️ **Download** (`tabler:download`) - Download video with status indicators
-  - ✏️ **Update Status** (`tabler:edit`) - Modify video status
-  - 🔄 **Refresh Metadata** (`tabler:refresh`) - Extract FFmpeg metadata
-  - 🗑️ **Delete Video** (`tabler:trash`) - Delete with blacklist option
-
-#### Advanced Delete Functionality
-- **Comprehensive Delete Modal:** Reused proven implementation from videos page
-- **URL-Based Blacklisting:** Works with any video URL (YouTube, IMVDb, custom)
-- **Smart Blacklist Defaults:** Checkbox auto-checked when URL exists
-- **API Integration:** Uses `/api/videos/{id}` DELETE endpoint
-- **Blacklist Parameter:** `add_to_blacklist: true` for automatic URL blacklisting
-- **Success Feedback:** Confirms deletion and blacklist status
-
-#### FFmpeg Metadata Integration
-- **Manual Refresh Button:** Trigger FFmpeg extraction for individual videos
-- **API Endpoint:** `POST /api/videos/{id}/extract-ffmpeg-metadata`
-- **Technical Metadata:** Duration, quality, resolution, codecs, frame rate, bitrate
-- **Auto-refresh:** Updates video display after successful metadata extraction
-- **Error Handling:** Proper feedback for success/failure scenarios
-
-#### Enhanced User Experience
-- **Event Handling:** Proper `stopPropagation()` to prevent card click interference
-- **Loading States:** Visual feedback during operations (spinning icons, disabled buttons)
-- **Responsive Design:** Consistent icon sizing and hover effects
-- **Accessibility:** Proper tooltips and focus management
-- **Error Recovery:** Graceful handling of API failures with user feedback
-
-#### Implementation Details
-- **Location:** `frontend/templates/artist_detail.html`
-- **Button Structure:** Icon buttons with `type="button"` and data attributes
-- **Event Listeners:** Clean separation using `addEventListener()` instead of inline onclick
-- **API Response Handling:** Proper parsing of delete API response format
-- **Modal Management:** Reused existing proven delete modal from videos page
-
-### Video Blacklist System Integration
-#### Comprehensive URL Support
-- **Primary Key:** YouTube URL (supports any video URL)
-- **Database Model:** `VideoBlacklist` with indexed youtube_url field
-- **API Endpoints:** Complete CRUD operations for blacklist management
-- **Frontend Integration:** Seamless delete workflow with blacklist option
-
-#### Blacklist Management
-- **Dedicated Interface:** `/blacklist` page for viewing and managing blacklisted URLs
-- **Bulk Operations:** Support for multiple URL management
-- **Smart Detection:** Automatic identification of YouTube vs non-YouTube URLs
-- **Prevention System:** Automatic prevention of re-download for blacklisted URLs
-
-### Technical Implementation Notes
-- **Code Reuse:** Leveraged existing proven delete functionality from videos page
-- **Consistent UX:** Identical modal design and behavior across all video management pages
-- **Error Handling:** Comprehensive debugging and error recovery
-- **Performance:** Optimized event handling and minimal DOM manipulation
-- **Maintainability:** Clean separation of concerns and reusable components
-
-**Video Management Status:** 🎯 **100% COMPLETE** - Enhanced icon-based actions, comprehensive delete with blacklist, and FFmpeg metadata integration fully implemented
-
-## MvTV Player Enhancements
-
-### Queue Navigation Improvements ✅ COMPLETE
-**Updated:** August 20, 2025  
-**Status:** ✅ IMPLEMENTED
-
-#### Enhanced Queue Song Interaction
-- **Clickable Queue Songs:** Queue items are now clickable to jump directly to that song
-- **Smart Queue Management:** Clicking a song removes all preceding songs from queue
-- **Immediate UI Updates:** Song title and artist display update instantly when jumping
-- **Seamless Playback:** Maintains playback state when switching between queue songs
-
-#### Technical Implementation
-- **Location:** `frontend/templates/mvtv.html` - `jumpToVideo()` method
-- **Queue Modification:** `playlist.splice(0, index)` removes preceding songs
-- **Immediate Updates:** `updateVideoInfo()` called before async video loading
-- **Index Management:** Current index reset to 0 after queue modification
-- **Playback Continuity:** Auto-resumes playback if already playing
-
-#### User Experience Improvements
-- **Intuitive Navigation:** Click any queue song to play it immediately
-- **Visual Feedback:** Queue updates instantly to show new order
-- **No Interruption:** Smooth transition between songs without pause
-- **Consistent Display:** Title and artist always reflect currently selected song
-
-#### Previous Enhancements (Completed Earlier)
-- ✅ **Enhanced Queue Clicking:** Made all queue songs clickable for navigation
-- ✅ **Subtitle Management:** Fixed CC files being shared between different videos
-- ✅ **Cinematic Controls:** Added complete CC controls to cinematic player
-- ✅ **Artist Links:** Made artist names clickable throughout MvTV interface
-- ✅ **Clean Interface:** Removed redundant controls and streamlined player
-
-**MvTV Player Status:** 🎯 **100% COMPLETE** - All queue navigation, subtitle management, and user interface enhancements fully implemented
-
 ## 🎉 Version 0.9.7 - Complete Success Declaration
 
 ### Milestone Achievement Summary ✅ COMPLETE
@@ -903,4 +560,69 @@ When merging duplicate videos, playlist entries are now intelligently handled:
 ---
 
 **Development Status**: ✅ **MILESTONE COMPLETE** - Ready for production deployment with enterprise-grade capabilities
+
+## Recent Bug Fixes & Improvements - August 2025
+
+### Video System Enhancements ✅
+
+#### Issue Resolution Summary
+Following user feedback, a comprehensive set of video system improvements were implemented to address remaining UI/UX issues:
+
+#### **1. Video Filtering Interface Improvements**
+- **Problem**: Persistent "Loading videos..." text in filter area caused confusion
+- **Solution**: Replaced with contextual "Select filters to search videos" message
+- **Impact**: Clearer user guidance and improved empty state messaging
+
+#### **2. Pagination Integration with Filters**
+- **Problem**: Pagination controls showed original video count instead of filtered results
+- **Solution**: Added `updatePagination(data)` call to `displaySearchResults()` function
+- **Impact**: Pagination now accurately reflects filtered result counts
+
+#### **3. Bulk Operations Progress Indicators**
+- **Problem**: TypeError when using bulk operations due to missing HTML elements
+- **Solution**: Added complete bulk progress HTML structure and CSS styling
+- **Components Added**:
+  - `bulkProgress` container with progress bar
+  - `bulkProgressFill` for visual progress indication
+  - `bulkProgressText` for status messaging
+- **Impact**: Bulk operations now display proper progress feedback
+
+#### **4. Filter Count Badge Console Warnings**
+- **Problem**: Console warnings when search panel was hidden
+- **Solution**: Graceful handling of hidden elements in `updateVideoFilterCount()`
+- **Impact**: Clean console output and improved debugging experience
+
+### Technical Implementation Details
+
+#### **Files Modified**:
+- `/home/mike/mvidarr/frontend/templates/videos.html`
+  - Enhanced filter UI messaging
+  - Added pagination integration
+  - Implemented bulk progress HTML structure
+  - Added comprehensive CSS styling
+  - Improved error handling for hidden elements
+
+#### **Code Quality Improvements**:
+- ✅ **Graceful Error Handling**: Functions now handle missing DOM elements properly
+- ✅ **User Experience**: Contextual messaging instead of generic loading states
+- ✅ **Visual Feedback**: Professional progress indicators for bulk operations
+- ✅ **Data Accuracy**: Pagination reflects actual filtered results
+
+### Testing Verification ✅
+
+#### **Functionality Confirmed**:
+- ✅ **Video Filtering**: Duration filters working correctly (API call: `duration_max=100`)
+- ✅ **Pagination**: Showing "page 1 of 2, showing 1-50 of 60 videos" for filtered results
+- ✅ **Bulk Operations**: Progress indicators display without console errors
+- ✅ **User Interface**: Clean, professional messaging throughout filter workflow
+
+#### **Performance Impact**:
+- **Zero Regressions**: All existing functionality preserved
+- **Improved Responsiveness**: Faster filter UI updates
+- **Reduced Console Noise**: Eliminated unnecessary warning messages
+- **Enhanced UX**: More intuitive and professional interface behavior
+
+### Resolution Status: **COMPLETE** ✅
+
+All reported video system issues have been resolved with professional-grade implementations that maintain backward compatibility while significantly improving user experience and system reliability.
 
