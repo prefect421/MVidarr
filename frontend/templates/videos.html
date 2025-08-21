@@ -5030,6 +5030,90 @@ function getCurrentUserId() {
     return window.currentUserId || null;
 }
 
+// Video Search Input Handler
+function handleVideoSearchInput(event) {
+    const query = event.target.value.trim();
+    
+    // Handle Enter key to trigger search
+    if (event.key === 'Enter') {
+        applyVideoFilters();
+        return;
+    }
+    
+    // Handle Escape key to clear search
+    if (event.key === 'Escape') {
+        event.target.value = '';
+        applyVideoFilters();
+        return;
+    }
+    
+    // Debounce search suggestions
+    clearTimeout(window.searchTimeout);
+    
+    if (query.length >= 2) {
+        window.searchTimeout = setTimeout(() => {
+            loadSearchSuggestions(query);
+        }, 300);
+    } else {
+        hideSearchSuggestions();
+    }
+}
+
+async function loadSearchSuggestions(query) {
+    try {
+        const response = await fetch(`/api/search/suggestions?query=${encodeURIComponent(query)}&limit=8&type=all`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        displaySearchSuggestions(data.suggestions || []);
+    } catch (error) {
+        console.error('Error loading search suggestions:', error);
+        hideSearchSuggestions();
+    }
+}
+
+function displaySearchSuggestions(suggestions) {
+    const suggestionsContainer = document.getElementById('videoSearchSuggestions');
+    
+    if (!suggestions || suggestions.length === 0) {
+        hideSearchSuggestions();
+        return;
+    }
+    
+    const suggestionsHtml = suggestions.map((suggestion, index) => `
+        <div class="suggestion-item" data-suggestion="${suggestion.text}" data-index="${index}" onclick="selectSearchSuggestion('${suggestion.text.replace(/'/g, "&#39;")}')">
+            <span class="suggestion-text">${suggestion.text}</span>
+            <span class="suggestion-type">${suggestion.type}</span>
+        </div>
+    `).join('');
+    
+    suggestionsContainer.innerHTML = suggestionsHtml;
+    suggestionsContainer.style.display = 'block';
+}
+
+function selectSearchSuggestion(suggestionText) {
+    const searchInput = document.getElementById('videoSearchInput');
+    searchInput.value = suggestionText;
+    hideSearchSuggestions();
+    applyVideoFilters();
+}
+
+function hideSearchSuggestions() {
+    const suggestionsContainer = document.getElementById('videoSearchSuggestions');
+    suggestionsContainer.style.display = 'none';
+    suggestionsContainer.innerHTML = '';
+}
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(event) {
+    const searchContainer = document.querySelector('.search-input-container');
+    if (searchContainer && !searchContainer.contains(event.target)) {
+        hideSearchSuggestions();
+    }
+});
+
 // Search Highlighting and Relevance Functions
 function highlightSearchTerms(text, searchQuery) {
     if (!searchQuery || !text) return text;
@@ -6478,14 +6562,34 @@ function performVideoMerge(currentVideoId, duplicateVideoId) {
 }
 
 /* Enhanced search suggestions */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface-base);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    margin-top: 4px;
+}
+
 .search-suggestions .suggestion-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: 10px 12px;
     cursor: pointer;
     border-bottom: 1px solid var(--border-light);
     transition: background-color 0.2s ease;
+}
+
+.search-suggestions .suggestion-item:last-child {
+    border-bottom: none;
 }
 
 .search-suggestions .suggestion-item:hover {
@@ -6499,20 +6603,26 @@ function performVideoMerge(currentVideoId, duplicateVideoId) {
 
 .suggestion-text {
     flex: 1;
+    font-size: 0.9em;
 }
 
 .suggestion-type {
-    font-size: 0.8em;
+    font-size: 0.75em;
     color: var(--text-muted);
     background: var(--surface-light);
     padding: 2px 6px;
     border-radius: 10px;
     margin-left: 8px;
+    text-transform: capitalize;
 }
 
 .search-suggestions .suggestion-item.selected .suggestion-type {
     background: rgba(255,255,255,0.2);
     color: rgba(255,255,255,0.8);
+}
+
+.search-input-container {
+    position: relative;
 }
 </style>
 
