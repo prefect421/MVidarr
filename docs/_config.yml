@@ -68,8 +68,7 @@ exclude:
   - "*.gem"
   - "*.gemspec"
 
-# Include specific documentation files
+# Include specific documentation files  
 include:
-  - docs/
-  - CHANGELOG.md
-  - LICENSE
+  - ../CHANGELOG.md
+  - ../LICENSE
