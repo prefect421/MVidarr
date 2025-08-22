@@ -19,9 +19,6 @@ Docker deployment is the recommended method for production use, offering consist
 git clone https://github.com/prefect421/mvidarr.git
 cd mvidarr
 
-# Checkout the latest stable release (v0.9.5 - recommended)
-git checkout v0.9.5
-
 # Start with Docker Compose
 docker-compose up -d
 ```
@@ -36,12 +33,12 @@ Use our optimized production image:
 
 ```bash
 # Pull the latest release
-docker pull ghcr.io/prefect421/mvidarr:v0.9.4
+docker pull ghcr.io/prefect421/mvidarr:v0.9.7
 
 # Or use in docker-compose.yml
 services:
   mvidarr:
-    image: ghcr.io/prefect421/mvidarr:v0.9.4
+    image: ghcr.io/prefect421/mvidarr:v0.9.7
     # ... other configuration
 ```
 

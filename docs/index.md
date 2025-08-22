@@ -3,28 +3,9 @@ layout: home
 title: Home
 ---
 
-<div class="home-header">
-  <img src="https://raw.githubusercontent.com/prefect421/mvidarr/main/frontend/src/Content/Images/mvidarr-logo.png" alt="MVidarr Logo" width="150" height="150">
-  
-  <h1>MVidarr</h1>
-  
-  <p class="tagline"><strong>A comprehensive music video management and discovery platform</strong> that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.</p>
-  
-  <div class="badges">
-    <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.6" target="_blank">
-      <img src="https://img.shields.io/badge/version-v0.9.6-blue.svg" alt="Version">
-    </a>
-    <a href="https://github.com/prefect421/mvidarr" target="_blank">
-      <img src="https://img.shields.io/github/stars/prefect421/mvidarr.svg" alt="Stars">
-    </a>
-    <a href="https://github.com/prefect421/mvidarr/blob/main/LICENSE" target="_blank">
-      <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
-    </a>
-    <a href="https://ghcr.io/prefect421/mvidarr:v0.9.6" target="_blank">
-      <img src="https://img.shields.io/badge/docker-ghcr.io-2496ED.svg" alt="Docker">
-    </a>
-  </div>
-</div>
+# MVidarr
+
+**A comprehensive music video management and discovery platform** that helps you organize, discover, and stream your music video collection with intelligent artist management and advanced search capabilities.
 
 ## ✨ Key Features
 
@@ -44,151 +25,62 @@ title: Home
 - **🔐 User Authentication** - Role-based access control with security features
 - **🌙 Dark/Light Themes** - Multiple theme options with automatic switching
 
-## 🆕 Recent Updates (v0.9.6) - **LATEST STABLE RELEASE**
+## 🆕 Latest Release (v0.9.7) - Enterprise Media Management
 
-**Quality Assurance & Testing Infrastructure Release**
+### 🏆 Major Achievements
+- **🎯 47 Comprehensive Solutions** - Complete feature matrix across all application areas  
+- **✅ Enterprise Quality** - 185+ comprehensive tests with 6000+ lines documentation
+- **🚀 Production Ready** - Zero known vulnerabilities with automated security monitoring
+- **💫 User Experience** - Modern interface with professional workflows requiring no technical expertise
 
-- **🧪 Enterprise Testing Infrastructure** - 185+ comprehensive tests across all testing categories
-- **🎨 Enhanced Video Management** - Icon-based video actions with intuitive UI and advanced delete functionality
-- **📊 Complete Test Coverage** - Unit, integration, API, functional, visual, and monitoring tests
-- **🔍 Advanced Testing Intelligence** - Flaky test detection, performance baselines, and automated maintenance
-- **📚 Documentation Excellence** - 6000+ lines of technical documentation with comprehensive guides
-- **🛡️ Security Operations** - Zero known vulnerabilities with enterprise-grade automated monitoring
-- **⚡ FFmpeg Integration** - Technical metadata extraction with video quality analysis
-- **🎭 Playlist Enhancements** - Complete playlist functionality with MvTV integration
-- **🔗 Enhanced Navigation** - Clickable artist names and improved user experience
+### 🎮 Advanced Video Management
+- **🔍 Advanced Search & Filtering** - Multi-criteria search with year range and performance optimization
+- **⚡ Bulk Operations** - Enterprise-grade batch processing with real-time progress tracking
+- **📺 Professional Video Players** - Standard, MvTV, and cinematic modes with subtitle support
+- **📁 Intelligent Organization** - Automatic folder creation and cleanup systems
 
-## 🔄 Development Version (v0.9.7-dev)
-
-**Performance & Integration Development**
-
-- **🔧 Advanced Video Filtering** - Multi-criteria search system in development
-- **⚡ Performance Optimization** - Database and frontend enhancements
-- **📦 Bulk Operations** - Enhanced batch management and processing
-- **🎨 Artist Discovery** - Multi-source metadata enrichment system
+### 🎨 User Interface Excellence  
+- **🎨 Streamlined Workflows** - Intuitive user journeys eliminating all reported pain points
+- **🎭 Theme System** - Consistent UI with MVIDARR logo and CSS variable compliance
+- **📊 Progress Indicators** - Professional feedback systems with error recovery
+- **📱 Responsive Design** - Modern interface with accessibility features
 
 ## 🚀 Quick Start
 
-<div class="quick-start">
-  <a href="https://github.com/prefect421/mvidarr/releases/tag/v0.9.6" target="_blank">📥 Download v0.9.6</a>
-  <a href="https://ghcr.io/prefect421/mvidarr:v0.9.6" target="_blank">🐳 Docker Image</a>
-  <a href="#installation">📚 Installation Guide</a>
-</div>
-
-### 🐳 Docker Deployment (Recommended)
+### Docker Deployment (Recommended)
 
 ```bash
-# Quick start with Docker Compose
 git clone https://github.com/prefect421/mvidarr.git
-cd mvidarr && git checkout v0.9.6
+cd mvidarr
 docker-compose up -d
-
-# Or use production image directly
-docker pull ghcr.io/prefect421/mvidarr:v0.9.6
 ```
 
-**🌐 Access your application:**
-- **URL**: `http://localhost:5001`
-- **Default Login**: `admin` / `admin` ⚠️ *Change immediately*
-- **API Docs**: `http://localhost:5001/api/docs`
+**Production Docker Image:**
+```bash
+# Use the latest stable release
+docker pull ghcr.io/prefect421/mvidarr:v0.9.7
+```
+
+**Access the application:**
+- Open your browser to `http://localhost:5001`
+- Default login: `admin` / `admin` (change immediately)
 
 ## 🏗️ Architecture
 
-<div class="architecture-grid">
-  <div class="arch-card">
-    <h3>🐍 Backend</h3>
-    <p>Flask (Python 3.12+) with modular service architecture, RESTful APIs, and comprehensive error handling</p>
-  </div>
-  <div class="arch-card">
-    <h3>🗄️ Database</h3>
-    <p>MariaDB 11.4+ with automatic initialization, optimized queries, and intelligent indexing</p>
-  </div>
-  <div class="arch-card">
-    <h3>🎨 Frontend</h3>
-    <p>Modern responsive design with advanced JavaScript, theme system, and mobile optimization</p>
-  </div>
-  <div class="arch-card">
-    <h3>🔒 Security</h3>
-    <p>Enterprise-grade security with role-based access, automated vulnerability scanning, and audit logging</p>
-  </div>
-</div>
+MVidarr is built with:
 
-## 🎯 About MVidarr
+- **Backend**: Flask (Python 3.12+) with modular service architecture
+- **Database**: MariaDB 11.4+ with automatic table initialization
+- **Frontend**: Modern HTML5/CSS3/JavaScript with responsive design
+- **Media Processing**: FFmpeg, yt-dlp for video downloading and processing
+- **Authentication**: Secure user management with role-based access control
+- **Security**: bcrypt password hashing, session management, audit logging
+- **Containerization**: Optimized Docker Compose with multi-stage builds, automated monitoring, and 1.41GB production images
 
-<div class="about-section">
-  <p>MVidarr is a comprehensive music video management and discovery platform designed for music enthusiasts who want to organize, discover, and stream their music video collections with professional-grade tools and intelligent automation.</p>
+## 📄 License
 
-  <h2>🌟 Project Vision</h2>
-  <p>Our vision is to create the ultimate music video management solution that combines the discovery power of multiple sources with intelligent organization, advanced search capabilities, and a modern streaming experience.</p>
-
-  <h2>🛡️ Enterprise Security Features</h2>
-  <div class="architecture-grid">
-    <div class="arch-card">
-      <h3>🔐 Authentication</h3>
-      <p>Role-based access control with Admin, Manager, User, and ReadOnly roles</p>
-    </div>
-    <div class="arch-card">
-      <h3>🔒 Data Protection</h3>
-      <p>bcrypt password hashing, secure session management, and SQL injection prevention</p>
-    </div>
-    <div class="arch-card">
-      <h3>📊 Audit Logging</h3>
-      <p>Comprehensive audit trails and account lockout protection</p>
-    </div>
-    <div class="arch-card">
-      <h3>🛡️ Security Scanning</h3>
-      <p>Automated vulnerability scanning with enterprise-grade security workflows</p>
-    </div>
-  </div>
-
-  <h2>📈 Development Philosophy</h2>
-  <ul>
-    <li><strong>Security First</strong>: Every feature is designed with security in mind</li>
-    <li><strong>User Experience</strong>: Intuitive interfaces that don't compromise on functionality</li>
-    <li><strong>Performance</strong>: Optimized for speed and reliability with 60% CI time reduction</li>
-    <li><strong>Maintainability</strong>: Clean, well-documented code architecture</li>
-    <li><strong>Extensibility</strong>: Built to grow with your needs</li>
-  </ul>
-
-  <h2>🚀 Current Status: v0.9.6</h2>
-  <p><strong>Latest Release</strong>: Quality Assurance & Testing Infrastructure</p>
-  <ul>
-    <li>✅ Enterprise Testing Infrastructure with 185+ comprehensive tests</li>
-    <li>✅ Complete test lifecycle management and automated maintenance</li>
-    <li>✅ Zero known vulnerabilities with automated security monitoring</li>
-    <li>✅ 6000+ lines of comprehensive technical documentation</li>
-    <li>✅ Enhanced video management with playlist functionality</li>
-  </ul>
-  
-  <h2>🔄 Development Status: v0.9.7-dev</h2>
-  <p><strong>Next Release</strong>: Performance & Integration (Target: February 2026)</p>
-  <ul>
-    <li>🔧 Advanced video filtering and search system</li>
-    <li>⚡ Database and frontend performance optimization</li>
-    <li>📦 Enhanced bulk operations and batch management</li>
-    <li>🎨 Multi-source artist discovery and metadata enrichment</li>
-  </ul>
-</div>
-
-## 🤝 Community & Support
-
-<div class="community-section">
-  <a href="https://github.com/prefect421/mvidarr/issues" target="_blank" style="background: #6f42c1; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
-    🐛 Report Issues
-  </a>
-  <a href="https://github.com/prefect421/mvidarr/discussions" target="_blank" style="background: #0969da; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
-    💬 Discussions
-  </a>
-  <a href="https://github.com/prefect421/mvidarr/tree/main/docs" target="_blank" style="background: #1f883d; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 0 10px; display: inline-block;">
-    📚 Documentation
-  </a>
-</div>
+This project is licensed under the MIT License - see the [LICENSE]({{ site.github.repository_url }}/blob/main/LICENSE) file for details.
 
 ---
 
-<div class="version-footer">
-  <h3>🚀 MVidarr v0.9.6</h3>
-  <p><strong>Quality Assurance & Testing Infrastructure</strong></p>
-  <p>Built with ❤️ for music video enthusiasts</p>
-  <small>Licensed under the <a href="https://github.com/prefect421/mvidarr/blob/main/LICENSE" target="_blank">MIT License</a></small>
-</div>
+**MVidarr v{{ site.data.version.current | default: "0.9.7" }}** - Built with ❤️ for music video enthusiasts

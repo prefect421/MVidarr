@@ -4,8 +4,6 @@ title: Documentation
 permalink: /documentation/
 ---
 
-<!-- Force rebuild -->
-
 # Documentation
 
 Comprehensive documentation and guides for MVidarr users, administrators, and developers.
@@ -13,7 +11,7 @@ Comprehensive documentation and guides for MVidarr users, administrators, and de
 ## 📖 User Documentation
 
 ### Getting Started
-- **[Installation Guide](https://github.com/prefect421/mvidarr/blob/main/docs/INSTALLATION-GUIDE.md)** - Complete setup instructions for all environments
+- **[Installation Guide](installation/)** - Complete setup instructions for all environments
 - **[User Guide](https://github.com/prefect421/mvidarr/blob/main/docs/USER-GUIDE.md)** - Feature documentation and tutorials
 - **[Docker Optimization Guide](https://github.com/prefect421/mvidarr/blob/main/docs/DOCKER_OPTIMIZATION_GUIDE.md)** - Container optimization and monitoring
 
@@ -48,7 +46,7 @@ Comprehensive documentation and guides for MVidarr users, administrators, and de
 - **[Documentation Summary](https://github.com/prefect421/mvidarr/blob/main/docs/DOCUMENTATION-SUMMARY.md)** - Complete documentation overview
 
 ### Release Information
-- **[Release Notes](/mvidarr/releases/)** - Detailed release information
+- **[Release Notes](releases/)** - Detailed release information
 - **[Final Project Status](https://github.com/prefect421/mvidarr/blob/main/docs/FINAL_PROJECT_STATUS.md)** - Complete feature status
 
 ## 🛠️ Troubleshooting

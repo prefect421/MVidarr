@@ -1,31 +1,75 @@
-# Site settings
-title: MVidarr - Music Video Management Platform
-description: A comprehensive music video management and discovery platform with intelligent automation, enterprise security, and modern streaming experience
+# MVidarr GitHub Pages Configuration
+title: MVidarr
+description: >-
+  A comprehensive music video management and discovery platform that helps you 
+  organize, discover, and stream your music video collection with intelligent 
+  artist management and advanced search capabilities.
 baseurl: "/mvidarr"
 url: "https://prefect421.github.io"
 
-# Theme
-theme: minima
-
 # Build settings
 markdown: kramdown
-highlighter: rouge
-
-# Plugins
+theme: minima
 plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
 
-# Social links
+# Site settings
+author:
+  name: MVidarr Team
+  email: noreply@github.com
+
+# Repository information
 github_username: prefect421
+repository: prefect421/mvidarr
 
-# Minima date format
+# Navigation
+header_pages:
+  - about.md
+  - installation.md
+  - features.md
+  - documentation.md
+  - releases.md
+
+# Minima theme settings
 minima:
-  date_format: "%b %-d, %Y"
+  skin: auto
+  social_links:
+    github: prefect421/mvidarr
 
-# Exclude from processing
+# Exclude files from Jekyll processing
 exclude:
-  - Gemfile
-  - Gemfile.lock
+  - .dockerignore
+  - ".env*"
+  - ".git*"
+  - .python-version
+  - __pycache__/
+  - "*.pyc"
+  - app.py
+  - "requirements*.txt"
+  - src/
+  - frontend/
+  - scripts/
+  - migrations/
+  - data/
+  - logs/
+  - "*.log"
+  - "docker-compose*.yml"
+  - "Dockerfile*"
+  - entrypoint.sh
+  - version.json
+  - node_modules/
   - vendor/
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - "Gemfile*"
+  - "*.gem"
+  - "*.gemspec"
+
+# Include specific documentation files
+include:
+  - docs/
+  - CHANGELOG.md
+  - LICENSE
