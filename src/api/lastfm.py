@@ -15,6 +15,9 @@ logger = get_logger("mvidarr.api.lastfm")
 def get_auth_url():
     """Get Last.fm authentication URL"""
     try:
+        # Refresh credentials in case they were updated since service initialization
+        lastfm_service.refresh_credentials()
+
         if not lastfm_service.api_key:
             return (
                 jsonify(
@@ -429,6 +432,9 @@ def get_status():
 def test_lastfm_integration():
     """Test Last.fm API connection"""
     try:
+        # Refresh credentials in case they were updated since service initialization
+        lastfm_service.refresh_credentials()
+
         # Check if API credentials are configured
         if not lastfm_service.api_key or not lastfm_service.api_secret:
             return (

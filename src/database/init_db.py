@@ -403,6 +403,25 @@ def initialize_database():
         logger.error("Failed to initialize built-in themes")
         return False
 
+    # Run database migrations
+    try:
+        from src.database.migrations import run_migrations
+
+        migration_results = run_migrations()
+        if migration_results["success"]:
+            if migration_results["applied_migrations"]:
+                logger.info(
+                    f"Applied {len(migration_results['applied_migrations'])} database migrations"
+                )
+            else:
+                logger.info("No database migrations needed")
+        else:
+            logger.error(f"Database migrations failed: {migration_results['errors']}")
+            return False
+    except Exception as e:
+        logger.error(f"Failed to run database migrations: {e}")
+        return False
+
     # Health check
     if not check_database_health():
         logger.error("Database health check failed")

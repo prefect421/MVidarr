@@ -8,6 +8,7 @@ import subprocess
 import threading
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote, unquote
 
 from flask import Blueprint, Response, jsonify, render_template, request, send_file
 from sqlalchemy import and_, func, or_
@@ -24,6 +25,12 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 logger = get_logger("mvidarr.api.videos")
 
 
+def public_endpoint(f):
+    """Decorator to mark an endpoint as public (no authentication required)"""
+    f._auth_protected = True  # Mark as already protected to skip auto-protection
+    return f
+
+
 def resolve_video_url(video, session):
     """
     Helper function to resolve video URL using yt-dlp search
@@ -37,6 +44,14 @@ def resolve_video_url(video, session):
     """
     if video.url:
         return video.url
+
+    # Also check youtube_url field as fallback (but ensure it's complete)
+    if (
+        video.youtube_url and len(video.youtube_url.strip()) > 30
+    ):  # Valid YouTube URLs are longer than 30 chars
+        # Additional check: ensure URL has a video ID (not just ending with "?v=")
+        if not video.youtube_url.endswith("?v="):
+            return video.youtube_url
 
     try:
         import json
@@ -192,7 +207,8 @@ def _trigger_video_download(video_id):
                     "error": "Video has no URL to download and could not resolve one",
                 }
 
-            # Import ytdlp service
+            # Import ytdlp service and settings
+            from src.services.settings_service import settings
             from src.services.ytdlp_service import ytdlp_service
 
             # Check if video is already downloaded
@@ -207,6 +223,10 @@ def _trigger_video_download(video_id):
             ):
                 return {"success": False, "error": "Video is already downloaded"}
 
+            # Read subtitle settings from database
+            download_subtitles = settings.get_bool("download_subtitles", False)
+            subtitle_languages = settings.get("subtitle_languages", "en,en-US")
+
             # Add download to yt-dlp queue
             result = ytdlp_service.add_music_video_download(
                 artist=artist_name,
@@ -214,6 +234,8 @@ def _trigger_video_download(video_id):
                 url=video_url,
                 quality="best",
                 video_id=video_id,
+                download_subtitles=download_subtitles,
+                subtitle_languages=subtitle_languages,
             )
 
             if result and result.get("success"):
@@ -356,9 +378,12 @@ def search_videos():
         # Get search parameters
         filters = {
             "query": request.args.get("q", "").strip(),
-            "artist_name": request.args.get("artist", "").strip(),
+            "artist_name": request.args.get("artist_name", "").strip(),
+            "artist": request.args.get("artist", "").strip(),
             "status": request.args.get("status", "").strip(),
             "year": request.args.get("year", "").strip(),
+            "year_from": request.args.get("year_from", "").strip(),
+            "year_to": request.args.get("year_to", "").strip(),
             "genre": request.args.get("genre", "").strip(),
             "quality": request.args.get("quality", "").strip(),
             "has_thumbnail": request.args.get("has_thumbnail", "").strip(),
@@ -382,6 +407,7 @@ def search_videos():
             need_artist_join = (
                 filters["query"]
                 or filters["artist_name"]
+                or filters["artist"]
                 or filters["sort_by"] in ["artist_name", "artist"]
             )
 
@@ -412,15 +438,133 @@ def search_videos():
                             f"Invalid video status filter: {filters['status']}"
                         )
                         pass
+
                 if filters["source"]:
                     if filters["source"] == "youtube":
                         videos_query = videos_query.filter(Video.youtube_id.isnot(None))
                     elif filters["source"] == "imvdb":
                         videos_query = videos_query.filter(Video.imvdb_id.isnot(None))
+                    elif filters["source"] == "manual":
+                        videos_query = videos_query.filter(
+                            and_(Video.youtube_id.is_(None), Video.imvdb_id.is_(None))
+                        )
+
                 if filters["quality"]:
                     videos_query = videos_query.filter(
                         Video.quality == filters["quality"]
                     )
+
+                # Year filters - handle both single year and year range
+                if filters["year"]:
+                    try:
+                        year_int = int(filters["year"])
+                        videos_query = videos_query.filter(Video.year == year_int)
+                    except ValueError:
+                        pass
+
+                # Year range filters (from frontend)
+                year_from = request.args.get("year_from", "").strip()
+                year_to = request.args.get("year_to", "").strip()
+                if year_from:
+                    try:
+                        year_from_int = int(year_from)
+                        videos_query = videos_query.filter(Video.year >= year_from_int)
+                    except ValueError:
+                        pass
+                if year_to:
+                    try:
+                        year_to_int = int(year_to)
+                        videos_query = videos_query.filter(Video.year <= year_to_int)
+                    except ValueError:
+                        pass
+
+                # Duration filters
+                if filters["duration_min"]:
+                    try:
+                        duration_min = (
+                            int(filters["duration_min"]) * 60
+                        )  # Convert minutes to seconds
+                        videos_query = videos_query.filter(
+                            Video.duration >= duration_min
+                        )
+                    except (ValueError, TypeError):
+                        pass
+
+                if filters["duration_max"]:
+                    try:
+                        duration_max = (
+                            int(filters["duration_max"]) * 60
+                        )  # Convert minutes to seconds
+                        videos_query = videos_query.filter(
+                            Video.duration <= duration_max
+                        )
+                    except (ValueError, TypeError):
+                        pass
+
+                # Date range filters
+                if filters["date_from"]:
+                    try:
+                        from datetime import datetime
+
+                        date_from = datetime.strptime(filters["date_from"], "%Y-%m-%d")
+                        videos_query = videos_query.filter(
+                            Video.created_at >= date_from
+                        )
+                    except ValueError:
+                        pass
+
+                if filters["date_to"]:
+                    try:
+                        from datetime import datetime
+
+                        date_to = datetime.strptime(filters["date_to"], "%Y-%m-%d")
+                        videos_query = videos_query.filter(Video.created_at <= date_to)
+                    except ValueError:
+                        pass
+
+                # Thumbnail filter
+                if filters["has_thumbnail"]:
+                    has_thumbnail_bool = filters["has_thumbnail"].lower() in [
+                        "true",
+                        "1",
+                        "yes",
+                    ]
+                    if has_thumbnail_bool:
+                        videos_query = videos_query.filter(
+                            Video.thumbnail_path.isnot(None)
+                        )
+                    else:
+                        videos_query = videos_query.filter(
+                            Video.thumbnail_path.is_(None)
+                        )
+
+                # Genre filter
+                if filters["genre"]:
+                    genre = filters["genre"]
+                    videos_query = videos_query.filter(
+                        Video.genres.contains(f'"{genre}"')
+                    )
+
+                # Keywords filter - search in video title and description
+                if filters["keywords"]:
+                    keywords = filters["keywords"].strip()
+                    if keywords:
+                        keyword_list = [
+                            k.strip().lower() for k in keywords.split(",") if k.strip()
+                        ]
+                        if keyword_list:
+                            # Create OR conditions for each keyword
+                            keyword_conditions = []
+                            for keyword in keyword_list:
+                                keyword_conditions.append(
+                                    func.lower(Video.title).contains(keyword)
+                                )
+                                if Video.description:
+                                    keyword_conditions.append(
+                                        func.lower(Video.description).contains(keyword)
+                                    )
+                            videos_query = videos_query.filter(or_(*keyword_conditions))
+
                 if filters["query"]:
                     from sqlalchemy import or_
 
@@ -435,6 +579,15 @@ def search_videos():
                         videos_query = videos_query.filter(
                             Video.title.contains(filters["query"])
                         )
+
+                # Artist name filter (handle both 'artist' and 'artist_name' params)
+                artist_filter = (
+                    filters["artist_name"] or request.args.get("artist", "").strip()
+                )
+                if artist_filter and need_artist_join:
+                    videos_query = videos_query.filter(
+                        Artist.name.contains(artist_filter)
+                    )
 
             # Apply sorting with performance consideration
             sort_by = filters["sort_by"]
@@ -611,9 +764,14 @@ def download_video(video_id):
                     400,
                 )
 
-            # Import ytdlp service
+            # Import ytdlp service and settings
             logger.info("Importing ytdlp service")
+            from src.services.settings_service import settings
             from src.services.ytdlp_service import ytdlp_service
+
+            # Read subtitle settings from database
+            download_subtitles = settings.get_bool("download_subtitles", False)
+            subtitle_languages = settings.get("subtitle_languages", "en,en-US")
 
             # Check if video is already downloaded
             logger.info(
@@ -645,6 +803,8 @@ def download_video(video_id):
                     url=video_url,
                     quality="best",
                     video_id=video_id,
+                    download_subtitles=download_subtitles,
+                    subtitle_languages=subtitle_languages,
                 )
                 logger.info(f"ytdlp_service result: {result}")
             except Exception as ytdlp_error:
@@ -2010,6 +2170,153 @@ def stream_video(video_id):
     except Exception as e:
         logger.error(f"Failed to stream video {video_id}: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/<int:video_id>/subtitles", methods=["GET"])
+def get_video_subtitles(video_id):
+    """Get available subtitle tracks for a video"""
+    try:
+        with get_db() as session:
+            video = session.query(Video).filter(Video.id == video_id).first()
+
+            if not video or not video.local_path:
+                return jsonify({"subtitles": []}), 200
+
+            video_path = Path(video.local_path)
+            if not video_path.exists():
+                return jsonify({"subtitles": []}), 200
+
+            # Look for subtitle files in the same directory
+            video_dir = video_path.parent
+            video_name_stem = video_path.stem
+
+            subtitle_extensions = [".srt", ".vtt", ".ass", ".ssa", ".sub"]
+            subtitles = []
+
+            for subtitle_ext in subtitle_extensions:
+                # Look for subtitle files with the same base name
+                for subtitle_file in video_dir.glob(
+                    f"{video_name_stem}*{subtitle_ext}"
+                ):
+                    # Extract language from filename (e.g., video.en.srt -> en)
+                    relative_name = subtitle_file.name
+                    parts = relative_name.split(".")
+
+                    language = "unknown"
+                    if len(parts) >= 3:  # video.en.srt
+                        language = parts[-2]
+                    elif len(parts) == 2:  # video.srt (assume default language)
+                        language = "default"
+
+                    subtitles.append(
+                        {
+                            "language": language,
+                            "filename": relative_name,
+                            "url": f"/api/videos/{video_id}/subtitles/{quote(relative_name)}",
+                            "format": subtitle_ext[1:],  # Remove the dot
+                        }
+                    )
+
+            return jsonify({"subtitles": subtitles}), 200
+
+    except Exception as e:
+        logger.error(f"Failed to get subtitles for video {video_id}: {e}")
+        return jsonify({"subtitles": []}), 200
+
+
+@videos_bp.route("/<int:video_id>/subtitles/<subtitle_filename>", methods=["GET"])
+@public_endpoint
+def serve_video_subtitle(video_id, subtitle_filename):
+    """Serve subtitle file for a video"""
+    try:
+        # URL decode the subtitle filename
+        decoded_filename = unquote(subtitle_filename)
+        logger.info(
+            f"Attempting to serve subtitle: {decoded_filename} for video {video_id}"
+        )
+
+        with get_db() as session:
+            video = session.query(Video).filter(Video.id == video_id).first()
+
+            if not video or not video.local_path:
+                logger.error(f"Video {video_id} not found or no local path")
+                return "Video not found or no local file", 404
+
+            video_path = Path(video.local_path)
+            logger.info(f"Video path: {video_path}")
+
+            # Handle relative paths by making them absolute
+            if not video_path.is_absolute():
+                video_path = Path.cwd() / video_path
+                logger.info(f"Converted to absolute path: {video_path}")
+
+            if not video_path.exists():
+                logger.error(f"Video file does not exist: {video_path}")
+                return "Video file not found", 404
+
+            # Security check: ensure subtitle filename doesn't contain path traversal
+            if (
+                ".." in decoded_filename
+                or "/" in decoded_filename
+                or "\\" in decoded_filename
+            ):
+                logger.error(
+                    f"Invalid subtitle filename (path traversal): {decoded_filename}"
+                )
+                return "Invalid subtitle filename", 400
+
+            # Find subtitle file in the same directory as the video
+            video_dir = video_path.parent
+            subtitle_path = video_dir / decoded_filename
+            logger.info(f"Subtitle path: {subtitle_path}")
+
+            if not subtitle_path.exists():
+                logger.error(f"Subtitle file does not exist: {subtitle_path}")
+                return "Subtitle file not found", 404
+
+            # Security check: ensure subtitle file is in the same directory as video
+            if not str(subtitle_path).startswith(str(video_dir)):
+                logger.error(f"Subtitle file outside video directory: {subtitle_path}")
+                return "Subtitle file access denied", 403
+
+            # Determine MIME type based on extension
+            subtitle_ext = subtitle_path.suffix.lower()
+            if subtitle_ext == ".srt":
+                mimetype = "text/srt; charset=utf-8"
+            elif subtitle_ext == ".vtt":
+                mimetype = "text/vtt; charset=utf-8"
+            elif subtitle_ext in [".ass", ".ssa"]:
+                mimetype = "text/plain; charset=utf-8"
+            else:
+                mimetype = "text/plain; charset=utf-8"
+
+            logger.info(
+                f"Serving subtitle {decoded_filename} for video {video_id} with MIME type {mimetype}"
+            )
+
+            response = send_file(
+                subtitle_path,
+                mimetype=mimetype,
+                as_attachment=False,
+                download_name=decoded_filename,
+            )
+
+            # Add CORS headers to allow video player to access subtitles
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+
+            return response
+
+    except Exception as e:
+        logger.error(
+            f"Failed to serve subtitle {subtitle_filename} for video {video_id}: {e}"
+        )
+        logger.error(f"Exception details: {type(e).__name__}: {str(e)}")
+        import traceback
+
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return "Subtitle serving error", 500
 
 
 @videos_bp.route("/recovery/fix-missing", methods=["POST"])
@@ -3454,6 +3761,13 @@ def bulk_download_videos():
         success_count = 0
         failed_count = 0
 
+        # Import settings service for subtitle configuration
+        from src.services.settings_service import settings
+
+        # Read subtitle settings from database once for all downloads
+        download_subtitles = settings.get_bool("download_subtitles", False)
+        subtitle_languages = settings.get("subtitle_languages", "en,en-US")
+
         with get_db() as session:
             for video_id in video_ids:
                 try:
@@ -3495,6 +3809,8 @@ def bulk_download_videos():
                         url=video_url,
                         quality="best",
                         video_id=video_id,
+                        download_subtitles=download_subtitles,
+                        subtitle_languages=subtitle_languages,
                     )
 
                     if result and result.get("success"):
@@ -3558,6 +3874,13 @@ def download_all_wanted_videos_internal(limit=50):
         success_count = 0
         failed_count = 0
         wanted_video_ids = []
+
+        # Import settings service for subtitle configuration
+        from src.services.settings_service import settings
+
+        # Read subtitle settings from database once for all downloads
+        download_subtitles = settings.get_bool("download_subtitles", False)
+        subtitle_languages = settings.get("subtitle_languages", "en,en-US")
 
         # First, get all wanted video IDs
         with get_db() as session:
@@ -3628,6 +3951,8 @@ def download_all_wanted_videos_internal(limit=50):
                         url=video_url,
                         quality="best",
                         video_id=video_id,
+                        download_subtitles=download_subtitles,
+                        subtitle_languages=subtitle_languages,
                     )
 
                     if result and result.get("success"):

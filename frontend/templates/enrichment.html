@@ -1,0 +1,1767 @@
+{% extends "base.html" %}
+
+{% block title %}Enrichment Dashboard - MVidarr{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="text-h1">Metadata Enrichment Dashboard</h1>
+            <p class="page-description">Enhance your library with rich metadata from multiple sources</p>
+        </div>
+        <div class="action-group" role="group" aria-label="Primary enrichment actions">
+            <button onclick="refreshDashboard()" class="btn btn-secondary" aria-label="Refresh dashboard data">
+                <iconify-icon icon="tabler:refresh" aria-hidden="true"></iconify-icon>
+                Refresh
+            </button>
+            <button onclick="runAutoEnrichment()" class="btn btn-success" aria-label="Run automatic enrichment">
+                <iconify-icon icon="tabler:sparkles" aria-hidden="true"></iconify-icon>
+                Auto Enrich
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="stats-grid" id="enrichmentStats">
+        <div class="loading-placeholder">Loading enrichment statistics...</div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="enrichment-dashboard-grid">
+        
+        <!-- Enrichment Candidates -->
+        <div class="dashboard-card candidates-card">
+            <div class="card-header">
+                <h2><iconify-icon icon="tabler:user-exclamation"></iconify-icon> Enrichment Candidates</h2>
+                <div class="card-actions">
+                    <button onclick="refreshCandidates()" class="btn btn-ghost btn-sm" title="Refresh candidates list">
+                        <iconify-icon icon="tabler:refresh"></iconify-icon>
+                    </button>
+                    <button onclick="showBatchEnrichmentModal()" class="btn btn-primary btn-sm" title="Batch enrich selected candidates">
+                        <iconify-icon icon="tabler:bolt"></iconify-icon>
+                        Batch Enrich
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="candidates-filters">
+                    <select id="candidatesFilter" onchange="filterCandidates()">
+                        <option value="all">All Candidates</option>
+                        <option value="missing_external_ids">Missing External IDs</option>
+                        <option value="outdated">Outdated Data</option>
+                        <option value="incomplete">Incomplete Metadata</option>
+                    </select>
+                    <select id="candidatesSort" onchange="sortCandidates()">
+                        <option value="priority_desc">Priority (High to Low)</option>
+                        <option value="priority_asc">Priority (Low to High)</option>
+                        <option value="name_asc">Name (A-Z)</option>
+                        <option value="name_desc">Name (Z-A)</option>
+                        <option value="videos_desc">Most Videos</option>
+                        <option value="videos_asc">Least Videos</option>
+                    </select>
+                </div>
+                <div class="candidates-list" id="candidatesList">
+                    <div class="loading-placeholder">Loading enrichment candidates...</div>
+                </div>
+                <div class="candidates-pagination" id="candidatesPagination"></div>
+            </div>
+        </div>
+
+        <!-- Data Quality Report -->
+        <div class="dashboard-card quality-card">
+            <div class="card-header">
+                <h2><iconify-icon icon="tabler:chart-bar"></iconify-icon> Data Quality Report</h2>
+                <div class="card-actions">
+                    <button onclick="generateQualityReport()" class="btn btn-ghost btn-sm" title="Generate quality report">
+                        <iconify-icon icon="tabler:report"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="quality-metrics" id="qualityMetrics">
+                    <div class="loading-placeholder">Loading quality metrics...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="dashboard-card activity-card">
+            <div class="card-header">
+                <h2><iconify-icon icon="tabler:clock"></iconify-icon> Recent Enrichment Activity</h2>
+                <div class="card-actions">
+                    <button onclick="viewEnrichmentHistory()" class="btn btn-ghost btn-sm" title="View complete history">
+                        <iconify-icon icon="tabler:history"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="activity-list" id="recentActivity">
+                    <div class="loading-placeholder">Loading recent activity...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Duplicate Detection -->
+        <div class="dashboard-card duplicates-card">
+            <div class="card-header">
+                <h2><iconify-icon icon="tabler:copy"></iconify-icon> Duplicate Detection</h2>
+                <div class="card-actions">
+                    <button onclick="scanForDuplicates()" class="btn btn-ghost btn-sm" title="Scan for duplicates">
+                        <iconify-icon icon="tabler:scan"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="duplicates-list" id="duplicatesList">
+                    <div class="loading-placeholder">Loading duplicate detection...</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Batch Enrichment Modal -->
+    <div class="modal" id="batchEnrichmentModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Batch Metadata Enrichment</h3>
+                <button onclick="closeBatchEnrichmentModal()" class="modal-close">
+                    <iconify-icon icon="tabler:x"></iconify-icon>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="batch-options">
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" id="forceRefresh" />
+                            Force refresh existing data
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" id="missingExternalIds" checked />
+                            Focus on missing external IDs
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" id="outdatedOnly" />
+                            Only update outdated metadata
+                        </label>
+                    </div>
+                </div>
+                <div class="batch-preview" id="batchPreview">
+                    <div class="preview-stats">
+                        <span id="selectedCount">0</span> artists selected for enrichment
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeBatchEnrichmentModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="executeBatchEnrichment()" class="btn btn-success">
+                    <iconify-icon icon="tabler:sparkles"></iconify-icon>
+                    Start Enrichment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div class="modal" id="progressModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Enrichment Progress</h3>
+            </div>
+            <div class="modal-body">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Initializing...</div>
+                </div>
+                <div class="progress-details" id="progressDetails">
+                    <div class="detail-item">
+                        <span class="detail-label">Processed:</span>
+                        <span class="detail-value" id="processedCount">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Successful:</span>
+                        <span class="detail-value" id="successCount">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Failed:</span>
+                        <span class="detail-value" id="failedCount">0</span>
+                    </div>
+                </div>
+                <div class="progress-log" id="progressLog"></div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeProgressModal()" class="btn btn-secondary" id="progressCloseBtn" style="display: none;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Enrichment Dashboard Styles */
+.page-description {
+    color: var(--text-secondary, #bbb);
+    margin: 5px 0 0 0;
+    font-size: 0.9em;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--bg-secondary, #2a2a2a);
+    border: 1px solid var(--border-secondary, #444);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: var(--primary-color, #4a9eff);
+    display: block;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    color: var(--text-secondary, #bbb);
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.stat-description {
+    color: var(--text-muted, #888);
+    font-size: 0.8em;
+    margin-top: 5px;
+}
+
+.enrichment-dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    grid-template-areas: 
+        "candidates quality"
+        "candidates activity"
+        "duplicates activity";
+}
+
+.candidates-card {
+    grid-area: candidates;
+}
+
+.quality-card {
+    grid-area: quality;
+}
+
+.activity-card {
+    grid-area: activity;
+}
+
+.duplicates-card {
+    grid-area: duplicates;
+}
+
+.dashboard-card {
+    background: var(--bg-secondary, #2a2a2a);
+    border: 1px solid var(--border-secondary, #444);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-tertiary, #555);
+    background: var(--bg-tertiary, #333);
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.1em;
+    color: var(--text-primary, #fff);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.card-content {
+    padding: 20px;
+}
+
+.candidates-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.candidates-filters select {
+    padding: 8px 12px;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-secondary, #444);
+    border-radius: 4px;
+    color: var(--text-primary, #fff);
+    font-size: 0.9em;
+}
+
+.candidate-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-tertiary, #555);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.candidate-item:hover {
+    background: var(--bg-accent, #444);
+    border-color: var(--primary-color, #4a9eff);
+}
+
+.candidate-info {
+    flex: 1;
+}
+
+.candidate-name {
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin-bottom: 4px;
+}
+
+.candidate-details {
+    font-size: 0.85em;
+    color: var(--text-secondary, #bbb);
+    display: flex;
+    gap: 12px;
+}
+
+.candidate-priority {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.priority-high {
+    background: var(--error-bg, rgba(244, 67, 54, 0.2));
+    color: var(--error-color, #f44336);
+    border: 1px solid var(--error-color, #f44336);
+}
+
+.priority-medium {
+    background: var(--warning-bg, rgba(255, 193, 7, 0.2));
+    color: var(--warning-color, #ffc107);
+    border: 1px solid var(--warning-color, #ffc107);
+}
+
+.priority-low {
+    background: var(--success-bg, rgba(76, 175, 80, 0.2));
+    color: var(--success-color, #4caf50);
+    border: 1px solid var(--success-color, #4caf50);
+}
+
+.candidate-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.quality-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-quaternary, #666);
+}
+
+.quality-metric:last-child {
+    border-bottom: none;
+}
+
+.metric-label {
+    color: var(--text-secondary, #bbb);
+    font-size: 0.9em;
+}
+
+.metric-value {
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.metric-bar {
+    width: 100px;
+    height: 6px;
+    background: var(--bg-quaternary, #555);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-left: 10px;
+}
+
+.metric-fill {
+    height: 100%;
+    background: var(--primary-color, #4a9eff);
+    transition: width 0.3s ease;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-quaternary, #666);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color, #4a9eff);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9em;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin-bottom: 2px;
+}
+
+.activity-description {
+    font-size: 0.85em;
+    color: var(--text-secondary, #bbb);
+    margin-bottom: 4px;
+}
+
+.activity-time {
+    font-size: 0.8em;
+    color: var(--text-muted, #888);
+}
+
+.duplicate-group {
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-tertiary, #555);
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 12px;
+}
+
+.duplicate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.duplicate-title {
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.duplicate-confidence {
+    font-size: 0.8em;
+    color: var(--warning-color, #ffc107);
+}
+
+.duplicate-artists {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.duplicate-artist {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg-quaternary, #444);
+    border-radius: 6px;
+    border: 1px solid var(--border-quaternary, #555);
+}
+
+.duplicate-details {
+    margin: 10px 0;
+    padding: 10px;
+    background: var(--bg-quaternary, #444);
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.match-reasons {
+    color: var(--text-secondary, #bbb);
+    margin-bottom: 8px;
+}
+
+.external-matches {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.external-match {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.external-match.match {
+    background: var(--success-bg, rgba(76, 175, 80, 0.2));
+    color: var(--success-color, #4caf50);
+    border: 1px solid var(--success-color, #4caf50);
+}
+
+.external-match.no-match {
+    background: var(--error-bg, rgba(244, 67, 54, 0.2));
+    color: var(--error-color, #f44336);
+    border: 1px solid var(--error-color, #f44336);
+}
+
+.duplicate-artists {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.artist-info {
+    flex: 1;
+}
+
+.artist-name {
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin-bottom: 4px;
+}
+
+.artist-meta {
+    font-size: 0.8em;
+    color: var(--text-muted, #888);
+}
+
+.artist-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.merge-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    background: var(--bg-accent, #555);
+    border-radius: 4px;
+    font-size: 0.8em;
+    color: var(--text-secondary, #bbb);
+}
+
+.action-label {
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.action-auto-merge {
+    background: var(--success-bg, rgba(76, 175, 80, 0.2));
+    color: var(--success-color, #4caf50);
+}
+
+.action-review {
+    background: var(--warning-bg, rgba(255, 193, 7, 0.2));
+    color: var(--warning-color, #ffc107);
+}
+
+.action-ignore {
+    background: var(--error-bg, rgba(244, 67, 54, 0.2));
+    color: var(--error-color, #f44336);
+}
+
+.duplicate-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-quaternary, #555);
+}
+
+.confidence-high {
+    color: var(--success-color, #4caf50);
+}
+
+.confidence-medium {
+    color: var(--warning-color, #ffc107);
+}
+
+.confidence-low {
+    color: var(--error-color, #f44336);
+}
+
+/* Merge Modal Styles */
+.merge-preview {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.merge-artist {
+    padding: 15px;
+    background: var(--bg-tertiary, #333);
+    border-radius: 6px;
+    border: 1px solid var(--border-tertiary, #555);
+}
+
+.merge-artist.primary {
+    border-color: var(--success-color, #4caf50);
+}
+
+.merge-artist.duplicate {
+    border-color: var(--warning-color, #ffc107);
+}
+
+.merge-artist h4 {
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+    color: var(--text-secondary, #bbb);
+}
+
+.artist-card {
+    margin-bottom: 10px;
+}
+
+.artist-card .artist-name {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.artist-card .artist-id {
+    font-size: 0.8em;
+    color: var(--text-muted, #888);
+}
+
+.artist-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.artist-stats .stat-item {
+    font-size: 0.8em;
+    color: var(--text-secondary, #bbb);
+    padding: 2px 0;
+}
+
+.merge-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    color: var(--primary-color, #4a9eff);
+    font-size: 0.8em;
+    font-weight: 600;
+    text-align: center;
+}
+
+.merge-arrow iconify-icon {
+    font-size: 1.5em;
+}
+
+.merge-options {
+    margin-bottom: 20px;
+}
+
+.merge-options h4 {
+    margin: 0 0 10px 0;
+    color: var(--text-primary, #fff);
+}
+
+.merge-actions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.merge-actions-list li {
+    padding: 4px 0;
+    color: var(--text-secondary, #bbb);
+    font-size: 0.9em;
+}
+
+.merge-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    background: var(--warning-bg, rgba(255, 193, 7, 0.1));
+    border: 1px solid var(--warning-color, #ffc107);
+    border-radius: 4px;
+    color: var(--warning-color, #ffc107);
+    font-size: 0.9em;
+}
+
+.merge-warning iconify-icon {
+    font-size: 1.2em;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .merge-preview {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .merge-arrow {
+        transform: rotate(90deg);
+    }
+    
+    .duplicate-artists {
+        gap: 8px;
+    }
+    
+    .duplicate-actions {
+        flex-direction: column;
+        gap: 6px;
+    }
+}
+
+.progress-container {
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-tertiary, #333);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-color, #4a9eff);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    color: var(--text-secondary, #bbb);
+    font-size: 0.9em;
+}
+
+.progress-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.detail-item {
+    text-align: center;
+}
+
+.detail-label {
+    display: block;
+    font-size: 0.8em;
+    color: var(--text-secondary, #bbb);
+    margin-bottom: 4px;
+}
+
+.detail-value {
+    display: block;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.progress-log {
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-tertiary, #555);
+    border-radius: 4px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.8em;
+    color: var(--text-secondary, #bbb);
+}
+
+@media (max-width: 1200px) {
+    .enrichment-dashboard-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas: 
+            "candidates"
+            "quality"
+            "activity"
+            "duplicates";
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .candidates-filters {
+        flex-direction: column;
+    }
+    
+    .progress-details {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+</style>
+
+<script>
+// Global variables
+let enrichmentData = {
+    candidates: [],
+    stats: {},
+    currentPage: 1,
+    pageSize: 20,
+    selectedCandidates: new Set()
+};
+
+// Initialize dashboard when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboard();
+});
+
+async function initializeDashboard() {
+    try {
+        await Promise.all([
+            loadEnrichmentStats(),
+            loadEnrichmentCandidates(),
+            loadQualityMetrics(),
+            loadRecentActivity(),
+            loadDuplicates()
+        ]);
+    } catch (error) {
+        console.error('Failed to initialize enrichment dashboard:', error);
+        showError('Failed to load enrichment dashboard');
+    }
+}
+
+async function loadEnrichmentStats() {
+    try {
+        const response = await fetch('/api/metadata-enrichment/stats');
+        const stats = await response.json();
+        
+        if (response.ok) {
+            console.log('Stats loaded successfully:', stats);
+            enrichmentData.stats = stats;
+            renderStats(stats);
+        } else {
+            console.error('Stats loading failed:', stats);
+            throw new Error(stats.error || 'Failed to load stats');
+        }
+    } catch (error) {
+        console.error('Error loading enrichment stats:', error);
+        document.getElementById('enrichmentStats').innerHTML = 
+            '<div class="error-placeholder">Failed to load enrichment statistics</div>';
+    }
+}
+
+function renderStats(stats) {
+    const statsHtml = `
+        <div class="stat-card">
+            <span class="stat-number">${stats.total_artists || 0}</span>
+            <span class="stat-label">Total Artists</span>
+            <div class="stat-description">In your library</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">${stats.enriched_artists || 0}</span>
+            <span class="stat-label">Enriched Artists</span>
+            <div class="stat-description">${stats.enrichment_coverage || 0}% complete</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">${stats.candidates_count || 0}</span>
+            <span class="stat-label">Need Enrichment</span>
+            <div class="stat-description">Missing metadata</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">${stats.external_id_coverage?.toFixed(1) || '0.0'}%</span>
+            <span class="stat-label">External ID Coverage</span>
+            <div class="stat-description">Spotify, Last.fm, IMVDb</div>
+        </div>
+    `;
+    
+    document.getElementById('enrichmentStats').innerHTML = statsHtml;
+}
+
+async function loadEnrichmentCandidates() {
+    try {
+        const filter = document.getElementById('candidatesFilter')?.value || 'all';
+        const params = new URLSearchParams({
+            limit: enrichmentData.pageSize,
+            offset: (enrichmentData.currentPage - 1) * enrichmentData.pageSize
+        });
+        
+        if (filter === 'missing_external_ids') {
+            params.set('missing_external_ids', 'true');
+        } else if (filter === 'outdated') {
+            params.set('outdated_only', 'true');
+        }
+        
+        const response = await fetch(`/api/metadata-enrichment/candidates?${params}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            console.log('Candidates loaded successfully:', data);
+            enrichmentData.candidates = data.candidates || [];
+            renderCandidates(enrichmentData.candidates);
+            renderPagination(data.total || 0);
+        } else {
+            console.error('Candidates loading failed:', data);
+            throw new Error(data.error || 'Failed to load candidates');
+        }
+    } catch (error) {
+        console.error('Error loading enrichment candidates:', error);
+        document.getElementById('candidatesList').innerHTML = 
+            '<div class="error-placeholder">Failed to load enrichment candidates</div>';
+    }
+}
+
+function renderCandidates(candidates) {
+    if (!candidates || candidates.length === 0) {
+        document.getElementById('candidatesList').innerHTML = 
+            '<div class="no-data">No enrichment candidates found</div>';
+        return;
+    }
+    
+    const candidatesHtml = candidates.map(candidate => {
+        const priority = calculatePriority(candidate);
+        const isSelected = enrichmentData.selectedCandidates.has(candidate.id);
+        
+        return `
+            <div class="candidate-item" data-candidate-id="${candidate.id}">
+                <div class="candidate-info">
+                    <div class="candidate-name">${candidate.name}</div>
+                    <div class="candidate-details">
+                        <span>Missing IDs: ${(candidate.missing_external_ids || []).join(', ') || 'None'}</span>
+                        <span>Enrichment: ${candidate.has_enriched_metadata ? 'Enriched ✓' : 'Needs enrichment'}</span>
+                        <span>Last updated: ${candidate.last_updated ? new Date(candidate.last_updated).toLocaleDateString() : 'Never'}</span>
+                        ${candidate.metadata_age_days ? `<span>Age: ${candidate.metadata_age_days} days</span>` : ''}
+                    </div>
+                </div>
+                <div class="candidate-priority priority-${priority.toLowerCase()}">${priority}</div>
+                <div class="candidate-actions">
+                    <label class="checkbox-label">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} 
+                               onchange="toggleCandidateSelection(${candidate.id}, this.checked)">
+                        <span class="checkmark"></span>
+                    </label>
+                    <button onclick="enrichSingleArtist(${candidate.id})" class="btn btn-primary btn-sm">
+                        <iconify-icon icon="tabler:sparkles"></iconify-icon>
+                        Enrich
+                    </button>
+                    <button onclick="viewArtistDetail(${candidate.id})" class="btn btn-ghost btn-sm">
+                        <iconify-icon icon="tabler:eye"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('candidatesList').innerHTML = candidatesHtml;
+}
+
+function calculatePriority(candidate) {
+    const missingIds = candidate.missing_external_ids || [];
+    const hasOldData = candidate.metadata_age_days && candidate.metadata_age_days > 30;
+    const noEnrichedData = !candidate.has_enriched_metadata;
+    
+    // High priority: No enriched data (regardless of external IDs)
+    if (noEnrichedData) return 'High';
+    
+    // High priority: Missing multiple external IDs  
+    if (missingIds.length >= 2) return 'High';
+    
+    // Medium priority: Missing some IDs or outdated data
+    if (missingIds.length === 1 || hasOldData) return 'Medium';
+    
+    // Low priority: Recently enriched with most data
+    return 'Low';
+}
+
+function renderPagination(total) {
+    const totalPages = Math.ceil(total / enrichmentData.pageSize);
+    const currentPage = enrichmentData.currentPage;
+    
+    let paginationHtml = '';
+    if (totalPages > 1) {
+        paginationHtml = `
+            <div class="pagination">
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                <span>Page ${currentPage} of ${totalPages}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+            </div>
+        `;
+    }
+    
+    document.getElementById('candidatesPagination').innerHTML = paginationHtml;
+}
+
+async function loadQualityMetrics() {
+    try {
+        console.log('🔍 Fetching quality metrics from /api/metadata-enrichment/validation/report');
+        const response = await fetch('/api/metadata-enrichment/validation/report');
+        console.log('🔍 Response status:', response.status, response.statusText);
+        const report = await response.json();
+        
+        if (response.ok) {
+            console.log('✅ Quality metrics report data:', report);
+            console.log('📊 Report summary:', report.summary);
+            renderQualityMetrics(report);
+        } else {
+            console.error('❌ API Error:', report);
+            throw new Error(report.error || 'Failed to load quality metrics');
+        }
+    } catch (error) {
+        console.error('💥 Error loading quality metrics:', error);
+        document.getElementById('qualityMetrics').innerHTML = 
+            '<div class="error-placeholder">Failed to load quality metrics - Check console for details</div>';
+    }
+}
+
+function renderQualityMetrics(report) {
+    // Use actual validation report data
+    const summary = report.summary || {};
+    const issues = report.issues_summary || {};
+    
+    console.log('Quality metrics summary data:', summary); // Debug logging
+    
+    // The validation_pass_rate already comes as a percentage (0-100)
+    // The average_quality_score comes as a decimal (0-1), so multiply by 100 for percentage
+    const metrics = [
+        { label: 'Validation Pass Rate', value: summary.validation_pass_rate || 0 },
+        { label: 'Average Quality Score', value: (summary.average_quality_score || 0) * 100 }, // Convert 0-1 to 0-100%
+        { label: 'Artists Needing Enrichment', value: summary.artists_needing_enrichment && summary.total_artists_checked ? 
+            (summary.artists_needing_enrichment / summary.total_artists_checked * 100) : 0 },
+        { label: 'Valid Artists', value: summary.valid_artists && summary.total_artists_checked ? 
+            (summary.valid_artists / summary.total_artists_checked * 100) : 0 },
+        { label: 'Data Quality Score', value: (summary.average_quality_score || 0) * 100 } // Convert 0-1 to 0-100%
+    ];
+    
+    console.log('Processed metrics:', metrics); // Debug logging
+    
+    const metricsHtml = metrics.map(metric => `
+        <div class="quality-metric">
+            <span class="metric-label">${metric.label}</span>
+            <div style="display: flex; align-items: center;">
+                <span class="metric-value">${metric.value.toFixed(1)}%</span>
+                <div class="metric-bar">
+                    <div class="metric-fill" style="width: ${Math.min(metric.value, 100)}%"></div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('qualityMetrics').innerHTML = metricsHtml;
+}
+
+async function loadRecentActivity() {
+    try {
+        // For now, generate dynamic activity based on current stats
+        const response = await fetch('/api/metadata-enrichment/stats');
+        const stats = await response.json();
+        
+        if (response.ok) {
+            const activities = [
+                {
+                    icon: 'tabler:sparkles',
+                    title: 'Statistics Updated',
+                    description: `Found ${stats.candidates_count || 0} artists needing enrichment`,
+                    time: 'Just now'
+                },
+                {
+                    icon: 'tabler:chart-line',
+                    title: 'Quality Analysis',
+                    description: `${stats.enriched_artists || 0} artists have enriched metadata`,
+                    time: '5 minutes ago'
+                },
+                {
+                    icon: 'tabler:database',
+                    title: 'External ID Coverage',
+                    description: `${stats.external_id_coverage || 0}% coverage across all services`,
+                    time: '10 minutes ago'
+                }
+            ];
+            
+            renderRecentActivity(activities);
+        } else {
+            throw new Error('Failed to load activity data');
+        }
+    } catch (error) {
+        console.error('Error loading recent activity:', error);
+        // Fallback to placeholder
+        const activityHtml = `
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <iconify-icon icon="tabler:info-circle"></iconify-icon>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-title">Activity Tracking</div>
+                    <div class="activity-description">Recent enrichment activity will appear here</div>
+                    <div class="activity-time">-</div>
+                </div>
+            </div>`;
+        
+        document.getElementById('recentActivity').innerHTML = activityHtml;
+    }
+}
+
+function renderRecentActivity(activities) {
+    const activityHtml = activities.map(activity => `
+        <div class="activity-item">
+            <div class="activity-icon">
+                <iconify-icon icon="${activity.icon}"></iconify-icon>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">${activity.title}</div>
+                <div class="activity-description">${activity.description}</div>
+                <div class="activity-time">${activity.time}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('recentActivity').innerHTML = activityHtml;
+}
+
+async function loadDuplicates() {
+    try {
+        const response = await fetch('/api/metadata-enrichment/duplicates/candidates?limit=20');
+        const data = await response.json();
+        
+        if (response.ok) {
+            renderDuplicates(data.candidates || []);
+        } else {
+            throw new Error(data.error || 'Failed to load duplicates');
+        }
+    } catch (error) {
+        console.error('Error loading duplicates:', error);
+        document.getElementById('duplicatesList').innerHTML = 
+            '<div class="error-placeholder">Failed to load duplicate detection</div>';
+    }
+}
+
+function renderDuplicates(duplicates) {
+    if (!duplicates || duplicates.length === 0) {
+        document.getElementById('duplicatesList').innerHTML = 
+            '<div class="no-data">No potential duplicates detected</div>';
+        return;
+    }
+    
+    const duplicatesHtml = duplicates.map(duplicate => {
+        const confidenceClass = getConfidenceClass(duplicate.match_confidence);
+        const actionClass = duplicate.recommended_action === 'auto_merge' ? 'auto-merge' : 
+                           duplicate.recommended_action === 'review' ? 'review' : 'ignore';
+        
+        return `
+            <div class="duplicate-group" data-duplicate-id="${duplicate.artist1_id}-${duplicate.artist2_id}">
+                <div class="duplicate-header">
+                    <div class="duplicate-title">Potential Duplicate Match</div>
+                    <div class="duplicate-confidence confidence-${confidenceClass}">
+                        ${(duplicate.match_confidence * 100).toFixed(1)}% confidence
+                    </div>
+                </div>
+                
+                <div class="duplicate-details">
+                    <div class="match-reasons">
+                        <strong>Match Reasons:</strong> ${duplicate.match_reasons?.join(', ') || 'Name similarity'}
+                    </div>
+                    <div class="external-matches">
+                        ${Object.entries(duplicate.external_id_matches || {}).map(([source, matches]) => 
+                            `<span class="external-match ${matches ? 'match' : 'no-match'}">${source}: ${matches ? '✓' : '✗'}</span>`
+                        ).join(' ')}
+                    </div>
+                </div>
+                
+                <div class="duplicate-artists">
+                    <div class="duplicate-artist">
+                        <div class="artist-info">
+                            <div class="artist-name">${duplicate.artist1_name}</div>
+                            <div class="artist-meta">ID: ${duplicate.artist1_id}</div>
+                        </div>
+                        <div class="artist-actions">
+                            <button onclick="viewArtistDetail(${duplicate.artist1_id})" class="btn btn-ghost btn-sm">
+                                <iconify-icon icon="tabler:eye"></iconify-icon>
+                            </button>
+                            <button onclick="selectAsPrimary(${duplicate.artist1_id}, ${duplicate.artist2_id})" 
+                                    class="btn btn-primary btn-sm" title="Keep this as primary">
+                                <iconify-icon icon="tabler:star"></iconify-icon>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="merge-indicator">
+                        <iconify-icon icon="tabler:arrow-down"></iconify-icon>
+                        <span class="action-label action-${actionClass}">${duplicate.recommended_action.replace('_', ' ')}</span>
+                        <iconify-icon icon="tabler:arrow-down"></iconify-icon>
+                    </div>
+                    
+                    <div class="duplicate-artist">
+                        <div class="artist-info">
+                            <div class="artist-name">${duplicate.artist2_name}</div>
+                            <div class="artist-meta">ID: ${duplicate.artist2_id}</div>
+                        </div>
+                        <div class="artist-actions">
+                            <button onclick="viewArtistDetail(${duplicate.artist2_id})" class="btn btn-ghost btn-sm">
+                                <iconify-icon icon="tabler:eye"></iconify-icon>
+                            </button>
+                            <button onclick="selectAsPrimary(${duplicate.artist2_id}, ${duplicate.artist1_id})" 
+                                    class="btn btn-primary btn-sm" title="Keep this as primary">
+                                <iconify-icon icon="tabler:star"></iconify-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="duplicate-actions">
+                    ${duplicate.recommended_action === 'auto_merge' ? 
+                        `<button onclick="autoMergeDuplicate(${duplicate.artist1_id}, ${duplicate.artist2_id})" 
+                                 class="btn btn-success btn-sm">
+                            <iconify-icon icon="tabler:bolt"></iconify-icon>
+                            Auto Merge
+                         </button>` : ''}
+                    <button onclick="showMergeModal(${duplicate.artist1_id}, ${duplicate.artist2_id}, '${duplicate.artist1_name}', '${duplicate.artist2_name}')" 
+                            class="btn btn-warning btn-sm">
+                        <iconify-icon icon="tabler:git-merge"></iconify-icon>
+                        Manual Merge
+                    </button>
+                    <button onclick="ignoreDuplicate(${duplicate.artist1_id}, ${duplicate.artist2_id})" 
+                            class="btn btn-ghost btn-sm">
+                        <iconify-icon icon="tabler:x"></iconify-icon>
+                        Ignore
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('duplicatesList').innerHTML = duplicatesHtml;
+}
+
+function getConfidenceClass(confidence) {
+    if (confidence >= 0.9) return 'high';
+    if (confidence >= 0.7) return 'medium';
+    return 'low';
+}
+
+// Event handlers
+function refreshDashboard() {
+    showSuccess('Refreshing dashboard...');
+    initializeDashboard();
+}
+
+function refreshCandidates() {
+    enrichmentData.currentPage = 1;
+    loadEnrichmentCandidates();
+}
+
+function filterCandidates() {
+    enrichmentData.currentPage = 1;
+    loadEnrichmentCandidates();
+}
+
+function sortCandidates() {
+    // TODO: Implement sorting logic
+    loadEnrichmentCandidates();
+}
+
+function changePage(page) {
+    if (page < 1) return;
+    enrichmentData.currentPage = page;
+    loadEnrichmentCandidates();
+}
+
+function toggleCandidateSelection(candidateId, isSelected) {
+    console.log('toggleCandidateSelection:', candidateId, isSelected);
+    console.log('selectedCandidates before:', enrichmentData.selectedCandidates);
+    console.log('selectedCandidates size before:', enrichmentData.selectedCandidates.size);
+    
+    if (isSelected) {
+        enrichmentData.selectedCandidates.add(candidateId);
+        console.log('Added', candidateId, 'to selection');
+    } else {
+        const deleted = enrichmentData.selectedCandidates.delete(candidateId);
+        console.log('Tried to delete', candidateId, 'success:', deleted);
+    }
+    
+    console.log('selectedCandidates after toggle:', enrichmentData.selectedCandidates);
+    console.log('selectedCandidates size after:', enrichmentData.selectedCandidates.size);
+    updateBatchPreview();
+}
+
+function updateBatchPreview() {
+    const selectedCount = enrichmentData.selectedCandidates.size;
+    document.getElementById('selectedCount').textContent = selectedCount;
+}
+
+function showBatchEnrichmentModal() {
+    console.log('showBatchEnrichmentModal called, selectedCandidates:', enrichmentData.selectedCandidates);
+    console.log('selectedCandidates size:', enrichmentData.selectedCandidates.size);
+    
+    if (enrichmentData.selectedCandidates.size === 0) {
+        showError('Please select at least one candidate for batch enrichment');
+        return;
+    }
+    
+    updateBatchPreview();
+    const modal = document.getElementById('batchEnrichmentModal');
+    console.log('Modal element:', modal);
+    
+    // Fix modal display - CSS expects 'block' not 'flex'
+    modal.style.display = 'block';
+    
+    // Trigger animation by adding show class after a short delay
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+function closeBatchEnrichmentModal() {
+    const modal = document.getElementById('batchEnrichmentModal');
+    
+    // Remove show class to trigger close animation
+    modal.classList.remove('show');
+    
+    // Hide modal after animation completes
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300); // Match CSS transition duration
+}
+
+async function executeBatchEnrichment() {
+    const selectedIds = Array.from(enrichmentData.selectedCandidates);
+    const forceRefresh = document.getElementById('forceRefresh').checked;
+    const missingExternalIds = document.getElementById('missingExternalIds').checked;
+    const outdatedOnly = document.getElementById('outdatedOnly').checked;
+    
+    closeBatchEnrichmentModal();
+    showProgressModal();
+    
+    try {
+        const response = await fetch('/api/metadata-enrichment/enrich/batch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                artist_ids: selectedIds,
+                force_refresh: forceRefresh,
+                missing_external_ids: missingExternalIds,
+                outdated_only: outdatedOnly
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            updateProgress(100, 'Batch enrichment completed successfully');
+            showSuccess(`Enriched ${result.successful_count || 0} artists successfully`);
+            
+            // Refresh the dashboard data
+            setTimeout(() => {
+                closeProgressModal();
+                initializeDashboard();
+                enrichmentData.selectedCandidates.clear();
+            }, 2000);
+        } else {
+            throw new Error(result.error || 'Batch enrichment failed');
+        }
+    } catch (error) {
+        console.error('Batch enrichment error:', error);
+        updateProgress(0, 'Batch enrichment failed');
+        showError('Batch enrichment failed: ' + error.message);
+        setTimeout(closeProgressModal, 3000);
+    }
+}
+
+async function enrichSingleArtist(artistId) {
+    try {
+        showSuccess('Enriching artist...');
+        
+        const response = await fetch(`/api/metadata-enrichment/enrich/${artistId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                force_refresh: false
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showSuccess('Artist enriched successfully');
+            refreshCandidates();
+        } else {
+            throw new Error(result.error || 'Enrichment failed');
+        }
+    } catch (error) {
+        console.error('Single enrichment error:', error);
+        showError('Failed to enrich artist: ' + error.message);
+    }
+}
+
+async function runAutoEnrichment() {
+    showProgressModal();
+    
+    try {
+        const response = await fetch('/api/metadata-enrichment/auto-enrich', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                limit: 50,
+                missing_external_ids: true
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            updateProgress(100, 'Auto enrichment completed');
+            showSuccess(`Auto-enriched ${result.successful_count || 0} artists`);
+            setTimeout(() => {
+                closeProgressModal();
+                initializeDashboard();
+            }, 2000);
+        } else {
+            throw new Error(result.error || 'Auto enrichment failed');
+        }
+    } catch (error) {
+        console.error('Auto enrichment error:', error);
+        updateProgress(0, 'Auto enrichment failed');
+        showError('Auto enrichment failed: ' + error.message);
+        setTimeout(closeProgressModal, 3000);
+    }
+}
+
+function showProgressModal() {
+    document.getElementById('progressModal').style.display = 'flex';
+    document.getElementById('progressCloseBtn').style.display = 'none';
+    updateProgress(0, 'Starting enrichment...');
+}
+
+function closeProgressModal() {
+    document.getElementById('progressModal').style.display = 'none';
+}
+
+function updateProgress(percentage, message) {
+    document.getElementById('progressFill').style.width = percentage + '%';
+    document.getElementById('progressText').textContent = message;
+    
+    if (percentage === 100 || percentage === 0) {
+        document.getElementById('progressCloseBtn').style.display = 'block';
+    }
+}
+
+function viewArtistDetail(artistId) {
+    window.open(`/artist/${artistId}`, '_blank');
+}
+
+function generateQualityReport() {
+    showSuccess('Generating quality report...');
+    loadQualityMetrics();
+}
+
+function viewEnrichmentHistory() {
+    showInfo('Enrichment history feature coming soon');
+}
+
+function scanForDuplicates() {
+    showSuccess('Scanning for duplicates...');
+    loadDuplicates();
+}
+
+// Duplicate management functions
+async function autoMergeDuplicate(artist1Id, artist2Id) {
+    try {
+        showSuccess('Auto-merging duplicate artists...');
+        
+        const response = await fetch('/api/metadata-enrichment/duplicates/auto-merge', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                limit: 1,
+                specific_pairs: [[artist1Id, artist2Id]]
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.results && result.results.length > 0) {
+            const mergeResult = result.results[0];
+            if (mergeResult.success) {
+                showSuccess(`Successfully merged artists. Moved ${mergeResult.videos_moved} videos.`);
+                loadDuplicates(); // Refresh the list
+                loadEnrichmentStats(); // Update stats
+            } else {
+                throw new Error(mergeResult.errors?.join(', ') || 'Merge failed');
+            }
+        } else {
+            throw new Error(result.error || 'Auto-merge failed');
+        }
+    } catch (error) {
+        console.error('Auto-merge error:', error);
+        showError('Failed to auto-merge: ' + error.message);
+    }
+}
+
+function selectAsPrimary(primaryId, duplicateId) {
+    showMergeModal(primaryId, duplicateId, 'Selected Artist', 'Duplicate Artist');
+}
+
+function showMergeModal(artist1Id, artist2Id, artist1Name, artist2Name) {
+    // Create merge modal if it doesn't exist
+    if (!document.getElementById('mergeModal')) {
+        const modalHtml = `
+            <div class="modal" id="mergeModal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Merge Duplicate Artists</h3>
+                        <button onclick="closeMergeModal()" class="modal-close">
+                            <iconify-icon icon="tabler:x"></iconify-icon>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="merge-preview">
+                            <div class="merge-artist primary">
+                                <h4>Primary Artist (will be kept)</h4>
+                                <div class="artist-card" id="primaryArtistCard">
+                                    <div class="artist-name" id="primaryArtistName"></div>
+                                    <div class="artist-id" id="primaryArtistId"></div>
+                                </div>
+                                <div class="artist-stats" id="primaryArtistStats"></div>
+                            </div>
+                            
+                            <div class="merge-arrow">
+                                <iconify-icon icon="tabler:arrow-right"></iconify-icon>
+                                <span>MERGE INTO</span>
+                            </div>
+                            
+                            <div class="merge-artist duplicate">
+                                <h4>Duplicate Artist (will be merged)</h4>
+                                <div class="artist-card" id="duplicateArtistCard">
+                                    <div class="artist-name" id="duplicateArtistName"></div>
+                                    <div class="artist-id" id="duplicateArtistId"></div>
+                                </div>
+                                <div class="artist-stats" id="duplicateArtistStats"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="merge-options">
+                            <h4>Merge Actions</h4>
+                            <ul class="merge-actions-list">
+                                <li>✓ Move all videos from duplicate to primary artist</li>
+                                <li>✓ Move all downloads from duplicate to primary artist</li>
+                                <li>✓ Merge metadata (external IDs, genres, enriched data)</li>
+                                <li>✓ Delete duplicate artist entry</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="merge-warning">
+                            <iconify-icon icon="tabler:alert-triangle"></iconify-icon>
+                            <strong>Warning:</strong> This action cannot be undone. Make sure you've selected the correct primary artist.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button onclick="closeMergeModal()" class="btn btn-secondary">Cancel</button>
+                        <button onclick="executeMerge()" class="btn btn-success">
+                            <iconify-icon icon="tabler:git-merge"></iconify-icon>
+                            Merge Artists
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    // Populate modal with artist data
+    document.getElementById('primaryArtistName').textContent = artist1Name;
+    document.getElementById('primaryArtistId').textContent = `ID: ${artist1Id}`;
+    document.getElementById('duplicateArtistName').textContent = artist2Name;
+    document.getElementById('duplicateArtistId').textContent = `ID: ${artist2Id}`;
+    
+    // Store IDs for merge execution
+    window.currentMerge = {
+        primaryId: artist1Id,
+        duplicateId: artist2Id
+    };
+    
+    // Load artist stats
+    loadArtistStatsForMerge(artist1Id, artist2Id);
+    
+    document.getElementById('mergeModal').style.display = 'flex';
+}
+
+async function loadArtistStatsForMerge(artist1Id, artist2Id) {
+    try {
+        // Load stats for both artists
+        const [artist1Response, artist2Response] = await Promise.all([
+            fetch(`/api/artists/${artist1Id}`),
+            fetch(`/api/artists/${artist2Id}`)
+        ]);
+        
+        if (artist1Response.ok && artist2Response.ok) {
+            const artist1 = await artist1Response.json();
+            const artist2 = await artist2Response.json();
+            
+            document.getElementById('primaryArtistStats').innerHTML = `
+                <div class="stat-item">Videos: ${artist1.statistics?.total_videos || 0}</div>
+                <div class="stat-item">Downloads: ${artist1.statistics?.downloaded_videos || 0}</div>
+                <div class="stat-item">External IDs: ${[artist1.spotify_id, artist1.lastfm_name, artist1.imvdb_id].filter(Boolean).length}/3</div>
+            `;
+            
+            document.getElementById('duplicateArtistStats').innerHTML = `
+                <div class="stat-item">Videos: ${artist2.statistics?.total_videos || 0}</div>
+                <div class="stat-item">Downloads: ${artist2.statistics?.downloaded_videos || 0}</div>
+                <div class="stat-item">External IDs: ${[artist2.spotify_id, artist2.lastfm_name, artist2.imvdb_id].filter(Boolean).length}/3</div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading artist stats for merge:', error);
+    }
+}
+
+function closeMergeModal() {
+    document.getElementById('mergeModal').style.display = 'none';
+    window.currentMerge = null;
+}
+
+async function executeMerge() {
+    if (!window.currentMerge) {
+        showError('No merge operation selected');
+        return;
+    }
+    
+    try {
+        closeMergeModal();
+        showProgressModal();
+        updateProgress(30, 'Merging artists...');
+        
+        const response = await fetch('/api/metadata-enrichment/duplicates/merge', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                primary_artist_id: window.currentMerge.primaryId,
+                duplicate_artist_id: window.currentMerge.duplicateId,
+                auto_merge: false
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            updateProgress(100, 'Merge completed successfully');
+            showSuccess(`Artists merged successfully. Moved ${result.videos_moved} videos and ${result.downloads_moved} downloads.`);
+            
+            setTimeout(() => {
+                closeProgressModal();
+                loadDuplicates(); // Refresh duplicates list
+                loadEnrichmentStats(); // Update stats
+            }, 2000);
+        } else {
+            throw new Error(result.errors?.join(', ') || result.error || 'Merge failed');
+        }
+    } catch (error) {
+        console.error('Merge error:', error);
+        updateProgress(0, 'Merge failed');
+        showError('Failed to merge artists: ' + error.message);
+        setTimeout(closeProgressModal, 3000);
+    }
+}
+
+function ignoreDuplicate(artist1Id, artist2Id) {
+    // Remove from display (in real implementation, might want to track ignored pairs)
+    const duplicateElement = document.querySelector(`[data-duplicate-id="${artist1Id}-${artist2Id}"]`);
+    if (duplicateElement) {
+        duplicateElement.style.transition = 'opacity 0.3s ease';
+        duplicateElement.style.opacity = '0.5';
+        setTimeout(() => {
+            duplicateElement.remove();
+            if (document.querySelectorAll('.duplicate-group').length === 0) {
+                document.getElementById('duplicatesList').innerHTML = 
+                    '<div class="no-data">No potential duplicates detected</div>';
+            }
+        }, 300);
+    }
+    showInfo('Duplicate pair ignored');
+}
+
+// Utility functions
+function showSuccess(message) {
+    // Use existing toast system if available
+    if (window.showSuccess) {
+        window.showSuccess(message);
+    } else {
+        console.log('Success:', message);
+    }
+}
+
+function showError(message) {
+    // Use existing toast system if available
+    if (window.showError) {
+        window.showError(message);
+    } else {
+        console.error('Error:', message);
+    }
+}
+
+function showInfo(message) {
+    // Use existing toast system if available
+    if (window.showInfo) {
+        window.showInfo(message);
+    } else {
+        console.log('Info:', message);
+    }
+}
+</script>
+
+{% endblock %}

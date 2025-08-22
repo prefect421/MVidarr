@@ -629,6 +629,191 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+
+/* Single-page Metadata Styles */
+.single-page-metadata {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.settings-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-primary);
+    padding-bottom: 0.5rem;
+}
+
+.section-title iconify-icon {
+    font-size: 1.2rem;
+    color: var(--accent-primary);
+}
+
+.settings-subsection {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-secondary);
+}
+
+.subsection-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.subsection-title iconify-icon {
+    font-size: 1rem;
+    color: var(--text-muted);
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.setting-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.setting-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.setting-group input,
+.setting-group select,
+.setting-group textarea {
+    padding: 0.5rem;
+    border: 1px solid var(--border-secondary);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+}
+
+.setting-group input:focus,
+.setting-group select:focus,
+.setting-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.1);
+}
+
+.field-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.checkbox-group {
+    display: block;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.checkbox-container:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-accent-subtle);
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-primary);
+    border-radius: 4px;
+    position: relative;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.checkbox-container input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.checkbox-content {
+    flex: 1;
+}
+
+.checkbox-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .checkbox-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .settings-section {
+        padding: 1rem;
+    }
+    
+    .single-page-metadata {
+        gap: 1.5rem;
+    }
+}
 </style>
 {% endblock %}
 
@@ -747,19 +932,20 @@
                     <button onclick="selectAllVideos()" class="btn btn-secondary">Select All</button>
                     <button onclick="deselectAllVideos()" class="btn btn-secondary">Deselect All</button>
                     <button onclick="bulkDownloadSelected()" class="btn btn-primary" id="bulkDownloadBtn" disabled>
+                        <iconify-icon icon="tabler:download"></iconify-icon>
                         <span id="downloadBtnText">Download Selected</span>
                     </button>
                     <button onclick="bulkAddToPlaylist()" class="btn btn-success" id="bulkPlaylistBtn" disabled>
-                        <iconify-icon icon="tabler:playlist-add"></iconify-icon> Add to Playlist
+                        <iconify-icon icon="tabler:playlist-add"></iconify-icon>
+                        <span>Add to Playlist</span>
                     </button>
                     <button onclick="bulkUpdateStatus()" class="btn btn-secondary" id="bulkStatusBtn" disabled>
+                        <iconify-icon icon="tabler:edit"></iconify-icon>
                         <span id="statusBtnText">Update Status</span>
                     </button>
-                    <button onclick="showVideoPreviewModal()" class="btn btn-info" id="previewBtn" disabled>
-                        <span id="previewBtnText">Preview Selected</span>
-                    </button>
                     <button onclick="bulkDeleteSelected()" class="btn btn-danger" id="bulkDeleteBtn" disabled>
-                        🗑️ Delete Selected
+                        <iconify-icon icon="tabler:trash"></iconify-icon>
+                        <span>Delete Selected</span>
                     </button>
                 </div>
             </div>
@@ -820,7 +1006,7 @@
         <div class="discover-panel">
             <div class="discover-header">
                 <h3>Discover New Videos</h3>
-                <p>Search IMVDb for new videos by this artist</p>
+                <p>Search for new videos by this artist</p>
             </div>
             
             <div class="discover-controls">
@@ -997,177 +1183,185 @@
             <h3>🎵 Enhanced Artist Metadata</h3>
             <form id="artistSettingsForm">
                 <!-- Basic Information Tab -->
-                <div class="metadata-tabs">
-                    <button type="button" class="metadata-tab active" onclick="switchMetadataTab('basic')" id="basicTab">
-                        📝 Basic Info
-                    </button>
-                    <button type="button" class="metadata-tab" onclick="switchMetadataTab('extended')" id="extendedTab">
-                        🔍 Extended Info
-                    </button>
-                    <button type="button" class="metadata-tab" onclick="switchMetadataTab('links')" id="linksTab">
-                        🔗 External Links
-                    </button>
-                    <button type="button" class="metadata-tab" onclick="switchMetadataTab('settings')" id="settingsTab">
-                        ⚙️ Settings
-                    </button>
-                </div>
+                <!-- Removed metadata tabs for single-page design -->
                 
-                <!-- Basic Information Panel -->
-                <div class="metadata-panel active" id="basicPanel">
-                    <div class="settings-grid">
-                        <div class="setting-group">
-                            <label for="artistNameSetting">Artist Name: *</label>
-                            <input type="text" id="artistNameSetting" name="name" required>
-                            <small class="field-hint">The primary name for this artist</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="sortNameSetting">Sort Name:</label>
-                            <input type="text" id="sortNameSetting" name="sort_name">
-                            <small class="field-hint">Name used for alphabetical sorting (e.g., "Beatles, The")</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="folderPathSetting">Folder Path:</label>
-                            <input type="text" id="folderPathSetting" name="folder_path">
-                            <small class="field-hint">Custom folder path for this artist's files</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="keywordsSetting">Keywords:</label>
-                            <input type="text" id="keywordsSetting" name="keywords">
-                            <small class="field-hint">Comma-separated search keywords</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="overviewSetting">Biography/Overview:</label>
-                            <textarea id="overviewSetting" name="overview" rows="4"></textarea>
-                            <small class="field-hint">Artist biography or description</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="genresSetting">Genres:</label>
-                            <input type="text" id="genresSetting" name="genres">
-                            <small class="field-hint">Comma-separated music genres</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="imvdbIdSetting">IMVDb ID:</label>
-                            <div class="input-group">
-                                <input type="number" id="imvdbIdSetting" name="imvdb_id" placeholder="Enter IMVDb ID or leave empty">
-                                <button type="button" id="clearImvdbId" class="btn-clear" title="Clear IMVDb ID">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                <button type="button" id="searchImvdbId" class="btn-search" title="Search for correct IMVDb ID">
-                                    <i class="fas fa-search"></i>
-                                </button>
+                <!-- Single-page Metadata Form - All sections combined -->
+                <div class="single-page-metadata">
+                    <!-- Basic Information Section -->
+                    <div class="settings-section">
+                        <h4 class="section-title">
+                            <iconify-icon icon="tabler:user"></iconify-icon>
+                            Basic Information
+                        </h4>
+                        <div class="settings-grid">
+                            <div class="setting-group">
+                                <label for="artistNameSetting">Artist Name: *</label>
+                                <input type="text" id="artistNameSetting" name="name" required>
+                                <small class="field-hint">The primary name for this artist</small>
                             </div>
-                            <small class="field-hint">
-                                Manually enter the correct IMVDb ID, search for it, or clear if incorrect. 
-                                <a href="https://imvdb.com" target="_blank" rel="noopener">Find ID on IMVDb</a>
-                            </small>
+                            
+                            <div class="setting-group">
+                                <label for="sortNameSetting">Sort Name:</label>
+                                <input type="text" id="sortNameSetting" name="sort_name">
+                                <small class="field-hint">Name used for alphabetical sorting (e.g., "Beatles, The")</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="folderPathSetting">Folder Path:</label>
+                                <input type="text" id="folderPathSetting" name="folder_path">
+                                <small class="field-hint">Custom folder path for this artist's files</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="keywordsSetting">Keywords:</label>
+                                <input type="text" id="keywordsSetting" name="keywords">
+                                <small class="field-hint">Comma-separated search keywords</small>
+                            </div>
+                            
+                            <div class="setting-group full-width">
+                                <label for="overviewSetting">Biography/Overview:</label>
+                                <textarea id="overviewSetting" name="overview" rows="4"></textarea>
+                                <small class="field-hint">Artist biography or description</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="genresSetting">Genres:</label>
+                                <input type="text" id="genresSetting" name="genres">
+                                <small class="field-hint">Comma-separated music genres</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="imvdbIdSetting">IMVDb ID:</label>
+                                <div class="input-group">
+                                    <input type="number" id="imvdbIdSetting" name="imvdb_id" placeholder="Enter IMVDb ID or leave empty">
+                                    <button type="button" id="clearImvdbId" class="btn-clear" title="Clear IMVDb ID">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <button type="button" id="searchImvdbId" class="btn-search" title="Search for correct IMVDb ID">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <small class="field-hint">
+                                    Manually enter the correct IMVDb ID, search for it, or clear if incorrect. 
+                                    <a href="https://imvdb.com" target="_blank" rel="noopener">Find ID on IMVDb</a>
+                                </small>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Extended Information Panel -->
-                <div class="metadata-panel" id="extendedPanel" style="display: none;">
-                    <div class="settings-grid">
-                        <div class="setting-group">
-                            <label for="formedYearSetting">Formed Year:</label>
-                            <input type="number" id="formedYearSetting" name="formed_year" min="1800" max="2030">
-                            <small class="field-hint">Year the artist/band was formed</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="disbandedYearSetting">Disbanded Year:</label>
-                            <input type="number" id="disbandedYearSetting" name="disbanded_year" min="1800" max="2030">
-                            <small class="field-hint">Year the band disbanded (if applicable)</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="originCountrySetting">Origin Country:</label>
-                            <select id="originCountrySetting" name="origin_country">
-                                <option value="">Select Country...</option>
-                                <option value="US">United States</option>
-                                <option value="UK">United Kingdom</option>
-                                <option value="CA">Canada</option>
-                                <option value="AU">Australia</option>
-                                <option value="DE">Germany</option>
-                                <option value="FR">France</option>
-                                <option value="JP">Japan</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <small class="field-hint">Country or region of origin</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="labelsSetting">Record Labels:</label>
-                            <input type="text" id="labelsSetting" name="labels">
-                            <small class="field-hint">Comma-separated record labels</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="membersSetting">Band Members:</label>
-                            <textarea id="membersSetting" name="members" rows="3"></textarea>
-                            <small class="field-hint">Current or notable band members</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- External Links Panel -->
-                <div class="metadata-panel" id="linksPanel" style="display: none;">
-                    <div class="settings-grid">
-                        <div class="setting-group">
-                            <label for="websiteUrlSetting">Official Website:</label>
-                            <input type="url" id="websiteUrlSetting" name="website_url">
-                            <small class="field-hint">Artist's official website</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="spotifyUrlSetting">Spotify URL:</label>
-                            <input type="url" id="spotifyUrlSetting" name="spotify_url">
-                            <small class="field-hint">Spotify artist page</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="youtubeUrlSetting">YouTube URL:</label>
-                            <input type="url" id="youtubeUrlSetting" name="youtube_url">
-                            <small class="field-hint">YouTube channel or artist page</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="appleMusicUrlSetting">Apple Music URL:</label>
-                            <input type="url" id="appleMusicUrlSetting" name="apple_music_url">
-                            <small class="field-hint">Apple Music artist page</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="twitterUrlSetting">Twitter/X URL:</label>
-                            <input type="url" id="twitterUrlSetting" name="twitter_url">
-                            <small class="field-hint">Official Twitter/X account</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="facebookUrlSetting">Facebook URL:</label>
-                            <input type="url" id="facebookUrlSetting" name="facebook_url">
-                            <small class="field-hint">Official Facebook page</small>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="instagramUrlSetting">Instagram URL:</label>
-                            <input type="url" id="instagramUrlSetting" name="instagram_url">
-                            <small class="field-hint">Official Instagram account</small>
+                    
+                    <!-- Extended Information Section -->
+                    <div class="settings-section">
+                        <h4 class="section-title">
+                            <iconify-icon icon="tabler:info-circle"></iconify-icon>
+                            Extended Information
+                        </h4>
+                        <div class="settings-grid">
+                            <div class="setting-group">
+                                <label for="formedYearSetting">Formed Year:</label>
+                                <input type="number" id="formedYearSetting" name="formed_year" min="1800" max="2030">
+                                <small class="field-hint">Year the artist/band was formed</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="disbandedYearSetting">Disbanded Year:</label>
+                                <input type="number" id="disbandedYearSetting" name="disbanded_year" min="1800" max="2030">
+                                <small class="field-hint">Year the band disbanded (if applicable)</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="originCountrySetting">Origin Country:</label>
+                                <select id="originCountrySetting" name="origin_country">
+                                    <option value="">Select Country...</option>
+                                    <option value="US">United States</option>
+                                    <option value="UK">United Kingdom</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="AU">Australia</option>
+                                    <option value="DE">Germany</option>
+                                    <option value="FR">France</option>
+                                    <option value="JP">Japan</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <small class="field-hint">Country or region of origin</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="labelsSetting">Record Labels:</label>
+                                <input type="text" id="labelsSetting" name="labels">
+                                <small class="field-hint">Comma-separated record labels</small>
+                            </div>
+                            
+                            <div class="setting-group full-width">
+                                <label for="membersSetting">Band Members:</label>
+                                <textarea id="membersSetting" name="members" rows="3"></textarea>
+                                <small class="field-hint">Current or notable band members</small>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Settings Panel -->
-                <div class="metadata-panel" id="settingsPanel" style="display: none;">
-                    <div class="settings-organized">
-                        <!-- Monitoring Settings Section -->
-                        <div class="settings-section">
-                            <h4 class="section-title">🔍 Monitoring & Discovery</h4>
+                    
+                    <!-- External Links Section -->
+                    <div class="settings-section">
+                        <h4 class="section-title">
+                            <iconify-icon icon="tabler:link"></iconify-icon>
+                            External Links
+                        </h4>
+                        <div class="settings-grid">
+                            <div class="setting-group">
+                                <label for="websiteUrlSetting">Official Website:</label>
+                                <input type="url" id="websiteUrlSetting" name="website_url">
+                                <small class="field-hint">Artist's official website</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="spotifyUrlSetting">Spotify URL:</label>
+                                <input type="url" id="spotifyUrlSetting" name="spotify_url">
+                                <small class="field-hint">Spotify artist page</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="youtubeUrlSetting">YouTube URL:</label>
+                                <input type="url" id="youtubeUrlSetting" name="youtube_url">
+                                <small class="field-hint">YouTube channel or artist page</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="appleMusicUrlSetting">Apple Music URL:</label>
+                                <input type="url" id="appleMusicUrlSetting" name="apple_music_url">
+                                <small class="field-hint">Apple Music artist page</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="twitterUrlSetting">Twitter/X URL:</label>
+                                <input type="url" id="twitterUrlSetting" name="twitter_url">
+                                <small class="field-hint">Official Twitter/X account</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="facebookUrlSetting">Facebook URL:</label>
+                                <input type="url" id="facebookUrlSetting" name="facebook_url">
+                                <small class="field-hint">Official Facebook page</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="instagramUrlSetting">Instagram URL:</label>
+                                <input type="url" id="instagramUrlSetting" name="instagram_url">
+                                <small class="field-hint">Official Instagram account</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Section -->
+                    <div class="settings-section">
+                        <h4 class="section-title">
+                            <iconify-icon icon="tabler:settings"></iconify-icon>
+                            Monitoring & Download Settings
+                        </h4>
+                        
+                        <!-- Monitoring Settings -->
+                        <div class="settings-subsection">
+                            <h5 class="subsection-title">
+                                <iconify-icon icon="tabler:eye"></iconify-icon>
+                                Monitoring & Discovery
+                            </h5>
                             <div class="checkbox-grid">
                                 <div class="setting-group checkbox-group">
                                     <label class="checkbox-container">
@@ -1193,9 +1387,12 @@
                             </div>
                         </div>
                         
-                        <!-- Download Settings Section -->
-                        <div class="settings-section">
-                            <h4 class="section-title">⬇️ Download Preferences</h4>
+                        <!-- Download Settings -->
+                        <div class="settings-subsection">
+                            <h5 class="subsection-title">
+                                <iconify-icon icon="tabler:download"></iconify-icon>
+                                Download Preferences
+                            </h5>
                             <div class="settings-grid">
                                 <div class="setting-group">
                                     <label for="qualityProfileSetting">Quality Profile:</label>
@@ -1443,6 +1640,7 @@
                 <label><input type="radio" name="statusOption" value="DOWNLOADED"> <span class="status-badge status-downloaded">Downloaded</span></label>
                 <label><input type="radio" name="statusOption" value="FAILED"> <span class="status-badge status-failed">Failed</span></label>
                 <label><input type="radio" name="statusOption" value="IGNORED"> <span class="status-badge status-ignored">Ignored</span></label>
+                <label><input type="radio" name="statusOption" value="MONITORED"> <span class="status-badge status-monitored">Monitored</span></label>
             </div>
         </div>
         <div class="modal-actions">
@@ -1511,6 +1709,40 @@
     </div>
 </div>
 
+<!-- Playlist Selection Modal -->
+<div id="playlistModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Add Videos to Playlist</h2>
+        <div class="playlist-selection">
+            <div class="selection-summary">
+                <p>Selected videos: <span id="playlistSelectedCount">0</span></p>
+            </div>
+            
+            <div class="playlist-options">
+                <div class="option-group">
+                    <h3>Select Playlist:</h3>
+                    <select id="playlistSelect" class="form-control">
+                        <option value="">Loading playlists...</option>
+                    </select>
+                </div>
+                
+                <div class="option-group">
+                    <h3>Or Create New Playlist:</h3>
+                    <div class="new-playlist-form">
+                        <input type="text" id="newPlaylistName" placeholder="Enter playlist name" class="form-control">
+                        <textarea id="newPlaylistDescription" placeholder="Optional description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button onclick="addVideosToPlaylist()" class="btn btn-primary">Add to Playlist</button>
+            <button onclick="hidePlaylistModal()" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentArtistId = null;
 let currentArtistData = null;
@@ -1571,6 +1803,11 @@ function setupEventListeners() {
     // Merge artist modal
     const mergeModal = document.getElementById('mergeArtistModal');
     
+    // Playlist modal
+    const playlistModal = document.getElementById('playlistModal');
+    const playlistCloseBtn = playlistModal.querySelector('.close');
+    playlistCloseBtn.onclick = hidePlaylistModal;
+    
     window.onclick = function(event) {
         if (event.target === videoModal) {
             hideVideoSelectionModal();
@@ -1586,6 +1823,9 @@ function setupEventListeners() {
         }
         if (event.target === mergeModal) {
             hideMergePrompt();
+        }
+        if (event.target === playlistModal) {
+            hidePlaylistModal();
         }
     };
 }
@@ -1657,10 +1897,7 @@ function renderArtistHeader(artist) {
                 </div>
                 ${artist.last_discovery ? `<p class="last-discovery">Last scan: ${new Date(artist.last_discovery).toLocaleString()}</p>` : ''}
             </div>
-            <div class="artist-header-actions">
-                <button onclick="discoverVideos()" class="btn btn-primary">Discover Videos</button>
-                <button onclick="showTab('settings')" class="btn btn-secondary">Settings</button>
-            </div>
+            <!-- Removed redundant header buttons - functionality available via tabs -->
         </div>
     `;
     document.getElementById('artistHeader').innerHTML = headerHtml;
@@ -1689,10 +1926,18 @@ function renderOverviewTab(artist) {
             <span class="stat-value">${artist.statistics.failed_videos}</span>
             <span class="stat-label">Failed</span>
         </div>
+        <div class="stat-item">
+            <span class="stat-value">${artist.statistics.monitored_videos || 0}</span>
+            <span class="stat-label">Monitored</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">${artist.statistics.ignored_videos || 0}</span>
+            <span class="stat-label">Ignored</span>
+        </div>
     `;
     document.getElementById('artistStats').innerHTML = statsHtml;
     
-    // Metadata
+    // Metadata - Enhanced display of all available artist information
     let metadataHtml = `
         <div class="metadata-item">
             <span class="metadata-label">Added:</span>
@@ -1703,33 +1948,142 @@ function renderOverviewTab(artist) {
             <span class="metadata-value">${new Date(artist.updated_at).toLocaleDateString()}</span>
         </div>
     `;
+
+    // Basic information
+    if (artist.source) {
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">Source:</span>
+                <span class="metadata-value">${artist.source}</span>
+            </div>
+        `;
+    }
+
+    if (artist.last_discovery) {
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">Last Discovery:</span>
+                <span class="metadata-value">${new Date(artist.last_discovery).toLocaleDateString()}</span>
+            </div>
+        `;
+    }
+
+    // Extended information from artist metadata or IMVDb metadata
+    const metadata = artist.imvdb_metadata || {};
     
-    if (artist.imvdb_metadata) {
-        const metadata = artist.imvdb_metadata;
-        if (metadata.bio) {
-            metadataHtml += `
-                <div class="metadata-item full-width">
-                    <span class="metadata-label">Biography:</span>
-                    <span class="metadata-value">${metadata.bio.substring(0, 200)}${metadata.bio.length > 200 ? '...' : ''}</span>
-                </div>
-            `;
+    if (artist.formed_year || metadata.formed_year) {
+        const formedYear = artist.formed_year || metadata.formed_year;
+        let yearText = formedYear.toString();
+        if (artist.disbanded_year || metadata.disbanded_year) {
+            const disbandedYear = artist.disbanded_year || metadata.disbanded_year;
+            yearText += ` - ${disbandedYear}`;
         }
-        if (metadata.formed_year) {
-            metadataHtml += `
-                <div class="metadata-item">
-                    <span class="metadata-label">Formed:</span>
-                    <span class="metadata-value">${metadata.formed_year}</span>
-                </div>
-            `;
-        }
-        if (metadata.genres && metadata.genres.length > 0) {
-            metadataHtml += `
-                <div class="metadata-item">
-                    <span class="metadata-label">Genres:</span>
-                    <span class="metadata-value">${metadata.genres.join(', ')}</span>
-                </div>
-            `;
-        }
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">Active Years:</span>
+                <span class="metadata-value">${yearText}</span>
+            </div>
+        `;
+    }
+
+    if (artist.origin_country || metadata.origin_country) {
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">Origin:</span>
+                <span class="metadata-value">${artist.origin_country || metadata.origin_country}</span>
+            </div>
+        `;
+    }
+
+    if ((artist.genres && artist.genres.length > 0) || (metadata.genres && metadata.genres.length > 0)) {
+        const genres = artist.genres || metadata.genres;
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">Genres:</span>
+                <span class="metadata-value">${Array.isArray(genres) ? genres.join(', ') : genres}</span>
+            </div>
+        `;
+    }
+
+    if (artist.labels || metadata.labels) {
+        const labels = artist.labels || metadata.labels;
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">Labels:</span>
+                <span class="metadata-value">${Array.isArray(labels) ? labels.join(', ') : labels}</span>
+            </div>
+        `;
+    }
+
+    if (artist.members || metadata.members) {
+        metadataHtml += `
+            <div class="metadata-item full-width">
+                <span class="metadata-label">Members:</span>
+                <span class="metadata-value">${artist.members || metadata.members}</span>
+            </div>
+        `;
+    }
+
+    // External links
+    const links = [];
+    if (artist.website_url) links.push(`<a href="${artist.website_url}" target="_blank" title="Official Website">🌐</a>`);
+    if (artist.spotify_url) links.push(`<a href="${artist.spotify_url}" target="_blank" title="Spotify">🎵</a>`);
+    if (artist.youtube_url) links.push(`<a href="${artist.youtube_url}" target="_blank" title="YouTube">📺</a>`);
+    if (artist.apple_music_url) links.push(`<a href="${artist.apple_music_url}" target="_blank" title="Apple Music">🍎</a>`);
+    if (artist.twitter_url) links.push(`<a href="${artist.twitter_url}" target="_blank" title="Twitter/X">🐦</a>`);
+    if (artist.facebook_url) links.push(`<a href="${artist.facebook_url}" target="_blank" title="Facebook">📘</a>`);
+    if (artist.instagram_url) links.push(`<a href="${artist.instagram_url}" target="_blank" title="Instagram">📷</a>`);
+    
+    if (links.length > 0) {
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">Links:</span>
+                <span class="metadata-value external-links">${links.join(' ')}</span>
+            </div>
+        `;
+    }
+
+    // IMVDb and external IDs
+    if (artist.imvdb_id) {
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">IMVDb ID:</span>
+                <span class="metadata-value">
+                    <a href="https://imvdb.com/artist/${artist.imvdb_id}" target="_blank">${artist.imvdb_id}</a>
+                </span>
+            </div>
+        `;
+    }
+
+    if (artist.spotify_id) {
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">Spotify ID:</span>
+                <span class="metadata-value">${artist.spotify_id}</span>
+            </div>
+        `;
+    }
+
+    if (artist.lastfm_name) {
+        metadataHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">Last.fm:</span>
+                <span class="metadata-value">
+                    <a href="https://www.last.fm/music/${encodeURIComponent(artist.lastfm_name)}" target="_blank">${artist.lastfm_name}</a>
+                </span>
+            </div>
+        `;
+    }
+
+    // Biography/Overview
+    if (artist.overview || artist.biography || metadata.bio) {
+        const bio = artist.overview || artist.biography || metadata.bio;
+        metadataHtml += `
+            <div class="metadata-item full-width">
+                <span class="metadata-label">Biography:</span>
+                <span class="metadata-value biography">${bio.length > 300 ? bio.substring(0, 300) + '...' : bio}</span>
+            </div>
+        `;
     }
     
     document.getElementById('artistMetadata').innerHTML = metadataHtml;
@@ -2507,7 +2861,6 @@ function updateVideoCardSelectionStates() {
 function updateVideoSelectionButtons() {
     const bulkDownloadBtn = document.getElementById('bulkDownloadBtn');
     const bulkStatusBtn = document.getElementById('bulkStatusBtn');
-    const previewBtn = document.getElementById('previewBtn');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
     const selectionInfo = document.getElementById('selectionInfo');
     const selectionCount = document.getElementById('selectionCount');
@@ -2515,14 +2868,12 @@ function updateVideoSelectionButtons() {
     
     bulkDownloadBtn.disabled = !hasSelection;
     bulkStatusBtn.disabled = !hasSelection;
-    previewBtn.disabled = !hasSelection;
     bulkDeleteBtn.disabled = !hasSelection;
     
     // Update button text
     bulkDownloadBtn.textContent = `Download Selected (${selectedVideos.size})`;
     bulkStatusBtn.textContent = `Update Status (${selectedVideos.size})`;
-    previewBtn.textContent = `Preview Selected (${selectedVideos.size})`;
-    bulkDeleteBtn.textContent = `🗑️ Delete Selected (${selectedVideos.size})`;
+    bulkDeleteBtn.innerHTML = `<iconify-icon icon="tabler:trash"></iconify-icon><span>Delete Selected (${selectedVideos.size})</span>`;
     
     // Update selection info display
     if (hasSelection) {
@@ -2974,7 +3325,7 @@ function bulkDeleteSelected() {
     })
     .finally(() => {
         bulkDeleteBtn.disabled = false;
-        bulkDeleteBtn.textContent = `🗑️ Delete Selected (${selectedVideos.size})`;
+        bulkDeleteBtn.innerHTML = `<iconify-icon icon="tabler:trash"></iconify-icon><span>Delete Selected (${selectedVideos.size})</span>`;
     });
 }
 
@@ -3473,15 +3824,7 @@ function closeModal(button) {
 }
 
 // Enhanced metadata editing functions
-function switchMetadataTab(tabName) {
-    // Remove active class from all tabs and panels
-    document.querySelectorAll('.metadata-tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.metadata-panel').forEach(panel => panel.style.display = 'none');
-    
-    // Activate selected tab and panel
-    document.getElementById(tabName + 'Tab').classList.add('active');
-    document.getElementById(tabName + 'Panel').style.display = 'block';
-}
+// switchMetadataTab function removed - no longer needed for single-page design
 
 function importFromImvdb() {
     if (!currentArtistId || !currentArtistData?.imvdb_id) {
@@ -3996,16 +4339,6 @@ function parseDuration(durationText) {
     return 0;
 }
 
-// Video Preview Modal Functions
-function showVideoPreviewModal() {
-    if (selectedVideos.size === 0) {
-        showWarning('Please select videos to preview');
-        return;
-    }
-    
-    document.getElementById('videoPreviewModal').style.display = 'block';
-    loadVideoPreview();
-}
 
 function hideVideoPreviewModal() {
     document.getElementById('videoPreviewModal').style.display = 'none';
@@ -4320,9 +4653,13 @@ function searchImvdbMatches() {
     })
     .catch(error => {
         console.error('Error searching IMVDb matches:', error);
-        showError('Error searching for IMVDb matches');
+        let errorMessage = 'Error searching for IMVDb matches';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
+        showError(errorMessage);
         if (statusDiv) {
-            statusDiv.innerHTML = '<div class="error-message">Search failed due to network error</div>';
+            statusDiv.innerHTML = `<div class="error-message">Search failed: ${error.message || 'Unknown error'}</div>`;
         }
     })
     .finally(() => {
@@ -4476,9 +4813,13 @@ function updateMetadataFromMatch(imvdbId) {
     })
     .catch(error => {
         console.error('Error updating metadata:', error);
-        showError('Error updating metadata from IMVDb');
+        let errorMessage = 'Error updating metadata from IMVDb';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
+        showError(errorMessage);
         if (statusDiv) {
-            statusDiv.innerHTML = '<div class="error-message">Update failed due to network error</div>';
+            statusDiv.innerHTML = `<div class="error-message">Update failed: ${error.message || 'Unknown error'}</div>`;
         }
     })
     .finally(() => {
@@ -4560,8 +4901,12 @@ function proceedUpdateMetadata() {
     })
     .catch(error => {
         console.error('Error updating metadata:', error);
-        showError('Error updating metadata from IMVDb');
-        statusDiv.innerHTML = '<div class="error-message">Update failed due to network error</div>';
+        let errorMessage = 'Error updating metadata from IMVDb';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
+        showError(errorMessage);
+        statusDiv.innerHTML = `<div class="error-message">Update failed: ${error.message || 'Unknown error'}</div>`;
     })
     .finally(() => {
         if (updateBtn) {
@@ -6606,10 +6951,107 @@ function bulkAddToPlaylist() {
         return;
     }
     
-    // Simple implementation for artist page - redirect to videos page with selection
+    // Show playlist modal directly on artist page
+    showPlaylistModal();
+}
+
+function showPlaylistModal() {
+    document.getElementById('playlistSelectedCount').textContent = selectedVideos.size;
+    loadPlaylistsIntoSelect();
+    document.getElementById('playlistModal').style.display = 'block';
+}
+
+function hidePlaylistModal() {
+    document.getElementById('playlistModal').style.display = 'none';
+    document.getElementById('newPlaylistName').value = '';
+    document.getElementById('newPlaylistDescription').value = '';
+}
+
+async function loadPlaylistsIntoSelect() {
+    const playlistSelect = document.getElementById('playlistSelect');
+    
+    try {
+        const response = await fetch('/api/playlists/');
+        const data = await response.json();
+        
+        if (data.playlists && data.playlists.length > 0) {
+            playlistSelect.innerHTML = '<option value="">Select a playlist...</option>' +
+                data.playlists.map(playlist => 
+                    `<option value="${playlist.id}">${playlist.name} (${playlist.video_count || 0} videos)</option>`
+                ).join('');
+        } else {
+            playlistSelect.innerHTML = '<option value="">No playlists available</option>';
+        }
+    } catch (error) {
+        console.error('Error loading playlists:', error);
+        playlistSelect.innerHTML = '<option value="">Error loading playlists</option>';
+    }
+}
+
+async function addVideosToPlaylist() {
+    const selectedPlaylist = document.getElementById('playlistSelect').value;
+    const newPlaylistName = document.getElementById('newPlaylistName').value.trim();
+    const newPlaylistDescription = document.getElementById('newPlaylistDescription').value.trim();
+    
+    if (!selectedPlaylist && !newPlaylistName) {
+        showError('Please select a playlist or enter a new playlist name');
+        return;
+    }
+    
     const videoIds = Array.from(selectedVideos);
-    sessionStorage.setItem('selectedVideosForPlaylist', JSON.stringify(videoIds));
-    window.location.href = '/videos?showPlaylistModal=true';
+    let playlistId = selectedPlaylist;
+    
+    try {
+        // Create new playlist if name provided
+        if (newPlaylistName && !selectedPlaylist) {
+            const createResponse = await fetch('/api/playlists/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: newPlaylistName,
+                    description: newPlaylistDescription
+                })
+            });
+            
+            const createData = await createResponse.json();
+            if (!createResponse.ok) {
+                throw new Error(createData.error || 'Failed to create playlist');
+            }
+            
+            playlistId = createData.playlist.id;
+            showSuccess(`Created new playlist: ${newPlaylistName}`);
+        }
+        
+        // Add videos to playlist
+        const addResponse = await fetch(`/api/playlists/${playlistId}/videos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                video_ids: videoIds
+            })
+        });
+        
+        const addData = await addResponse.json();
+        if (!addResponse.ok) {
+            throw new Error(addData.error || 'Failed to add videos to playlist');
+        }
+        
+        const playlistName = newPlaylistName || document.getElementById('playlistSelect').selectedOptions[0]?.text.split(' (')[0] || 'playlist';
+        showSuccess(`Added ${videoIds.length} videos to ${playlistName}`);
+        
+        // Clear selection and hide modal
+        selectedVideos.clear();
+        updateSelectionUI();
+        hidePlaylistModal();
+        
+    } catch (error) {
+        console.error('Error adding videos to playlist:', error);
+        showError(error.message || 'Failed to add videos to playlist');
+    }
 }
 
 function bulkDownloadSelected() {
@@ -6623,26 +7065,7 @@ function bulkDownloadSelected() {
     showInfo(`Starting download for ${videoIds.length} selected videos...`);
 }
 
-function bulkUpdateStatus() {
-    if (selectedVideos.size === 0) {
-        showError('Please select videos to update status');
-        return;
-    }
-    
-    const videoIds = Array.from(selectedVideos);
-    // Implement bulk status update logic here
-    showInfo(`Updating status for ${videoIds.length} selected videos...`);
-}
 
-function showVideoPreviewModal() {
-    if (selectedVideos.size === 0) {
-        showError('Please select videos to preview');
-        return;
-    }
-    
-    // Implement video preview modal logic here
-    showInfo('Video preview modal not yet implemented');
-}
 
 function bulkDeleteSelected() {
     if (selectedVideos.size === 0) {
@@ -6659,7 +7082,7 @@ function bulkDeleteSelected() {
 
 function updateSelectionUI() {
     const count = selectedVideos.size;
-    const bulkButtons = ['bulkDownloadBtn', 'bulkPlaylistBtn', 'bulkStatusBtn', 'previewBtn', 'bulkDeleteBtn'];
+    const bulkButtons = ['bulkDownloadBtn', 'bulkPlaylistBtn', 'bulkStatusBtn', 'bulkDeleteBtn'];
     
     bulkButtons.forEach(buttonId => {
         const button = document.getElementById(buttonId);

@@ -1,9 +1,9 @@
 {
-  "version": "0.9.7-dev",
-  "build_date": "2025-08-16T01:53:17.045242",
-  "git_commit": "bb27164",
+  "version": "0.9.7",
+  "build_date": "2025-08-22T00:00:00.000000",
+  "git_commit": "70ebcd0",
   "git_branch": "main",
-  "release_name": "Development - Performance & Integration",
+  "release_name": "Production Release - Enterprise Media Management",
   "features": [
     "Advanced Artist Management with multi-criteria search and bulk operations",
     "Comprehensive Video Discovery with dual-source integration (IMVDb + YouTube)",
@@ -54,12 +54,17 @@
     "Automated Security Monitoring with multi-framework compliance",
     "Complete Playlist Functionality with management and MvTV integration",
     "Clickable Artist Navigation with enhanced user experience",
-    "[DEV] Advanced Video Filtering and Search System - In Development",
-    "[DEV] Bulk Operations and Batch Management System - In Development",
-    "[DEV] Enhanced Artist Discovery and Metadata Enrichment - In Development",
-    "[DEV] Import/Export and Backup Management System - In Development",
-    "[DEV] Advanced Download Queue Management - In Development",
-    "[DEV] Custom Video Organization Rules - In Development"
+    "Advanced Video Filtering System with year range support and multi-criteria search",
+    "Streamlined Bulk Operations Interface with compact grid design replacing bulky tabs",
+    "Theme-Consistent UI with MVIDARR logo loading animations and CSS variable compliance",
+    "Enhanced Subtitle Support with language selection settings and automatic download",
+    "User Experience Polish with IMVDb reference removal and interface improvements",
+    "Critical UI Bug Fix - Search Panel Visibility resolved by correcting element targeting",
+    "Major HTML Structure Fix - Videos and pagination properly extracted from bulkActionsPanel",
+    "Playlist Thumbnail Assignment - Users can now assign custom thumbnails to playlists via URL",
+    "Video Filtering UI Improvements - Removed persistent loading text and improved empty state messaging",
+    "Pagination Integration with Filters - Pagination now updates correctly when filters are applied",
+    "Bulk Operations Progress Fix - Added missing HTML elements and CSS for bulk progress indicators",
+    "Video Filter Count Badge Fix - Resolved console warnings when search panel is hidden"
   ]
 }
-EOF < /dev/null

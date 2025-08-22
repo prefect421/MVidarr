@@ -112,6 +112,14 @@ def get_artists():
             search_term = request.args.get("search", "").strip()
             monitored = request.args.get("monitored")
             auto_download = request.args.get("auto_download")
+            has_thumbnail = request.args.get("has_thumbnail")
+            has_imvdb_id = request.args.get("has_imvdb_id")
+            genre = request.args.get("genre", "").strip()
+            min_videos = request.args.get("min_videos")
+            max_videos = request.args.get("max_videos")
+            date_from = request.args.get("date_from")
+            date_to = request.args.get("date_to")
+            keywords = request.args.get("keywords", "").strip()
 
             # If using optimized query, we need to handle filters differently
             if results_raw is not None:
@@ -139,6 +147,95 @@ def get_artists():
                         if r[0].auto_download == auto_download_bool
                     ]
 
+                if has_thumbnail is not None:
+                    has_thumbnail_bool = has_thumbnail.lower() in ["true", "1", "yes"]
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if bool(r[0].thumbnail_url) == has_thumbnail_bool
+                    ]
+
+                if has_imvdb_id is not None:
+                    has_imvdb_bool = has_imvdb_id.lower() in ["true", "1", "yes"]
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if bool(r[0].imvdb_id) == has_imvdb_bool
+                    ]
+
+                if genre:
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if r[0].genre and genre.lower() in r[0].genre.lower()
+                    ]
+
+                if min_videos and min_videos.strip():
+                    try:
+                        min_videos_int = int(min_videos)
+                        filtered_results = [
+                            r for r in filtered_results if r[1] >= min_videos_int
+                        ]
+                    except ValueError:
+                        logger.warning(f"Invalid min_videos value: {min_videos}")
+
+                if max_videos and max_videos.strip():
+                    try:
+                        max_videos_int = int(max_videos)
+                        filtered_results = [
+                            r for r in filtered_results if r[1] <= max_videos_int
+                        ]
+                    except ValueError:
+                        logger.warning(f"Invalid max_videos value: {max_videos}")
+
+                if date_from:
+                    from datetime import datetime
+
+                    date_from_dt = datetime.strptime(date_from, "%Y-%m-%d")
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if r[0].created_at
+                        and r[0].created_at.date() >= date_from_dt.date()
+                    ]
+
+                if date_to:
+                    from datetime import datetime
+
+                    date_to_dt = datetime.strptime(date_to, "%Y-%m-%d")
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if r[0].created_at
+                        and r[0].created_at.date() <= date_to_dt.date()
+                    ]
+
+                if keywords:
+                    keyword_list = [
+                        k.strip().lower() for k in keywords.split(",") if k.strip()
+                    ]
+                    filtered_results = [
+                        r
+                        for r in filtered_results
+                        if any(
+                            keyword in r[0].name.lower()
+                            or (
+                                r[0].keywords
+                                and any(
+                                    keyword in str(kw).lower() for kw in r[0].keywords
+                                )
+                            )
+                            or (
+                                r[0].genres
+                                and any(
+                                    keyword in str(genre).lower()
+                                    for genre in r[0].genres
+                                )
+                            )
+                            for keyword in keyword_list
+                        )
+                    ]
+
                 results_raw = filtered_results
             else:
                 # Apply filters to the query (fallback mode)
@@ -152,6 +249,69 @@ def get_artists():
                 if auto_download is not None:
                     auto_download_bool = auto_download.lower() in ["true", "1", "yes"]
                     query = query.filter(Artist.auto_download == auto_download_bool)
+
+                if has_thumbnail is not None:
+                    has_thumbnail_bool = has_thumbnail.lower() in ["true", "1", "yes"]
+                    if has_thumbnail_bool:
+                        query = query.filter(Artist.thumbnail_url.isnot(None))
+                    else:
+                        query = query.filter(Artist.thumbnail_url.is_(None))
+
+                if has_imvdb_id is not None:
+                    has_imvdb_bool = has_imvdb_id.lower() in ["true", "1", "yes"]
+                    if has_imvdb_bool:
+                        query = query.filter(Artist.imvdb_id.isnot(None))
+                    else:
+                        query = query.filter(Artist.imvdb_id.is_(None))
+
+                if genre:
+                    query = query.filter(Artist.genre.ilike(f"%{genre}%"))
+
+                if min_videos and min_videos.strip():
+                    try:
+                        min_videos_int = int(min_videos)
+                        query = query.filter(
+                            func.coalesce(video_count_subquery.c.video_count, 0)
+                            >= min_videos_int
+                        )
+                    except ValueError:
+                        logger.warning(f"Invalid min_videos value: {min_videos}")
+
+                if max_videos and max_videos.strip():
+                    try:
+                        max_videos_int = int(max_videos)
+                        query = query.filter(
+                            func.coalesce(video_count_subquery.c.video_count, 0)
+                            <= max_videos_int
+                        )
+                    except ValueError:
+                        logger.warning(f"Invalid max_videos value: {max_videos}")
+
+                if date_from:
+                    from datetime import datetime
+
+                    date_from_dt = datetime.strptime(date_from, "%Y-%m-%d")
+                    query = query.filter(Artist.created_at >= date_from_dt)
+
+                if date_to:
+                    from datetime import datetime
+
+                    date_to_dt = datetime.strptime(date_to, "%Y-%m-%d")
+                    # Add one day to include the entire date_to day
+                    date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
+                    query = query.filter(Artist.created_at <= date_to_dt)
+
+                if keywords:
+                    keyword_list = [k.strip() for k in keywords.split(",") if k.strip()]
+                    if keyword_list:  # Only apply filter if we have actual keywords
+                        keyword_filters = []
+                        for keyword in keyword_list:
+                            keyword_filters.append(Artist.name.ilike(f"%{keyword}%"))
+                            # Search in JSON keywords field
+                            keyword_filters.append(Artist.keywords.contains(keyword))
+                            # Search in JSON genres field
+                            keyword_filters.append(Artist.genres.contains(keyword))
+                        query = query.filter(or_(*keyword_filters))
 
             # Sorting
             sort_by = request.args.get("sort", "name")
@@ -838,7 +998,9 @@ def get_artist_preview(imvdb_id):
 
         # Get artist's videos from IMVDb
         artist_name = artist_data.get("name", "")
-        videos_data = imvdb_service.search_artist_videos(artist_name, limit=20)
+        videos_data = imvdb_service.search_artist_videos(
+            artist_name, limit=50
+        )  # Increased from 20 to improve discovery
 
         # Process video data
         videos_list = []
@@ -1110,14 +1272,23 @@ def get_artist_detailed(artist_id):
             stats = {
                 "total_videos": len(videos),
                 "downloaded_videos": len(
-                    [v for v in videos if v.status == "DOWNLOADED"]
+                    [v for v in videos if v.status == VideoStatus.DOWNLOADED]
                 ),
-                "wanted_videos": len([v for v in videos if v.status == "WANTED"]),
+                "wanted_videos": len(
+                    [v for v in videos if v.status == VideoStatus.WANTED]
+                ),
                 "downloading_videos": len(
-                    [v for v in videos if v.status == "DOWNLOADING"]
+                    [v for v in videos if v.status == VideoStatus.DOWNLOADING]
                 ),
-                "failed_videos": len([v for v in videos if v.status == "FAILED"]),
-                "ignored_videos": len([v for v in videos if v.status == "IGNORED"]),
+                "failed_videos": len(
+                    [v for v in videos if v.status == VideoStatus.FAILED]
+                ),
+                "ignored_videos": len(
+                    [v for v in videos if v.status == VideoStatus.IGNORED]
+                ),
+                "monitored_videos": len(
+                    [v for v in videos if v.status == VideoStatus.MONITORED]
+                ),
                 "latest_video_date": None,
                 "earliest_video_date": None,
                 "total_duration": 0,
@@ -1276,11 +1447,11 @@ def discover_artist_videos(artist_id):
             if videos_data and videos_data.get("videos"):
                 imvdb_videos = videos_data["videos"]
 
-            # Search for videos on YouTube (top 20 results)
+            # Search for videos on YouTube (top 50 results)
             youtube_videos = []
             try:
                 youtube_data = youtube_search_service.search_artist_videos(
-                    artist_name, limit=20
+                    artist_name, limit=50  # Increased from 20 to YouTube API maximum
                 )
                 if youtube_data and youtube_data.get("videos"):
                     youtube_videos = youtube_data["videos"]
@@ -2458,6 +2629,36 @@ def update_artist_settings(artist_id):
                             400,
                         )
 
+            # Handle MusicBrainz ID (stored in imvdb_metadata JSON field)
+            if "musicbrainz_id" in data:
+                new_mbid = data["musicbrainz_id"]
+                if not isinstance(artist.imvdb_metadata, dict):
+                    artist.imvdb_metadata = {}
+                if new_mbid == "" or new_mbid is None:
+                    if "musicbrainz_id" in artist.imvdb_metadata:
+                        del artist.imvdb_metadata["musicbrainz_id"]
+                else:
+                    artist.imvdb_metadata["musicbrainz_id"] = str(new_mbid).strip()
+                from sqlalchemy.orm.attributes import flag_modified
+
+                flag_modified(artist, "imvdb_metadata")
+
+            # Handle Spotify ID updates
+            if "spotify_id" in data:
+                new_spotify_id = data["spotify_id"]
+                if new_spotify_id == "" or new_spotify_id is None:
+                    artist.spotify_id = None
+                else:
+                    artist.spotify_id = str(new_spotify_id).strip()
+
+            # Handle Last.fm name updates
+            if "lastfm_name" in data:
+                new_lastfm_name = data["lastfm_name"]
+                if new_lastfm_name == "" or new_lastfm_name is None:
+                    artist.lastfm_name = None
+                else:
+                    artist.lastfm_name = str(new_lastfm_name).strip()
+
             # Update the updated_at timestamp
             artist.updated_at = datetime.utcnow()
 
@@ -2474,6 +2675,9 @@ def update_artist_settings(artist_id):
                             "id": artist.id,
                             "name": artist.name,
                             "imvdb_id": artist.imvdb_id,
+                            "spotify_id": artist.spotify_id,
+                            "lastfm_name": artist.lastfm_name,
+                            "imvdb_metadata": artist.imvdb_metadata,
                             "folder_path": ensure_artist_folder_path(artist, session),
                             "keywords": artist.keywords or [],
                             "monitored": artist.monitored,

@@ -48,6 +48,7 @@ class ThumbnailService:
         (self.thumbnails_dir / "artists").mkdir(exist_ok=True, mode=0o755)
         (self.thumbnails_dir / "videos").mkdir(exist_ok=True, mode=0o755)
         (self.thumbnails_dir / "uploads").mkdir(exist_ok=True, mode=0o755)
+        (self.thumbnails_dir / "playlists").mkdir(exist_ok=True, mode=0o755)
 
         # Create size-specific directories for multi-size thumbnails
         for entity in ["artists", "videos"]:
@@ -239,6 +240,28 @@ class ThumbnailService:
 
         filename = self.generate_filename(url, f"{safe_artist}_{safe_title}_")
         return self.download_thumbnail(url, filename, "videos")
+
+    def download_playlist_thumbnail(
+        self, playlist_name: str, url: str
+    ) -> Optional[str]:
+        """
+        Download thumbnail for a playlist
+
+        Args:
+            playlist_name: Name of the playlist
+            url: URL of the thumbnail
+
+        Returns:
+            Path to downloaded thumbnail or None
+        """
+        # Sanitize playlist name for filename
+        safe_name = "".join(
+            c for c in playlist_name if c.isalnum() or c in (" ", "-", "_")
+        ).strip()
+        safe_name = safe_name.replace(" ", "_").lower()
+
+        filename = self.generate_filename(url, f"playlist_{safe_name}_")
+        return self.download_thumbnail(url, filename, "playlists")
 
     def get_thumbnail_path(self, relative_path: str) -> Optional[Path]:
         """

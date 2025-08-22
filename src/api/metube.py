@@ -79,6 +79,13 @@ def add_music_video_download():
         video_id = data.get("video_id")
         download_subtitles = data.get("download_subtitles", False)
 
+        # Read subtitle language settings if not provided in request
+        from src.services.settings_service import settings
+
+        subtitle_languages = data.get("subtitle_languages") or settings.get(
+            "subtitle_languages", "en,en-US"
+        )
+
         result = ytdlp_service.add_music_video_download(
             artist=artist,
             title=title,
@@ -86,6 +93,7 @@ def add_music_video_download():
             quality=quality,
             video_id=video_id,
             download_subtitles=download_subtitles,
+            subtitle_languages=subtitle_languages,
         )
 
         status_code = 200 if result["success"] else 400

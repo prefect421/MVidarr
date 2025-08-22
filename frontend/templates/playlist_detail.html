@@ -7,7 +7,9 @@
     
     <!-- Loading Indicator -->
     <div id="playlistDetailLoading" class="loading-container">
-        <div class="loading-spinner"></div>
+        <div class="loading-spinner">
+            <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
+        </div>
         <p>Loading playlist...</p>
     </div>
     
@@ -15,8 +17,10 @@
     <div class="playlist-header" id="playlistHeader" style="display: none;">
         <div class="playlist-header-content">
             <div class="playlist-header-main">
-                <div class="playlist-header-icon">
-                    <iconify-icon icon="tabler:playlist" style="font-size: 3rem;"></iconify-icon>
+                <div class="playlist-header-thumbnail" id="playlistHeaderThumbnail">
+                    <div class="playlist-header-icon">
+                        <iconify-icon icon="tabler:playlist" style="font-size: 3rem;"></iconify-icon>
+                    </div>
                 </div>
                 <div class="playlist-header-info">
                     <h1 class="playlist-title" id="playlistTitle">Loading...</h1>
@@ -196,6 +200,41 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="editPlaylistThumbnailUrl">Thumbnail</label>
+                    
+                    <!-- URL Import Section -->
+                    <div class="thumbnail-section">
+                        <label class="form-sublabel">From URL</label>
+                        <div class="input-group">
+                            <input type="text" id="editPlaylistThumbnailUrl" class="form-control" placeholder="https://example.com/image.jpg or /thumbnails/...">
+                            <button type="button" class="btn btn-secondary" id="editImportThumbnailBtn" onclick="importPlaylistThumbnailDetail()">
+                                <iconify-icon icon="tabler:download" aria-hidden="true"></iconify-icon>
+                                Import
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload Section -->
+                    <div class="thumbnail-section">
+                        <label class="form-sublabel">Upload File</label>
+                        <div class="file-upload-container">
+                            <input type="file" id="editPlaylistThumbnailFile" class="form-control-file" accept="image/*" onchange="handleDetailThumbnailFileSelect()" style="display: none;">
+                            <div class="input-group">
+                                <input type="text" id="editPlaylistThumbnailFileName" class="form-control" placeholder="No file selected" readonly>
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editPlaylistThumbnailFile').click()">
+                                    <iconify-icon icon="tabler:photo" aria-hidden="true"></iconify-icon>
+                                    Browse
+                                </button>
+                                <button type="button" class="btn btn-primary" id="editUploadThumbnailBtn" onclick="uploadPlaylistThumbnailDetail()" disabled>
+                                    <iconify-icon icon="tabler:upload" aria-hidden="true"></iconify-icon>
+                                    Upload
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
                     <div class="checkbox-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="editPlaylistIsPublic">
@@ -289,11 +328,78 @@
     flex: 1;
 }
 
+.playlist-header-thumbnail {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
 .playlist-header-icon {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--accent-primary);
     background: var(--bg-accent-subtle);
-    padding: 1rem;
     border-radius: 12px;
+}
+
+.playlist-header-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.thumbnail-section {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-primary);
+}
+
+.thumbnail-section:last-child {
+    margin-bottom: 0;
+}
+
+.form-sublabel {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.file-upload-container {
+    position: relative;
+}
+
+.form-control-file {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
+}
+
+.input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    white-space: nowrap;
 }
 
 .playlist-title {

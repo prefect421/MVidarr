@@ -5,21 +5,28 @@ API routes registration for MVidarr
 from flask import Blueprint
 
 from src.api.admin_interface import admin_bp
+from src.api.advanced_search import advanced_search_bp
 from src.api.artists import artists_bp
 from src.api.auth import auth_bp
+from src.api.bulk_operations import bulk_operations_bp
+from src.api.enhanced_artist_discovery import enhanced_discovery_bp
 from src.api.enhanced_scheduler import enhanced_scheduler_bp
 from src.api.genres import genres_bp
 from src.api.health import health_bp
 from src.api.imvdb import imvdb_bp
 from src.api.lastfm import lastfm_bp
 from src.api.lidarr import lidarr_bp
+from src.api.metadata_enrichment import metadata_enrichment_bp
 from src.api.metube import metube_bp
+from src.api.migrations import migrations_bp
+from src.api.musicbrainz import musicbrainz_bp
 
 # OpenAPI documentation
 from src.api.openapi import openapi_bp
 from src.api.optimization import optimization_bp
 from src.api.playlists import playlists_bp
 from src.api.plex import plex_bp
+from src.api.security import security_bp
 from src.api.settings import settings_bp
 
 # External integration blueprints
@@ -49,9 +56,13 @@ def register_routes(app):
     api_bp.register_blueprint(artists_bp)
     api_bp.register_blueprint(videos_bp)
     api_bp.register_blueprint(settings_bp)
+    api_bp.register_blueprint(security_bp)
+    api_bp.register_blueprint(bulk_operations_bp)
+    api_bp.register_blueprint(enhanced_discovery_bp)
     api_bp.register_blueprint(enhanced_scheduler_bp)
     api_bp.register_blueprint(themes_bp, url_prefix="/themes")
     api_bp.register_blueprint(playlists_bp)
+    api_bp.register_blueprint(migrations_bp)
     api_bp.register_blueprint(health_bp)
     api_bp.register_blueprint(users_bp)
     api_bp.register_blueprint(video_org_bp)
@@ -61,6 +72,7 @@ def register_routes(app):
     api_bp.register_blueprint(vlc_bp)
     api_bp.register_blueprint(optimization_bp)
     api_bp.register_blueprint(genres_bp)
+    api_bp.register_blueprint(advanced_search_bp)
 
     # Register external integration blueprints
     api_bp.register_blueprint(spotify_bp)
@@ -68,6 +80,8 @@ def register_routes(app):
     api_bp.register_blueprint(youtube_bp)
     api_bp.register_blueprint(youtube_playlists_bp)
     api_bp.register_blueprint(lastfm_bp)
+    api_bp.register_blueprint(musicbrainz_bp)
+    api_bp.register_blueprint(metadata_enrichment_bp)
     api_bp.register_blueprint(plex_bp)
     api_bp.register_blueprint(lidarr_bp, url_prefix="/lidarr")
 

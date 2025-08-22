@@ -112,6 +112,18 @@
     margin-bottom: 5px;
 }
 
+.video-info .artist-link {
+    color: var(--text-accent, #00d4ff);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.video-info .artist-link:hover {
+    color: var(--text-primary, #fff);
+    text-decoration: underline;
+    transform: translateY(-1px);
+}
+
 .video-info .genres {
     display: flex;
     gap: 8px;
@@ -326,6 +338,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.queue-item:hover {
+    background: var(--bg-hover, #2a2a2a);
+    border-color: var(--text-accent, #00d4ff);
+    transform: translateX(2px);
+}
+
+.queue-item-content {
+    flex-grow: 1;
+    pointer-events: none; /* Prevent text selection interfering with clicks */
 }
 
 .queue-item.current {
@@ -539,6 +564,11 @@ body.light-theme .queue-item {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+body.light-theme .queue-item:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+}
+
 body.light-theme .queue-item.current {
     border-color: #667eea;
     background: rgba(102, 126, 234, 0.1);
@@ -564,6 +594,14 @@ body.light-theme .video-info h3 {
 
 body.light-theme .video-info .artist {
     color: #666;
+}
+
+body.light-theme .video-info .artist-link {
+    color: #667eea;
+}
+
+body.light-theme .video-info .artist-link:hover {
+    color: #333;
 }
 
 body.light-theme .playlist-queue {
@@ -602,6 +640,16 @@ body.light-theme .btn-danger {
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
     border: none;
     color: white;
+}
+
+/* Subtitle Controls Styles */
+/* Subtitle controls CSS removed - now handled by native video player controls */
+
+/* Subtitle toggle CSS removed */
+
+/* Ensure video player has proper positioning */
+.video-player {
+    position: relative;
 }
 </style>
 
@@ -680,11 +728,12 @@ body.light-theme .btn-danger {
     <div class="mvtv-player" role="region" aria-labelledby="video-player-title">
         <h3 id="video-player-title" class="sr-only">Video Player</h3>
         <div class="video-player">
-            <video id="videoPlayer" controls preload="metadata" 
+            <video id="videoPlayer" controls preload="metadata" crossorigin="anonymous"
                    aria-label="Music video player" aria-describedby="videoInfo">
                 <source id="videoSource" src="" type="video/mp4">
                 <p>Your browser does not support the video tag. Please update your browser or try a different one.</p>
             </video>
+            <!-- Subtitle controls removed - now handled by native video player controls -->
         </div>
         
         <div class="video-info" id="videoInfo" style="display: none;" role="complementary" aria-label="Current video information">
@@ -721,7 +770,9 @@ body.light-theme .btn-danger {
         </h4>
         <div id="queueList" role="list" aria-label="Upcoming videos queue">
             <div class="loading-indicator" role="status" aria-live="polite">
-                <span class="loading-spinner"></span>
+                <span class="loading-spinner">
+                    <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
+                </span>
                 Loading video queue...
             </div>
         </div>
@@ -744,13 +795,13 @@ body.light-theme .btn-danger {
             <p class="artist text-secondary" id="cinematicVideoArtist">Artist Name</p>
         </div>
         <div class="cinematic-controls" role="toolbar" aria-label="Cinematic playback controls">
-            <button class="btn btn-primary" onclick="cinematicPrevious()" aria-label="Previous video">
-                <iconify-icon icon="mdi:skip-previous" aria-hidden="true"></iconify-icon>
-                Previous
-            </button>
             <button class="btn btn-secondary" onclick="cinematicPlayPause()" id="cinematicPlayPauseBtn" aria-label="Pause video">
                 <iconify-icon icon="mdi:pause" aria-hidden="true"></iconify-icon>
                 Pause
+            </button>
+            <button class="btn btn-ghost" onclick="toggleCinematicSubtitles()" id="cinematicCcBtn" aria-label="Toggle closed captions" title="Toggle Closed Captions">
+                <iconify-icon icon="tabler:subtitles" aria-hidden="true"></iconify-icon>
+                CC
             </button>
             <button class="btn btn-primary" onclick="cinematicNext()" aria-label="Next video">
                 <iconify-icon icon="mdi:skip-next" aria-hidden="true"></iconify-icon>
@@ -798,6 +849,11 @@ class MvTVPlayer {
             console.error('Video error:', e);
             this.showError('Error playing video. Skipping to next...');
             setTimeout(() => this.nextVideo(), 2000);
+        });
+        
+        this.videoPlayer.addEventListener('abort', (e) => {
+            console.log('Video loading aborted (normal when switching videos quickly)');
+            // Don't treat abort as an error - it's normal when switching videos
         });
     }
     
@@ -893,7 +949,7 @@ class MvTVPlayer {
                 }
                 
                 this.updateQueue();
-                this.loadVideo(0);
+                await this.loadVideo(0);
             } else {
                 this.showError('No videos found matching your criteria.');
             }
@@ -928,23 +984,84 @@ class MvTVPlayer {
         }
     }
     
-    loadVideo(index) {
+    async loadVideo(index) {
         if (index < 0 || index >= this.playlist.length) return;
         
         const video = this.playlist[index];
         this.currentIndex = index;
         
-        // Update video source
-        this.videoSource.src = `/api/videos/${video.id}/stream`;
-        this.videoPlayer.load();
-        
-        // Update video info
-        this.updateVideoInfo(video);
-        this.updateQueue();
-        this.updatePosition();
-        
-        // Add to played indices
-        this.playedIndices.add(index);
+        try {
+            // Update status to show loading
+            this.updatePlaybackStatus('loading', `Loading: ${video.title}...`);
+            
+            // Clear any existing subtitle tracks first
+            this.clearSubtitleTracks();
+            
+            // Load subtitles for this video first, then update video source
+            await loadVideoSubtitles(video.id);
+            
+            // Update video source after subtitles are loaded
+            this.videoSource.src = `/api/videos/${video.id}/stream`;
+            
+            // Handle video loading with proper error handling
+            return new Promise((resolve, reject) => {
+                const handleLoadSuccess = () => {
+                    this.videoPlayer.removeEventListener('loadeddata', handleLoadSuccess);
+                    this.videoPlayer.removeEventListener('error', handleLoadError);
+                    this.videoPlayer.removeEventListener('abort', handleLoadAbort);
+                    
+                    // Update video info
+                    this.updateVideoInfo(video);
+                    this.updateQueue();
+                    this.updatePosition();
+                    
+                    // Add to played indices
+                    this.playedIndices.add(index);
+                    
+                    this.updatePlaybackStatus('ready', `Ready: ${video.title}`);
+                    resolve();
+                };
+                
+                const handleLoadError = (e) => {
+                    this.videoPlayer.removeEventListener('loadeddata', handleLoadSuccess);
+                    this.videoPlayer.removeEventListener('error', handleLoadError);
+                    this.videoPlayer.removeEventListener('abort', handleLoadAbort);
+                    
+                    console.error('Error loading video:', e);
+                    this.updatePlaybackStatus('error', `Error loading: ${video.title}`);
+                    resolve(); // Don't reject, just continue
+                };
+                
+                const handleLoadAbort = (e) => {
+                    this.videoPlayer.removeEventListener('loadeddata', handleLoadSuccess);
+                    this.videoPlayer.removeEventListener('error', handleLoadError);
+                    this.videoPlayer.removeEventListener('abort', handleLoadAbort);
+                    
+                    console.log('Video loading aborted (likely due to switching videos)');
+                    resolve(); // Don't reject, this is normal when switching videos quickly
+                };
+                
+                this.videoPlayer.addEventListener('loadeddata', handleLoadSuccess);
+                this.videoPlayer.addEventListener('error', handleLoadError);
+                this.videoPlayer.addEventListener('abort', handleLoadAbort);
+                
+                this.videoPlayer.load();
+            });
+            
+        } catch (error) {
+            console.error('Error in loadVideo:', error);
+            this.updatePlaybackStatus('error', `Error: Failed to load ${video.title}`);
+            
+            // Update video info even on error to maintain UI consistency
+            this.updateVideoInfo(video);
+            this.updateQueue();
+            this.updatePosition();
+        }
+    }
+    
+    clearSubtitleTracks() {
+        const existingTracks = this.videoPlayer.querySelectorAll('track');
+        existingTracks.forEach(track => track.remove());
     }
     
     updateVideoInfo(video) {
@@ -954,7 +1071,14 @@ class MvTVPlayer {
         const videoGenres = document.getElementById('videoGenres');
         
         videoTitle.textContent = video.title;
-        videoArtist.textContent = video.artist_name || 'Unknown Artist';
+        
+        // Make artist name clickable
+        const artistName = video.artist_name || 'Unknown Artist';
+        if (video.artist_id && artistName !== 'Unknown Artist') {
+            videoArtist.innerHTML = `<a href="/artist/${video.artist_id}" class="artist-link" title="View ${artistName} details">${artistName}</a>`;
+        } else {
+            videoArtist.textContent = artistName;
+        }
         
         // Update genres
         videoGenres.innerHTML = '';
@@ -991,12 +1115,12 @@ class MvTVPlayer {
         }
         
         queueList.innerHTML = nextVideos.map((video, i) => `
-            <div class="queue-item ${i === 0 ? 'current' : ''}">
-                <div>
+            <div class="queue-item ${i === 0 ? 'current' : ''}" onclick="mvtvPlayer.jumpToVideo(${video.index})" title="Click to play this video">
+                <div class="queue-item-content">
                     <div class="title">${video.title}</div>
                     <div class="artist">${video.artist_name || 'Unknown Artist'}</div>
                 </div>
-                <button class="remove-btn" onclick="mvtvPlayer.removeFromQueue(${video.index})">×</button>
+                <button class="remove-btn" onclick="event.stopPropagation(); mvtvPlayer.removeFromQueue(${video.index})" title="Remove from queue">×</button>
             </div>
         `).join('');
     }
@@ -1047,7 +1171,7 @@ class MvTVPlayer {
         this.videoPlayer.pause();
     }
     
-    nextVideo() {
+    async nextVideo() {
         if (this.playlist.length === 0) return;
         
         let nextIndex;
@@ -1073,7 +1197,7 @@ class MvTVPlayer {
             nextIndex = (this.currentIndex + 1) % this.playlist.length;
         }
         
-        this.loadVideo(nextIndex);
+        await this.loadVideo(nextIndex);
         
         // Auto-play if currently playing
         if (this.isPlaying) {
@@ -1081,7 +1205,7 @@ class MvTVPlayer {
         }
     }
     
-    previousVideo() {
+    async previousVideo() {
         if (this.playlist.length === 0) return;
         
         let prevIndex;
@@ -1097,7 +1221,7 @@ class MvTVPlayer {
             }
         }
         
-        this.loadVideo(prevIndex);
+        await this.loadVideo(prevIndex);
         
         // Auto-play if currently playing
         if (this.isPlaying) {
@@ -1115,7 +1239,33 @@ class MvTVPlayer {
         this.playedIndices.add(this.currentIndex);
     }
     
-    removeFromQueue(index) {
+    async jumpToVideo(index) {
+        if (index >= 0 && index < this.playlist.length) {
+            // Remove all songs before the clicked song from the queue
+            if (index > 0) {
+                console.log(`Removing ${index} songs before clicked song from queue`);
+                this.playlist.splice(0, index);
+                // Update current index since we removed items from the beginning
+                this.currentIndex = 0;
+                // Rebuild queue display with updated indices
+                this.updateQueue();
+            }
+            
+            // Immediately update video info for the new current video
+            const currentVideo = this.playlist[this.currentIndex];
+            if (currentVideo) {
+                this.updateVideoInfo(currentVideo);
+            }
+            
+            await this.loadVideo(0); // Always load index 0 since we removed preceding items
+            // Auto-play if currently playing
+            if (this.isPlaying) {
+                this.videoPlayer.play();
+            }
+        }
+    }
+
+    async removeFromQueue(index) {
         this.playlist.splice(index, 1);
         
         // Adjust current index if necessary
@@ -1127,7 +1277,7 @@ class MvTVPlayer {
                 this.currentIndex = 0;
             }
             if (this.playlist.length > 0) {
-                this.loadVideo(this.currentIndex);
+                await this.loadVideo(this.currentIndex);
             }
         }
         
@@ -1175,6 +1325,26 @@ async function loadFilterOptions() {
             });
         } else {
             console.log('No playlists found or API error:', playlistsData);
+        }
+        
+        // Auto-select playlist if specified in URL parameters
+        if (window.autoSelectPlaylist) {
+            const playlistToSelect = window.autoSelectPlaylist;
+            const playlistOption = Array.from(playlistFilter.options).find(option => option.value === playlistToSelect);
+            if (playlistOption) {
+                playlistFilter.value = playlistToSelect;
+                console.log(`Auto-selected playlist ${playlistToSelect} from URL parameter`);
+                // Update page title to indicate playlist is loaded
+                document.title = `MVidarr - MvTV - ${playlistOption.textContent}`;
+                // Auto-trigger playlist loading
+                setTimeout(() => {
+                    applyPlaylistFilter();
+                }, 100);
+            } else {
+                console.warn(`Playlist ${playlistToSelect} not found in available playlists`);
+            }
+            // Clear the flag
+            delete window.autoSelectPlaylist;
         }
         
         // Load artists (load all artists for search functionality)
@@ -1308,8 +1478,14 @@ function enterCinematicMode() {
     // Copy current video to cinematic player
     const currentVideo = mvtvPlayer.playlist[mvtvPlayer.currentIndex];
     if (currentVideo) {
+        // Clear existing subtitle tracks
+        clearCinematicSubtitleTracks();
+        
         cinematicVideoSource.src = `/api/videos/${currentVideo.id}/stream`;
         cinematicVideoPlayer.load();
+        
+        // Load subtitles
+        loadCinematicVideoSubtitles(currentVideo.id);
         
         // Pause main player first to avoid sync issues
         const currentTime = mvtvPlayer.videoPlayer.currentTime;
@@ -1406,7 +1582,7 @@ function cinematicPlayPause() {
     }
 }
 
-function syncToCinematicMode() {
+async function syncToCinematicMode() {
     if (!isCinematicMode) return;
     
     const currentVideo = mvtvPlayer.playlist[mvtvPlayer.currentIndex];
@@ -1415,8 +1591,15 @@ function syncToCinematicMode() {
     const cinematicVideoSource = document.getElementById('cinematicVideoSource');
     const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
     
+    // Clear existing subtitle tracks
+    clearCinematicSubtitleTracks();
+    
     cinematicVideoSource.src = `/api/videos/${currentVideo.id}/stream`;
     cinematicVideoPlayer.load();
+    
+    // Load subtitles for cinematic player
+    await loadCinematicVideoSubtitles(currentVideo.id);
+    
     cinematicVideoPlayer.play();
     
     // Update cinematic info
@@ -1425,6 +1608,189 @@ function syncToCinematicMode() {
     
     if (titleElement) titleElement.textContent = currentVideo.title;
     if (artistElement) artistElement.textContent = currentVideo.artist_name;
+}
+
+function clearCinematicSubtitleTracks() {
+    const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
+    const existingTracks = cinematicVideoPlayer.querySelectorAll('track');
+    existingTracks.forEach(track => track.remove());
+}
+
+async function loadCinematicVideoSubtitles(videoId) {
+    try {
+        console.log('Loading cinematic subtitles for video:', videoId);
+        const response = await fetch(`/api/videos/${videoId}/subtitles`);
+        if (!response.ok) {
+            console.log('Cinematic subtitles API response not ok:', response.status);
+            return;
+        }
+        
+        const subtitles = await response.json();
+        console.log('Cinematic subtitles API response:', subtitles);
+        
+        // Handle different API response formats
+        let subtitleArray = subtitles.subtitles || subtitles;
+        
+        if (!subtitleArray || subtitleArray.length === 0) {
+            console.log('No cinematic subtitles available or API failed');
+            return;
+        }
+        
+        console.log('Found', subtitleArray.length, 'cinematic subtitle tracks');
+        
+        const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
+        console.log('Cinematic video player found:', !!cinematicVideoPlayer);
+        
+        console.log('Adding', subtitleArray.length, 'subtitle tracks to cinematic player');
+        subtitleArray.forEach((subtitle, index) => {
+            const track = document.createElement('track');
+            track.kind = 'subtitles';
+            track.src = `/api/videos/${videoId}/subtitles/${subtitle.filename}`;
+            track.srclang = subtitle.language || 'en';
+            track.label = subtitle.label || subtitle.language || 'Subtitles';
+            
+            console.log(`Creating cinematic track ${index}:`, {
+                src: track.src,
+                language: track.srclang,
+                label: track.label
+            });
+            
+            // Make first track default
+            if (index === 0) {
+                track.default = true;
+                console.log('Set track 0 as default');
+            }
+            
+            cinematicVideoPlayer.appendChild(track);
+            console.log(`Added track ${index} to cinematic player`);
+        });
+        
+        console.log('All tracks added. Cinematic player textTracks.length:', cinematicVideoPlayer.textTracks.length);
+        
+        // Wait for video to load and then activate first track
+        const activateSubtitles = () => {
+            const tracks = cinematicVideoPlayer.textTracks;
+            console.log('Activating subtitles. Available tracks:', tracks.length);
+            if (tracks.length > 0) {
+                console.log('Setting first track to showing mode');
+                tracks[0].mode = 'showing';
+                
+                // Double check after setting the mode
+                setTimeout(() => {
+                    console.log('Track 0 mode after activation:', tracks[0].mode);
+                    updateCinematicCcButtonState();
+                }, 50);
+            } else {
+                console.log('No tracks available for activation');
+                updateCinematicCcButtonState();
+            }
+        };
+        
+        // Wait for tracks to be added before trying to activate
+        setTimeout(() => {
+            const tracks = cinematicVideoPlayer.textTracks;
+            if (tracks.length > 0) {
+                activateSubtitles();
+            } else {
+                console.log('No tracks loaded yet, waiting for loadeddata event');
+                cinematicVideoPlayer.addEventListener('loadeddata', activateSubtitles, { once: true });
+            }
+        }, 200);
+        
+    } catch (error) {
+        console.error('Error loading cinematic subtitles:', error);
+    }
+}
+
+function toggleCinematicSubtitles() {
+    const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
+    const tracks = cinematicVideoPlayer.textTracks;
+    
+    console.log('Toggle CC called. Available tracks:', tracks.length);
+    
+    if (tracks.length === 0) {
+        console.log('No subtitle tracks available');
+        // Try to reload subtitles if there aren't any
+        if (mvtvPlayer.playlist && mvtvPlayer.playlist[mvtvPlayer.currentIndex]) {
+            const currentVideo = mvtvPlayer.playlist[mvtvPlayer.currentIndex];
+            console.log('Attempting to reload subtitles for video:', currentVideo.id);
+            loadCinematicVideoSubtitles(currentVideo.id);
+        }
+        return;
+    }
+    
+    // Find the current active track
+    let activeTrack = null;
+    let activeIndex = -1;
+    
+    for (let i = 0; i < tracks.length; i++) {
+        console.log(`Track ${i}: mode=${tracks[i].mode}, kind=${tracks[i].kind}, lang=${tracks[i].language}`);
+        if (tracks[i].mode === 'showing') {
+            activeTrack = tracks[i];
+            activeIndex = i;
+            break;
+        }
+    }
+    
+    if (activeTrack) {
+        // Turn off current track
+        console.log('Turning off subtitle track', activeIndex);
+        activeTrack.mode = 'disabled';
+    } else {
+        // Turn on first track
+        console.log('Turning on subtitle track 0');
+        tracks[0].mode = 'showing';
+    }
+    
+    // Force update button state after a brief delay to ensure changes are processed
+    setTimeout(() => {
+        updateCinematicCcButtonState();
+    }, 100);
+}
+
+function updateCinematicCcButtonState() {
+    const cinematicVideoPlayer = document.getElementById('cinematicVideoPlayer');
+    const ccBtn = document.getElementById('cinematicCcBtn');
+    const tracks = cinematicVideoPlayer.textTracks;
+    
+    console.log('Updating CC button state. Tracks:', tracks.length, 'Button exists:', !!ccBtn);
+    
+    if (!ccBtn) {
+        console.log('CC button not found');
+        return;
+    }
+    
+    if (tracks.length === 0) {
+        console.log('No tracks available, disabling button');
+        ccBtn.style.opacity = '0.5';
+        ccBtn.style.color = '';
+        ccBtn.title = 'No subtitles available';
+        return;
+    }
+    
+    // Check if any track is showing
+    let hasActiveTrack = false;
+    for (let i = 0; i < tracks.length; i++) {
+        console.log(`Checking track ${i}: mode=${tracks[i].mode}`);
+        if (tracks[i].mode === 'showing') {
+            hasActiveTrack = true;
+            break;
+        }
+    }
+    
+    console.log('Has active track:', hasActiveTrack);
+    
+    if (hasActiveTrack) {
+        ccBtn.style.opacity = '1';
+        ccBtn.style.color = 'var(--text-accent, #00d4ff)';
+        ccBtn.title = 'Turn off closed captions';
+        console.log('CC button activated (subtitles ON)');
+    } else {
+        ccBtn.style.opacity = '0.7';
+        ccBtn.style.color = '';
+        ccBtn.title = tracks.length > 0 ? 'Turn on closed captions' : 'No subtitles available';
+        console.log('CC button deactivated (subtitles OFF)');
+    }
 }
 
 // Keyboard shortcuts for cinematic mode
@@ -1438,13 +1804,14 @@ document.addEventListener('keydown', function(event) {
                 event.preventDefault();
                 cinematicPlayPause();
                 break;
-            case 'ArrowLeft':
-                event.preventDefault();
-                cinematicPrevious();
-                break;
             case 'ArrowRight':
                 event.preventDefault();
                 cinematicNext();
+                break;
+            case 'c':
+            case 'C':
+                event.preventDefault();
+                toggleCinematicSubtitles();
                 break;
         }
     }
@@ -1455,7 +1822,21 @@ let mvtvPlayer;
 document.addEventListener('DOMContentLoaded', function() {
     loadFilterOptions();
     mvtvPlayer = new MvTVPlayer();
+    
+    // Check for URL parameters and auto-apply filters
+    checkUrlParameters();
 });
+
+function checkUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const playlistId = urlParams.get('playlist');
+    
+    if (playlistId) {
+        console.log(`URL parameter detected: playlist=${playlistId}`);
+        // Store the playlist ID to be applied after filters load
+        window.autoSelectPlaylist = playlistId;
+    }
+}
 
 // Filter Panel Toggle Function
 function toggleFilterPanel() {
@@ -1474,5 +1855,180 @@ function toggleFilterPanel() {
         }
     }
 }
+
+// Subtitle Management Functions (shared with video detail page)
+let availableSubtitles = [];
+
+async function loadVideoSubtitles(videoId) {
+    try {
+        console.log(`Loading subtitles for video ${videoId}`);
+        const response = await fetch(`/api/videos/${videoId}/subtitles`);
+        const data = await response.json();
+        availableSubtitles = data.subtitles || [];
+        
+        console.log(`Found ${availableSubtitles.length} subtitle tracks for video ${videoId}:`, availableSubtitles);
+        
+        // Automatically load all available subtitle tracks for native video controls
+        if (availableSubtitles.length > 0) {
+            loadAllSubtitleTracks();
+        } else {
+            console.log(`No subtitles available for video ${videoId}`);
+        }
+    } catch (error) {
+        console.error('Failed to load subtitles:', error);
+        availableSubtitles = [];
+    }
+}
+
+function loadAllSubtitleTracks() {
+    const videoElement = document.getElementById('videoPlayer');
+    if (!videoElement || !availableSubtitles || availableSubtitles.length === 0) return;
+    
+    console.log('Loading subtitle tracks for MvTV:', availableSubtitles);
+    
+    // Add all available subtitle tracks (clearing is handled by the player class)
+    availableSubtitles.forEach((subtitle, index) => {
+        const track = document.createElement('track');
+        track.kind = 'subtitles';
+        track.src = subtitle.url;
+        
+        // Set language code
+        let langCode = subtitle.language;
+        if (langCode === 'default' || !langCode) {
+            langCode = 'en';
+        } else if (langCode.includes('-')) {
+            langCode = langCode.split('-')[0];
+        }
+        track.srclang = langCode;
+        
+        // Set display label
+        let label = subtitle.language;
+        if (label === 'default') {
+            label = 'English';
+        } else {
+            label = label.toUpperCase().replace('-', ' ');
+        }
+        track.label = `${label} (${subtitle.format})`;
+        
+        // Set first track as default
+        if (index === 0) {
+            track.default = true;
+        }
+        
+        videoElement.appendChild(track);
+        
+        console.log(`Added subtitle track: ${track.label} (${track.srclang}) - ${track.src}`);
+    });
+    
+    // Wait a moment for tracks to load, then ensure the first one is showing
+    setTimeout(() => {
+        if (videoElement.textTracks.length > 0) {
+            videoElement.textTracks[0].mode = 'showing';
+            console.log('Enabled first subtitle track for MvTV');
+        }
+    }, 100);
+}
+
+// Obsolete subtitle menu functions - keeping updateSubtitleMenu for compatibility
+function updateSubtitleMenu() {
+    const subtitleOptions = document.getElementById('subtitleOptions');
+    if (!subtitleOptions) return;
+    
+    if (availableSubtitles.length === 0) {
+        subtitleOptions.innerHTML = '<div class="subtitle-option">No subtitles available</div>';
+        return;
+    }
+    
+    let optionsHtml = '<div class="subtitle-option" onclick="disableSubtitles()">Off</div>';
+    
+    availableSubtitles.forEach((subtitle, index) => {
+        const languageDisplay = subtitle.language === 'default' ? 'Default' : 
+                               subtitle.language.toUpperCase();
+        optionsHtml += `
+            <div class="subtitle-option" onclick="enableSubtitle(${index})">
+                ${languageDisplay} (${subtitle.format})
+            </div>
+        `;
+    });
+    
+    subtitleOptions.innerHTML = optionsHtml;
+}
+
+function toggleSubtitleMenu() {
+    const menu = document.getElementById('subtitleMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function enableSubtitle(index) {
+    if (index < 0 || index >= availableSubtitles.length) return;
+    
+    const subtitle = availableSubtitles[index];
+    loadSubtitleTrack(subtitle);
+    toggleSubtitleMenu();
+}
+
+function disableSubtitles() {
+    const videoElement = document.getElementById('videoPlayer');
+    if (videoElement) {
+        // Remove all existing tracks
+        const tracks = videoElement.querySelectorAll('track');
+        tracks.forEach(track => track.remove());
+        
+        // Disable text tracks
+        for (let i = 0; i < videoElement.textTracks.length; i++) {
+            videoElement.textTracks[i].mode = 'disabled';
+        }
+    }
+    toggleSubtitleMenu();
+}
+
+function loadSubtitleTrack(subtitle) {
+    const videoElement = document.getElementById('videoPlayer');
+    if (!videoElement) return;
+    
+    // Remove existing tracks
+    const existingTracks = videoElement.querySelectorAll('track');
+    existingTracks.forEach(track => track.remove());
+    
+    // Add new track
+    const track = document.createElement('track');
+    track.kind = 'subtitles';
+    track.src = subtitle.url;
+    track.srclang = subtitle.language === 'default' ? 'en' : subtitle.language;
+    track.label = subtitle.language === 'default' ? 'Default' : subtitle.language.toUpperCase();
+    track.default = true;
+    
+    videoElement.appendChild(track);
+    
+    // Enable the track
+    track.addEventListener('load', () => {
+        if (videoElement.textTracks.length > 0) {
+            videoElement.textTracks[0].mode = 'showing';
+        }
+    });
+}
+
+// Close subtitle menu when clicking outside
+document.addEventListener('click', (event) => {
+    const menu = document.getElementById('subtitleMenu');
+    const toggle = document.getElementById('subtitleToggle');
+    
+    if (menu && toggle && !menu.contains(event.target) && !toggle.contains(event.target)) {
+        menu.style.display = 'none';
+    }
+});
+
+// Handle unhandled promise rejections (especially from video loading aborts)
+window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.name === 'AbortError' || 
+        (event.reason && event.reason.message && event.reason.message.includes('aborted'))) {
+        // This is likely a video loading abort - prevent it from showing as an error
+        console.log('Video loading aborted (handled):', event.reason.message);
+        event.preventDefault();
+    }
+});
+
 </script>
 {% endblock %}

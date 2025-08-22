@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from src.database.connection import get_db
 from src.database.models import Artist, Video, VideoStatus
 from src.services.imvdb_service import imvdb_service
+from src.services.settings_service import SettingsService
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.services.lastfm")
@@ -23,14 +24,28 @@ class LastFmService:
     """Service for Last.fm integration and listening history"""
 
     def __init__(self):
-        self.api_key = os.getenv("LASTFM_API_KEY")
-        self.api_secret = os.getenv("LASTFM_API_SECRET")
         self.base_url = "https://ws.audioscrobbler.com/2.0/"
         self.session_key = None
         self.username = None
+        self.refresh_credentials()
+
+    def refresh_credentials(self):
+        """Refresh API credentials from environment or settings"""
+        # Try environment variables first, then settings
+        self.api_key = os.getenv("LASTFM_API_KEY") or SettingsService.get(
+            "lastfm_api_key"
+        )
+        self.api_secret = os.getenv("LASTFM_API_SECRET") or SettingsService.get(
+            "lastfm_api_secret"
+        )
+        logger.debug(
+            f"Last.fm credentials refreshed - API key: {'present' if self.api_key else 'missing'}, secret: {'present' if self.api_secret else 'missing'}"
+        )
 
     def get_auth_url(self) -> str:
         """Generate Last.fm authentication URL"""
+        if not self.api_key:
+            self.refresh_credentials()
         if not self.api_key:
             raise ValueError("Last.fm API key not configured")
 
@@ -39,6 +54,8 @@ class LastFmService:
 
     def get_session_key(self, token: str) -> Dict:
         """Get session key from authentication token"""
+        if not self.api_key or not self.api_secret:
+            self.refresh_credentials()
         if not self.api_key or not self.api_secret:
             raise ValueError("Last.fm API credentials not configured")
 
@@ -81,6 +98,8 @@ class LastFmService:
     def _make_request(self, method: str, params: Dict = None) -> Dict:
         """Make authenticated request to Last.fm API"""
         if not self.api_key:
+            self.refresh_credentials()
+        if not self.api_key:
             raise ValueError("Last.fm API key not configured")
 
         request_params = {"method": method, "api_key": self.api_key, "format": "json"}
@@ -102,6 +121,10 @@ class LastFmService:
         except requests.RequestException as e:
             logger.error(f"Last.fm API request failed: {e}")
             raise
+
+    def call_api(self, method: str, params: Dict = None) -> Dict:
+        """Generic API call method for testing and direct calls"""
+        return self._make_request(method, params)
 
     def get_user_info(self, username: str = None) -> Dict:
         """Get user information"""

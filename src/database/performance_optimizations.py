@@ -392,6 +392,44 @@ class DatabasePerformanceOptimizer:
             except (ValueError, TypeError):
                 pass
 
+        # Keywords filter - search in video title and description
+        if filters.get("keywords"):
+            keywords = filters["keywords"].strip()
+            if keywords:
+                keyword_list = [
+                    k.strip().lower() for k in keywords.split(",") if k.strip()
+                ]
+                if keyword_list:
+                    from sqlalchemy import func, or_
+
+                    # Create OR conditions for each keyword
+                    keyword_conditions = []
+                    for keyword in keyword_list:
+                        keyword_conditions.append(
+                            func.lower(Video.title).contains(keyword)
+                        )
+                        # Only search description if it exists
+                        keyword_conditions.append(
+                            func.lower(Video.description).contains(keyword)
+                        )
+                    query = query.filter(or_(*keyword_conditions))
+
+        # Year range filters (from frontend - year_from/year_to)
+        year_from = filters.get("year_from")
+        year_to = filters.get("year_to")
+        if year_from:
+            try:
+                year_from_int = int(year_from)
+                query = query.filter(Video.year >= year_from_int)
+            except (ValueError, TypeError):
+                pass
+        if year_to:
+            try:
+                year_to_int = int(year_to)
+                query = query.filter(Video.year <= year_to_int)
+            except (ValueError, TypeError):
+                pass
+
         return query
 
     def get_optimized_artist_video_counts(self, session, monitored_only=True):

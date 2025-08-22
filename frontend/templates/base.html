@@ -1279,7 +1279,7 @@
                 <!-- Search Results Dropdown -->
                 <div class="universal-search-results" id="universalSearchResults" style="display: none;">
                     <div class="universal-search-loading" id="universalSearchLoading" style="display: none;">
-                        <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+                        <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
                         <span>Searching...</span>
                     </div>
                     
@@ -1441,18 +1441,41 @@
         // Load theme CSS variables
         async function loadThemeVariables(themeId) {
             try {
-                // First try to get it as a custom theme
-                let response = await fetch(`/api/themes/${themeId}`);
+                // List of built-in theme names
+                const builtInThemes = ['cyber', 'vaporwave', 'tardis', 'punk_77', 'mtv', 'lcars'];
+                
+                let response;
+                
+                if (builtInThemes.includes(themeId)) {
+                    // Handle built-in theme
+                    response = await fetch(`/api/themes/built-in/${themeId}/extract`, {
+                        method: 'POST'
+                    });
+                } else {
+                    // Handle custom theme
+                    response = await fetch(`/api/themes/${themeId}`);
+                }
                 
                 if (response.ok) {
                     const themeData = await response.json();
+                    
+                    // Handle different response formats
+                    let cssVariables;
                     if (themeData.theme_data) {
-                        Object.entries(themeData.theme_data).forEach(([cssVar, value]) => {
+                        cssVariables = themeData.theme_data; // Custom theme format
+                    } else if (themeData.variables) {
+                        cssVariables = themeData.variables; // Built-in theme format
+                    } else {
+                        cssVariables = themeData; // Direct format
+                    }
+                    
+                    if (cssVariables) {
+                        Object.entries(cssVariables).forEach(([cssVar, value]) => {
                             document.documentElement.style.setProperty(cssVar, value);
                         });
                     }
-                } else {
-                    // Try as built-in theme
+                } else if (!builtInThemes.includes(themeId)) {
+                    // If custom theme failed, try as built-in theme
                     response = await fetch(`/api/themes/built-in/${themeId}/extract`, {
                         method: 'POST'
                     });
@@ -1558,19 +1581,49 @@
         
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
-                fetch('/auth/dynamic-logout', { 
+                // Try different logout endpoints based on which auth system is active
+                let logoutEndpoint = '/simple-auth/logout';
+                
+                // Try simple auth logout first (since we're running simple auth mode)
+                fetch('/simple-auth/logout', { 
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 })
                     .then(response => {
-                        console.log('Logout response status:', response.status);
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
+                        console.log('Simple auth logout response status:', response.status);
+                        
+                        // If simple auth returns 404, try dynamic logout
+                        if (response.status === 404) {
+                            console.log('Simple auth logout not found, trying dynamic logout');
+                            logoutEndpoint = '/auth/dynamic-logout';
+                            return fetch('/auth/dynamic-logout', { 
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            });
                         }
-                        return response.json();
+                        
+                        // If still 404, try full auth system
+                        if (response.status === 404) {
+                            console.log('Dynamic logout not found, trying full auth logout');
+                            logoutEndpoint = '/auth/logout';
+                            return fetch('/auth/logout', { 
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            });
+                        }
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status} from ${logoutEndpoint}`);
+                        }
+                        return response;
                     })
+                    .then(response => response.json())
                     .then(data => {
                         console.log('Logout response data:', data);
                         if (data.success) {
@@ -1579,8 +1632,14 @@
                             if (userMenu) {
                                 userMenu.style.display = 'none';
                             }
-                            // Redirect to login page
-                            window.location.href = '/simple-login';
+                            // Redirect based on auth system
+                            if (logoutEndpoint === '/simple-auth/logout') {
+                                window.location.href = '/simple-auth/login';
+                            } else if (logoutEndpoint === '/auth/dynamic-logout') {
+                                window.location.href = '/simple-login';
+                            } else {
+                                window.location.href = '/';
+                            }
                         } else {
                             console.error('Logout failed - response indicates failure:', data);
                             alert('Logout failed: ' + (data.error || data.message || 'Unknown error'));
@@ -2094,7 +2153,7 @@
                 
                 this.isSearching = true;
                 this.searchMoreButton.innerHTML = `
-                    <iconify-icon icon="tabler:loader-2" class="spinning"></iconify-icon>
+                    <img src="{{ url_for('static', filename='MVidarr.png') }}" alt="MVidarr" class="spinning mvidarr-logo-spinner" style="width: 24px; height: 24px;">
                     <span>Searching IMVDb & YouTube...</span>
                 `;
                 this.searchMoreButton.disabled = true;
