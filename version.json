@@ -1,9 +1,9 @@
 {
-  "version": "0.9.7-dev",
-  "build_date": "2025-08-21T16:41:40.539869",
-  "git_commit": "15c1194",
+  "version": "0.9.8-dev",
+  "build_date": "2025-08-22T14:40:19.982756",
+  "git_commit": "70ebcd0",
   "git_branch": "dev",
-  "release_name": "Performance & Integration",
+  "release_name": "External Service Integrations",
   "features": [
     "Advanced Artist Management with multi-criteria search and bulk operations",
     "Comprehensive Video Discovery with dual-source integration (IMVDb + YouTube)",
@@ -66,8 +66,11 @@
     "[COMPLETED] Pagination Integration with Filters - Pagination now updates correctly when filters are applied",
     "[COMPLETED] Bulk Operations Progress Fix - Added missing HTML elements and CSS for bulk progress indicators",
     "[COMPLETED] Video Filter Count Badge Fix - Resolved console warnings when search panel is hidden",
-    "[PLANNED] Advanced Performance Analytics with real-time monitoring dashboard",
-    "[PLANNED] Enhanced API Integration with external service extensions",
+    "[IN_DEVELOPMENT] Enhanced Spotify Integration with advanced music discovery capabilities",
+    "[IN_DEVELOPMENT] Media Server Integration with Plex/Jellyfin/Emby support",
+    "[IN_DEVELOPMENT] Advanced Notification System with Discord/Slack integration",
+    "[IN_DEVELOPMENT] Third-Party Metadata Providers for enriched content information",
+    "[IN_DEVELOPMENT] Cloud Storage Integration and comprehensive backup solutions",
     "[PLANNED] Mobile-Responsive Design with touch-optimized interfaces",
     "[PLANNED] Advanced Search Enhancement with AI-powered suggestions",
     "[PLANNED] Extended Video Quality Management with automatic optimization"
