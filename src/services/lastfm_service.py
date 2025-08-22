@@ -24,6 +24,13 @@ class LastFmService:
     """Service for Last.fm integration and listening history"""
 
     def __init__(self):
+        self.base_url = "https://ws.audioscrobbler.com/2.0/"
+        self.session_key = None
+        self.username = None
+        self.refresh_credentials()
+
+    def refresh_credentials(self):
+        """Refresh API credentials from environment or settings"""
         # Try environment variables first, then settings
         self.api_key = os.getenv("LASTFM_API_KEY") or SettingsService.get(
             "lastfm_api_key"
@@ -31,12 +38,14 @@ class LastFmService:
         self.api_secret = os.getenv("LASTFM_API_SECRET") or SettingsService.get(
             "lastfm_api_secret"
         )
-        self.base_url = "https://ws.audioscrobbler.com/2.0/"
-        self.session_key = None
-        self.username = None
+        logger.debug(
+            f"Last.fm credentials refreshed - API key: {'present' if self.api_key else 'missing'}, secret: {'present' if self.api_secret else 'missing'}"
+        )
 
     def get_auth_url(self) -> str:
         """Generate Last.fm authentication URL"""
+        if not self.api_key:
+            self.refresh_credentials()
         if not self.api_key:
             raise ValueError("Last.fm API key not configured")
 
@@ -45,6 +54,8 @@ class LastFmService:
 
     def get_session_key(self, token: str) -> Dict:
         """Get session key from authentication token"""
+        if not self.api_key or not self.api_secret:
+            self.refresh_credentials()
         if not self.api_key or not self.api_secret:
             raise ValueError("Last.fm API credentials not configured")
 
@@ -86,6 +97,8 @@ class LastFmService:
 
     def _make_request(self, method: str, params: Dict = None) -> Dict:
         """Make authenticated request to Last.fm API"""
+        if not self.api_key:
+            self.refresh_credentials()
         if not self.api_key:
             raise ValueError("Last.fm API key not configured")
 
