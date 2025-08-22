@@ -380,8 +380,9 @@
                 <input type="password" id="lastfm_api_secret" name="lastfm_api_secret">
             </div>
             <div class="form-group">
-                <label for="lastfm_username">Connected Username:</label>
-                <input type="text" id="lastfm_username" name="lastfm_username" placeholder="Connected Last.fm username" readonly>
+                <label for="lastfm_username">Last.fm Username:</label>
+                <input type="text" id="lastfm_username" name="lastfm_username" placeholder="Enter your Last.fm username or connect via OAuth">
+                <div class="help-text">Enter your username manually or use the "Authorize" button for OAuth authentication</div>
             </div>
             <div class="integration-actions">
                 <button onclick="testLastfmIntegration()" class="btn btn-info">Test Connection</button>

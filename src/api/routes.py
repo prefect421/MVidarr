@@ -18,6 +18,7 @@ from src.api.lastfm import lastfm_bp
 from src.api.lidarr import lidarr_bp
 from src.api.metadata_enrichment import metadata_enrichment_bp
 from src.api.metube import metube_bp
+from src.api.migrations import migrations_bp
 from src.api.musicbrainz import musicbrainz_bp
 
 # OpenAPI documentation
@@ -61,6 +62,7 @@ def register_routes(app):
     api_bp.register_blueprint(enhanced_scheduler_bp)
     api_bp.register_blueprint(themes_bp, url_prefix="/themes")
     api_bp.register_blueprint(playlists_bp)
+    api_bp.register_blueprint(migrations_bp)
     api_bp.register_blueprint(health_bp)
     api_bp.register_blueprint(users_bp)
     api_bp.register_blueprint(video_org_bp)
