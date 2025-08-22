@@ -10,8 +10,8 @@ from src.database.migrations import (
     rollback_migration,
     run_migrations,
 )
+from src.middleware.simple_auth_middleware import auth_required
 from src.utils.logger import get_logger
-from src.utils.security import simple_auth_required
 
 logger = get_logger("mvidarr.api.migrations")
 
@@ -19,7 +19,7 @@ migrations_bp = Blueprint("migrations", __name__, url_prefix="/migrations")
 
 
 @migrations_bp.route("/status", methods=["GET"])
-@simple_auth_required
+@auth_required
 def get_migrations_status():
     """Get current migration status"""
     try:
@@ -32,7 +32,7 @@ def get_migrations_status():
 
 
 @migrations_bp.route("/run", methods=["POST"])
-@simple_auth_required
+@auth_required
 def run_pending_migrations():
     """Run all pending migrations"""
     try:
@@ -68,7 +68,7 @@ def run_pending_migrations():
 
 
 @migrations_bp.route("/rollback/<version>", methods=["POST"])
-@simple_auth_required
+@auth_required
 def rollback_migration_endpoint(version):
     """Rollback a specific migration"""
     try:
