@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from src.database.connection import get_db
 from src.database.models import Artist, Video
+from src.services.allmusic_service import allmusic_service
 from src.services.imvdb_service import imvdb_service
 from src.services.lastfm_service import lastfm_service
 from src.services.musicbrainz_service import musicbrainz_service
@@ -85,6 +86,7 @@ class MetadataEnrichmentService:
         self.lastfm = lastfm_service
         self.imvdb = imvdb_service
         self.musicbrainz = musicbrainz_service
+        self.allmusic = allmusic_service
 
         # Configuration
         self.min_confidence_threshold = 0.7
@@ -96,6 +98,7 @@ class MetadataEnrichmentService:
         self.source_weights = {
             "spotify": 0.9,
             "musicbrainz": 0.95,  # Most authoritative source
+            "allmusic": 0.88,  # High quality music metadata
             "imvdb": 0.85,
             "lastfm": 0.8,
             "wikipedia": 0.7,
@@ -288,6 +291,24 @@ class MetadataEnrichmentService:
         else:
             logger.debug(
                 f"MusicBrainz integration disabled, skipping for {artist_data['name']}"
+            )
+
+        # AllMusic metadata - check if enabled
+        if hasattr(self.allmusic, "enabled") and self.allmusic.enabled:
+            try:
+                allmusic_metadata = await self._get_allmusic_metadata(artist_data)
+                if allmusic_metadata:
+                    metadata_sources["allmusic"] = allmusic_metadata
+                    logger.debug(
+                        f"Successfully gathered AllMusic metadata for {artist_data['name']}"
+                    )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to get AllMusic metadata for {artist_data['name']}: {e}"
+                )
+        else:
+            logger.debug(
+                f"AllMusic integration disabled, skipping for {artist_data['name']}"
             )
 
         logger.info(
@@ -516,6 +537,54 @@ class MetadataEnrichmentService:
 
         except Exception as e:
             logger.error(f"Error getting MusicBrainz metadata: {e}")
+            return None
+
+    async def _get_allmusic_metadata(self, artist_data: Dict) -> Optional[ArtistMetadata]:
+        """Get enhanced metadata from AllMusic"""
+        try:
+            # Get metadata from AllMusic service
+            allmusic_metadata = self.allmusic.get_artist_metadata_for_enrichment(
+                artist_data["name"]
+            )
+
+            if not allmusic_metadata:
+                return None
+
+            # Convert to ArtistMetadata format
+            metadata = ArtistMetadata(
+                name=allmusic_metadata.get("name", artist_data["name"]),
+                source="allmusic",
+                confidence=allmusic_metadata.get("confidence", 0.88),
+                genres=allmusic_metadata.get("genres", []),
+                biography=allmusic_metadata.get("biography"),
+                similar_artists=allmusic_metadata.get("similar_artists", []),
+                raw_data=allmusic_metadata.get("raw_data", {}),
+            )
+
+            # Add AllMusic-specific fields if available
+            if allmusic_metadata.get("formed_year"):
+                metadata.raw_data["formed_year"] = allmusic_metadata["formed_year"]
+            if allmusic_metadata.get("origin_country"):
+                metadata.raw_data["origin_country"] = allmusic_metadata["origin_country"]
+            if allmusic_metadata.get("members"):
+                metadata.raw_data["members"] = allmusic_metadata["members"]
+            if allmusic_metadata.get("moods"):
+                metadata.raw_data["moods"] = allmusic_metadata["moods"]
+            if allmusic_metadata.get("themes"):
+                metadata.raw_data["themes"] = allmusic_metadata["themes"]
+            if allmusic_metadata.get("active_years"):
+                metadata.raw_data["active_years"] = allmusic_metadata["active_years"]
+            if allmusic_metadata.get("discography"):
+                metadata.raw_data["discography"] = allmusic_metadata["discography"]
+            if allmusic_metadata.get("allmusic_rating"):
+                metadata.raw_data["allmusic_rating"] = allmusic_metadata["allmusic_rating"]
+            if allmusic_metadata.get("allmusic_url"):
+                metadata.raw_data["allmusic_url"] = allmusic_metadata["allmusic_url"]
+
+            return metadata
+
+        except Exception as e:
+            logger.error(f"Error getting AllMusic metadata: {e}")
             return None
 
     def _aggregate_metadata(
