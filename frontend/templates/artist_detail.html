@@ -481,6 +481,12 @@
     font-weight: bold;
 }
 
+.warning-message {
+    color: #ff9800;
+    font-weight: bold;
+    font-style: italic;
+}
+
 /* Icon button styles for video actions */
 .btn-icon {
     padding: 8px !important;
@@ -814,6 +820,923 @@
         gap: 1.5rem;
     }
 }
+
+/* Enhanced Artist Detail Layout Styles */
+.overview-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.artist-hero-card {
+    background: linear-gradient(135deg, var(--bg-secondary, #2a2a2a) 0%, var(--bg-tertiary, #333) 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-secondary, #444);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hero-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.quick-stats {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.quick-stat {
+    text-align: center;
+    min-width: 80px;
+}
+
+.quick-stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-accent, #00d4ff);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.quick-stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metadata-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-metadata-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-metadata-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.metadata-section {
+    background: var(--bg-secondary, #2a2a2a);
+    border-radius: 10px;
+    border: 1px solid var(--border-secondary, #444);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.metadata-section:hover {
+    border-color: var(--text-accent, #00d4ff);
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.1);
+}
+
+.metadata-section.full-width {
+    grid-column: 1 / -1;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: var(--bg-tertiary, #333);
+    border-bottom: 1px solid var(--border-secondary, #444);
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-header iconify-icon {
+    font-size: 1.1rem;
+    color: var(--text-accent, #00d4ff);
+}
+
+.data-quality-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-quality-badge.excellent {
+    background: var(--success-bg, #4CAF50);
+    color: white;
+}
+
+.data-quality-badge.good {
+    background: var(--info-bg, #2196F3);
+    color: white;
+}
+
+.data-quality-badge.fair {
+    background: var(--warning-bg, #ff9800);
+    color: white;
+}
+
+.data-quality-badge.poor {
+    background: var(--danger-bg, #f44336);
+    color: white;
+}
+
+.data-quality-badge.none {
+    background: var(--bg-muted, #666);
+    color: white;
+}
+
+.metadata-content {
+    padding: 1.25rem;
+}
+
+.metadata-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-tertiary, rgba(255, 255, 255, 0.1));
+}
+
+.metadata-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.metadata-item.full-width {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.metadata-label {
+    font-weight: 500;
+    color: var(--text-muted, #888);
+    font-size: 0.9rem;
+    min-width: 100px;
+    flex-shrink: 0;
+}
+
+.metadata-value {
+    color: var(--text-primary, #fff);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    text-align: right;
+    flex: 1;
+}
+
+.metadata-item.full-width .metadata-value {
+    text-align: left;
+}
+
+.metadata-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.metadata-tag {
+    background: var(--bg-accent-subtle, rgba(0, 212, 255, 0.1));
+    color: var(--text-accent, #00d4ff);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    border: 1px solid var(--text-accent, #00d4ff);
+}
+
+/* Enhanced metadata display styles */
+.metadata-item.enhanced {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-tertiary, rgba(255, 255, 255, 0.1));
+}
+
+.metadata-item.enhanced:last-child {
+    border-bottom: none;
+}
+
+.metadata-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.metadata-item.enhanced .metadata-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    font-size: 0.95rem;
+}
+
+.metadata-source {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--bg-tertiary, #333);
+    color: var(--text-muted, #888);
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--border-secondary, #444);
+}
+
+.metadata-item.enhanced .metadata-value {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #ddd);
+    line-height: 1.4;
+}
+
+/* Enhanced tag styles */
+.metadata-tags.enhanced {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+}
+
+.metadata-tag-genre {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.metadata-tag-label {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 152, 0, 0.1));
+    color: #FF9800;
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.metadata-tag-mood {
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(233, 30, 99, 0.1));
+    color: #E91E63;
+    border: 1px solid rgba(233, 30, 99, 0.3);
+}
+
+.metadata-tag-theme {
+    background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(156, 39, 176, 0.1));
+    color: #9C27B0;
+    border: 1px solid rgba(156, 39, 176, 0.3);
+}
+
+/* Popularity bar styles */
+.popularity-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.popularity-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-tertiary, #333);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border-secondary, #444);
+}
+
+.popularity-fill {
+    height: 100%;
+    transition: width 0.6s ease;
+    border-radius: 4px;
+}
+
+.popularity-value {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted, #888);
+    min-width: 50px;
+    text-align: right;
+}
+
+/* Enhanced enrichment modal styles */
+.enrichment-progress-modal,
+.enrichment-results-modal,
+.enrichment-error-modal {
+    background: var(--bg-secondary, #2a2a2a);
+    border-radius: 12px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-secondary, #444);
+}
+
+.enrichment-progress-container {
+    padding: 1rem 0;
+}
+
+.progress-bar-container {
+    margin-bottom: 1.5rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: var(--bg-tertiary, #333);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--text-accent, #00d4ff), var(--accent-secondary, #00b8e6));
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #ddd);
+    font-weight: 500;
+}
+
+.sources-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.source-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-tertiary, #333);
+    border-radius: 8px;
+    color: var(--text-muted, #888);
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.source-item.processing {
+    color: var(--text-accent, #00d4ff);
+    background: var(--bg-accent-subtle, rgba(0, 212, 255, 0.1));
+    border-left-color: var(--text-accent, #00d4ff);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.summary-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    justify-content: center;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-accent, #00d4ff);
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sources-used,
+.enriched-fields,
+.failed-sources {
+    margin-bottom: 1.5rem;
+}
+
+.sources-used h4,
+.enriched-fields h4,
+.failed-sources h4 {
+    margin: 0 0 0.75rem 0;
+    color: var(--text-primary, #fff);
+    font-size: 1rem;
+}
+
+.source-badges,
+.field-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.source-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.source-badge.success {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+    color: #4CAF50;
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.source-badge.error {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1));
+    color: #f44336;
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+.field-badge {
+    padding: 0.4rem 0.6rem;
+    background: var(--bg-accent-subtle, rgba(0, 212, 255, 0.1));
+    color: var(--text-accent, #00d4ff);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    border: 1px solid var(--text-accent, #00d4ff);
+}
+
+.error-message {
+    color: var(--text-secondary, #ddd);
+    line-height: 1.6;
+}
+
+.error-message p {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.suggestions ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.suggestions li {
+    margin-bottom: 0.5rem;
+    color: var(--text-muted, #888);
+}
+
+/* Quality analysis modal styles */
+.quality-analysis-modal {
+    background: var(--bg-secondary, #2a2a2a);
+    border-radius: 12px;
+    width: 700px;
+    max-width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-secondary, #444);
+}
+
+.quality-overview {
+    text-align: center;
+    padding: 1rem 0 2rem 0;
+    border-bottom: 1px solid var(--border-secondary, #444);
+    margin-bottom: 2rem;
+}
+
+.overall-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid;
+    position: relative;
+}
+
+.score-circle.excellent {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+    border-color: #4CAF50;
+    color: #4CAF50;
+}
+
+.score-circle.good {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.1));
+    border-color: #2196F3;
+    color: #2196F3;
+}
+
+.score-circle.fair {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 152, 0, 0.1));
+    border-color: #FF9800;
+    color: #FF9800;
+}
+
+.score-circle.poor {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1));
+    border-color: #f44336;
+    color: #f44336;
+}
+
+.score-circle.none {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.2), rgba(108, 117, 125, 0.1));
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.score-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+.overall-score h4 {
+    margin: 0;
+    color: var(--text-primary, #fff);
+    font-size: 1.25rem;
+}
+
+.score-description {
+    margin: 0;
+    color: var(--text-secondary, #ddd);
+    font-size: 0.9rem;
+    max-width: 400px;
+    line-height: 1.4;
+}
+
+.section-scores {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.section-score {
+    background: var(--bg-tertiary, #333);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid var(--border-secondary, #444);
+}
+
+.section-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.section-info h5 {
+    margin: 0;
+    color: var(--text-primary, #fff);
+    font-size: 1rem;
+}
+
+.quality-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.section-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.section-details .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-quaternary, #444);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.section-details .progress-fill {
+    height: 100%;
+    background: var(--text-accent, #00d4ff);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+
+.section-stats {
+    font-size: 0.85rem;
+    color: var(--text-muted, #888);
+    min-width: 100px;
+    text-align: right;
+}
+
+.improvement-suggestions,
+.metadata-strengths {
+    margin-bottom: 1.5rem;
+}
+
+.improvement-suggestions h4,
+.metadata-strengths h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary, #fff);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.suggestion-item {
+    background: var(--bg-tertiary, #333);
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid;
+}
+
+.suggestion-item.priority-high {
+    border-left-color: #f44336;
+}
+
+.suggestion-item.priority-medium {
+    border-left-color: #FF9800;
+}
+
+.suggestion-item.priority-low {
+    border-left-color: #4CAF50;
+}
+
+.suggestion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.suggestion-action {
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    font-size: 0.95rem;
+}
+
+.priority-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.priority-badge.priority-high {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.priority-badge.priority-medium {
+    background: rgba(255, 152, 0, 0.2);
+    color: #FF9800;
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.priority-badge.priority-low {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.suggestion-description {
+    margin: 0.5rem 0;
+    color: var(--text-secondary, #ddd);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.suggestion-benefit {
+    margin: 0.5rem 0 0 0;
+    color: var(--text-muted, #888);
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.strengths-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.strength-badge {
+    padding: 0.4rem 0.6rem;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+    color: #4CAF50;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    font-weight: 500;
+}
+
+.external-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+.external-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-tertiary, #333);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-primary, #fff);
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-secondary, #444);
+}
+
+.external-link:hover {
+    background: var(--bg-hover, #444);
+    border-color: var(--text-accent, #00d4ff);
+    color: var(--text-accent, #00d4ff);
+    transform: translateY(-1px);
+}
+
+.external-link iconify-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.biography-content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-secondary, #ccc);
+}
+
+.biography-content.expanded {
+    max-height: none;
+}
+
+.biography-toggle {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary, #333);
+    color: var(--text-accent, #00d4ff);
+    border: 1px solid var(--text-accent, #00d4ff);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.biography-toggle:hover {
+    background: var(--text-accent, #00d4ff);
+    color: var(--bg-primary, #1a1a1a);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    background: var(--bg-tertiary, #333);
+    border-radius: 8px;
+    border: 1px solid var(--border-secondary, #444);
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    border-color: var(--text-accent, #00d4ff);
+    background: var(--bg-hover, #444);
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-accent, #00d4ff);
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--bg-tertiary, #333);
+    border-radius: 6px;
+    border: 1px solid var(--border-secondary, #444);
+}
+
+.activity-type {
+    font-weight: 500;
+    color: var(--text-accent, #00d4ff);
+    font-size: 0.9rem;
+}
+
+.activity-description {
+    color: var(--text-secondary, #ccc);
+    font-size: 0.9rem;
+    flex: 1;
+    margin: 0 1rem;
+}
+
+.activity-time {
+    color: var(--text-muted, #888);
+    font-size: 0.8rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .metadata-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-content {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    
+    .metadata-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .metadata-value {
+        text-align: left;
+    }
+    
+    .external-links-grid {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
 {% endblock %}
 
@@ -849,25 +1772,94 @@
     
     <!-- Overview Tab -->
     <div class="tab-content active" id="overviewContent">
-        <div class="overview-grid">
-            <div class="artist-stats-card">
-                <h3>Statistics</h3>
-                <div class="stats-grid" id="artistStats">
-                    <div class="loading-placeholder">Loading statistics...</div>
+        <div class="overview-layout">
+            <!-- Hero section with key info -->
+            <div class="artist-hero-card">
+                <div class="hero-content">
+                    <div class="quick-stats" id="quickStats">
+                        <div class="loading-placeholder">Loading quick stats...</div>
+                    </div>
+                    <div class="metadata-actions">
+                        <button type="button" onclick="enrichMetadataAllSources()" class="btn btn-success btn-metadata-action">
+                            <iconify-icon icon="tabler:sparkles"></iconify-icon>
+                            Enrich from All Sources
+                        </button>
+                        <button type="button" onclick="showMetadataQualityAnalysis()" class="btn btn-info btn-metadata-action">
+                            <iconify-icon icon="tabler:chart-pie"></iconify-icon>
+                            Quality Analysis
+                        </button>
+                        <button type="button" onclick="showMetadataHistory()" class="btn btn-secondary btn-metadata-action">
+                            <iconify-icon icon="tabler:history"></iconify-icon>
+                            Enrichment History
+                        </button>
+                    </div>
                 </div>
             </div>
-            
-            <div class="artist-info-card">
-                <h3>Artist Information</h3>
-                <div class="artist-metadata" id="artistMetadata">
-                    <div class="loading-placeholder">Loading metadata...</div>
+
+            <!-- Main content grid -->
+            <div class="metadata-grid">
+                <!-- Basic Information -->
+                <div class="metadata-section basic-info">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="tabler:info-circle"></iconify-icon> Basic Information</h3>
+                        <span class="data-quality-badge" id="basicInfoQuality">Loading...</span>
+                    </div>
+                    <div class="metadata-content" id="basicInfoContent">
+                        <div class="loading-placeholder">Loading basic information...</div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="recent-activity-card">
-                <h3>Recent Activity</h3>
-                <div class="activity-list" id="recentActivity">
-                    <div class="loading-placeholder">Loading activity...</div>
+
+                <!-- Musical Information -->
+                <div class="metadata-section musical-info">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="tabler:music"></iconify-icon> Musical Profile</h3>
+                        <span class="data-quality-badge" id="musicalInfoQuality">Loading...</span>
+                    </div>
+                    <div class="metadata-content" id="musicalInfoContent">
+                        <div class="loading-placeholder">Loading musical information...</div>
+                    </div>
+                </div>
+
+                <!-- External Links & IDs -->
+                <div class="metadata-section external-links">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="tabler:link"></iconify-icon> External Services</h3>
+                        <span class="data-quality-badge" id="externalLinksQuality">Loading...</span>
+                    </div>
+                    <div class="metadata-content" id="externalLinksContent">
+                        <div class="loading-placeholder">Loading external links...</div>
+                    </div>
+                </div>
+
+                <!-- Biography & Description -->
+                <div class="metadata-section biography full-width">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="tabler:book"></iconify-icon> Biography & Overview</h3>
+                        <span class="data-quality-badge" id="biographyQuality">Loading...</span>
+                    </div>
+                    <div class="metadata-content biography-content" id="biographyContent">
+                        <div class="loading-placeholder">Loading biography...</div>
+                    </div>
+                </div>
+
+                <!-- Statistics Card -->
+                <div class="metadata-section statistics">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="tabler:chart-bar"></iconify-icon> Library Statistics</h3>
+                    </div>
+                    <div class="stats-grid" id="artistStats">
+                        <div class="loading-placeholder">Loading statistics...</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="metadata-section activity">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="tabler:clock"></iconify-icon> Recent Activity</h3>
+                    </div>
+                    <div class="activity-list" id="recentActivity">
+                        <div class="loading-placeholder">Loading activity...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1163,10 +2155,10 @@
     <div class="tab-content" id="settingsContent">
         <!-- Metadata Management Panel -->
         <div class="settings-panel">
-            <h3>Metadata Management</h3>
+            <h3>Link IMVDb Artist</h3>
             <div class="metadata-management">
                 <div class="metadata-info">
-                    <p>Update artist metadata from IMVDb to get the latest information including biography, genres, and links.</p>
+                    <p>Search and link this artist to their IMVDb profile to automatically fetch metadata including biography, genres, and external links.</p>
                     <div class="metadata-status" id="metadataStatus">
                         <div class="loading-placeholder" style="display: none;">Updating metadata...</div>
                     </div>
@@ -1422,7 +2414,6 @@
                 <div class="settings-actions">
                     <button type="submit" class="btn btn-primary">💾 Save All Changes</button>
                     <button type="button" onclick="resetSettings()" class="btn btn-secondary">🔄 Reset</button>
-                    <button type="button" onclick="importFromImvdb()" class="btn btn-info">📥 Import Metadata</button>
                     <button type="button" onclick="validateMetadata()" class="btn btn-secondary">✅ Validate</button>
                 </div>
             </form>
@@ -1904,7 +2895,283 @@ function renderArtistHeader(artist) {
 }
 
 function renderOverviewTab(artist) {
-    // Statistics
+    const metadata = artist.imvdb_metadata || {};
+    
+    // Render quick stats in hero section
+    renderQuickStats(artist);
+    
+    // Render each metadata section
+    renderBasicInfo(artist, metadata);
+    renderMusicalInfo(artist, metadata);
+    renderExternalLinks(artist, metadata);
+    renderBiography(artist, metadata);
+    renderStatistics(artist);
+    renderRecentActivity(artist);
+}
+
+function renderQuickStats(artist) {
+    const quickStatsHtml = `
+        <div class="quick-stat">
+            <span class="quick-stat-value">${artist.statistics.total_videos}</span>
+            <span class="quick-stat-label">Videos</span>
+        </div>
+        <div class="quick-stat">
+            <span class="quick-stat-value">${artist.statistics.downloaded_videos}</span>
+            <span class="quick-stat-label">Downloaded</span>
+        </div>
+        <div class="quick-stat">
+            <span class="quick-stat-value">${artist.statistics.wanted_videos}</span>
+            <span class="quick-stat-label">Wanted</span>
+        </div>
+        <div class="quick-stat">
+            <span class="quick-stat-value">${calculateDataCompleteness(artist)}%</span>
+            <span class="quick-stat-label">Complete</span>
+        </div>
+    `;
+    document.getElementById('quickStats').innerHTML = quickStatsHtml;
+}
+
+function renderBasicInfo(artist, metadata) {
+    let basicInfoHtml = '';
+    
+    // Core information with enhanced display
+    basicInfoHtml += createEnhancedMetadataItem('Added', new Date(artist.created_at).toLocaleDateString(), 'calendar', artist.source || 'Manual');
+    basicInfoHtml += createEnhancedMetadataItem('Updated', new Date(artist.updated_at).toLocaleDateString(), 'clock', 'System');
+    
+    if (artist.source) {
+        const sourceIcon = getSourceIcon(artist.source);
+        basicInfoHtml += createEnhancedMetadataItem('Source', artist.source, sourceIcon, 'Discovery');
+    }
+    
+    if (artist.last_discovery) {
+        basicInfoHtml += createEnhancedMetadataItem('Last Discovery', new Date(artist.last_discovery).toLocaleDateString(), 'search', 'Auto-Discovery');
+    }
+    
+    // Formation/active years with visual timeline
+    if (artist.formed_year || metadata.formed_year) {
+        const formedYear = artist.formed_year || metadata.formed_year;
+        let yearText = formedYear.toString();
+        let status = 'Active';
+        if (artist.disbanded_year || metadata.disbanded_year) {
+            const disbandedYear = artist.disbanded_year || metadata.disbanded_year;
+            yearText += ` - ${disbandedYear}`;
+            status = 'Disbanded';
+        }
+        basicInfoHtml += createEnhancedMetadataItem('Active Years', yearText, 'timeline', status);
+    }
+    
+    if (artist.origin_country || metadata.origin_country) {
+        const origin = artist.origin_country || metadata.origin_country;
+        basicInfoHtml += createEnhancedMetadataItem('Origin', origin, 'location', getRegionFromCountry(origin));
+    }
+    
+    // Members with count badge
+    if (artist.members || metadata.members) {
+        const members = artist.members || metadata.members;
+        const memberText = Array.isArray(members) ? members.join(', ') : members;
+        const memberCount = Array.isArray(members) ? members.length : (members.split(',').length || 1);
+        basicInfoHtml += createEnhancedMetadataItem('Members', memberText, 'users', `${memberCount} members`, true);
+    }
+    
+    document.getElementById('basicInfoContent').innerHTML = basicInfoHtml;
+    updateSectionQuality('basicInfoQuality', 'basic', artist, metadata);
+}
+
+function renderMusicalInfo(artist, metadata) {
+    let musicalInfoHtml = '';
+    
+    // Genres with enhanced styling and source attribution
+    if ((artist.genres && artist.genres.length > 0) || (metadata.genres && metadata.genres.length > 0)) {
+        const genres = artist.genres || metadata.genres;
+        const genreSource = artist.genres ? 'User' : getMetadataSource(metadata, 'genres');
+        musicalInfoHtml += createEnhancedMetadataItem('Genres', createEnhancedTagList(genres, 'genre'), 'music', genreSource);
+    }
+    
+    // Labels with record label styling
+    if (artist.labels || metadata.labels) {
+        const labels = artist.labels || metadata.labels;
+        const labelArray = Array.isArray(labels) ? labels : [labels];
+        const labelSource = artist.labels ? 'User' : getMetadataSource(metadata, 'labels');
+        musicalInfoHtml += createEnhancedMetadataItem('Labels', createEnhancedTagList(labelArray, 'label'), 'building', labelSource);
+    }
+    
+    // AllMusic-specific fields with enhanced display
+    if (metadata.moods && metadata.moods.length > 0) {
+        musicalInfoHtml += createEnhancedMetadataItem('Moods', createEnhancedTagList(metadata.moods, 'mood'), 'heart', 'AllMusic');
+    }
+    
+    if (metadata.themes && metadata.themes.length > 0) {
+        musicalInfoHtml += createEnhancedMetadataItem('Themes', createEnhancedTagList(metadata.themes, 'theme'), 'palette', 'AllMusic');
+    }
+    
+    // Spotify popularity if available
+    if (metadata.spotify_popularity) {
+        const popularityBar = createPopularityBar(metadata.spotify_popularity);
+        musicalInfoHtml += createEnhancedMetadataItem('Popularity', popularityBar, 'trending-up', 'Spotify');
+    }
+    
+    if (metadata.similar_artists && metadata.similar_artists.length > 0) {
+        musicalInfoHtml += createMetadataItem('Similar Artists', metadata.similar_artists.join(', '), true);
+    }
+    
+    // Music-related metadata
+    if (metadata.discography) {
+        const disco = metadata.discography;
+        if (disco.album_count || (disco.popular_albums && disco.popular_albums.length > 0)) {
+            let discoText = '';
+            if (disco.album_count) discoText += `${disco.album_count} albums`;
+            if (disco.popular_albums && disco.popular_albums.length > 0) {
+                if (discoText) discoText += ' • ';
+                discoText += `Popular: ${disco.popular_albums.slice(0, 3).join(', ')}`;
+            }
+            musicalInfoHtml += createMetadataItem('Discography', discoText, true);
+        }
+    }
+    
+    document.getElementById('musicalInfoContent').innerHTML = musicalInfoHtml || '<div class="loading-placeholder">No musical information available</div>';
+    document.getElementById('musicalInfoQuality').className = 'data-quality-badge ' + calculateSectionQuality('musical', artist, metadata);
+    document.getElementById('musicalInfoQuality').textContent = getQualityLabel(calculateSectionQuality('musical', artist, metadata));
+}
+
+function renderExternalLinks(artist, metadata) {
+    const links = [];
+    
+    // Service links
+    if (artist.imvdb_id) {
+        links.push({
+            icon: 'tabler:video',
+            label: 'IMVDb',
+            url: `https://imvdb.com/artist/${artist.imvdb_id}`,
+            id: artist.imvdb_id
+        });
+    }
+    
+    if (artist.spotify_id) {
+        links.push({
+            icon: 'tabler:brand-spotify',
+            label: 'Spotify',
+            url: `https://open.spotify.com/artist/${artist.spotify_id}`,
+            id: artist.spotify_id
+        });
+    }
+    
+    if (artist.lastfm_name) {
+        links.push({
+            icon: 'tabler:music',
+            label: 'Last.fm',
+            url: `https://www.last.fm/music/${encodeURIComponent(artist.lastfm_name)}`,
+            id: artist.lastfm_name
+        });
+    }
+    
+    if (metadata.allmusic_url) {
+        links.push({
+            icon: 'tabler:disc',
+            label: 'AllMusic',
+            url: metadata.allmusic_url,
+            id: 'View Profile'
+        });
+    }
+    
+    // Social media links
+    if (artist.website_url) {
+        links.push({
+            icon: 'tabler:world',
+            label: 'Website',
+            url: artist.website_url,
+            id: 'Official Site'
+        });
+    }
+    
+    if (artist.youtube_url) {
+        links.push({
+            icon: 'tabler:brand-youtube',
+            label: 'YouTube',
+            url: artist.youtube_url,
+            id: 'Channel'
+        });
+    }
+    
+    if (artist.twitter_url) {
+        links.push({
+            icon: 'tabler:brand-twitter',
+            label: 'Twitter',
+            url: artist.twitter_url,
+            id: '@Profile'
+        });
+    }
+    
+    if (artist.facebook_url) {
+        links.push({
+            icon: 'tabler:brand-facebook',
+            label: 'Facebook',
+            url: artist.facebook_url,
+            id: 'Page'
+        });
+    }
+    
+    if (artist.instagram_url) {
+        links.push({
+            icon: 'tabler:brand-instagram',
+            label: 'Instagram',
+            url: artist.instagram_url,
+            id: '@Profile'
+        });
+    }
+    
+    if (links.length > 0) {
+        const linksHtml = `
+            <div class="external-links-grid">
+                ${links.map(link => `
+                    <a href="${link.url}" target="_blank" class="external-link">
+                        <iconify-icon icon="${link.icon}"></iconify-icon>
+                        <div>
+                            <div style="font-weight: 500;">${link.label}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">${link.id}</div>
+                        </div>
+                    </a>
+                `).join('')}
+            </div>
+        `;
+        document.getElementById('externalLinksContent').innerHTML = linksHtml;
+    } else {
+        document.getElementById('externalLinksContent').innerHTML = '<div class="loading-placeholder">No external links available</div>';
+    }
+    
+    document.getElementById('externalLinksQuality').className = 'data-quality-badge ' + calculateSectionQuality('external', artist, metadata);
+    document.getElementById('externalLinksQuality').textContent = getQualityLabel(calculateSectionQuality('external', artist, metadata));
+}
+
+function renderBiography(artist, metadata) {
+    const bio = artist.overview || artist.biography || metadata.biography;
+    
+    if (bio) {
+        const isLong = bio.length > 500;
+        const shortBio = isLong ? bio.substring(0, 500) + '...' : bio;
+        
+        const biographyHtml = `
+            <div class="biography-text" id="biographyText">
+                ${isLong ? shortBio : bio}
+            </div>
+            ${isLong ? `
+                <button class="biography-toggle" onclick="toggleBiography()">
+                    <span id="biographyToggleText">Read More</span>
+                </button>
+                <div class="biography-full" id="biographyFull" style="display: none;">
+                    ${bio}
+                </div>
+            ` : ''}
+        `;
+        document.getElementById('biographyContent').innerHTML = biographyHtml;
+    } else {
+        document.getElementById('biographyContent').innerHTML = '<div class="loading-placeholder">No biography available</div>';
+    }
+    
+    document.getElementById('biographyQuality').className = 'data-quality-badge ' + (bio ? 'good' : 'none');
+    document.getElementById('biographyQuality').textContent = bio ? 'Good' : 'None';
+}
+
+function renderStatistics(artist) {
     const statsHtml = `
         <div class="stat-item">
             <span class="stat-value">${artist.statistics.total_videos}</span>
@@ -1936,167 +3203,515 @@ function renderOverviewTab(artist) {
         </div>
     `;
     document.getElementById('artistStats').innerHTML = statsHtml;
+}
+
+function renderRecentActivity(artist) {
+    const activityItems = [];
     
-    // Metadata - Enhanced display of all available artist information
-    let metadataHtml = `
-        <div class="metadata-item">
-            <span class="metadata-label">Added:</span>
-            <span class="metadata-value">${new Date(artist.created_at).toLocaleDateString()}</span>
-        </div>
-        <div class="metadata-item">
-            <span class="metadata-label">Updated:</span>
-            <span class="metadata-value">${new Date(artist.updated_at).toLocaleDateString()}</span>
-        </div>
-    `;
-
-    // Basic information
-    if (artist.source) {
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">Source:</span>
-                <span class="metadata-value">${artist.source}</span>
-            </div>
-        `;
-    }
-
     if (artist.last_discovery) {
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">Last Discovery:</span>
-                <span class="metadata-value">${new Date(artist.last_discovery).toLocaleDateString()}</span>
-            </div>
-        `;
+        activityItems.push({
+            type: 'Discovery',
+            description: 'Last video discovery',
+            time: new Date(artist.last_discovery).toLocaleDateString()
+        });
     }
-
-    // Extended information from artist metadata or IMVDb metadata
+    
+    if (artist.updated_at) {
+        activityItems.push({
+            type: 'Update',
+            description: 'Artist information updated',
+            time: new Date(artist.updated_at).toLocaleDateString()
+        });
+    }
+    
     const metadata = artist.imvdb_metadata || {};
-    
-    if (artist.formed_year || metadata.formed_year) {
-        const formedYear = artist.formed_year || metadata.formed_year;
-        let yearText = formedYear.toString();
-        if (artist.disbanded_year || metadata.disbanded_year) {
-            const disbandedYear = artist.disbanded_year || metadata.disbanded_year;
-            yearText += ` - ${disbandedYear}`;
-        }
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">Active Years:</span>
-                <span class="metadata-value">${yearText}</span>
-            </div>
-        `;
-    }
-
-    if (artist.origin_country || metadata.origin_country) {
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">Origin:</span>
-                <span class="metadata-value">${artist.origin_country || metadata.origin_country}</span>
-            </div>
-        `;
-    }
-
-    if ((artist.genres && artist.genres.length > 0) || (metadata.genres && metadata.genres.length > 0)) {
-        const genres = artist.genres || metadata.genres;
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">Genres:</span>
-                <span class="metadata-value">${Array.isArray(genres) ? genres.join(', ') : genres}</span>
-            </div>
-        `;
-    }
-
-    if (artist.labels || metadata.labels) {
-        const labels = artist.labels || metadata.labels;
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">Labels:</span>
-                <span class="metadata-value">${Array.isArray(labels) ? labels.join(', ') : labels}</span>
-            </div>
-        `;
-    }
-
-    if (artist.members || metadata.members) {
-        metadataHtml += `
-            <div class="metadata-item full-width">
-                <span class="metadata-label">Members:</span>
-                <span class="metadata-value">${artist.members || metadata.members}</span>
-            </div>
-        `;
-    }
-
-    // External links
-    const links = [];
-    if (artist.website_url) links.push(`<a href="${artist.website_url}" target="_blank" title="Official Website">🌐</a>`);
-    if (artist.spotify_url) links.push(`<a href="${artist.spotify_url}" target="_blank" title="Spotify">🎵</a>`);
-    if (artist.youtube_url) links.push(`<a href="${artist.youtube_url}" target="_blank" title="YouTube">📺</a>`);
-    if (artist.apple_music_url) links.push(`<a href="${artist.apple_music_url}" target="_blank" title="Apple Music">🍎</a>`);
-    if (artist.twitter_url) links.push(`<a href="${artist.twitter_url}" target="_blank" title="Twitter/X">🐦</a>`);
-    if (artist.facebook_url) links.push(`<a href="${artist.facebook_url}" target="_blank" title="Facebook">📘</a>`);
-    if (artist.instagram_url) links.push(`<a href="${artist.instagram_url}" target="_blank" title="Instagram">📷</a>`);
-    
-    if (links.length > 0) {
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">Links:</span>
-                <span class="metadata-value external-links">${links.join(' ')}</span>
-            </div>
-        `;
-    }
-
-    // IMVDb and external IDs
-    if (artist.imvdb_id) {
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">IMVDb ID:</span>
-                <span class="metadata-value">
-                    <a href="https://imvdb.com/artist/${artist.imvdb_id}" target="_blank">${artist.imvdb_id}</a>
-                </span>
-            </div>
-        `;
-    }
-
-    if (artist.spotify_id) {
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">Spotify ID:</span>
-                <span class="metadata-value">${artist.spotify_id}</span>
-            </div>
-        `;
-    }
-
-    if (artist.lastfm_name) {
-        metadataHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">Last.fm:</span>
-                <span class="metadata-value">
-                    <a href="https://www.last.fm/music/${encodeURIComponent(artist.lastfm_name)}" target="_blank">${artist.lastfm_name}</a>
-                </span>
-            </div>
-        `;
-    }
-
-    // Biography/Overview
-    if (artist.overview || artist.biography || metadata.bio) {
-        const bio = artist.overview || artist.biography || metadata.bio;
-        metadataHtml += `
-            <div class="metadata-item full-width">
-                <span class="metadata-label">Biography:</span>
-                <span class="metadata-value biography">${bio.length > 300 ? bio.substring(0, 300) + '...' : bio}</span>
-            </div>
-        `;
+    if (metadata.enrichment_date) {
+        activityItems.push({
+            type: 'Enrichment',
+            description: 'Metadata enriched from external sources',
+            time: new Date(metadata.enrichment_date).toLocaleDateString()
+        });
     }
     
-    document.getElementById('artistMetadata').innerHTML = metadataHtml;
+    const activityHtml = activityItems.length > 0 ? 
+        activityItems.map(item => `
+            <div class="activity-item">
+                <span class="activity-type">${item.type}</span>
+                <span class="activity-description">${item.description}</span>
+                <span class="activity-time">${item.time}</span>
+            </div>
+        `).join('') :
+        '<div class="loading-placeholder">No recent activity</div>';
     
-    // Recent Activity (placeholder for now)
-    const activityHtml = `
-        <div class="activity-item">
-            <span class="activity-type">Discovery</span>
-            <span class="activity-description">Last video discovery</span>
-            <span class="activity-time">${artist.last_discovery ? new Date(artist.last_discovery).toLocaleDateString() : 'Never'}</span>
+    document.getElementById('recentActivity').innerHTML = activityHtml;
+}
+
+// Helper functions
+function createMetadataItem(label, value, fullWidth = false) {
+    if (!value) return '';
+    return `
+        <div class="metadata-item ${fullWidth ? 'full-width' : ''}">
+            <span class="metadata-label">${label}:</span>
+            <span class="metadata-value">${value}</span>
         </div>
     `;
-    document.getElementById('recentActivity').innerHTML = activityHtml;
+}
+
+function createTagList(items) {
+    if (!Array.isArray(items)) return items;
+    return `<div class="metadata-tags">${items.map(item => `<span class="metadata-tag">${item}</span>`).join('')}</div>`;
+}
+
+function calculateDataCompleteness(artist) {
+    const metadata = artist.imvdb_metadata || {};
+    let score = 0;
+    let total = 0;
+    
+    // Basic fields (40% weight)
+    const basicFields = ['name', 'created_at'];
+    basicFields.forEach(field => {
+        total += 4;
+        if (artist[field]) score += 4;
+    });
+    
+    // Extended fields (30% weight)
+    const extendedFields = ['formed_year', 'origin_country', 'genres', 'imvdb_id'];
+    extendedFields.forEach(field => {
+        total += 3;
+        if (artist[field] || metadata[field]) score += 3;
+    });
+    
+    // Rich metadata (30% weight)
+    const richFields = ['biography', 'members', 'moods', 'themes', 'similar_artists'];
+    richFields.forEach(field => {
+        total += 3;
+        if (artist[field] || metadata[field]) score += 3;
+    });
+    
+    return Math.round((score / total) * 100);
+}
+
+function calculateSectionQuality(section, artist, metadata) {
+    switch (section) {
+        case 'basic':
+            const basicScore = [
+                artist.formed_year || metadata.formed_year,
+                artist.origin_country || metadata.origin_country,
+                artist.members || metadata.members,
+                artist.source
+            ].filter(Boolean).length;
+            return basicScore >= 3 ? 'excellent' : basicScore >= 2 ? 'good' : basicScore >= 1 ? 'fair' : 'none';
+            
+        case 'musical':
+            const musicalScore = [
+                artist.genres || metadata.genres,
+                metadata.moods,
+                metadata.themes,
+                metadata.similar_artists,
+                artist.labels || metadata.labels
+            ].filter(x => x && (Array.isArray(x) ? x.length > 0 : true)).length;
+            return musicalScore >= 4 ? 'excellent' : musicalScore >= 3 ? 'good' : musicalScore >= 1 ? 'fair' : 'none';
+            
+        case 'external':
+            const externalScore = [
+                artist.imvdb_id,
+                artist.spotify_id,
+                artist.lastfm_name,
+                metadata.allmusic_url,
+                artist.website_url
+            ].filter(Boolean).length;
+            return externalScore >= 4 ? 'excellent' : externalScore >= 3 ? 'good' : externalScore >= 1 ? 'fair' : 'none';
+            
+        default:
+            return 'none';
+    }
+}
+
+function getQualityLabel(quality) {
+    const labels = {
+        'excellent': 'Excellent',
+        'good': 'Good',
+        'fair': 'Fair',
+        'poor': 'Poor',
+        'none': 'None'
+    };
+    return labels[quality] || 'Unknown';
+}
+
+// Enhanced metadata quality analysis
+function calculateEnhancedMetadataQuality(artist, metadata) {
+    const analysis = {
+        overall: 0,
+        sections: {},
+        missing: [],
+        suggestions: [],
+        strengths: []
+    };
+    
+    // Basic Information Analysis
+    const basicFields = {
+        name: { weight: 10, present: !!artist.name },
+        formed_year: { weight: 8, present: !!(artist.formed_year || metadata.formed_year) },
+        origin_country: { weight: 8, present: !!(artist.origin_country || metadata.origin_country) },
+        members: { weight: 6, present: !!(artist.members || metadata.members) },
+        disbanded_year: { weight: 4, present: !!(artist.disbanded_year || metadata.disbanded_year) },
+        source: { weight: 3, present: !!artist.source }
+    };
+    
+    const basicAnalysis = analyzeFieldGroup('Basic Information', basicFields, analysis);
+    analysis.sections.basic = basicAnalysis;
+    
+    // Musical Information Analysis
+    const musicalFields = {
+        genres: { weight: 10, present: !!((artist.genres && artist.genres.length > 0) || (metadata.genres && metadata.genres.length > 0)) },
+        labels: { weight: 6, present: !!(artist.labels || metadata.labels) },
+        moods: { weight: 4, present: !!(metadata.moods && metadata.moods.length > 0) },
+        themes: { weight: 4, present: !!(metadata.themes && metadata.themes.length > 0) },
+        similar_artists: { weight: 3, present: !!(metadata.similar_artists && metadata.similar_artists.length > 0) },
+        spotify_popularity: { weight: 2, present: !!metadata.spotify_popularity }
+    };
+    
+    const musicalAnalysis = analyzeFieldGroup('Musical Profile', musicalFields, analysis);
+    analysis.sections.musical = musicalAnalysis;
+    
+    // External Links Analysis
+    const externalFields = {
+        imvdb_id: { weight: 10, present: !!artist.imvdb_id },
+        spotify_id: { weight: 8, present: !!artist.spotify_id },
+        lastfm_name: { weight: 6, present: !!artist.lastfm_name },
+        allmusic_url: { weight: 5, present: !!metadata.allmusic_url },
+        website_url: { weight: 4, present: !!artist.website_url },
+        youtube_url: { weight: 3, present: !!artist.youtube_url }
+    };
+    
+    const externalAnalysis = analyzeFieldGroup('External Services', externalFields, analysis);
+    analysis.sections.external = externalAnalysis;
+    
+    // Biography Analysis
+    const biographyFields = {
+        biography: { weight: 10, present: !!(artist.biography || artist.overview || metadata.biography) },
+        description: { weight: 5, present: !!metadata.description }
+    };
+    
+    const biographyAnalysis = analyzeFieldGroup('Biography & Overview', biographyFields, analysis);
+    analysis.sections.biography = biographyAnalysis;
+    
+    // Calculate overall score
+    const totalWeight = Object.values({...basicFields, ...musicalFields, ...externalFields, ...biographyFields})
+        .reduce((sum, field) => sum + field.weight, 0);
+    const achievedWeight = Object.values({...basicFields, ...musicalFields, ...externalFields, ...biographyFields})
+        .filter(field => field.present)
+        .reduce((sum, field) => sum + field.weight, 0);
+        
+    analysis.overall = Math.round((achievedWeight / totalWeight) * 100);
+    
+    // Generate suggestions based on missing high-value fields
+    generateQualityImprovementSuggestions(analysis, artist, metadata);
+    
+    return analysis;
+}
+
+function analyzeFieldGroup(groupName, fields, globalAnalysis) {
+    const totalWeight = Object.values(fields).reduce((sum, field) => sum + field.weight, 0);
+    const achievedWeight = Object.values(fields)
+        .filter(field => field.present)
+        .reduce((sum, field) => sum + field.weight, 0);
+    
+    const percentage = Math.round((achievedWeight / totalWeight) * 100);
+    const quality = percentage >= 80 ? 'excellent' : percentage >= 60 ? 'good' : percentage >= 40 ? 'fair' : percentage >= 20 ? 'poor' : 'none';
+    
+    // Track missing high-value fields
+    Object.entries(fields).forEach(([fieldName, fieldData]) => {
+        if (!fieldData.present && fieldData.weight >= 6) {
+            globalAnalysis.missing.push({
+                field: fieldName,
+                group: groupName,
+                weight: fieldData.weight,
+                impact: fieldData.weight >= 8 ? 'high' : 'medium'
+            });
+        }
+    });
+    
+    // Track strengths
+    Object.entries(fields).forEach(([fieldName, fieldData]) => {
+        if (fieldData.present && fieldData.weight >= 8) {
+            globalAnalysis.strengths.push({
+                field: fieldName,
+                group: groupName,
+                weight: fieldData.weight
+            });
+        }
+    });
+    
+    return {
+        percentage,
+        quality,
+        totalFields: Object.keys(fields).length,
+        presentFields: Object.values(fields).filter(f => f.present).length,
+        missingHighValue: Object.values(fields).filter(f => !f.present && f.weight >= 6).length
+    };
+}
+
+function generateQualityImprovementSuggestions(analysis, artist, metadata) {
+    const suggestions = [];
+    
+    // Priority suggestions based on missing high-impact fields
+    if (!artist.imvdb_id) {
+        suggestions.push({
+            priority: 'high',
+            action: 'Connect to IMVDb',
+            description: 'Link this artist to IMVDb for video discovery and metadata enhancement',
+            benefit: 'Enables automatic video discovery and rich metadata'
+        });
+    }
+    
+    if (!artist.spotify_id) {
+        suggestions.push({
+            priority: 'high',
+            action: 'Connect to Spotify',
+            description: 'Link this artist to Spotify for music metadata and popularity data',
+            benefit: 'Provides genres, popularity metrics, and related artists'
+        });
+    }
+    
+    if (!(artist.genres && artist.genres.length > 0) && !(metadata.genres && metadata.genres.length > 0)) {
+        suggestions.push({
+            priority: 'high',
+            action: 'Add Genre Information',
+            description: 'Specify musical genres for better categorization',
+            benefit: 'Improves discovery and filtering capabilities'
+        });
+    }
+    
+    if (!artist.formed_year && !metadata.formed_year) {
+        suggestions.push({
+            priority: 'medium',
+            action: 'Add Formation Year',
+            description: 'Specify when the artist/band was formed',
+            benefit: 'Enables timeline-based filtering and historical context'
+        });
+    }
+    
+    if (!artist.origin_country && !metadata.origin_country) {
+        suggestions.push({
+            priority: 'medium',
+            action: 'Add Origin Information',
+            description: 'Specify the artist\'s country or region of origin',
+            benefit: 'Enables geographical filtering and cultural context'
+        });
+    }
+    
+    if (!artist.biography && !artist.overview && !metadata.biography) {
+        suggestions.push({
+            priority: 'medium',
+            action: 'Add Biography',
+            description: 'Provide background information about the artist',
+            benefit: 'Enriches user experience with artist context and history'
+        });
+    }
+    
+    analysis.suggestions = suggestions;
+}
+
+function showMetadataQualityAnalysis() {
+    if (!currentArtistData) {
+        showWarning('No artist data available for quality analysis');
+        return;
+    }
+    
+    const analysis = calculateEnhancedMetadataQuality(currentArtistData, currentArtistData.imvdb_metadata || {});
+    displayQualityAnalysisModal(analysis);
+}
+
+function displayQualityAnalysisModal(analysis) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="quality-analysis-modal">
+            <div class="modal-header">
+                <h3><iconify-icon icon="tabler:chart-pie"></iconify-icon> Metadata Quality Analysis</h3>
+                <button type="button" class="close-btn" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="quality-overview">
+                    <div class="overall-score">
+                        <div class="score-circle ${getScoreClass(analysis.overall)}">
+                            <span class="score-value">${analysis.overall}</span>
+                            <span class="score-label">%</span>
+                        </div>
+                        <h4>Overall Quality Score</h4>
+                        <p class="score-description">${getScoreDescription(analysis.overall)}</p>
+                    </div>
+                </div>
+                
+                <div class="section-scores">
+                    ${Object.entries(analysis.sections).map(([section, data]) => `
+                        <div class="section-score">
+                            <div class="section-info">
+                                <h5>${data.group || section}</h5>
+                                <span class="quality-badge ${data.quality}">${getQualityLabel(data.quality)}</span>
+                            </div>
+                            <div class="section-details">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${data.percentage}%"></div>
+                                </div>
+                                <span class="section-stats">${data.presentFields}/${data.totalFields} fields complete</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                ${analysis.suggestions.length > 0 ? `
+                    <div class="improvement-suggestions">
+                        <h4>Improvement Suggestions</h4>
+                        <div class="suggestions-list">
+                            ${analysis.suggestions.map(suggestion => `
+                                <div class="suggestion-item priority-${suggestion.priority}">
+                                    <div class="suggestion-header">
+                                        <span class="suggestion-action">${suggestion.action}</span>
+                                        <span class="priority-badge priority-${suggestion.priority}">${suggestion.priority}</span>
+                                    </div>
+                                    <p class="suggestion-description">${suggestion.description}</p>
+                                    <p class="suggestion-benefit"><strong>Benefit:</strong> ${suggestion.benefit}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${analysis.strengths.length > 0 ? `
+                    <div class="metadata-strengths">
+                        <h4>Data Strengths</h4>
+                        <div class="strengths-list">
+                            ${analysis.strengths.map(strength => `
+                                <span class="strength-badge">${strength.field} (${strength.group})</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function getScoreClass(score) {
+    if (score >= 80) return 'excellent';
+    if (score >= 60) return 'good';
+    if (score >= 40) return 'fair';
+    if (score >= 20) return 'poor';
+    return 'none';
+}
+
+function getScoreDescription(score) {
+    if (score >= 80) return 'Excellent metadata coverage with comprehensive information';
+    if (score >= 60) return 'Good metadata quality with most important fields present';
+    if (score >= 40) return 'Fair metadata coverage with room for improvement';
+    if (score >= 20) return 'Poor metadata quality - consider enriching from external sources';
+    return 'Minimal metadata present - significant enrichment needed';
+}
+
+function toggleBiography() {
+    const biographyText = document.getElementById('biographyText');
+    const biographyFull = document.getElementById('biographyFull');
+    const toggleText = document.getElementById('biographyToggleText');
+    
+    if (biographyFull.style.display === 'none') {
+        biographyText.style.display = 'none';
+        biographyFull.style.display = 'block';
+        toggleText.textContent = 'Read Less';
+    } else {
+        biographyText.style.display = 'block';
+        biographyFull.style.display = 'none';
+        toggleText.textContent = 'Read More';
+    }
+}
+
+// Enhanced metadata display functions
+function createEnhancedMetadataItem(label, value, icon = 'info', source = '', fullWidth = false) {
+    if (!value) return '';
+    return `
+        <div class="metadata-item enhanced ${fullWidth ? 'full-width' : ''}">
+            <div class="metadata-header">
+                <span class="metadata-label">
+                    <iconify-icon icon="tabler:${icon}"></iconify-icon>
+                    ${label}:
+                </span>
+                ${source ? `<span class="metadata-source">${source}</span>` : ''}
+            </div>
+            <div class="metadata-value">${value}</div>
+        </div>
+    `;
+}
+
+function createEnhancedTagList(items, tagType = 'default') {
+    if (!Array.isArray(items)) items = [items];
+    const typeClass = `metadata-tag-${tagType}`;
+    return `<div class="metadata-tags enhanced">${items.map(item => 
+        `<span class="metadata-tag ${typeClass}" title="${item}">${item}</span>`
+    ).join('')}</div>`;
+}
+
+function getSourceIcon(source) {
+    const icons = {
+        'IMVDB': 'database',
+        'AllMusic': 'music',
+        'Spotify': 'brand-spotify',
+        'MusicBrainz': 'vinyl',
+        'Last.fm': 'brand-lastfm',
+        'YouTube': 'brand-youtube',
+        'Manual': 'user'
+    };
+    return icons[source] || 'info';
+}
+
+function getRegionFromCountry(country) {
+    // Simple region mapping - could be expanded
+    const regions = {
+        'United States': 'North America',
+        'Canada': 'North America', 
+        'United Kingdom': 'Europe',
+        'Germany': 'Europe',
+        'France': 'Europe',
+        'Japan': 'Asia',
+        'Australia': 'Oceania'
+    };
+    return regions[country] || 'Unknown';
+}
+
+function getMetadataSource(metadata, field) {
+    // Try to determine source based on metadata structure
+    if (metadata.allmusic_data && metadata.allmusic_data[field]) return 'AllMusic';
+    if (metadata.spotify_data && metadata.spotify_data[field]) return 'Spotify';
+    if (metadata.musicbrainz_data && metadata.musicbrainz_data[field]) return 'MusicBrainz';
+    return 'External Source';
+}
+
+function createPopularityBar(popularity) {
+    const percentage = Math.max(0, Math.min(100, popularity));
+    const color = percentage > 70 ? '#4CAF50' : percentage > 40 ? '#FF9800' : '#f44336';
+    return `
+        <div class="popularity-container">
+            <div class="popularity-bar">
+                <div class="popularity-fill" style="width: ${percentage}%; background: ${color};"></div>
+            </div>
+            <span class="popularity-value">${percentage}/100</span>
+        </div>
+    `;
+}
+
+function updateSectionQuality(elementId, section, artist, metadata) {
+    const quality = calculateSectionQuality(section, artist, metadata);
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.className = 'data-quality-badge ' + quality;
+        element.textContent = getQualityLabel(quality);
+    }
+}
+
+function showMetadataHistory() {
+    // Placeholder for metadata enrichment history
+    showInfo('Metadata enrichment history feature coming soon!');
 }
 
 function renderVideosTab(videos) {
@@ -3865,6 +5480,254 @@ function importFromImvdb() {
     });
 }
 
+function enrichMetadataAllSources() {
+    if (!currentArtistId) {
+        showError('No artist selected');
+        return;
+    }
+    
+    if (!confirm('Enrich metadata from all available sources (IMVDb, AllMusic, MusicBrainz, Last.fm, Spotify)? This will complement existing data with information from multiple providers.')) {
+        return;
+    }
+    
+    const btn = event.target;
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    
+    // Show enhanced progress modal
+    showEnrichmentProgressModal();
+    
+    const sources = ['IMVDb', 'AllMusic', 'MusicBrainz', 'Last.fm', 'Spotify'];
+    let currentStep = 0;
+    
+    // Update progress with each source
+    const progressInterval = setInterval(() => {
+        if (currentStep < sources.length) {
+            updateEnrichmentProgress(currentStep + 1, sources.length, `Processing ${sources[currentStep]}...`);
+            currentStep++;
+        }
+    }, 1000);
+    
+    fetch(`/api/metadata-enrichment/enrich/${currentArtistId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force_refresh: true })
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        hideEnrichmentProgressModal();
+        
+        if (data.success) {
+            const sourcesUsed = data.sources_used || [];
+            const enrichedFields = data.enriched_fields || [];
+            const enrichmentSummary = data.enrichment_summary || {};
+            
+            // Show detailed success message with enrichment summary
+            showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary);
+            
+            // Reload artist data to show updated metadata with animation
+            if (data.metadata_found) {
+                currentArtistData = { ...currentArtistData, ...data.metadata_found };
+                animateMetadataUpdate();
+                loadArtistDetails(); // Refresh the entire view
+            }
+        } else {
+            const errorMessage = data.error || 'Failed to enrich metadata';
+            showEnrichmentError(errorMessage, data.failed_sources || []);
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        hideEnrichmentProgressModal();
+        console.error('Enrichment error:', error);
+        
+        // Provide user-friendly error messages
+        let userMessage = 'Failed to enrich metadata from external sources';
+        let suggestions = [];
+        
+        if (error.message && error.message.includes('404')) {
+            userMessage = 'Artist not found in external metadata sources';
+            suggestions.push('Try checking the artist name spelling');
+            suggestions.push('Verify the artist exists in external databases');
+        } else if (error.message && error.message.includes('network')) {
+            userMessage = 'Network error while fetching metadata';
+            suggestions.push('Check your internet connection');
+            suggestions.push('Try again in a few moments');
+        }
+        
+        showEnrichmentError(userMessage, [], suggestions);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    });
+}
+
+// Enhanced enrichment UI functions
+function showEnrichmentProgressModal() {
+    const modal = document.createElement('div');
+    modal.id = 'enrichmentProgressModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="enrichment-progress-modal">
+            <div class="modal-header">
+                <h3><iconify-icon icon="tabler:sparkles"></iconify-icon> Enriching Metadata</h3>
+            </div>
+            <div class="modal-body">
+                <div class="enrichment-progress-container">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="enrichmentProgressFill"></div>
+                        </div>
+                        <div class="progress-text" id="enrichmentProgressText">Initializing...</div>
+                    </div>
+                    <div class="sources-progress" id="sourcesProgress">
+                        <div class="source-item" data-source="IMVDb"><iconify-icon icon="tabler:database"></iconify-icon> IMVDb</div>
+                        <div class="source-item" data-source="AllMusic"><iconify-icon icon="tabler:music"></iconify-icon> AllMusic</div>
+                        <div class="source-item" data-source="MusicBrainz"><iconify-icon icon="tabler:vinyl"></iconify-icon> MusicBrainz</div>
+                        <div class="source-item" data-source="Last.fm"><iconify-icon icon="tabler:brand-lastfm"></iconify-icon> Last.fm</div>
+                        <div class="source-item" data-source="Spotify"><iconify-icon icon="tabler:brand-spotify"></iconify-icon> Spotify</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function updateEnrichmentProgress(current, total, message) {
+    const progressFill = document.getElementById('enrichmentProgressFill');
+    const progressText = document.getElementById('enrichmentProgressText');
+    const percentage = (current / total) * 100;
+    
+    if (progressFill) progressFill.style.width = percentage + '%';
+    if (progressText) progressText.textContent = message;
+    
+    // Update source indicators
+    const sources = ['IMVDb', 'AllMusic', 'MusicBrainz', 'Last.fm', 'Spotify'];
+    if (current <= sources.length) {
+        const sourceElement = document.querySelector(`[data-source="${sources[current - 1]}"]`);
+        if (sourceElement) {
+            sourceElement.classList.add('processing');
+        }
+    }
+}
+
+function hideEnrichmentProgressModal() {
+    const modal = document.getElementById('enrichmentProgressModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="enrichment-results-modal">
+            <div class="modal-header">
+                <h3><iconify-icon icon="tabler:check-circle"></iconify-icon> Enrichment Complete</h3>
+                <button type="button" class="close-btn" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="enrichment-summary">
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">${sourcesUsed.length}</span>
+                            <span class="stat-label">Sources Used</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">${enrichedFields.length}</span>
+                            <span class="stat-label">Fields Updated</span>
+                        </div>
+                    </div>
+                    <div class="sources-used">
+                        <h4>Sources Successfully Processed:</h4>
+                        <div class="source-badges">
+                            ${sourcesUsed.map(source => `
+                                <span class="source-badge success">
+                                    <iconify-icon icon="tabler:${getSourceIcon(source)}"></iconify-icon>
+                                    ${source}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ${enrichedFields.length > 0 ? `
+                        <div class="enriched-fields">
+                            <h4>Updated Fields:</h4>
+                            <div class="field-badges">
+                                ${enrichedFields.map(field => `<span class="field-badge">${field}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+        modal.remove();
+    }, 5000);
+}
+
+function showEnrichmentError(message, failedSources = [], suggestions = []) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="enrichment-error-modal">
+            <div class="modal-header">
+                <h3><iconify-icon icon="tabler:exclamation-circle"></iconify-icon> Enrichment Failed</h3>
+                <button type="button" class="close-btn" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="error-message">
+                    <p>${message}</p>
+                    ${failedSources.length > 0 ? `
+                        <div class="failed-sources">
+                            <h4>Failed Sources:</h4>
+                            <div class="source-badges">
+                                ${failedSources.map(source => `
+                                    <span class="source-badge error">
+                                        <iconify-icon icon="tabler:${getSourceIcon(source)}"></iconify-icon>
+                                        ${source}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${suggestions.length > 0 ? `
+                        <div class="suggestions">
+                            <h4>Suggestions:</h4>
+                            <ul>
+                                ${suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function animateMetadataUpdate() {
+    // Add a subtle animation to metadata sections to indicate they've been updated
+    const metadataSections = document.querySelectorAll('.metadata-section');
+    metadataSections.forEach(section => {
+        section.style.transition = 'all 0.3s ease';
+        section.style.transform = 'scale(1.02)';
+        section.style.boxShadow = '0 6px 20px rgba(0, 212, 255, 0.2)';
+        
+        setTimeout(() => {
+            section.style.transform = 'scale(1)';
+            section.style.boxShadow = '0 4px 16px rgba(0, 212, 255, 0.1)';
+        }, 300);
+    });
+}
+
 function validateMetadata() {
     const form = document.getElementById('artistSettingsForm');
     const formData = new FormData(form);
@@ -4653,13 +6516,38 @@ function searchImvdbMatches() {
     })
     .catch(error => {
         console.error('Error searching IMVDb matches:', error);
-        let errorMessage = 'Error searching for IMVDb matches';
-        if (error.message) {
-            errorMessage += ': ' + error.message;
+        
+        // Provide user-friendly error messages
+        let userMessage = 'Artist not found on IMVDb';
+        let statusMessage = 'Artist not found on IMVDb';
+        
+        // Check for specific error types
+        if (error.message && error.message.includes('404')) {
+            userMessage = 'Artist not found on IMVDb';
+            statusMessage = 'Artist not found on IMVDb';
+        } else if (error.message && error.message.includes('400')) {
+            userMessage = 'Artist not found on IMVDb';
+            statusMessage = 'Artist not found on IMVDb';
+        } else if (error.message && error.message.includes('401')) {
+            userMessage = 'IMVDb API key not configured. Please check Settings > External Services';
+            statusMessage = 'API key required';
+        } else if (error.message && error.message.includes('403')) {
+            userMessage = 'IMVDb API access denied. Please check your API key';
+            statusMessage = 'API access denied';
+        } else if (error.message && error.message.includes('429')) {
+            userMessage = 'IMVDb rate limit exceeded. Please try again later';
+            statusMessage = 'Rate limit exceeded';
+        } else if (error.message && (error.message.includes('network') || error.message.includes('Connection'))) {
+            userMessage = 'Network error. Please check your internet connection';
+            statusMessage = 'Network error';
+        } else if (error.message && error.message.includes('timeout')) {
+            userMessage = 'Request timed out. Please try again';
+            statusMessage = 'Request timed out';
         }
-        showError(errorMessage);
+        
+        showWarning(userMessage);
         if (statusDiv) {
-            statusDiv.innerHTML = `<div class="error-message">Search failed: ${error.message || 'Unknown error'}</div>`;
+            statusDiv.innerHTML = `<div class="warning-message">${statusMessage}</div>`;
         }
     })
     .finally(() => {

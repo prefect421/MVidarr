@@ -50,6 +50,7 @@ def enrich_artist_metadata(artist_id: int):
                         "success": True,
                         "artist_id": artist_id,
                         "sources_used": result.sources_used,
+                        "enriched_fields": result.enriched_fields,
                         "metadata_found": result.metadata_found,
                         "confidence_score": result.confidence_score,
                         "processing_time": result.processing_time,

@@ -75,12 +75,122 @@ class Migration_001_AddPlaylistThumbnailUrl(Migration):
             raise
 
 
+class Migration_002_AddDynamicPlaylists(Migration):
+    """Add dynamic playlist support to playlists table"""
+
+    def __init__(self):
+        super().__init__("002", "Add dynamic playlist support to playlists table")
+
+    def up(self, connection):
+        """Add dynamic playlist columns"""
+        try:
+            # Add playlist_type column
+            try:
+                connection.execute(
+                    text("ALTER TABLE playlists ADD COLUMN playlist_type VARCHAR(10) DEFAULT 'STATIC' NOT NULL")
+                )
+                logger.info("Added playlist_type column to playlists table")
+            except OperationalError as e:
+                if "Duplicate column name" in str(e) or "already exists" in str(e):
+                    logger.info("Column playlist_type already exists")
+                else:
+                    raise
+
+            # Add filter_criteria column
+            try:
+                connection.execute(
+                    text("ALTER TABLE playlists ADD COLUMN filter_criteria JSON NULL")
+                )
+                logger.info("Added filter_criteria column to playlists table")
+            except OperationalError as e:
+                if "Duplicate column name" in str(e) or "already exists" in str(e):
+                    logger.info("Column filter_criteria already exists")
+                else:
+                    raise
+
+            # Add auto_update column
+            try:
+                connection.execute(
+                    text("ALTER TABLE playlists ADD COLUMN auto_update BOOLEAN DEFAULT 1 NOT NULL")
+                )
+                logger.info("Added auto_update column to playlists table")
+            except OperationalError as e:
+                if "Duplicate column name" in str(e) or "already exists" in str(e):
+                    logger.info("Column auto_update already exists")
+                else:
+                    raise
+
+            # Add last_updated column
+            try:
+                connection.execute(
+                    text("ALTER TABLE playlists ADD COLUMN last_updated DATETIME NULL")
+                )
+                logger.info("Added last_updated column to playlists table")
+            except OperationalError as e:
+                if "Duplicate column name" in str(e) or "already exists" in str(e):
+                    logger.info("Column last_updated already exists")
+                else:
+                    raise
+
+            # Create indexes for better performance
+            indexes = [
+                "CREATE INDEX IF NOT EXISTS idx_playlist_type ON playlists (playlist_type)",
+                "CREATE INDEX IF NOT EXISTS idx_playlist_auto_update ON playlists (auto_update)",
+                "CREATE INDEX IF NOT EXISTS idx_playlist_last_updated ON playlists (last_updated)",
+                "CREATE INDEX IF NOT EXISTS idx_playlist_type_auto ON playlists (playlist_type, auto_update)"
+            ]
+            
+            for index_sql in indexes:
+                try:
+                    connection.execute(text(index_sql))
+                except OperationalError:
+                    # Index might already exist
+                    pass
+
+            logger.info("Dynamic playlist migration completed successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to add dynamic playlist columns: {e}")
+            raise
+
+    def down(self, connection):
+        """Remove dynamic playlist columns"""
+        try:
+            # Drop indexes
+            indexes = [
+                "DROP INDEX IF EXISTS idx_playlist_type_auto",
+                "DROP INDEX IF EXISTS idx_playlist_last_updated", 
+                "DROP INDEX IF EXISTS idx_playlist_auto_update",
+                "DROP INDEX IF EXISTS idx_playlist_type"
+            ]
+            
+            for index_sql in indexes:
+                try:
+                    connection.execute(text(index_sql))
+                except OperationalError:
+                    pass
+
+            # Drop columns
+            columns = ["last_updated", "auto_update", "filter_criteria", "playlist_type"]
+            for column in columns:
+                try:
+                    connection.execute(text(f"ALTER TABLE playlists DROP COLUMN {column}"))
+                except OperationalError:
+                    pass
+
+            logger.info("Dynamic playlist rollback completed")
+        except Exception as e:
+            logger.error(f"Failed to rollback dynamic playlist migration: {e}")
+            raise
+
+
 class MigrationManager:
     """Manages database migrations"""
 
     def __init__(self):
         self.migrations: List[Migration] = [
             Migration_001_AddPlaylistThumbnailUrl(),
+            Migration_002_AddDynamicPlaylists(),
             # Add new migrations here
         ]
 

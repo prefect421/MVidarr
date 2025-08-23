@@ -73,7 +73,7 @@ class EnrichmentResult:
     metadata_found: Dict = field(default_factory=dict)
     metadata_sources: List[str] = field(default_factory=list)
     enriched_fields: List[str] = field(default_factory=list)
-    errors: Optional[List[str]] = None
+    errors: List[str] = field(default_factory=list)
     confidence_score: float = 0.0
     processing_time: float = 0.0
 
@@ -182,6 +182,8 @@ class MetadataEnrichmentService:
                     unified_metadata.followers,
                     unified_metadata.playcount,
                     unified_metadata.listeners,
+                    unified_metadata.genres,  # Include genres as meaningful data
+                    unified_metadata.similar_artists,  # Include similar artists as meaningful data
                 ]
 
                 has_meaningful_data = any(field for field in meaningful_fields)
@@ -199,6 +201,7 @@ class MetadataEnrichmentService:
                 # Build successful result
                 result.success = True
                 result.sources_used = list(metadata_sources.keys())
+                result.enriched_fields = updated_fields  # Fields that were actually updated
                 result.metadata_found = updated_fields
                 result.confidence_score = unified_metadata.confidence
                 result.processing_time = time.time() - start_time
@@ -456,7 +459,7 @@ class MetadataEnrichmentService:
             # Use existing IMVDb integration
             if artist_data.get("imvdb_id"):
                 # Get fresh artist data by ID
-                imvdb_artist_data = self.imvdb.get_artist_by_id(artist_data["imvdb_id"])
+                imvdb_artist_data = self.imvdb.get_artist(artist_data["imvdb_id"])
             else:
                 # Search for artist
                 search_results = self.imvdb.search_artist(artist_data["name"])

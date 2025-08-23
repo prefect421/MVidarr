@@ -44,6 +44,13 @@ class SessionStatus(Enum):
     REVOKED = "REVOKED"
 
 
+class PlaylistType(Enum):
+    """Playlist type enumeration"""
+
+    STATIC = "STATIC"  # Traditional playlists with manually added videos
+    DYNAMIC = "DYNAMIC"  # Auto-updating playlists based on filter criteria
+
+
 class Setting(Base):
     """Application settings"""
 
@@ -615,6 +622,12 @@ class Playlist(Base):
     thumbnail_url = Column(String(500), nullable=True)  # Playlist thumbnail URL
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Dynamic playlist fields
+    playlist_type = Column(SQLEnum(PlaylistType), default=PlaylistType.STATIC, nullable=False)
+    filter_criteria = Column(JSON, nullable=True)  # Filter criteria for dynamic playlists
+    auto_update = Column(Boolean, default=True, nullable=False)  # Whether to auto-update dynamic playlists
+    last_updated = Column(DateTime, nullable=True)  # Last time dynamic playlist was updated
 
     # Relationships
     user = relationship("User", backref="playlists")
@@ -632,9 +645,15 @@ class Playlist(Base):
         Index("idx_playlist_is_public", "is_public"),
         Index("idx_playlist_is_featured", "is_featured"),
         Index("idx_playlist_created_at", "created_at"),
+        Index("idx_playlist_type", "playlist_type"),  # Dynamic playlist queries
+        Index("idx_playlist_auto_update", "auto_update"),  # For update jobs
+        Index("idx_playlist_last_updated", "last_updated"),  # For staleness checks
         Index(
             "idx_playlist_user_public", "user_id", "is_public"
         ),  # Composite for permissions
+        Index(
+            "idx_playlist_type_auto", "playlist_type", "auto_update"
+        ),  # For dynamic update queries
         {"extend_existing": True},
     )
 
@@ -680,6 +699,11 @@ class Playlist(Base):
             "thumbnail_url": self.thumbnail_url,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
+            # Dynamic playlist fields
+            "playlist_type": self.playlist_type.value,
+            "filter_criteria": self.filter_criteria,
+            "auto_update": self.auto_update,
+            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
         }
 
         if include_entries and self.entries:
@@ -687,8 +711,60 @@ class Playlist(Base):
 
         return data
 
+    def is_dynamic(self):
+        """Check if this is a dynamic playlist"""
+        return self.playlist_type == PlaylistType.DYNAMIC
+
+    def is_static(self):
+        """Check if this is a static playlist"""
+        return self.playlist_type == PlaylistType.STATIC
+
+    def needs_update(self, max_age_hours=24):
+        """Check if dynamic playlist needs updating based on age"""
+        if not self.is_dynamic() or not self.auto_update:
+            return False
+        
+        if not self.last_updated:
+            return True  # Never been updated
+        
+        from datetime import datetime, timedelta
+        max_age = timedelta(hours=max_age_hours)
+        return datetime.utcnow() - self.last_updated > max_age
+
+    def validate_filter_criteria(self):
+        """Validate filter criteria structure"""
+        if not self.is_dynamic():
+            return True
+        
+        if not self.filter_criteria:
+            return False
+        
+        # Define allowed filter keys
+        allowed_keys = {
+            'genres', 'artists', 'year_range', 'duration_range', 
+            'quality', 'status', 'keywords', 'directories'
+        }
+        
+        # Check if all keys are allowed
+        for key in self.filter_criteria.keys():
+            if key not in allowed_keys:
+                return False
+        
+        # Validate range structures
+        if 'year_range' in self.filter_criteria:
+            year_range = self.filter_criteria['year_range']
+            if not isinstance(year_range, dict) or 'min' not in year_range or 'max' not in year_range:
+                return False
+        
+        if 'duration_range' in self.filter_criteria:
+            duration_range = self.filter_criteria['duration_range']
+            if not isinstance(duration_range, dict) or 'min' not in duration_range or 'max' not in duration_range:
+                return False
+        
+        return True
+
     def __repr__(self):
-        return f"<Playlist(name='{self.name}', user_id={self.user_id}, videos={self.video_count})>"
+        return f"<Playlist(name='{self.name}', user_id={self.user_id}, type='{self.playlist_type.value}', videos={self.video_count})>"
 
 
 class PlaylistEntry(Base):

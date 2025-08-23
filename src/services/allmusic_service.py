@@ -638,14 +638,14 @@ class AllMusicService:
             enrichment_metadata = {
                 "name": metadata.get("name", artist_name),
                 "confidence": metadata.get("confidence", 0.85),
-                "genres": metadata.get("genres", []) + metadata.get("styles", []),  # Combine genres and styles
+                "genres": (metadata.get("genres") or []) + (metadata.get("styles") or []),  # Combine genres and styles
                 "biography": metadata.get("biography"),
-                "similar_artists": metadata.get("similar_artists", []),
+                "similar_artists": metadata.get("similar_artists") or [],
                 "formed_year": metadata.get("formed_year"),
                 "origin_country": metadata.get("origin"),
-                "members": metadata.get("members", []),
-                "moods": metadata.get("moods", []),
-                "themes": metadata.get("themes", []),
+                "members": metadata.get("members") or [],
+                "moods": metadata.get("moods") or [],
+                "themes": metadata.get("themes") or [],
                 "active_years": metadata.get("active_years"),
                 "discography": metadata.get("discography"),
                 "allmusic_rating": metadata.get("rating"),
