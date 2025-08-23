@@ -53,6 +53,7 @@ class YtDlpService:
         download_subtitles: bool = False,
         subtitle_languages: str = "en,en-US",
         artist_folder_path: str = None,
+        user_id: int = None,
     ) -> Dict:
         """
         Add a music video download using yt-dlp CLI directly
@@ -61,11 +62,12 @@ class YtDlpService:
             artist: Artist name
             title: Video title
             url: Video URL
-            quality: Video quality preference
+            quality: Video quality preference (deprecated - use quality service)
             video_id: Optional video ID for database tracking
             download_subtitles: Whether to download closed captions/subtitles
             subtitle_languages: Language codes for subtitles (e.g., "en,en-US,fr")
             artist_folder_path: Optional custom folder path for the artist (overrides artist name)
+            user_id: Optional user ID for quality preferences
 
         Returns:
             Dictionary with download submission result
@@ -149,6 +151,25 @@ class YtDlpService:
                     "error": f"Directory creation failed: {str(e)}",
                 }
 
+            # Get quality format string from quality service
+            try:
+                from src.services.video_quality_service import video_quality_service
+                
+                # Find artist ID if video_id is provided
+                artist_id = None
+                if video_id:
+                    with get_db() as temp_session:
+                        from src.database.models import Video as VideoModel
+                        video_obj = temp_session.query(VideoModel).filter(VideoModel.id == video_id).first()
+                        if video_obj:
+                            artist_id = video_obj.artist_id
+                
+                quality_format_string = video_quality_service.generate_ytdlp_format_string(user_id, artist_id)
+                logger.info(f"Using quality format string for download {download_id}: {quality_format_string}")
+            except Exception as quality_error:
+                logger.warning(f"Failed to get quality format string, using default: {quality_error}")
+                quality_format_string = "best[height<=2160]/best[height<=1080]/bestvideo[height<=1080]+bestaudio/best"
+
             # Create download entry
             download_id = self._get_next_id()
             download_entry = {
@@ -158,7 +179,9 @@ class YtDlpService:
                 "title": title,
                 "url": url,
                 "quality": quality,
+                "quality_format_string": quality_format_string,
                 "video_id": video_id,
+                "user_id": user_id,
                 "download_subtitles": download_subtitles,
                 "subtitle_languages": subtitle_languages,
                 "status": "pending",
@@ -285,15 +308,13 @@ class YtDlpService:
                 else:
                     logger.info(f"Attempting download {download_id} with no cookies")
 
+                # Use quality format string from video quality service
+                quality_format = download_entry.get("quality_format_string", "best[height<=2160]/best[height<=1080]/bestvideo[height<=1080]+bestaudio/best")
+                
                 cmd = [
                     self.yt_dlp_path,
                     "--format",
-                    # Robust format selection with fallbacks:
-                    # 1. Try best video ≤1080p + best audio
-                    # 2. Fallback to best video ≤720p + best audio
-                    # 3. Fallback to best combined format ≤1080p
-                    # 4. Final fallback to any best available format
-                    "best[height<=1080]/best[height<=720]/bestvideo[height<=1080]+bestaudio/best",
+                    quality_format,
                     "--output",
                     output_template,
                     "--no-playlist",
@@ -303,6 +324,8 @@ class YtDlpService:
                     "--ignore-errors",  # Continue on errors
                     "--no-check-certificate",  # Skip SSL certificate verification if needed
                 ]
+                
+                logger.info(f"Download {download_id} using quality format: {quality_format}")
 
                 # Add cookie source if available
                 if cookie_type == "file":

@@ -453,13 +453,57 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="video_quality_preference">Video Quality:</label>
-                <select id="video_quality_preference" name="video_quality_preference">
+                <label for="default_video_quality">Default Video Quality:</label>
+                <select id="default_video_quality" name="default_video_quality">
                     <option value="best">Best Available</option>
-                    <option value="1080p">1080p</option>
-                    <option value="720p">720p</option>
+                    <option value="2160p">4K (2160p)</option>
+                    <option value="1440p">1440p</option>
+                    <option value="1080p">1080p (Full HD)</option>
+                    <option value="720p">720p (HD)</option>
+                    <option value="480p">480p</option>
+                    <option value="360p">360p</option>
+                    <option value="240p">240p</option>
+                </select>
+                <small class="help-text">Default quality for new downloads</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="max_video_quality">Maximum Quality Limit:</label>
+                <select id="max_video_quality" name="max_video_quality">
+                    <option value="2160p">4K (2160p)</option>
+                    <option value="1440p">1440p</option>
+                    <option value="1080p">1080p (Full HD)</option>
+                    <option value="720p">720p (HD)</option>
                     <option value="480p">480p</option>
                 </select>
+                <small class="help-text">Maximum quality to prevent excessive bandwidth/storage usage</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="min_video_quality">Minimum Quality Limit:</label>
+                <select id="min_video_quality" name="min_video_quality">
+                    <option value="1080p">1080p (Full HD)</option>
+                    <option value="720p">720p (HD)</option>
+                    <option value="480p">480p</option>
+                    <option value="360p">360p</option>
+                    <option value="240p">240p</option>
+                </select>
+                <small class="help-text">Minimum acceptable quality</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="max_video_file_size_gb">Max File Size (GB):</label>
+                <input type="number" id="max_video_file_size_gb" name="max_video_file_size_gb" min="0.5" max="50" step="0.5" value="10">
+                <small class="help-text">Maximum file size limit to prevent storage issues</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="quality_fallback">Allow Quality Fallback:</label>
+                <select id="quality_fallback" name="quality_fallback">
+                    <option value="true">Enabled</option>
+                    <option value="false">Disabled</option>
+                </select>
+                <small class="help-text">Allow downloading lower quality if preferred quality unavailable</small>
             </div>
             <div class="form-group">
                 <label for="download_subtitles">Download Closed Captions:</label>
@@ -507,6 +551,49 @@
             <div class="form-group">
                 <label for="max_concurrent_downloads">Max Concurrent Downloads:</label>
                 <input type="number" id="max_concurrent_downloads" name="max_concurrent_downloads" min="1" max="10">
+            </div>
+        </div>
+        
+        <!-- Video Quality Management Section -->
+        <div class="settings-section">
+            <h2>Video Quality Management</h2>
+            <p class="section-description">Manage and upgrade video quality for your collection</p>
+            
+            <div class="quality-stats-container">
+                <div id="qualityStatistics" class="quality-stats">
+                    <div class="stat-card">
+                        <h3>Collection Quality</h3>
+                        <div class="stat-loading">Loading statistics...</div>
+                    </div>
+                </div>
+                <button onclick="loadQualityStatistics()" class="btn btn-secondary btn-sm">
+                    <iconify-icon icon="mdi:refresh"></iconify-icon> Refresh Stats
+                </button>
+            </div>
+            
+            <div class="quality-actions">
+                <button onclick="showUpgradeableVideos()" class="btn btn-primary">
+                    <iconify-icon icon="mdi:arrow-up-bold"></iconify-icon> Find Upgradeable Videos
+                </button>
+                <button onclick="showQualityAnalysis()" class="btn btn-info">
+                    <iconify-icon icon="mdi:chart-line"></iconify-icon> Quality Analysis
+                </button>
+            </div>
+            
+            <!-- Upgradeable Videos Modal would be shown here -->
+            <div id="upgradeableVideosContainer" style="display: none;">
+                <h4>Videos Available for Quality Upgrade</h4>
+                <div id="upgradeableVideosList" class="upgradeable-videos-list">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <div class="upgrade-actions">
+                    <button onclick="bulkUpgradeSelected()" class="btn btn-success" id="bulkUpgradeBtn" style="display: none;">
+                        <iconify-icon icon="mdi:download-multiple"></iconify-icon> Upgrade Selected Videos
+                    </button>
+                    <button onclick="hideUpgradeableVideos()" class="btn btn-secondary">
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1556,6 +1643,193 @@ function initializeTab() {
         }
     }
 }
+
+// Video Quality Management Functions
+async function loadQualityStatistics() {
+    try {
+        const response = await fetch('/api/video-quality/statistics');
+        const data = await response.json();
+        
+        if (data.success) {
+            displayQualityStatistics(data.statistics);
+        } else {
+            showError('Failed to load quality statistics: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error loading quality statistics:', error);
+        showError('Error loading quality statistics: ' + error.message);
+    }
+}
+
+function displayQualityStatistics(stats) {
+    const container = document.getElementById('qualityStatistics');
+    
+    const qualityDistribution = stats.quality_distribution || {};
+    const totalVideos = stats.total_videos || 0;
+    const upgradeCanditates = stats.upgrade_candidates || 0;
+    const averageFileSize = (stats.average_file_size_mb || 0).toFixed(1);
+    const storageUsage = (stats.storage_usage_gb || 0).toFixed(2);
+    
+    container.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">${totalVideos}</div>
+                <div class="stat-label">Total Videos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${upgradeCanditates}</div>
+                <div class="stat-label">Upgradeable</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${averageFileSize} MB</div>
+                <div class="stat-label">Avg File Size</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${storageUsage} GB</div>
+                <div class="stat-label">Storage Used</div>
+            </div>
+        </div>
+        <div class="quality-breakdown">
+            <h4>Quality Distribution</h4>
+            <div class="quality-bars">
+                ${Object.entries(qualityDistribution).map(([quality, count]) => `
+                    <div class="quality-bar-item">
+                        <span class="quality-label">${quality}</span>
+                        <div class="quality-bar">
+                            <div class="quality-bar-fill" style="width: ${totalVideos ? (count / totalVideos * 100) : 0}%"></div>
+                        </div>
+                        <span class="quality-count">${count}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+async function showUpgradeableVideos() {
+    try {
+        const response = await fetch('/api/video-quality/upgradeable?limit=50');
+        const data = await response.json();
+        
+        if (data.success) {
+            displayUpgradeableVideos(data.upgradeable_videos);
+        } else {
+            showError('Failed to load upgradeable videos: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error loading upgradeable videos:', error);
+        showError('Error loading upgradeable videos: ' + error.message);
+    }
+}
+
+function displayUpgradeableVideos(videos) {
+    const container = document.getElementById('upgradeableVideosContainer');
+    const listContainer = document.getElementById('upgradeableVideosList');
+    
+    if (!videos || videos.length === 0) {
+        listContainer.innerHTML = '<p class="no-results">No videos available for quality upgrade</p>';
+    } else {
+        listContainer.innerHTML = `
+            <div class="upgradeable-header">
+                <label>
+                    <input type="checkbox" id="selectAllUpgrades" onchange="toggleAllUpgrades(this.checked)">
+                    Select All (${videos.length} videos)
+                </label>
+            </div>
+            <div class="upgradeable-list">
+                ${videos.map(video => `
+                    <div class="upgrade-item" data-video-id="${video.video_id}">
+                        <label class="upgrade-checkbox">
+                            <input type="checkbox" class="upgrade-video-check" value="${video.video_id}">
+                            <div class="upgrade-info">
+                                <div class="upgrade-title">${video.title}</div>
+                                <div class="upgrade-artist">${video.artist_name || 'Unknown Artist'}</div>
+                                <div class="upgrade-details">
+                                    <span class="current-quality">${video.current_quality || 'Unknown'}</span>
+                                    →
+                                    <span class="target-quality">${video.recommended_quality}</span>
+                                    <span class="priority-score">Priority: ${video.upgrade_priority}</span>
+                                    ${video.file_size_mb ? `<span class="file-size">${video.file_size_mb.toFixed(1)} MB</span>` : ''}
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        // Show bulk upgrade button if videos are available
+        document.getElementById('bulkUpgradeBtn').style.display = 'block';
+    }
+    
+    container.style.display = 'block';
+}
+
+function hideUpgradeableVideos() {
+    document.getElementById('upgradeableVideosContainer').style.display = 'none';
+}
+
+function toggleAllUpgrades(checked) {
+    const checkboxes = document.querySelectorAll('.upgrade-video-check');
+    checkboxes.forEach(cb => cb.checked = checked);
+}
+
+async function bulkUpgradeSelected() {
+    const selectedIds = Array.from(document.querySelectorAll('.upgrade-video-check:checked'))
+        .map(cb => parseInt(cb.value));
+    
+    if (selectedIds.length === 0) {
+        showError('Please select at least one video to upgrade');
+        return;
+    }
+    
+    if (!confirm(`Upgrade ${selectedIds.length} videos to higher quality? This will queue new downloads.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/video-quality/bulk-upgrade', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                video_ids: selectedIds
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showSuccess(`Successfully queued ${data.successful_upgrades} videos for quality upgrade`);
+            if (data.failed_upgrades > 0) {
+                showWarning(`${data.failed_upgrades} videos failed to upgrade. Check logs for details.`);
+            }
+            hideUpgradeableVideos();
+        } else {
+            showError('Bulk upgrade failed: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error during bulk upgrade:', error);
+        showError('Error during bulk upgrade: ' + error.message);
+    }
+}
+
+function showQualityAnalysis() {
+    // This could be expanded to show detailed quality analysis charts
+    showInfo('Quality analysis feature coming soon! Use the statistics above to monitor your collection quality.');
+}
+
+// Load quality statistics when the downloads tab is opened
+document.addEventListener('DOMContentLoaded', function() {
+    // Load quality statistics when switching to downloads tab
+    const downloadsTabBtn = document.getElementById('tab-downloads');
+    if (downloadsTabBtn) {
+        downloadsTabBtn.addEventListener('click', function() {
+            setTimeout(loadQualityStatistics, 100);
+        });
+    }
+});
 
 // Handle hash changes
 window.addEventListener('hashchange', initializeTab);
@@ -7818,6 +8092,195 @@ input[type="file"]:focus {
     box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
 }
 
+/* Video Quality Management Styles */
+.quality-stats-container {
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-value {
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--primary);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+.quality-breakdown h4 {
+    margin-bottom: 15px;
+    color: var(--text-primary);
+}
+
+.quality-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.quality-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quality-label {
+    min-width: 80px;
+    font-size: 0.9em;
+    color: var(--text-primary);
+}
+
+.quality-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.quality-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.quality-count {
+    min-width: 30px;
+    text-align: right;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+.quality-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.upgradeable-videos-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+}
+
+.upgradeable-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-tertiary);
+}
+
+.upgradeable-header label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.upgrade-item {
+    border-bottom: 1px solid var(--border-secondary);
+}
+
+.upgrade-item:last-child {
+    border-bottom: none;
+}
+
+.upgrade-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.upgrade-checkbox:hover {
+    background: var(--bg-hover);
+}
+
+.upgrade-info {
+    flex: 1;
+}
+
+.upgrade-title {
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.upgrade-artist {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.upgrade-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+.current-quality {
+    color: var(--warning, #ffc107);
+}
+
+.target-quality {
+    color: var(--success, #28a745);
+    font-weight: bold;
+}
+
+.priority-score {
+    color: var(--info, #17a2b8);
+}
+
+.file-size {
+    color: var(--text-secondary);
+}
+
+.upgrade-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border-primary);
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .certificate-actions {
@@ -7833,6 +8296,24 @@ input[type="file"]:focus {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.25rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .quality-actions {
+        flex-direction: column;
+    }
+    
+    .upgrade-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .upgrade-details {
+        flex-direction: column;
+        gap: 5px;
     }
 }
 </style>

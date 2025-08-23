@@ -37,6 +37,7 @@ from src.api.users import users_bp
 from src.api.video_discovery import video_discovery_bp
 from src.api.video_indexing import video_indexing_bp
 from src.api.video_organization import video_org_bp
+from src.api.video_quality import video_quality_bp
 from src.api.videos import videos_bp
 from src.api.vlc_streaming import vlc_bp
 
@@ -67,6 +68,7 @@ def register_routes(app):
     api_bp.register_blueprint(users_bp)
     api_bp.register_blueprint(video_org_bp)
     api_bp.register_blueprint(video_indexing_bp)
+    api_bp.register_blueprint(video_quality_bp)
     api_bp.register_blueprint(metube_bp)
     api_bp.register_blueprint(video_discovery_bp)
     api_bp.register_blueprint(vlc_bp)
