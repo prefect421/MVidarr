@@ -113,7 +113,10 @@ class SpotifyService:
         scopes = [
             "playlist-read-private",
             "playlist-read-collaborative",
+            "playlist-modify-public",
+            "playlist-modify-private",
             "user-library-read",
+            "user-library-modify",
             "user-follow-read",
             "user-top-read",
         ]
@@ -306,6 +309,11 @@ class SpotifyService:
         params = {"q": artist_name, "type": "artist", "limit": limit}
         return self._make_request("search", params)
 
+    def search_tracks(self, query: str, limit: int = 10) -> Dict:
+        """Search for tracks on Spotify"""
+        params = {"q": query, "type": "track", "limit": limit}
+        return self._make_request("search", params)
+
     def get_artist_albums(self, artist_id: str, limit: int = 50) -> Dict:
         """Get albums by an artist"""
         params = {"include_groups": "album,single", "limit": limit, "market": "US"}
@@ -315,6 +323,152 @@ class SpotifyService:
         """Get artist's top tracks"""
         params = {"market": market}
         return self._make_request(f"artists/{artist_id}/top-tracks", params)
+
+    def get_recommendations(
+        self,
+        seed_artists: List[str] = None,
+        seed_tracks: List[str] = None,
+        seed_genres: List[str] = None,
+        limit: int = 20,
+        **kwargs,
+    ) -> Dict:
+        """Get track recommendations based on seeds"""
+        params = {"limit": limit}
+
+        if seed_artists:
+            params["seed_artists"] = ",".join(seed_artists[:5])  # Max 5 seeds
+        if seed_tracks:
+            params["seed_tracks"] = ",".join(seed_tracks[:5])
+        if seed_genres:
+            params["seed_genres"] = ",".join(seed_genres[:5])
+
+        # Add audio feature parameters if provided
+        for key, value in kwargs.items():
+            if key.startswith(("target_", "min_", "max_")):
+                params[key] = value
+
+        return self._make_request("recommendations", params)
+
+    def get_track_audio_features(self, track_id: str) -> Dict:
+        """Get audio features for a track"""
+        return self._make_request(f"audio-features/{track_id}")
+
+    def get_multiple_track_audio_features(self, track_ids: List[str]) -> Dict:
+        """Get audio features for multiple tracks"""
+        if len(track_ids) > 100:
+            track_ids = track_ids[:100]  # Spotify limit
+        params = {"ids": ",".join(track_ids)}
+        return self._make_request("audio-features", params)
+
+    def create_playlist(
+        self,
+        name: str,
+        description: str = "",
+        public: bool = False,
+        collaborative: bool = False,
+    ) -> Dict:
+        """Create a new playlist for the current user"""
+        user_profile = self.get_user_profile()
+        if not user_profile or "id" not in user_profile:
+            raise ValueError("Unable to get user ID for playlist creation")
+
+        user_id = user_profile["id"]
+        endpoint = f"users/{user_id}/playlists"
+
+        data = {
+            "name": name,
+            "description": description,
+            "public": public,
+            "collaborative": collaborative,
+        }
+
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+
+        try:
+            response = requests.post(
+                f"{self.base_url}/{endpoint}", headers=headers, json=data
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Failed to create Spotify playlist: {e}")
+            return {}
+
+    def add_tracks_to_playlist(self, playlist_id: str, track_uris: List[str]) -> Dict:
+        """Add tracks to a playlist"""
+        if len(track_uris) > 100:
+            # Split into batches of 100
+            results = []
+            for i in range(0, len(track_uris), 100):
+                batch = track_uris[i : i + 100]
+                result = self.add_tracks_to_playlist(playlist_id, batch)
+                results.append(result)
+            return {"snapshot_ids": [r.get("snapshot_id") for r in results]}
+
+        endpoint = f"playlists/{playlist_id}/tracks"
+        data = {"uris": track_uris}
+
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+
+        try:
+            response = requests.post(
+                f"{self.base_url}/{endpoint}", headers=headers, json=data
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Failed to add tracks to playlist: {e}")
+            return {}
+
+    def remove_tracks_from_playlist(
+        self, playlist_id: str, track_uris: List[str]
+    ) -> Dict:
+        """Remove tracks from a playlist"""
+        endpoint = f"playlists/{playlist_id}/tracks"
+        data = {"uris": track_uris}
+
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+
+        try:
+            response = requests.delete(
+                f"{self.base_url}/{endpoint}", headers=headers, json=data
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Failed to remove tracks from playlist: {e}")
+            return {}
+
+    def follow_playlist(self, playlist_id: str, public: bool = True) -> bool:
+        """Follow a playlist"""
+        endpoint = f"playlists/{playlist_id}/followers"
+        data = {"public": public}
+
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+
+        try:
+            response = requests.put(
+                f"{self.base_url}/{endpoint}", headers=headers, json=data
+            )
+            response.raise_for_status()
+            return True
+        except requests.RequestException as e:
+            logger.error(f"Failed to follow playlist: {e}")
+            return False
+
+    def unfollow_playlist(self, playlist_id: str) -> bool:
+        """Unfollow a playlist"""
+        endpoint = f"playlists/{playlist_id}/followers"
+
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+
+        try:
+            response = requests.delete(f"{self.base_url}/{endpoint}", headers=headers)
+            response.raise_for_status()
+            return True
+        except requests.RequestException as e:
+            logger.error(f"Failed to unfollow playlist: {e}")
+            return False
 
     def import_playlist_artists(self, playlist_id: str) -> Dict:
         """Import artists from a Spotify playlist and search for music videos"""
