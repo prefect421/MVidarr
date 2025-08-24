@@ -201,7 +201,9 @@ class MetadataEnrichmentService:
                 # Build successful result
                 result.success = True
                 result.sources_used = list(metadata_sources.keys())
-                result.enriched_fields = updated_fields  # Fields that were actually updated
+                result.enriched_fields = (
+                    updated_fields  # Fields that were actually updated
+                )
                 result.metadata_found = updated_fields
                 result.confidence_score = unified_metadata.confidence
                 result.processing_time = time.time() - start_time
@@ -542,7 +544,9 @@ class MetadataEnrichmentService:
             logger.error(f"Error getting MusicBrainz metadata: {e}")
             return None
 
-    async def _get_allmusic_metadata(self, artist_data: Dict) -> Optional[ArtistMetadata]:
+    async def _get_allmusic_metadata(
+        self, artist_data: Dict
+    ) -> Optional[ArtistMetadata]:
         """Get enhanced metadata from AllMusic"""
         try:
             # Get metadata from AllMusic service
@@ -568,7 +572,9 @@ class MetadataEnrichmentService:
             if allmusic_metadata.get("formed_year"):
                 metadata.raw_data["formed_year"] = allmusic_metadata["formed_year"]
             if allmusic_metadata.get("origin_country"):
-                metadata.raw_data["origin_country"] = allmusic_metadata["origin_country"]
+                metadata.raw_data["origin_country"] = allmusic_metadata[
+                    "origin_country"
+                ]
             if allmusic_metadata.get("members"):
                 metadata.raw_data["members"] = allmusic_metadata["members"]
             if allmusic_metadata.get("moods"):
@@ -580,7 +586,9 @@ class MetadataEnrichmentService:
             if allmusic_metadata.get("discography"):
                 metadata.raw_data["discography"] = allmusic_metadata["discography"]
             if allmusic_metadata.get("allmusic_rating"):
-                metadata.raw_data["allmusic_rating"] = allmusic_metadata["allmusic_rating"]
+                metadata.raw_data["allmusic_rating"] = allmusic_metadata[
+                    "allmusic_rating"
+                ]
             if allmusic_metadata.get("allmusic_url"):
                 metadata.raw_data["allmusic_url"] = allmusic_metadata["allmusic_url"]
 

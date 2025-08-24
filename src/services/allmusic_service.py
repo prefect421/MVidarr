@@ -39,9 +39,7 @@ class AllMusicService:
 
         try:
             # AllMusic scraping can be disabled if needed
-            self._enabled = (
-                settings.get("allmusic_enabled", "true").lower() == "true"
-            )
+            self._enabled = settings.get("allmusic_enabled", "true").lower() == "true"
             self._settings_loaded = True
             logger.debug(f"AllMusic settings loaded - enabled: {self._enabled}")
         except Exception as e:
@@ -107,13 +105,15 @@ class AllMusicService:
             if not response:
                 return None
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
 
             # Find artist search results
-            artist_results = soup.find_all('div', class_='artist')
+            artist_results = soup.find_all("div", class_="artist")
             if not artist_results:
                 # Try alternative search result structure
-                artist_results = soup.find_all('li', class_='artist') or soup.find_all('div', class_='search-result')
+                artist_results = soup.find_all("li", class_="artist") or soup.find_all(
+                    "div", class_="search-result"
+                )
 
             if not artist_results:
                 logger.debug(f"No artist results found for: {artist_name}")
@@ -121,14 +121,16 @@ class AllMusicService:
 
             # Get the first (most relevant) result
             first_result = artist_results[0]
-            
+
             # Extract artist link
-            artist_link = first_result.find('a')
+            artist_link = first_result.find("a")
             if not artist_link:
-                logger.debug(f"No artist link found in search results for: {artist_name}")
+                logger.debug(
+                    f"No artist link found in search results for: {artist_name}"
+                )
                 return None
 
-            artist_url = urljoin(self.base_url, artist_link.get('href'))
+            artist_url = urljoin(self.base_url, artist_link.get("href"))
             artist_title = artist_link.get_text(strip=True)
 
             # Calculate confidence based on name similarity
@@ -138,14 +140,16 @@ class AllMusicService:
                 "name": artist_title,
                 "url": artist_url,
                 "confidence": confidence,
-                "source": "allmusic_search"
+                "source": "allmusic_search",
             }
 
         except Exception as e:
             logger.error(f"Error searching AllMusic for artist '{artist_name}': {e}")
             return None
 
-    def get_artist_metadata(self, artist_name: str, artist_url: str = None) -> Optional[Dict]:
+    def get_artist_metadata(
+        self, artist_name: str, artist_url: str = None
+    ) -> Optional[Dict]:
         """
         Get comprehensive metadata for an artist from AllMusic
         """
@@ -161,7 +165,7 @@ class AllMusicService:
             if not response:
                 return None
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
 
             # Extract metadata using various selectors
             metadata = {
@@ -181,13 +185,15 @@ class AllMusicService:
                 "url": artist_url,
                 "confidence": 0.85,  # High confidence for direct page access
                 "source": "allmusic",
-                "extracted_at": datetime.now().isoformat()
+                "extracted_at": datetime.now().isoformat(),
             }
 
             # Filter out None values
             metadata = {k: v for k, v in metadata.items() if v is not None}
 
-            logger.info(f"Successfully extracted AllMusic metadata for: {metadata.get('name', artist_name)}")
+            logger.info(
+                f"Successfully extracted AllMusic metadata for: {metadata.get('name', artist_name)}"
+            )
             return metadata
 
         except Exception as e:
@@ -199,12 +205,12 @@ class AllMusicService:
         try:
             # Try various selectors for artist name
             selectors = [
-                'h1.artist-name',
-                'h1.header-new-title',
+                "h1.artist-name",
+                "h1.header-new-title",
                 'h1[class*="title"]',
-                'h1',
-                '.artist-name',
-                '.header-new-title'
+                "h1",
+                ".artist-name",
+                ".header-new-title",
             ]
 
             for selector in selectors:
@@ -223,12 +229,12 @@ class AllMusicService:
         try:
             # Try various selectors for biography
             selectors = [
-                '.biography',
-                '.bio',
-                '.artist-bio',
-                '.description',
+                ".biography",
+                ".bio",
+                ".artist-bio",
+                ".description",
                 '[class*="bio"]',
-                '[class*="description"]'
+                '[class*="description"]',
             ]
 
             for selector in selectors:
@@ -237,7 +243,7 @@ class AllMusicService:
                     # Clean up the text
                     bio_text = element.get_text(strip=True)
                     # Remove excessive whitespace
-                    bio_text = ' '.join(bio_text.split())
+                    bio_text = " ".join(bio_text.split())
                     return bio_text if len(bio_text) > 50 else None
 
             return None
@@ -250,13 +256,13 @@ class AllMusicService:
         """Extract genres from page"""
         try:
             genres = []
-            
+
             # Try various selectors for genres
             selectors = [
-                '.genre a',
-                '.genres a',
+                ".genre a",
+                ".genres a",
                 '[class*="genre"] a',
-                '.styles .genre a'
+                ".styles .genre a",
             ]
 
             for selector in selectors:
@@ -267,11 +273,11 @@ class AllMusicService:
                         genres.append(genre)
 
             # Also try text-based extraction
-            genre_section = soup.find(string=lambda text: text and 'Genre' in text)
+            genre_section = soup.find(string=lambda text: text and "Genre" in text)
             if genre_section:
                 parent = genre_section.parent
                 if parent:
-                    genre_links = parent.find_all('a')
+                    genre_links = parent.find_all("a")
                     for link in genre_links:
                         genre = link.get_text(strip=True)
                         if genre and genre not in genres:
@@ -287,13 +293,13 @@ class AllMusicService:
         """Extract musical styles from page"""
         try:
             styles = []
-            
+
             # Try various selectors for styles
             selectors = [
-                '.style a',
-                '.styles a',
+                ".style a",
+                ".styles a",
                 '[class*="style"] a',
-                '.genre-styles a'
+                ".genre-styles a",
             ]
 
             for selector in selectors:
@@ -304,11 +310,13 @@ class AllMusicService:
                         styles.append(style)
 
             # Look for "Styles:" section
-            style_section = soup.find(string=lambda text: text and 'Style' in text and ':' in text)
+            style_section = soup.find(
+                string=lambda text: text and "Style" in text and ":" in text
+            )
             if style_section:
                 parent = style_section.parent
                 if parent:
-                    style_links = parent.find_all('a')
+                    style_links = parent.find_all("a")
                     for link in style_links:
                         style = link.get_text(strip=True)
                         if style and style not in styles:
@@ -324,24 +332,20 @@ class AllMusicService:
         """Extract moods from page"""
         try:
             moods = []
-            
+
             # Look for moods section
-            mood_section = soup.find(string=lambda text: text and 'Mood' in text)
+            mood_section = soup.find(string=lambda text: text and "Mood" in text)
             if mood_section:
                 parent = mood_section.parent
                 if parent:
-                    mood_links = parent.find_all('a')
+                    mood_links = parent.find_all("a")
                     for link in mood_links:
                         mood = link.get_text(strip=True)
                         if mood and mood not in moods:
                             moods.append(mood)
 
             # Alternative selectors
-            selectors = [
-                '.mood a',
-                '.moods a',
-                '[class*="mood"] a'
-            ]
+            selectors = [".mood a", ".moods a", '[class*="mood"] a']
 
             for selector in selectors:
                 elements = soup.select(selector)
@@ -360,24 +364,20 @@ class AllMusicService:
         """Extract themes from page"""
         try:
             themes = []
-            
+
             # Look for themes section
-            theme_section = soup.find(string=lambda text: text and 'Theme' in text)
+            theme_section = soup.find(string=lambda text: text and "Theme" in text)
             if theme_section:
                 parent = theme_section.parent
                 if parent:
-                    theme_links = parent.find_all('a')
+                    theme_links = parent.find_all("a")
                     for link in theme_links:
                         theme = link.get_text(strip=True)
                         if theme and theme not in themes:
                             themes.append(theme)
 
             # Alternative selectors
-            selectors = [
-                '.theme a',
-                '.themes a',
-                '[class*="theme"] a'
-            ]
+            selectors = [".theme a", ".themes a", '[class*="theme"] a']
 
             for selector in selectors:
                 elements = soup.select(selector)
@@ -396,12 +396,7 @@ class AllMusicService:
         """Extract active years for the artist"""
         try:
             # Look for years in various formats
-            year_patterns = [
-                'Active:',
-                'Years Active:',
-                'Active Years:',
-                'Career:'
-            ]
+            year_patterns = ["Active:", "Years Active:", "Active Years:", "Career:"]
 
             for pattern in year_patterns:
                 year_section = soup.find(string=lambda text: text and pattern in text)
@@ -412,7 +407,10 @@ class AllMusicService:
                         text = next_element.get_text(strip=True)
                         # Look for year patterns like "1990-2010" or "1990-Present"
                         import re
-                        year_match = re.search(r'(\d{4})[-–](\d{4}|Present|present)', text)
+
+                        year_match = re.search(
+                            r"(\d{4})[-–](\d{4}|Present|present)", text
+                        )
                         if year_match:
                             return year_match.group(0)
 
@@ -426,12 +424,17 @@ class AllMusicService:
         """Extract formation year"""
         try:
             # Look for formation year
-            formed_section = soup.find(string=lambda text: text and 'Formed' in text)
+            formed_section = soup.find(string=lambda text: text and "Formed" in text)
             if formed_section:
                 # Extract year from text
                 import re
-                text = formed_section.get_text() if hasattr(formed_section, 'get_text') else str(formed_section)
-                year_match = re.search(r'(\d{4})', text)
+
+                text = (
+                    formed_section.get_text()
+                    if hasattr(formed_section, "get_text")
+                    else str(formed_section)
+                )
+                year_match = re.search(r"(\d{4})", text)
                 if year_match:
                     return int(year_match.group(1))
 
@@ -439,7 +442,8 @@ class AllMusicService:
             active_years = self._extract_active_years(soup)
             if active_years:
                 import re
-                year_match = re.search(r'(\d{4})', active_years)
+
+                year_match = re.search(r"(\d{4})", active_years)
                 if year_match:
                     return int(year_match.group(1))
 
@@ -453,13 +457,7 @@ class AllMusicService:
         """Extract origin/location information"""
         try:
             # Look for origin information
-            origin_patterns = [
-                'Born:',
-                'Origin:',
-                'From:',
-                'Location:',
-                'Based:'
-            ]
+            origin_patterns = ["Born:", "Origin:", "From:", "Location:", "Based:"]
 
             for pattern in origin_patterns:
                 origin_section = soup.find(string=lambda text: text and pattern in text)
@@ -472,7 +470,9 @@ class AllMusicService:
                         if pattern in text:
                             origin = text.split(pattern, 1)[1].strip()
                             # Clean up common formatting
-                            origin = origin.split(',')[0].strip()  # Take first part if comma-separated
+                            origin = origin.split(",")[
+                                0
+                            ].strip()  # Take first part if comma-separated
                             return origin if len(origin) > 2 else None
 
             return None
@@ -487,11 +487,11 @@ class AllMusicService:
             members = []
 
             # Look for members section
-            member_section = soup.find(string=lambda text: text and 'Member' in text)
+            member_section = soup.find(string=lambda text: text and "Member" in text)
             if member_section:
                 parent = member_section.parent
                 if parent:
-                    member_links = parent.find_all('a')
+                    member_links = parent.find_all("a")
                     for link in member_links:
                         member = link.get_text(strip=True)
                         if member and member not in members:
@@ -509,22 +509,18 @@ class AllMusicService:
             similar = []
 
             # Look for similar artists section
-            similar_section = soup.find(string=lambda text: text and 'Similar' in text)
+            similar_section = soup.find(string=lambda text: text and "Similar" in text)
             if similar_section:
                 parent = similar_section.parent
                 if parent:
-                    similar_links = parent.find_all('a')
+                    similar_links = parent.find_all("a")
                     for link in similar_links:
                         artist = link.get_text(strip=True)
                         if artist and artist not in similar:
                             similar.append(artist)
 
             # Alternative selectors
-            selectors = [
-                '.similar a',
-                '.similar-artists a',
-                '[class*="similar"] a'
-            ]
+            selectors = [".similar a", ".similar-artists a", '[class*="similar"] a']
 
             for selector in selectors:
                 elements = soup.select(selector)
@@ -542,28 +538,30 @@ class AllMusicService:
     def _extract_discography_summary(self, soup: BeautifulSoup) -> Optional[Dict]:
         """Extract basic discography information"""
         try:
-            discography = {
-                "album_count": 0,
-                "popular_albums": []
-            }
+            discography = {"album_count": 0, "popular_albums": []}
 
             # Try to find album count
-            album_section = soup.find(string=lambda text: text and 'Album' in text)
+            album_section = soup.find(string=lambda text: text and "Album" in text)
             if album_section:
                 import re
+
                 text = str(album_section)
-                count_match = re.search(r'(\d+)\s*Album', text)
+                count_match = re.search(r"(\d+)\s*Album", text)
                 if count_match:
                     discography["album_count"] = int(count_match.group(1))
 
             # Try to find popular albums
-            album_links = soup.find_all('a', href=lambda x: x and '/album/' in x)
+            album_links = soup.find_all("a", href=lambda x: x and "/album/" in x)
             for link in album_links[:5]:  # Top 5 albums
                 album_title = link.get_text(strip=True)
                 if album_title:
                     discography["popular_albums"].append(album_title)
 
-            return discography if discography["album_count"] > 0 or discography["popular_albums"] else None
+            return (
+                discography
+                if discography["album_count"] > 0 or discography["popular_albums"]
+                else None
+            )
 
         except Exception as e:
             logger.debug(f"Error extracting discography: {e}")
@@ -574,10 +572,10 @@ class AllMusicService:
         try:
             # Look for rating elements
             rating_selectors = [
-                '.rating',
-                '.allmusic-rating',
+                ".rating",
+                ".allmusic-rating",
                 '[class*="rating"]',
-                '.stars'
+                ".stars",
             ]
 
             for selector in rating_selectors:
@@ -586,7 +584,8 @@ class AllMusicService:
                     # Try to extract numeric rating
                     text = element.get_text(strip=True)
                     import re
-                    rating_match = re.search(r'(\d+(?:\.\d+)?)', text)
+
+                    rating_match = re.search(r"(\d+(?:\.\d+)?)", text)
                     if rating_match:
                         return float(rating_match.group(1))
 
@@ -624,13 +623,15 @@ class AllMusicService:
 
         return len(intersection) / len(union) if union else 0.0
 
-    def get_artist_metadata_for_enrichment(self, artist_name: str, existing_url: str = None) -> Optional[Dict]:
+    def get_artist_metadata_for_enrichment(
+        self, artist_name: str, existing_url: str = None
+    ) -> Optional[Dict]:
         """
         Get metadata specifically formatted for the metadata enrichment service
         """
         try:
             metadata = self.get_artist_metadata(artist_name, existing_url)
-            
+
             if not metadata:
                 return None
 
@@ -638,7 +639,8 @@ class AllMusicService:
             enrichment_metadata = {
                 "name": metadata.get("name", artist_name),
                 "confidence": metadata.get("confidence", 0.85),
-                "genres": (metadata.get("genres") or []) + (metadata.get("styles") or []),  # Combine genres and styles
+                "genres": (metadata.get("genres") or [])
+                + (metadata.get("styles") or []),  # Combine genres and styles
                 "biography": metadata.get("biography"),
                 "similar_artists": metadata.get("similar_artists") or [],
                 "formed_year": metadata.get("formed_year"),
@@ -651,7 +653,7 @@ class AllMusicService:
                 "allmusic_rating": metadata.get("rating"),
                 "allmusic_url": metadata.get("url"),
                 "raw_data": metadata,
-                "source": "allmusic"
+                "source": "allmusic",
             }
 
             return enrichment_metadata

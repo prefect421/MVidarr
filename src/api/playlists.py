@@ -895,6 +895,7 @@ def upload_playlist_thumbnail_file(playlist_id):
 
 # ===== DYNAMIC PLAYLISTS ENDPOINTS (Issue #109) =====
 
+
 @playlists_bp.route("/dynamic", methods=["POST"])
 @monitor_performance("api.playlists.create_dynamic")
 def create_dynamic_playlist():
@@ -903,35 +904,34 @@ def create_dynamic_playlist():
         user = get_current_user_from_session()
         if not user:
             return jsonify({"error": "Authentication required"}), 401
-        
+
         data = request.get_json()
         if not data:
             return jsonify({"error": "Request body required"}), 400
-        
+
         # Validate required fields
-        required_fields = ['name', 'filter_criteria']
+        required_fields = ["name", "filter_criteria"]
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
-        
+
         from src.services.dynamic_playlist_service import dynamic_playlist_service
-        
+
         # Create dynamic playlist
         playlist = dynamic_playlist_service.create_dynamic_playlist(
-            name=data['name'],
-            description=data.get('description'),
+            name=data["name"],
+            description=data.get("description"),
             user_id=user.id,
-            filter_criteria=data['filter_criteria'],
-            is_public=data.get('is_public', False),
-            auto_update=data.get('auto_update', True)
+            filter_criteria=data["filter_criteria"],
+            is_public=data.get("is_public", False),
+            auto_update=data.get("auto_update", True),
         )
-        
+
         logger.info(f"User {user.username} created dynamic playlist '{playlist.name}'")
-        return jsonify({
-            "success": True,
-            "playlist": playlist.to_dict(include_entries=True)
-        })
-    
+        return jsonify(
+            {"success": True, "playlist": playlist.to_dict(include_entries=True)}
+        )
+
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
@@ -947,32 +947,38 @@ def refresh_dynamic_playlist(playlist_id):
         user = get_current_user_from_session()
         if not user:
             return jsonify({"error": "Authentication required"}), 401
-        
+
         with get_db() as session:
-            playlist = session.query(Playlist).filter(Playlist.id == playlist_id).first()
+            playlist = (
+                session.query(Playlist).filter(Playlist.id == playlist_id).first()
+            )
             if not playlist:
                 return jsonify({"error": "Playlist not found"}), 404
-            
+
             if not playlist.can_modify(user):
                 return jsonify({"error": "Permission denied"}), 403
-            
+
             if not playlist.is_dynamic():
                 return jsonify({"error": "Playlist is not dynamic"}), 400
-            
+
             from src.services.dynamic_playlist_service import dynamic_playlist_service
-            
+
             changes_made = dynamic_playlist_service.update_dynamic_playlist(playlist_id)
-            
+
             # Refresh playlist data
             session.refresh(playlist)
-            
-            logger.info(f"User {user.username} refreshed dynamic playlist '{playlist.name}'")
-            return jsonify({
-                "success": True,
-                "changes_made": changes_made,
-                "playlist": playlist.to_dict(include_entries=True)
-            })
-    
+
+            logger.info(
+                f"User {user.username} refreshed dynamic playlist '{playlist.name}'"
+            )
+            return jsonify(
+                {
+                    "success": True,
+                    "changes_made": changes_made,
+                    "playlist": playlist.to_dict(include_entries=True),
+                }
+            )
+
     except Exception as e:
         logger.error(f"Failed to refresh dynamic playlist {playlist_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -986,48 +992,55 @@ def update_playlist_filters(playlist_id):
         user = get_current_user_from_session()
         if not user:
             return jsonify({"error": "Authentication required"}), 401
-        
+
         data = request.get_json()
-        if not data or 'filter_criteria' not in data:
+        if not data or "filter_criteria" not in data:
             return jsonify({"error": "Filter criteria required"}), 400
-        
+
         with get_db() as session:
-            playlist = session.query(Playlist).filter(Playlist.id == playlist_id).first()
+            playlist = (
+                session.query(Playlist).filter(Playlist.id == playlist_id).first()
+            )
             if not playlist:
                 return jsonify({"error": "Playlist not found"}), 404
-            
+
             if not playlist.can_modify(user):
                 return jsonify({"error": "Permission denied"}), 403
-            
+
             if not playlist.is_dynamic():
                 return jsonify({"error": "Playlist is not dynamic"}), 400
-            
+
             # Update filter criteria
-            playlist.filter_criteria = data['filter_criteria']
-            
+            playlist.filter_criteria = data["filter_criteria"]
+
             # Update auto_update setting if provided
-            if 'auto_update' in data:
-                playlist.auto_update = data['auto_update']
-            
+            if "auto_update" in data:
+                playlist.auto_update = data["auto_update"]
+
             # Validate new criteria
             if not playlist.validate_filter_criteria():
                 return jsonify({"error": "Invalid filter criteria"}), 400
-            
+
             session.commit()
-            
+
             # Refresh playlist with new criteria
             from src.services.dynamic_playlist_service import dynamic_playlist_service
+
             changes_made = dynamic_playlist_service.update_dynamic_playlist(playlist_id)
-            
+
             session.refresh(playlist)
-            
-            logger.info(f"User {user.username} updated filters for dynamic playlist '{playlist.name}'")
-            return jsonify({
-                "success": True,
-                "changes_made": changes_made,
-                "playlist": playlist.to_dict(include_entries=True)
-            })
-    
+
+            logger.info(
+                f"User {user.username} updated filters for dynamic playlist '{playlist.name}'"
+            )
+            return jsonify(
+                {
+                    "success": True,
+                    "changes_made": changes_made,
+                    "playlist": playlist.to_dict(include_entries=True),
+                }
+            )
+
     except Exception as e:
         logger.error(f"Failed to update filters for playlist {playlist_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -1041,16 +1054,13 @@ def get_dynamic_playlist_templates():
         user = get_current_user_from_session()
         if not user:
             return jsonify({"error": "Authentication required"}), 401
-        
+
         from src.services.dynamic_playlist_service import dynamic_playlist_service
-        
+
         templates = dynamic_playlist_service.get_dynamic_playlist_templates()
-        
-        return jsonify({
-            "success": True,
-            "templates": templates
-        })
-    
+
+        return jsonify({"success": True, "templates": templates})
+
     except Exception as e:
         logger.error(f"Failed to get dynamic playlist templates: {e}")
         return jsonify({"error": str(e)}), 500
@@ -1064,38 +1074,42 @@ def create_playlist_from_template(template_id):
         user = get_current_user_from_session()
         if not user:
             return jsonify({"error": "Authentication required"}), 401
-        
+
         data = request.get_json() or {}
-        
+
         from src.services.dynamic_playlist_service import dynamic_playlist_service
-        
+
         # Get template
         templates = dynamic_playlist_service.get_dynamic_playlist_templates()
-        template = next((t for t in templates if t['id'] == template_id), None)
-        
+        template = next((t for t in templates if t["id"] == template_id), None)
+
         if not template:
             return jsonify({"error": "Template not found"}), 404
-        
+
         # Create playlist from template
-        playlist_name = data.get('name', template['name'])
-        playlist_description = data.get('description', template['description'])
-        
+        playlist_name = data.get("name", template["name"])
+        playlist_description = data.get("description", template["description"])
+
         playlist = dynamic_playlist_service.create_dynamic_playlist(
             name=playlist_name,
             description=playlist_description,
             user_id=user.id,
-            filter_criteria=template['filter_criteria'],
-            is_public=data.get('is_public', False),
-            auto_update=data.get('auto_update', True)
+            filter_criteria=template["filter_criteria"],
+            is_public=data.get("is_public", False),
+            auto_update=data.get("auto_update", True),
         )
-        
-        logger.info(f"User {user.username} created playlist from template '{template_id}'")
-        return jsonify({
-            "success": True,
-            "playlist": playlist.to_dict(include_entries=True),
-            "template_used": template_id
-        })
-    
+
+        logger.info(
+            f"User {user.username} created playlist from template '{template_id}'"
+        )
+        return jsonify(
+            {
+                "success": True,
+                "playlist": playlist.to_dict(include_entries=True),
+                "template_used": template_id,
+            }
+        )
+
     except Exception as e:
         logger.error(f"Failed to create playlist from template {template_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -1109,25 +1123,21 @@ def preview_dynamic_playlist():
         user = get_current_user_from_session()
         if not user:
             return jsonify({"error": "Authentication required"}), 401
-        
+
         data = request.get_json()
-        if not data or 'filter_criteria' not in data:
+        if not data or "filter_criteria" not in data:
             return jsonify({"error": "Filter criteria required"}), 400
-        
+
         from src.services.dynamic_playlist_service import dynamic_playlist_service
-        
+
         # Get preview
-        limit = data.get('limit', 50)
+        limit = data.get("limit", 50)
         preview = dynamic_playlist_service.preview_filter_criteria(
-            data['filter_criteria'],
-            limit=limit
+            data["filter_criteria"], limit=limit
         )
-        
-        return jsonify({
-            "success": True,
-            "preview": preview
-        })
-    
+
+        return jsonify({"success": True, "preview": preview})
+
     except Exception as e:
         logger.error(f"Failed to preview dynamic playlist: {e}")
         return jsonify({"error": str(e)}), 500
@@ -1141,23 +1151,20 @@ def update_all_dynamic_playlists():
         user = get_current_user_from_session()
         if not user:
             return jsonify({"error": "Authentication required"}), 401
-        
+
         if user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
             return jsonify({"error": "Admin permission required"}), 403
-        
+
         data = request.get_json() or {}
-        max_age_hours = data.get('max_age_hours', 24)
-        
+        max_age_hours = data.get("max_age_hours", 24)
+
         from src.services.dynamic_playlist_service import dynamic_playlist_service
-        
+
         result = dynamic_playlist_service.update_all_dynamic_playlists(max_age_hours)
-        
+
         logger.info(f"Admin {user.username} triggered update of all dynamic playlists")
-        return jsonify({
-            "success": True,
-            "update_result": result
-        })
-    
+        return jsonify({"success": True, "update_result": result})
+
     except Exception as e:
         logger.error(f"Failed to update all dynamic playlists: {e}")
         return jsonify({"error": str(e)}), 500

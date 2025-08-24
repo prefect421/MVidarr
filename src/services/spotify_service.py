@@ -3,14 +3,16 @@ Spotify API integration service for importing playlists and discovering music vi
 """
 
 import base64
+import difflib
 import json
 import os
+import re
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import quote_plus, urlencode
 
 import requests
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, func, or_
 
 from src.database.connection import get_db
 from src.database.models import Artist, Video, VideoStatus
@@ -625,6 +627,294 @@ class SpotifyService:
 
         except Exception as e:
             logger.error(f"Failed to sync followed artists: {e}")
+            raise
+
+    def calculate_metadata_similarity(
+        self, spotify_track: Dict, video_data: Dict
+    ) -> float:
+        """
+        Calculate similarity score between Spotify track and video data
+        Returns score from 0.0 to 1.0 (1.0 = perfect match)
+        """
+        score = 0.0
+        weight_total = 0.0
+
+        # Artist name matching (40% weight)
+        artist_weight = 0.4
+        spotify_artists = [
+            a.get("name", "").lower() for a in spotify_track.get("artists", [])
+        ]
+        video_artist = video_data.get("artist_name", "").lower()
+
+        artist_similarity = 0.0
+        for spotify_artist in spotify_artists:
+            similarity = difflib.SequenceMatcher(
+                None, spotify_artist, video_artist
+            ).ratio()
+            artist_similarity = max(artist_similarity, similarity)
+
+        score += artist_similarity * artist_weight
+        weight_total += artist_weight
+
+        # Track name matching (35% weight)
+        track_weight = 0.35
+        spotify_track_name = spotify_track.get("name", "").lower()
+        video_title = video_data.get("song_title", video_data.get("title", "")).lower()
+
+        # Clean up common variations
+        spotify_clean = re.sub(
+            r"\s*\(.*\)\s*|\s*\[.*\]\s*|-\s*remaster.*", "", spotify_track_name
+        )
+        video_clean = re.sub(
+            r"\s*\(.*\)\s*|\s*\[.*\]\s*|-\s*remaster.*", "", video_title
+        )
+
+        track_similarity = difflib.SequenceMatcher(
+            None, spotify_clean, video_clean
+        ).ratio()
+        score += track_similarity * track_weight
+        weight_total += track_weight
+
+        # Album matching (15% weight) - if available
+        album_weight = 0.15
+        spotify_album = spotify_track.get("album", {}).get("name", "").lower()
+        video_album = video_data.get("album", "").lower()
+
+        if spotify_album and video_album:
+            album_similarity = difflib.SequenceMatcher(
+                None, spotify_album, video_album
+            ).ratio()
+            score += album_similarity * album_weight
+            weight_total += album_weight
+
+        # Duration matching (10% weight) - if available
+        duration_weight = 0.1
+        spotify_duration = (
+            spotify_track.get("duration_ms", 0) / 1000
+        )  # Convert to seconds
+        video_duration = video_data.get("duration", 0)
+
+        if spotify_duration > 0 and video_duration > 0:
+            # Calculate duration similarity (closer durations get higher scores)
+            duration_diff = abs(spotify_duration - video_duration)
+            max_acceptable_diff = max(
+                30, spotify_duration * 0.1
+            )  # 10% or 30 seconds max
+
+            if duration_diff <= max_acceptable_diff:
+                duration_similarity = 1.0 - (duration_diff / max_acceptable_diff)
+                score += duration_similarity * duration_weight
+                weight_total += duration_weight
+
+        # Normalize score by total weights applied
+        if weight_total > 0:
+            score = score / weight_total
+
+        return min(1.0, max(0.0, score))
+
+    def enhanced_metadata_matching(
+        self,
+        spotify_tracks: List[Dict],
+        video_results: List[Dict],
+        threshold: float = 0.85,
+    ) -> List[Tuple[Dict, Dict, float]]:
+        """
+        Perform enhanced metadata matching between Spotify tracks and video results
+        Returns list of (spotify_track, video_data, similarity_score) tuples above threshold
+        """
+        matches = []
+
+        for spotify_track in spotify_tracks:
+            best_matches = []
+
+            for video_data in video_results:
+                similarity = self.calculate_metadata_similarity(
+                    spotify_track, video_data
+                )
+
+                if similarity >= threshold:
+                    best_matches.append((spotify_track, video_data, similarity))
+
+            # Sort by similarity score (highest first) and take best matches
+            best_matches.sort(key=lambda x: x[2], reverse=True)
+            matches.extend(best_matches[:3])  # Top 3 matches per track
+
+        return matches
+
+    def discover_music_videos_from_listening_history(
+        self, time_range: str = "medium_term", limit: int = 50
+    ) -> Dict:
+        """
+        Discover music videos based on user's Spotify listening history
+        """
+        logger.info(
+            f"Discovering music videos from Spotify listening history (timerange: {time_range})"
+        )
+
+        try:
+            # Get user's top tracks
+            top_tracks_data = self.get_user_top_tracks(time_range, limit)
+            top_tracks = top_tracks_data.get("items", [])
+
+            results = {
+                "discovered_videos": [],
+                "total_tracks_analyzed": len(top_tracks),
+                "high_confidence_matches": 0,
+                "potential_matches": 0,
+                "errors": [],
+            }
+
+            with get_db() as session:
+                for track in top_tracks:
+                    try:
+                        artists = track.get("artists", [])
+                        if not artists:
+                            continue
+
+                        primary_artist = artists[0].get("name")
+
+                        # Search for videos by this artist
+                        imvdb_results = imvdb_service.search_artist(primary_artist)
+
+                        if imvdb_results and imvdb_results.get("results"):
+                            # Get artist videos
+                            imvdb_artist = imvdb_results["results"][0]
+                            video_results = imvdb_service.get_artist_videos(
+                                imvdb_artist.get("id")
+                            )
+
+                            if video_results and video_results.get("results"):
+                                # Enhanced metadata matching
+                                matches = self.enhanced_metadata_matching(
+                                    [track], video_results["results"], threshold=0.85
+                                )
+
+                                for spotify_track, video_data, similarity in matches:
+                                    # Check if video already exists
+                                    existing_video = (
+                                        session.query(Video)
+                                        .filter(Video.imvdb_id == video_data.get("id"))
+                                        .first()
+                                    )
+
+                                    if existing_video:
+                                        continue
+
+                                    # Categorize match confidence
+                                    if similarity >= 0.9:
+                                        results["high_confidence_matches"] += 1
+                                        confidence = "high"
+                                    else:
+                                        results["potential_matches"] += 1
+                                        confidence = "medium"
+
+                                    results["discovered_videos"].append(
+                                        {
+                                            "video_data": video_data,
+                                            "spotify_track": spotify_track,
+                                            "similarity_score": similarity,
+                                            "confidence": confidence,
+                                            "artist": primary_artist,
+                                            "recommendation_source": "listening_history",
+                                        }
+                                    )
+
+                    except Exception as e:
+                        error_msg = f"Error processing track {track.get('name', 'Unknown')}: {str(e)}"
+                        logger.warning(error_msg)
+                        results["errors"].append(error_msg)
+
+            # Sort by similarity score
+            results["discovered_videos"].sort(
+                key=lambda x: x["similarity_score"], reverse=True
+            )
+
+            logger.info(
+                f"Discovery completed: {results['high_confidence_matches']} high confidence, {results['potential_matches']} potential matches"
+            )
+            return results
+
+        except Exception as e:
+            logger.error(f"Failed to discover music videos from listening history: {e}")
+            raise
+
+    def get_new_releases_for_followed_artists(
+        self, country: str = "US", limit: int = 50
+    ) -> Dict:
+        """
+        Get new releases from followed artists for notifications
+        """
+        logger.info("Getting new releases for followed artists")
+
+        try:
+            # Get followed artists
+            followed_data = self.get_followed_artists(limit)
+            artists = followed_data.get("artists", {}).get("items", [])
+
+            results = {
+                "new_releases": [],
+                "artists_checked": len(artists),
+                "total_releases": 0,
+                "errors": [],
+            }
+
+            # Check for new releases from each artist
+            for artist in artists:
+                try:
+                    artist_id = artist.get("id")
+                    artist_name = artist.get("name")
+
+                    # Get recent albums/singles (last 90 days)
+                    albums_data = self.get_artist_albums(artist_id, limit=20)
+
+                    for album in albums_data.get("items", []):
+                        release_date = album.get("release_date")
+                        if not release_date:
+                            continue
+
+                        # Check if release is within last 90 days
+                        try:
+                            release_datetime = datetime.strptime(
+                                release_date, "%Y-%m-%d"
+                            )
+                            days_ago = (datetime.now() - release_datetime).days
+
+                            if days_ago <= 90:
+                                results["new_releases"].append(
+                                    {
+                                        "artist_name": artist_name,
+                                        "artist_id": artist_id,
+                                        "album_name": album.get("name"),
+                                        "album_id": album.get("id"),
+                                        "release_date": release_date,
+                                        "album_type": album.get("album_type"),
+                                        "total_tracks": album.get("total_tracks", 0),
+                                        "days_since_release": days_ago,
+                                        "images": album.get("images", []),
+                                        "external_urls": album.get("external_urls", {}),
+                                    }
+                                )
+                                results["total_releases"] += 1
+
+                        except ValueError:
+                            # Handle partial dates or invalid formats
+                            continue
+
+                except Exception as e:
+                    error_msg = f"Error checking releases for {artist_name}: {str(e)}"
+                    logger.warning(error_msg)
+                    results["errors"].append(error_msg)
+
+            # Sort by release date (newest first)
+            results["new_releases"].sort(key=lambda x: x["release_date"], reverse=True)
+
+            logger.info(
+                f"Found {results['total_releases']} new releases from {results['artists_checked']} artists"
+            )
+            return results
+
+        except Exception as e:
+            logger.error(f"Failed to get new releases: {e}")
             raise
 
 

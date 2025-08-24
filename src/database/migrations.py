@@ -87,7 +87,9 @@ class Migration_002_AddDynamicPlaylists(Migration):
             # Add playlist_type column
             try:
                 connection.execute(
-                    text("ALTER TABLE playlists ADD COLUMN playlist_type VARCHAR(10) DEFAULT 'STATIC' NOT NULL")
+                    text(
+                        "ALTER TABLE playlists ADD COLUMN playlist_type VARCHAR(10) DEFAULT 'STATIC' NOT NULL"
+                    )
                 )
                 logger.info("Added playlist_type column to playlists table")
             except OperationalError as e:
@@ -111,7 +113,9 @@ class Migration_002_AddDynamicPlaylists(Migration):
             # Add auto_update column
             try:
                 connection.execute(
-                    text("ALTER TABLE playlists ADD COLUMN auto_update BOOLEAN DEFAULT 1 NOT NULL")
+                    text(
+                        "ALTER TABLE playlists ADD COLUMN auto_update BOOLEAN DEFAULT 1 NOT NULL"
+                    )
                 )
                 logger.info("Added auto_update column to playlists table")
             except OperationalError as e:
@@ -137,9 +141,9 @@ class Migration_002_AddDynamicPlaylists(Migration):
                 "CREATE INDEX IF NOT EXISTS idx_playlist_type ON playlists (playlist_type)",
                 "CREATE INDEX IF NOT EXISTS idx_playlist_auto_update ON playlists (auto_update)",
                 "CREATE INDEX IF NOT EXISTS idx_playlist_last_updated ON playlists (last_updated)",
-                "CREATE INDEX IF NOT EXISTS idx_playlist_type_auto ON playlists (playlist_type, auto_update)"
+                "CREATE INDEX IF NOT EXISTS idx_playlist_type_auto ON playlists (playlist_type, auto_update)",
             ]
-            
+
             for index_sql in indexes:
                 try:
                     connection.execute(text(index_sql))
@@ -159,11 +163,11 @@ class Migration_002_AddDynamicPlaylists(Migration):
             # Drop indexes
             indexes = [
                 "DROP INDEX IF EXISTS idx_playlist_type_auto",
-                "DROP INDEX IF EXISTS idx_playlist_last_updated", 
+                "DROP INDEX IF EXISTS idx_playlist_last_updated",
                 "DROP INDEX IF EXISTS idx_playlist_auto_update",
-                "DROP INDEX IF EXISTS idx_playlist_type"
+                "DROP INDEX IF EXISTS idx_playlist_type",
             ]
-            
+
             for index_sql in indexes:
                 try:
                     connection.execute(text(index_sql))
@@ -171,10 +175,17 @@ class Migration_002_AddDynamicPlaylists(Migration):
                     pass
 
             # Drop columns
-            columns = ["last_updated", "auto_update", "filter_criteria", "playlist_type"]
+            columns = [
+                "last_updated",
+                "auto_update",
+                "filter_criteria",
+                "playlist_type",
+            ]
             for column in columns:
                 try:
-                    connection.execute(text(f"ALTER TABLE playlists DROP COLUMN {column}"))
+                    connection.execute(
+                        text(f"ALTER TABLE playlists DROP COLUMN {column}")
+                    )
                 except OperationalError:
                     pass
 

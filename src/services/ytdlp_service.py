@@ -154,20 +154,33 @@ class YtDlpService:
             # Get quality format string from quality service
             try:
                 from src.services.video_quality_service import video_quality_service
-                
+
                 # Find artist ID if video_id is provided
                 artist_id = None
                 if video_id:
                     with get_db() as temp_session:
                         from src.database.models import Video as VideoModel
-                        video_obj = temp_session.query(VideoModel).filter(VideoModel.id == video_id).first()
+
+                        video_obj = (
+                            temp_session.query(VideoModel)
+                            .filter(VideoModel.id == video_id)
+                            .first()
+                        )
                         if video_obj:
                             artist_id = video_obj.artist_id
-                
-                quality_format_string = video_quality_service.generate_ytdlp_format_string(user_id, artist_id)
-                logger.info(f"Using quality format string for download {download_id}: {quality_format_string}")
+
+                quality_format_string = (
+                    video_quality_service.generate_ytdlp_format_string(
+                        user_id, artist_id
+                    )
+                )
+                logger.info(
+                    f"Using quality format string for download {download_id}: {quality_format_string}"
+                )
             except Exception as quality_error:
-                logger.warning(f"Failed to get quality format string, using default: {quality_error}")
+                logger.warning(
+                    f"Failed to get quality format string, using default: {quality_error}"
+                )
                 quality_format_string = "best[height<=2160]/best[height<=1080]/bestvideo[height<=1080]+bestaudio/best"
 
             # Create download entry
@@ -309,8 +322,11 @@ class YtDlpService:
                     logger.info(f"Attempting download {download_id} with no cookies")
 
                 # Use quality format string from video quality service
-                quality_format = download_entry.get("quality_format_string", "best[height<=2160]/best[height<=1080]/bestvideo[height<=1080]+bestaudio/best")
-                
+                quality_format = download_entry.get(
+                    "quality_format_string",
+                    "best[height<=2160]/best[height<=1080]/bestvideo[height<=1080]+bestaudio/best",
+                )
+
                 cmd = [
                     self.yt_dlp_path,
                     "--format",
@@ -324,8 +340,10 @@ class YtDlpService:
                     "--ignore-errors",  # Continue on errors
                     "--no-check-certificate",  # Skip SSL certificate verification if needed
                 ]
-                
-                logger.info(f"Download {download_id} using quality format: {quality_format}")
+
+                logger.info(
+                    f"Download {download_id} using quality format: {quality_format}"
+                )
 
                 # Add cookie source if available
                 if cookie_type == "file":

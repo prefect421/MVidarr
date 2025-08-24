@@ -622,12 +622,20 @@ class Playlist(Base):
     thumbnail_url = Column(String(500), nullable=True)  # Playlist thumbnail URL
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Dynamic playlist fields
-    playlist_type = Column(SQLEnum(PlaylistType), default=PlaylistType.STATIC, nullable=False)
-    filter_criteria = Column(JSON, nullable=True)  # Filter criteria for dynamic playlists
-    auto_update = Column(Boolean, default=True, nullable=False)  # Whether to auto-update dynamic playlists
-    last_updated = Column(DateTime, nullable=True)  # Last time dynamic playlist was updated
+    playlist_type = Column(
+        SQLEnum(PlaylistType), default=PlaylistType.STATIC, nullable=False
+    )
+    filter_criteria = Column(
+        JSON, nullable=True
+    )  # Filter criteria for dynamic playlists
+    auto_update = Column(
+        Boolean, default=True, nullable=False
+    )  # Whether to auto-update dynamic playlists
+    last_updated = Column(
+        DateTime, nullable=True
+    )  # Last time dynamic playlist was updated
 
     # Relationships
     user = relationship("User", backref="playlists")
@@ -703,7 +711,9 @@ class Playlist(Base):
             "playlist_type": self.playlist_type.value,
             "filter_criteria": self.filter_criteria,
             "auto_update": self.auto_update,
-            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
+            "last_updated": (
+                self.last_updated.isoformat() if self.last_updated else None
+            ),
         }
 
         if include_entries and self.entries:
@@ -723,11 +733,12 @@ class Playlist(Base):
         """Check if dynamic playlist needs updating based on age"""
         if not self.is_dynamic() or not self.auto_update:
             return False
-        
+
         if not self.last_updated:
             return True  # Never been updated
-        
+
         from datetime import datetime, timedelta
+
         max_age = timedelta(hours=max_age_hours)
         return datetime.utcnow() - self.last_updated > max_age
 
@@ -735,32 +746,46 @@ class Playlist(Base):
         """Validate filter criteria structure"""
         if not self.is_dynamic():
             return True
-        
+
         if not self.filter_criteria:
             return False
-        
+
         # Define allowed filter keys
         allowed_keys = {
-            'genres', 'artists', 'year_range', 'duration_range', 
-            'quality', 'status', 'keywords', 'directories'
+            "genres",
+            "artists",
+            "year_range",
+            "duration_range",
+            "quality",
+            "status",
+            "keywords",
+            "directories",
         }
-        
+
         # Check if all keys are allowed
         for key in self.filter_criteria.keys():
             if key not in allowed_keys:
                 return False
-        
+
         # Validate range structures
-        if 'year_range' in self.filter_criteria:
-            year_range = self.filter_criteria['year_range']
-            if not isinstance(year_range, dict) or 'min' not in year_range or 'max' not in year_range:
+        if "year_range" in self.filter_criteria:
+            year_range = self.filter_criteria["year_range"]
+            if (
+                not isinstance(year_range, dict)
+                or "min" not in year_range
+                or "max" not in year_range
+            ):
                 return False
-        
-        if 'duration_range' in self.filter_criteria:
-            duration_range = self.filter_criteria['duration_range']
-            if not isinstance(duration_range, dict) or 'min' not in duration_range or 'max' not in duration_range:
+
+        if "duration_range" in self.filter_criteria:
+            duration_range = self.filter_criteria["duration_range"]
+            if (
+                not isinstance(duration_range, dict)
+                or "min" not in duration_range
+                or "max" not in duration_range
+            ):
                 return False
-        
+
         return True
 
     def __repr__(self):
