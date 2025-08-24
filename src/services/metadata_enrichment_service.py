@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from src.database.connection import get_db
 from src.database.models import Artist, Video
 from src.services.allmusic_service import allmusic_service
+from src.services.discogs_service import discogs_service
 from src.services.imvdb_service import imvdb_service
 from src.services.lastfm_service import lastfm_service
 from src.services.musicbrainz_service import musicbrainz_service
@@ -45,6 +46,7 @@ class ArtistMetadata:
     lastfm_name: Optional[str] = None
     imvdb_id: Optional[str] = None
     mbid: Optional[str] = None  # MusicBrainz ID
+    discogs_id: Optional[str] = None  # Discogs ID
 
     # Rich metadata
     biography: Optional[str] = None
@@ -87,6 +89,7 @@ class MetadataEnrichmentService:
         self.imvdb = imvdb_service
         self.musicbrainz = musicbrainz_service
         self.allmusic = allmusic_service
+        self.discogs = discogs_service
 
         # Configuration
         self.min_confidence_threshold = 0.7
@@ -99,6 +102,7 @@ class MetadataEnrichmentService:
             "spotify": 0.9,
             "musicbrainz": 0.95,  # Most authoritative source
             "allmusic": 0.88,  # High quality music metadata
+            "discogs": 0.87,  # Comprehensive release information
             "imvdb": 0.85,
             "lastfm": 0.8,
             "wikipedia": 0.7,
@@ -314,6 +318,24 @@ class MetadataEnrichmentService:
         else:
             logger.debug(
                 f"AllMusic integration disabled, skipping for {artist_data['name']}"
+            )
+
+        # Discogs metadata - check if enabled
+        if hasattr(self.discogs, "enabled") and self.discogs.enabled:
+            try:
+                discogs_metadata = await self._get_discogs_metadata(artist_data)
+                if discogs_metadata:
+                    metadata_sources["discogs"] = discogs_metadata
+                    logger.debug(
+                        f"Successfully gathered Discogs metadata for {artist_data['name']}"
+                    )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to get Discogs metadata for {artist_data['name']}: {e}"
+                )
+        else:
+            logger.debug(
+                f"Discogs integration disabled, skipping for {artist_data['name']}"
             )
 
         logger.info(
@@ -598,6 +620,61 @@ class MetadataEnrichmentService:
             logger.error(f"Error getting AllMusic metadata: {e}")
             return None
 
+    async def _get_discogs_metadata(
+        self, artist_data: Dict
+    ) -> Optional[ArtistMetadata]:
+        """Get enhanced metadata from Discogs"""
+        try:
+            # Get metadata from Discogs service
+            discogs_metadata = self.discogs.get_artist_metadata_for_enrichment(
+                artist_data["name"]
+            )
+
+            if not discogs_metadata:
+                return None
+
+            # Convert to ArtistMetadata format
+            metadata = ArtistMetadata(
+                name=discogs_metadata.get("name", artist_data["name"]),
+                source="discogs",
+                confidence=discogs_metadata.get("confidence", 0.87),
+                genres=discogs_metadata.get("genres", []),
+                biography=discogs_metadata.get("biography"),
+                images=discogs_metadata.get("images", []),
+                discogs_id=discogs_metadata.get("discogs_id"),
+                raw_data=discogs_metadata.get("raw_data", {}),
+            )
+
+            # Add Discogs-specific fields if available
+            if discogs_metadata.get("discogs_id"):
+                metadata.raw_data["discogs_id"] = discogs_metadata["discogs_id"]
+            if discogs_metadata.get("real_name"):
+                metadata.raw_data["real_name"] = discogs_metadata["real_name"]
+            if discogs_metadata.get("aliases"):
+                metadata.raw_data["aliases"] = discogs_metadata["aliases"]
+            if discogs_metadata.get("name_variations"):
+                metadata.raw_data["name_variations"] = discogs_metadata[
+                    "name_variations"
+                ]
+            if discogs_metadata.get("external_urls"):
+                metadata.raw_data["external_urls"] = discogs_metadata["external_urls"]
+            if discogs_metadata.get("members"):
+                metadata.raw_data["members"] = discogs_metadata["members"]
+            if discogs_metadata.get("groups"):
+                metadata.raw_data["groups"] = discogs_metadata["groups"]
+            if discogs_metadata.get("data_quality"):
+                metadata.raw_data["data_quality"] = discogs_metadata["data_quality"]
+            if discogs_metadata.get("discography_count"):
+                metadata.raw_data["discography_count"] = discogs_metadata[
+                    "discography_count"
+                ]
+
+            return metadata
+
+        except Exception as e:
+            logger.error(f"Error getting Discogs metadata: {e}")
+            return None
+
     def _aggregate_metadata(
         self, metadata_sources: Dict[str, ArtistMetadata]
     ) -> ArtistMetadata:
@@ -724,6 +801,8 @@ class MetadataEnrichmentService:
                 unified.imvdb_id = metadata.imvdb_id
             if metadata.mbid and not unified.mbid:
                 unified.mbid = metadata.mbid
+            if metadata.discogs_id and not unified.discogs_id:
+                unified.discogs_id = metadata.discogs_id
 
     def _calculate_overall_confidence(
         self, sources: Dict[str, ArtistMetadata]
@@ -768,6 +847,14 @@ class MetadataEnrichmentService:
             if artist.imvdb_metadata.get("musicbrainz_id") != metadata.mbid:
                 artist.imvdb_metadata["musicbrainz_id"] = metadata.mbid
                 updated_fields["musicbrainz_id"] = metadata.mbid
+
+        # Store Discogs ID in metadata JSON since there's no dedicated field
+        if metadata.discogs_id:
+            if not artist.imvdb_metadata:
+                artist.imvdb_metadata = {}
+            if artist.imvdb_metadata.get("discogs_id") != metadata.discogs_id:
+                artist.imvdb_metadata["discogs_id"] = metadata.discogs_id
+                updated_fields["discogs_id"] = metadata.discogs_id
 
         # Update genres
         if metadata.genres:
@@ -1428,6 +1515,14 @@ class MetadataEnrichmentService:
                     .count()
                 )
 
+                # Count artists with Discogs IDs (stored in JSON metadata)
+                with_discogs = (
+                    session.query(Artist)
+                    .filter(Artist.imvdb_metadata.isnot(None))
+                    .filter(Artist.imvdb_metadata.contains('"discogs_id"'))
+                    .count()
+                )
+
                 # Artists with enriched metadata
                 enriched_artists = (
                     session.query(Artist)
@@ -1458,8 +1553,14 @@ class MetadataEnrichmentService:
 
                 # Calculate overall external ID coverage (average across all services)
                 overall_coverage = (
-                    (with_spotify + with_lastfm + with_imvdb + with_musicbrainz)
-                    / (total_artists * 4)  # Updated to include MusicBrainz
+                    (
+                        with_spotify
+                        + with_lastfm
+                        + with_imvdb
+                        + with_musicbrainz
+                        + with_discogs
+                    )
+                    / (total_artists * 5)  # Updated to include MusicBrainz and Discogs
                     * 100
                     if total_artists > 0
                     else 0
@@ -1496,6 +1597,11 @@ class MetadataEnrichmentService:
                             if total_artists > 0
                             else 0
                         ),
+                        "discogs": (
+                            round(with_discogs / total_artists * 100, 1)
+                            if total_artists > 0
+                            else 0
+                        ),
                     },
                     "external_id_counts": {
                         "linked": {
@@ -1503,12 +1609,14 @@ class MetadataEnrichmentService:
                             "lastfm": with_lastfm,
                             "imvdb": with_imvdb,
                             "musicbrainz": with_musicbrainz,
+                            "discogs": with_discogs,
                         },
                         "missing": {
                             "spotify": missing_spotify,
                             "lastfm": missing_lastfm,
                             "imvdb": missing_imvdb,
                             "musicbrainz": total_artists - with_musicbrainz,
+                            "discogs": total_artists - with_discogs,
                         },
                     },
                     "data_quality": {
