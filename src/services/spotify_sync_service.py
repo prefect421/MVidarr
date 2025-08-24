@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from sqlalchemy import and_, or_
 
 from src.database.connection import get_db
-from src.database.models import Artist, Playlist, PlaylistVideo, Video
+from src.database.models import Artist, Playlist, PlaylistEntry, Video
 from src.services.imvdb_service import imvdb_service
 from src.services.settings_service import settings
 from src.services.spotify_service import spotify_service
@@ -377,9 +377,9 @@ class SpotifySyncService:
 
         # Get current playlist videos
         current_video_ids = set(
-            pv.video_id
-            for pv in session.query(PlaylistVideo)
-            .filter(PlaylistVideo.playlist_id == mvidarr_playlist.id)
+            pe.video_id
+            for pe in session.query(PlaylistEntry)
+            .filter(PlaylistEntry.playlist_id == mvidarr_playlist.id)
             .all()
         )
 
@@ -387,13 +387,13 @@ class SpotifySyncService:
         new_videos_added = 0
         for video in videos:
             if video.id not in current_video_ids:
-                playlist_video = PlaylistVideo(
+                playlist_entry = PlaylistEntry(
                     playlist_id=mvidarr_playlist.id,
                     video_id=video.id,
                     position=len(current_video_ids) + new_videos_added + 1,
                     added_at=datetime.now(),
                 )
-                session.add(playlist_video)
+                session.add(playlist_entry)
                 current_video_ids.add(video.id)
                 new_videos_added += 1
 
@@ -443,23 +443,23 @@ class SpotifySyncService:
                     return result
 
                 # Get playlist videos
-                playlist_videos = (
-                    session.query(PlaylistVideo)
+                playlist_entries = (
+                    session.query(PlaylistEntry)
                     .join(Video)
                     .join(Artist)
-                    .filter(PlaylistVideo.playlist_id == mvidarr_playlist_id)
-                    .order_by(PlaylistVideo.position)
+                    .filter(PlaylistEntry.playlist_id == mvidarr_playlist_id)
+                    .order_by(PlaylistEntry.position)
                     .all()
                 )
 
-                if not playlist_videos:
+                if not playlist_entries:
                     result.errors.append("No videos in MVidarr playlist")
                     return result
 
                 # Find matching Spotify tracks
                 spotify_track_uris = []
-                for pv in playlist_videos:
-                    video = pv.video
+                for pe in playlist_entries:
+                    video = pe.video
                     artist = video.artist
 
                     # Search for track on Spotify
