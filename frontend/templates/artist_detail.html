@@ -11,6 +11,143 @@
     gap: 5px;
 }
 
+/* Metadata Services Styles */
+.metadata-services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.metadata-service-card {
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-secondary, #444);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.metadata-service-card:hover {
+    border-color: var(--text-accent, #00d4ff);
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.1);
+}
+
+.service-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-quaternary, #2a2a2a);
+    border-bottom: 1px solid var(--border-secondary, #444);
+}
+
+.service-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.service-icon {
+    font-size: 1.5rem;
+    color: var(--text-accent, #00d4ff);
+}
+
+.service-details h5 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.service-description {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #ccc);
+}
+
+.service-status .status-indicator {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-indicator.unknown {
+    background: var(--bg-muted, #666);
+    color: white;
+}
+
+.status-indicator.linked {
+    background: var(--success-bg, #4CAF50);
+    color: white;
+}
+
+.status-indicator.error {
+    background: var(--danger-bg, #f44336);
+    color: white;
+}
+
+.service-controls {
+    padding: 1rem;
+}
+
+.service-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-secondary, #444);
+    border-radius: 4px;
+    background: var(--bg-primary, #1a1a1a);
+    color: var(--text-primary, #fff);
+    margin-bottom: 0.75rem;
+}
+
+.service-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.service-metadata {
+    padding: 1rem;
+    background: var(--bg-primary, #1a1a1a);
+    border-top: 1px solid var(--border-secondary, #444);
+}
+
+.metadata-bulk-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-secondary, #444);
+    flex-wrap: wrap;
+}
+
+.metadata-bulk-actions .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .metadata-services-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metadata-bulk-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .service-actions {
+        flex-wrap: wrap;
+    }
+}
+
 .input-group input {
     flex: 1;
 }
@@ -2338,6 +2475,203 @@
                                 <input type="url" id="instagramUrlSetting" name="instagram_url">
                                 <small class="field-hint">Official Instagram account</small>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Metadata Services Section -->
+                    <div class="settings-section">
+                        <h4 class="section-title">
+                            <iconify-icon icon="tabler:database"></iconify-icon>
+                            Metadata Services
+                        </h4>
+                        <p class="section-description">Link and enrich this artist's metadata from external sources</p>
+                        
+                        <div class="metadata-services-grid">
+                            <!-- MusicBrainz -->
+                            <div class="metadata-service-card">
+                                <div class="service-header">
+                                    <div class="service-info">
+                                        <iconify-icon icon="simple-icons:musicbrainz" class="service-icon"></iconify-icon>
+                                        <div class="service-details">
+                                            <h5>MusicBrainz</h5>
+                                            <span class="service-description">Comprehensive music database</span>
+                                        </div>
+                                    </div>
+                                    <div class="service-status" id="musicbrainzStatus">
+                                        <span class="status-indicator unknown">Not Linked</span>
+                                    </div>
+                                </div>
+                                <div class="service-controls">
+                                    <input type="text" id="musicbrainzId" name="musicbrainz_id" 
+                                           placeholder="Enter MusicBrainz Artist ID" class="service-input">
+                                    <div class="service-actions">
+                                        <button type="button" onclick="searchMusicBrainz()" class="btn btn-secondary btn-sm">
+                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
+                                        </button>
+                                        <button type="button" onclick="enrichFromMusicBrainz()" class="btn btn-info btn-sm">
+                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
+                                        </button>
+                                        <button type="button" onclick="clearMusicBrainzId()" class="btn btn-outline btn-sm">
+                                            <iconify-icon icon="tabler:x"></iconify-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="service-metadata" id="musicbrainzMetadata" style="display: none;">
+                                    <!-- Metadata preview will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Last.fm -->
+                            <div class="metadata-service-card">
+                                <div class="service-header">
+                                    <div class="service-info">
+                                        <iconify-icon icon="simple-icons:lastdotfm" class="service-icon"></iconify-icon>
+                                        <div class="service-details">
+                                            <h5>Last.fm</h5>
+                                            <span class="service-description">Music recommendations & tags</span>
+                                        </div>
+                                    </div>
+                                    <div class="service-status" id="lastfmStatus">
+                                        <span class="status-indicator unknown">Not Linked</span>
+                                    </div>
+                                </div>
+                                <div class="service-controls">
+                                    <input type="text" id="lastfmArtist" name="lastfm_artist" 
+                                           placeholder="Enter Last.fm artist name" class="service-input">
+                                    <div class="service-actions">
+                                        <button type="button" onclick="searchLastfm()" class="btn btn-secondary btn-sm">
+                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
+                                        </button>
+                                        <button type="button" onclick="enrichFromLastfm()" class="btn btn-info btn-sm">
+                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
+                                        </button>
+                                        <button type="button" onclick="clearLastfmArtist()" class="btn btn-outline btn-sm">
+                                            <iconify-icon icon="tabler:x"></iconify-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="service-metadata" id="lastfmMetadata" style="display: none;">
+                                    <!-- Metadata preview will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Discogs -->
+                            <div class="metadata-service-card">
+                                <div class="service-header">
+                                    <div class="service-info">
+                                        <iconify-icon icon="simple-icons:discogs" class="service-icon"></iconify-icon>
+                                        <div class="service-details">
+                                            <h5>Discogs</h5>
+                                            <span class="service-description">Vinyl & music marketplace</span>
+                                        </div>
+                                    </div>
+                                    <div class="service-status" id="discogsStatus">
+                                        <span class="status-indicator unknown">Not Linked</span>
+                                    </div>
+                                </div>
+                                <div class="service-controls">
+                                    <input type="text" id="discogsId" name="discogs_id" 
+                                           placeholder="Enter Discogs Artist ID" class="service-input">
+                                    <div class="service-actions">
+                                        <button type="button" onclick="searchDiscogs()" class="btn btn-secondary btn-sm">
+                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
+                                        </button>
+                                        <button type="button" onclick="enrichFromDiscogs()" class="btn btn-info btn-sm">
+                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
+                                        </button>
+                                        <button type="button" onclick="clearDiscogsId()" class="btn btn-outline btn-sm">
+                                            <iconify-icon icon="tabler:x"></iconify-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="service-metadata" id="discogsMetadata" style="display: none;">
+                                    <!-- Metadata preview will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- AllMusic -->
+                            <div class="metadata-service-card">
+                                <div class="service-header">
+                                    <div class="service-info">
+                                        <iconify-icon icon="tabler:music" class="service-icon"></iconify-icon>
+                                        <div class="service-details">
+                                            <h5>AllMusic</h5>
+                                            <span class="service-description">Music guide & reviews</span>
+                                        </div>
+                                    </div>
+                                    <div class="service-status" id="allmusicStatus">
+                                        <span class="status-indicator unknown">Not Linked</span>
+                                    </div>
+                                </div>
+                                <div class="service-controls">
+                                    <input type="text" id="allmusicId" name="allmusic_id" 
+                                           placeholder="Enter AllMusic Artist ID" class="service-input">
+                                    <div class="service-actions">
+                                        <button type="button" onclick="searchAllMusic()" class="btn btn-secondary btn-sm">
+                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
+                                        </button>
+                                        <button type="button" onclick="enrichFromAllMusic()" class="btn btn-info btn-sm">
+                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
+                                        </button>
+                                        <button type="button" onclick="clearAllMusicId()" class="btn btn-outline btn-sm">
+                                            <iconify-icon icon="tabler:x"></iconify-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="service-metadata" id="allmusicMetadata" style="display: none;">
+                                    <!-- Metadata preview will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Wikipedia -->
+                            <div class="metadata-service-card">
+                                <div class="service-header">
+                                    <div class="service-info">
+                                        <iconify-icon icon="simple-icons:wikipedia" class="service-icon"></iconify-icon>
+                                        <div class="service-details">
+                                            <h5>Wikipedia</h5>
+                                            <span class="service-description">Encyclopedia & biographies</span>
+                                        </div>
+                                    </div>
+                                    <div class="service-status" id="wikipediaStatus">
+                                        <span class="status-indicator unknown">Not Linked</span>
+                                    </div>
+                                </div>
+                                <div class="service-controls">
+                                    <input type="text" id="wikipediaTitle" name="wikipedia_title" 
+                                           placeholder="Enter Wikipedia page title" class="service-input">
+                                    <div class="service-actions">
+                                        <button type="button" onclick="searchWikipedia()" class="btn btn-secondary btn-sm">
+                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
+                                        </button>
+                                        <button type="button" onclick="enrichFromWikipedia()" class="btn btn-info btn-sm">
+                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
+                                        </button>
+                                        <button type="button" onclick="clearWikipediaTitle()" class="btn btn-outline btn-sm">
+                                            <iconify-icon icon="tabler:x"></iconify-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="service-metadata" id="wikipediaMetadata" style="display: none;">
+                                    <!-- Metadata preview will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bulk Metadata Actions -->
+                        <div class="metadata-bulk-actions">
+                            <button type="button" onclick="enrichFromAllServices()" class="btn btn-success">
+                                <iconify-icon icon="tabler:sparkles"></iconify-icon>
+                                Enrich from All Services
+                            </button>
+                            <button type="button" onclick="autoMatchServices()" class="btn btn-primary">
+                                <iconify-icon icon="tabler:wand"></iconify-icon>
+                                Auto-Match Services
+                            </button>
+                            <button type="button" onclick="viewEnrichmentHistory()" class="btn btn-secondary">
+                                <iconify-icon icon="tabler:history"></iconify-icon>
+                                View History
+                            </button>
                         </div>
                     </div>
                     

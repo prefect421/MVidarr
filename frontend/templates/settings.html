@@ -2,6 +2,117 @@
 
 {% block title %}Settings - MVidarr{% endblock %}
 
+{% block head %}
+<style>
+/* Metadata Providers Grid Styles */
+.metadata-providers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.metadata-provider {
+    background: var(--bg-tertiary, #333);
+    border: 1px solid var(--border-secondary, #444);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.provider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-quaternary, #2a2a2a);
+    border-bottom: 1px solid var(--border-secondary, #444);
+}
+
+.provider-header h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.provider-config {
+    padding: 1rem;
+    display: none; /* Hidden by default, shown when enabled */
+}
+
+.metadata-provider input[type="checkbox"]:checked ~ .provider-config,
+.metadata-provider input[type="checkbox"]:checked + .provider-header + .provider-config {
+    display: block;
+}
+
+.form-group.inline {
+    margin: 0;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--text-accent, #00d4ff);
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+.metadata-enrichment-settings {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-secondary, #444);
+}
+
+.metadata-enrichment-settings h3 {
+    margin-bottom: 1rem;
+    color: var(--text-primary, #fff);
+}
+
+.section-description {
+    color: var(--text-secondary, #ccc);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <!-- Page Header -->
@@ -426,6 +537,230 @@
                 <button onclick="importLidarrArtists()" class="btn btn-secondary">Import Artists</button>
                 <button onclick="syncLidarrAlbums()" class="btn btn-secondary">Sync Albums</button>
                 <a href="/lidarr" class="btn btn-primary">🎵 Lidarr Manager</a>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <h2>Metadata Services</h2>
+            <p class="section-description">Configure third-party metadata providers for enhanced artist information</p>
+            
+            <div class="form-group">
+                <label for="metadata_auto_enrich">Automatic Metadata Enrichment:</label>
+                <select id="metadata_auto_enrich" name="metadata_auto_enrich">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+                <div class="help-text">Automatically enrich metadata for new artists using configured providers</div>
+            </div>
+
+            <div class="metadata-providers-grid">
+                <!-- MusicBrainz -->
+                <div class="metadata-provider">
+                    <div class="provider-header">
+                        <h3>🎵 MusicBrainz</h3>
+                        <div class="form-group inline">
+                            <label class="switch">
+                                <input type="checkbox" id="musicbrainz_enabled" name="musicbrainz_enabled">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="provider-config">
+                        <div class="form-group">
+                            <label for="musicbrainz_rate_limit">Rate Limit (requests/second):</label>
+                            <input type="number" id="musicbrainz_rate_limit" name="musicbrainz_rate_limit" 
+                                   min="1" max="10" value="2" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="musicbrainz_priority">Priority:</label>
+                            <select id="musicbrainz_priority" name="musicbrainz_priority">
+                                <option value="1">Highest</option>
+                                <option value="2">High</option>
+                                <option value="3" selected>Medium</option>
+                                <option value="4">Low</option>
+                                <option value="5">Lowest</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Last.fm -->
+                <div class="metadata-provider">
+                    <div class="provider-header">
+                        <h3>🎼 Last.fm Metadata</h3>
+                        <div class="form-group inline">
+                            <label class="switch">
+                                <input type="checkbox" id="lastfm_metadata_enabled" name="lastfm_metadata_enabled">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="provider-config">
+                        <div class="form-group">
+                            <label for="lastfm_metadata_rate_limit">Rate Limit (requests/second):</label>
+                            <input type="number" id="lastfm_metadata_rate_limit" name="lastfm_metadata_rate_limit" 
+                                   min="1" max="10" value="5" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="lastfm_metadata_priority">Priority:</label>
+                            <select id="lastfm_metadata_priority" name="lastfm_metadata_priority">
+                                <option value="1">Highest</option>
+                                <option value="2" selected>High</option>
+                                <option value="3">Medium</option>
+                                <option value="4">Low</option>
+                                <option value="5">Lowest</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Discogs -->
+                <div class="metadata-provider">
+                    <div class="provider-header">
+                        <h3>💿 Discogs</h3>
+                        <div class="form-group inline">
+                            <label class="switch">
+                                <input type="checkbox" id="discogs_enabled" name="discogs_enabled">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="provider-config">
+                        <div class="form-group">
+                            <label for="discogs_token">Personal Access Token:</label>
+                            <input type="password" id="discogs_token" name="discogs_token" 
+                                   placeholder="Get from https://discogs.com/settings/developers">
+                            <div class="help-text">Optional - increases rate limits significantly</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="discogs_rate_limit">Rate Limit (requests/minute):</label>
+                            <input type="number" id="discogs_rate_limit" name="discogs_rate_limit" 
+                                   min="25" max="240" value="60" step="5">
+                            <div class="help-text">25/min without token, 240/min with token</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="discogs_priority">Priority:</label>
+                            <select id="discogs_priority" name="discogs_priority">
+                                <option value="1">Highest</option>
+                                <option value="2">High</option>
+                                <option value="3" selected>Medium</option>
+                                <option value="4">Low</option>
+                                <option value="5">Lowest</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AllMusic -->
+                <div class="metadata-provider">
+                    <div class="provider-header">
+                        <h3>🎶 AllMusic</h3>
+                        <div class="form-group inline">
+                            <label class="switch">
+                                <input type="checkbox" id="allmusic_enabled" name="allmusic_enabled">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="provider-config">
+                        <div class="form-group">
+                            <label for="allmusic_rate_limit">Rate Limit (requests/second):</label>
+                            <input type="number" id="allmusic_rate_limit" name="allmusic_rate_limit" 
+                                   min="1" max="5" value="2" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="allmusic_priority">Priority:</label>
+                            <select id="allmusic_priority" name="allmusic_priority">
+                                <option value="1">Highest</option>
+                                <option value="2">High</option>
+                                <option value="3">Medium</option>
+                                <option value="4" selected>Low</option>
+                                <option value="5">Lowest</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wikipedia -->
+                <div class="metadata-provider">
+                    <div class="provider-header">
+                        <h3>📖 Wikipedia</h3>
+                        <div class="form-group inline">
+                            <label class="switch">
+                                <input type="checkbox" id="wikipedia_enabled" name="wikipedia_enabled">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="provider-config">
+                        <div class="form-group">
+                            <label for="wikipedia_language">Language:</label>
+                            <select id="wikipedia_language" name="wikipedia_language">
+                                <option value="en" selected>English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="it">Italian</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="ja">Japanese</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="wikipedia_priority">Priority:</label>
+                            <select id="wikipedia_priority" name="wikipedia_priority">
+                                <option value="1">Highest</option>
+                                <option value="2">High</option>
+                                <option value="3">Medium</option>
+                                <option value="4">Low</option>
+                                <option value="5" selected>Lowest</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metadata-enrichment-settings">
+                <h3>Enrichment Behavior</h3>
+                <div class="form-group">
+                    <label for="metadata_conflict_resolution">Conflict Resolution:</label>
+                    <select id="metadata_conflict_resolution" name="metadata_conflict_resolution">
+                        <option value="priority">Use Highest Priority Source</option>
+                        <option value="newest">Use Newest Data</option>
+                        <option value="most_complete">Use Most Complete Data</option>
+                        <option value="merge">Merge All Sources</option>
+                    </select>
+                    <div class="help-text">How to handle conflicting metadata from different providers</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="metadata_cache_duration">Cache Duration (hours):</label>
+                    <input type="number" id="metadata_cache_duration" name="metadata_cache_duration" 
+                           min="1" max="168" value="24">
+                    <div class="help-text">How long to cache metadata before re-fetching</div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="metadata_update_existing" name="metadata_update_existing">
+                        Update existing metadata when enriching
+                    </label>
+                    <div class="help-text">Overwrite existing artist metadata with enriched data</div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="metadata_auto_image_download" name="metadata_auto_image_download">
+                        Automatically download artist images
+                    </label>
+                    <div class="help-text">Download and store artist images from metadata providers</div>
+                </div>
+            </div>
+
+            <div class="integration-actions">
+                <button onclick="testMetadataServices()" class="btn btn-info">Test All Connections</button>
+                <button onclick="enrichAllArtists()" class="btn btn-success">Enrich All Artists</button>
+                <button onclick="clearMetadataCache()" class="btn btn-warning">Clear Cache</button>
+                <a href="/enrichment" class="btn btn-primary">📊 Enrichment Dashboard</a>
             </div>
         </div>
         
