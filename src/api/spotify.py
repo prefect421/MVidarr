@@ -88,6 +88,39 @@ def get_profile():
         return jsonify({"error": str(e)}), 500
 
 
+@spotify_bp.route("/search/artists", methods=["GET"])
+def search_artists():
+    """Search for artists on Spotify"""
+    try:
+        query = request.args.get("q")
+        if not query:
+            return jsonify({"error": "Query parameter 'q' is required"}), 400
+
+        limit = int(request.args.get("limit", 10))
+
+        # Use client credentials flow for public data
+        try:
+            # Get client credentials token
+            token_data = spotify_service.get_client_credentials_token()
+            spotify_service.access_token = token_data.get("access_token")
+
+            # Search for artists
+            result = spotify_service.search_artist(query, limit)
+
+            return jsonify({"success": True, "results": result}), 200
+
+        except ValueError as ve:
+            logger.error(f"Spotify credentials not configured: {ve}")
+            return jsonify({"error": "Spotify API credentials not configured"}), 500
+        except Exception as e:
+            logger.error(f"Spotify API error: {e}")
+            return jsonify({"error": "Failed to search Spotify"}), 500
+
+    except Exception as e:
+        logger.error(f"Failed to search Spotify artists: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @spotify_bp.route("/playlists", methods=["GET"])
 def get_playlists():
     """Get user's Spotify playlists"""

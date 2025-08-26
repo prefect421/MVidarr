@@ -760,3 +760,303 @@ def get_blank_metadata_report(artist_id: int):
             f"Failed to generate blank metadata report for artist {artist_id}: {e}"
         )
         return jsonify({"error": str(e)}), 500
+
+
+# Search endpoints for metadata enrichment sources
+@metadata_enrichment_bp.route("/search/lastfm", methods=["GET"])
+@auth_required
+def search_lastfm():
+    """Search Last.fm for artist information"""
+    try:
+        artist_name = request.args.get("artist")
+        if not artist_name:
+            return jsonify({"error": "artist parameter is required"}), 400
+
+        # Import the lastfm service
+        from src.services.lastfm_service import lastfm_service
+
+        # Check if Last.fm is properly configured
+        if not lastfm_service.api_key:
+            return (
+                jsonify(
+                    {
+                        "results": [],
+                        "message": "Last.fm API requires credentials. Please configure API key and secret in Settings.",
+                        "authentication_required": True,
+                    }
+                ),
+                200,
+            )
+
+        results = lastfm_service.search_artist(artist_name)
+        if not results:
+            return (
+                jsonify(
+                    {
+                        "results": [],
+                        "message": "No Last.fm results found or API credentials invalid.",
+                        "authentication_required": not bool(lastfm_service.api_key),
+                    }
+                ),
+                200,
+            )
+
+        return jsonify({"results": results}), 200
+
+    except Exception as e:
+        logger.error(f"Failed to search Last.fm for artist '{artist_name}': {e}")
+        # Check if it's an authentication error
+        if "API key not configured" in str(e):
+            return (
+                jsonify(
+                    {
+                        "results": [],
+                        "message": "Last.fm API requires credentials. Please configure API key and secret in Settings.",
+                        "authentication_required": True,
+                    }
+                ),
+                200,
+            )
+        return jsonify({"error": str(e)}), 500
+
+
+@metadata_enrichment_bp.route("/search/discogs", methods=["GET"])
+@auth_required
+def search_discogs():
+    """Search Discogs for artist information"""
+    try:
+        artist_name = request.args.get("artist")
+        if not artist_name:
+            return jsonify({"error": "artist parameter is required"}), 400
+
+        # Import the discogs service
+        from src.services.discogs_service import discogs_service
+
+        # Check if Discogs is properly configured
+        if not discogs_service.token:
+            return (
+                jsonify(
+                    {
+                        "results": [],
+                        "message": "Discogs API requires authentication. Please configure a personal access token in Settings.",
+                        "authentication_required": True,
+                    }
+                ),
+                200,
+            )
+
+        results = discogs_service.search_artist(artist_name)
+        if results is None:
+            return (
+                jsonify(
+                    {
+                        "results": [],
+                        "message": "Discogs search failed. Please check authentication settings.",
+                        "authentication_required": not bool(discogs_service.token),
+                    }
+                ),
+                200,
+            )
+
+        return jsonify({"results": results or []}), 200
+
+    except Exception as e:
+        logger.error(f"Failed to search Discogs for artist '{artist_name}': {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@metadata_enrichment_bp.route("/search/allmusic", methods=["GET"])
+@auth_required
+def search_allmusic():
+    """Search AllMusic for artist information"""
+    try:
+        artist_name = request.args.get("artist")
+        if not artist_name:
+            return jsonify({"error": "artist parameter is required"}), 400
+
+        # Use AllMusic search via web scraping (no official API)
+        from urllib.parse import quote
+
+        import requests
+
+        search_url = f"https://www.allmusic.com/search/artists/{quote(artist_name)}"
+        headers = {
+            "User-Agent": "MVidarr/0.9.8 (https://github.com/prefect421/mvidarr)"
+        }
+
+        try:
+            response = requests.get(search_url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                # Basic implementation - extract artist names from search results
+                # This is a simplified approach since AllMusic doesn't have a public API
+                results = []
+
+                # Try to extract some basic info from the HTML (simplified)
+                if artist_name.lower() in response.text.lower():
+                    results.append(
+                        {
+                            "name": artist_name,
+                            "id": artist_name.lower().replace(" ", "-"),
+                            "url": f"https://www.allmusic.com/artist/{artist_name.lower().replace(' ', '-')}",
+                            "source": "allmusic",
+                        }
+                    )
+
+                return jsonify({"results": results}), 200
+            else:
+                logger.warning(
+                    f"AllMusic search returned status {response.status_code}"
+                )
+                return jsonify({"results": []}), 200
+
+        except requests.RequestException as e:
+            logger.error(f"AllMusic request failed: {e}")
+            return jsonify({"results": []}), 200
+
+    except Exception as e:
+        logger.error(f"Failed to search AllMusic for artist '{artist_name}': {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@metadata_enrichment_bp.route("/search/wikipedia", methods=["GET"])
+@auth_required
+def search_wikipedia():
+    """Search Wikipedia for artist information"""
+    try:
+        artist_name = request.args.get("artist")
+        if not artist_name:
+            return jsonify({"error": "artist parameter is required"}), 400
+
+        # Import wikipedia service or implement basic search
+        import requests
+
+        # Use Wikipedia's OpenSearch API (more reliable)
+        url = "https://en.wikipedia.org/w/api.php"
+        params = {
+            "action": "opensearch",
+            "search": artist_name,
+            "limit": 5,
+            "namespace": 0,
+            "format": "json",
+        }
+
+        headers = {
+            "User-Agent": "MVidarr/0.9.8 (https://github.com/prefect421/mvidarr) - Media Library Manager"
+        }
+
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()  # Raises an exception for bad status codes
+
+            data = response.json()
+            results = []
+
+            # OpenSearch returns: [query, [titles], [descriptions], [urls]]
+            if len(data) >= 4:
+                titles = data[1]
+                descriptions = data[2] if len(data) > 2 else []
+                urls = data[3] if len(data) > 3 else []
+
+                for i, title in enumerate(titles):
+                    results.append(
+                        {
+                            "name": title,
+                            "description": (
+                                descriptions[i] if i < len(descriptions) else ""
+                            ),
+                            "url": (
+                                urls[i]
+                                if i < len(urls)
+                                else f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
+                            ),
+                            "source": "wikipedia",
+                        }
+                    )
+
+            return jsonify({"results": results}), 200
+
+        except requests.RequestException as e:
+            logger.error(f"Wikipedia API request failed: {e}")
+            return jsonify({"error": f"Wikipedia search failed: {str(e)}"}), 500
+
+    except Exception as e:
+        logger.error(f"Failed to search Wikipedia for artist '{artist_name}': {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@metadata_enrichment_bp.route("/search/musicbrainz", methods=["GET"])
+@auth_required
+def search_musicbrainz():
+    """Search MusicBrainz for artist information"""
+    try:
+        artist_name = request.args.get("artist")
+        if not artist_name:
+            return jsonify({"error": "artist parameter is required"}), 400
+
+        # Import musicbrainz service
+        from src.services.musicbrainz_service import musicbrainz_service
+
+        results = musicbrainz_service.search_artist(artist_name)
+        return jsonify({"results": results or []}), 200
+
+    except Exception as e:
+        logger.error(f"Failed to search MusicBrainz for artist '{artist_name}': {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@metadata_enrichment_bp.route("/search/imvdb", methods=["GET"])
+@auth_required
+def search_imvdb():
+    """Search IMVDb for artist information"""
+    try:
+        artist_name = request.args.get("artist")
+        if not artist_name:
+            return jsonify({"error": "artist parameter is required"}), 400
+
+        # Import the imvdb service
+        from src.services.imvdb_service import imvdb_service
+
+        # Check if IMVDb is properly configured
+        if not imvdb_service.api_key:
+            return (
+                jsonify(
+                    {
+                        "results": [],
+                        "message": "IMVDb API requires authentication. Please configure an API key in Settings.",
+                        "authentication_required": True,
+                    }
+                ),
+                200,
+            )
+
+        # Use search_artists function which returns a list
+        results = imvdb_service.search_artists(artist_name, limit=10)
+        if not results:
+            return (
+                jsonify(
+                    {
+                        "results": [],
+                        "message": "No IMVDb results found or API credentials invalid.",
+                        "authentication_required": not bool(imvdb_service.api_key),
+                    }
+                ),
+                200,
+            )
+
+        return jsonify({"results": results}), 200
+
+    except Exception as e:
+        logger.error(f"Failed to search IMVDb for artist '{artist_name}': {e}")
+        # Check if it's an authentication error
+        if "API key not configured" in str(e):
+            return (
+                jsonify(
+                    {
+                        "results": [],
+                        "message": "IMVDb API requires authentication. Please configure an API key in Settings.",
+                        "authentication_required": True,
+                    }
+                ),
+                200,
+            )
+        return jsonify({"error": str(e)}), 500

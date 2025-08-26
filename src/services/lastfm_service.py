@@ -31,16 +31,24 @@ class LastFmService:
 
     def refresh_credentials(self):
         """Refresh API credentials from environment or settings"""
+        # Import the global settings instance
+        from src.services.settings_service import settings
+
         # Try environment variables first, then settings
-        self.api_key = os.getenv("LASTFM_API_KEY") or SettingsService.get(
-            "lastfm_api_key"
-        )
-        self.api_secret = os.getenv("LASTFM_API_SECRET") or SettingsService.get(
+        self.api_key = os.getenv("LASTFM_API_KEY") or settings.get("lastfm_api_key")
+        self.api_secret = os.getenv("LASTFM_API_SECRET") or settings.get(
             "lastfm_api_secret"
         )
         logger.debug(
             f"Last.fm credentials refreshed - API key: {'present' if self.api_key else 'missing'}, secret: {'present' if self.api_secret else 'missing'}"
         )
+
+    @property
+    def enabled(self):
+        """Check if Last.fm integration is enabled"""
+        self.refresh_credentials()
+        # Last.fm is enabled if we have an API key
+        return bool(self.api_key)
 
     def get_auth_url(self) -> str:
         """Generate Last.fm authentication URL"""
@@ -298,6 +306,38 @@ class LastFmService:
             "per_page": int(recent_tracks.get("@attr", {}).get("perPage", limit)),
             "total_pages": int(recent_tracks.get("@attr", {}).get("totalPages", 1)),
         }
+
+    def search_artist(self, artist_name: str, limit: int = 10) -> List[Dict]:
+        """Search for artists by name"""
+        try:
+            params = {"artist": artist_name, "limit": limit}
+            data = self._make_request("artist.search", params)
+
+            results = []
+            artists = data.get("results", {}).get("artistmatches", {}).get("artist", [])
+
+            # Handle single result case
+            if isinstance(artists, dict):
+                artists = [artists]
+
+            for artist in artists:
+                results.append(
+                    {
+                        "name": artist.get("name"),
+                        "mbid": artist.get("mbid"),
+                        "url": artist.get("url"),
+                        "image": artist.get("image", []),
+                        "streamable": artist.get("streamable") == "1",
+                        "listeners": int(artist.get("listeners", 0)),
+                        "source": "lastfm",
+                    }
+                )
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Error searching Last.fm for artist '{artist_name}': {e}")
+            return []
 
     def get_artist_info(self, artist_name: str, username: str = None) -> Dict:
         """Get artist information"""

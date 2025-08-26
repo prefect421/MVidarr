@@ -912,7 +912,7 @@ class MetadataEnrichmentService:
         return updated_fields
 
     def _is_metadata_fresh(self, artist: Artist) -> bool:
-        """Check if artist metadata is fresh enough"""
+        """Check if artist metadata is fresh enough AND contains meaningful data"""
         if not artist.imvdb_metadata or not isinstance(artist.imvdb_metadata, dict):
             return False
 
@@ -920,11 +920,39 @@ class MetadataEnrichmentService:
         if not enrichment_date_str:
             return False
 
+        # Check if the cached data actually contains meaningful metadata
+        metadata = artist.imvdb_metadata
+        meaningful_fields = [
+            metadata.get("biography"),
+            metadata.get("related_artists"),
+            metadata.get("top_tracks"),
+            metadata.get("images"),
+            metadata.get("popularity"),
+            metadata.get("followers"),
+            metadata.get("playcount"),
+            metadata.get("listeners"),
+            metadata.get("genres"),
+            metadata.get("similar_artists"),
+        ]
+        
+        # Only consider metadata "fresh" if it has meaningful data
+        has_meaningful_data = any(
+            field and field != [] and field != {} and field != "" 
+            for field in meaningful_fields
+        )
+        
+        if not has_meaningful_data:
+            logger.debug(f"Artist {artist.name} has enrichment_date but no meaningful data - forcing refresh")
+            return False
+
         try:
             enrichment_date = datetime.fromisoformat(enrichment_date_str)
-            return datetime.now() - enrichment_date < timedelta(
+            is_fresh = datetime.now() - enrichment_date < timedelta(
                 hours=self.cache_duration_hours
             )
+            if is_fresh:
+                logger.debug(f"Artist {artist.name} metadata is fresh with meaningful data - using cache")
+            return is_fresh
         except (ValueError, TypeError):
             return False
 

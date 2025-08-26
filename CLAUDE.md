@@ -626,3 +626,182 @@ Following user feedback, a comprehensive set of video system improvements were i
 
 All reported video system issues have been resolved with professional-grade implementations that maintain backward compatibility while significantly improving user experience and system reliability.
 
+---
+
+## 🚀 MVidarr Future Roadmap - Home User & Self-Hosting Focus
+
+### Current Status: Version 0.9.8 - User Testing Phase
+
+**MVidarr 0.9.8** is now entering **user testing phase** with comprehensive external service integrations complete. The focus moving forward is on home users and self-hosting enthusiasts who prefer building out their personal media libraries.
+
+---
+
+## Version 0.9.9: Community Adoption Focus
+**Target Release**: Next 2-3 months  
+**Focus**: Simplified deployment and home user experience
+
+### High Priority Items
+
+#### 1. **Unraid Template Creation** - *Critical for Adoption*
+- **Objective**: One-click deployment for the largest home media server community
+- **Impact**: Dramatic increase in user adoption and community feedback
+- **Implementation**: XML template for Unraid Community Applications
+- **Benefits**: 
+  - Eliminates complex Docker configuration for non-technical users
+  - Provides standardized deployment across home servers
+  - Builds community of home users providing valuable feedback
+
+#### 2. **Simplified Backup System for Home Users**
+- **Objective**: Protect personal music video libraries without complexity
+- **Features**:
+  - Automatic backup scheduling to external drives/NAS
+  - Export/import of curated metadata and playlists
+  - Configuration backup for disaster recovery
+  - One-click restore functionality
+- **Target Audience**: Home users who fear losing their carefully curated libraries
+
+#### 3. **Basic Performance Monitoring Dashboard**
+- **Objective**: System health visibility for home server administrators
+- **Features**:
+  - Storage usage and database size monitoring
+  - System load and resource utilization
+  - Failed download alerts and notifications
+  - Simple, clean dashboard (not enterprise analytics)
+- **Focus**: Peace of mind for home users managing their own infrastructure
+
+#### 4. **Mobile-Responsive Design Improvements**
+- **Objective**: Optimize for tablet and phone usage in home environments
+- **Features**:
+  - Touch-optimized interface for mobile devices
+  - Improved video playback on mobile
+  - Progressive Web App (PWA) capabilities
+  - Responsive grid layouts for all screen sizes
+
+---
+
+## Version 1.0.0: Home Media Hub
+**Target Release**: Next 4-6 months  
+**Focus**: Enhanced home integration and music discovery
+
+### Core Features for Home Enthusiasts
+
+#### 1. **Smart Home Integration**
+- **Home Assistant Integration**:
+  - Media automation based on home presence
+  - Voice control via Alexa/Google Home
+  - Integration with smart displays and speakers
+  - Playlist automation based on time/activity
+- **Benefits**: Seamless integration with existing home automation setups
+
+#### 2. **Enhanced Music Discovery for Enthusiasts**
+- **Personal Discovery Features**:
+  - "Discover Weekly" style playlists based on listening history
+  - Similar artist recommendations and genre exploration
+  - Integration with music blogs and review sites
+  - Collection gap analysis (missing albums from favorite artists)
+- **Target**: Music enthusiasts who enjoy discovering new content
+
+#### 3. **Collection Analytics for Collectors**
+- **Personal Statistics**:
+  - Listening habits and collection growth over time
+  - Most played artists, genres, and time periods
+  - Discovery success rate metrics
+  - Collection quality and completeness analysis
+- **Audience**: Collectors who appreciate data about their music libraries
+
+#### 4. **Quality Management for Audio Enthusiasts**
+- **Audio Optimization**:
+  - Format standardization and quality upgrades
+  - Duplicate detection with quality comparison
+  - Storage space optimization recommendations
+  - Automated quality improvement suggestions
+- **Focus**: Audiophiles and quality-conscious collectors
+
+---
+
+## Version 1.1.0: Community & Extended Integration
+**Target Release**: Next 6-8 months  
+**Focus**: Social features and cloud integration
+
+### Community-Focused Features
+
+#### 1. **Advanced Notification System** 
+- **Home-Focused Notifications**:
+  - Discord notifications for new music discoveries
+  - Simple webhook system for home automation
+  - Email alerts for download completions and discoveries
+  - Mobile notifications via Pushover/Ntfy
+- **Integration**: Works with existing home notification systems
+
+#### 2. **Personal Cloud Integration**
+- **Cloud Storage Support**:
+  - Google Drive, Dropbox integration for personal backup
+  - Sync playlists and metadata to personal cloud accounts
+  - Hybrid storage: local for frequent access, cloud for archive
+  - Personal cloud as automated backup destination
+- **Target**: Users wanting offsite backup without enterprise complexity
+
+#### 3. **Social Features for Music Communities**
+- **Sharing & Discovery**:
+  - Playlist export/import for sharing with friends
+  - Music discovery sharing within friend networks
+  - Integration with Last.fm scrobbling for social discovery
+  - Optional community features for users who want them
+- **Philosophy**: Optional social features that respect privacy preferences
+
+---
+
+## Community Adoption Strategy
+
+### Deployment Platform Priority
+1. **Unraid Template** (Highest Priority) - Largest home media server community
+2. **TrueNAS/FreeNAS Templates** - Popular NAS platform for enthusiasts  
+3. **Proxmox LXC Templates** - Advanced home lab users
+4. **Synology/QNAP Packages** - Consumer NAS devices
+
+### Community Engagement Strategy
+- **r/selfhosted promotion** - Core target community for self-hosted applications
+- **YouTube tutorials** - Self-hosters prefer visual setup guides
+- **Home media server forums** - Build presence in existing communities
+- **GitHub Discussions** - Foster community contribution and feedback
+
+### Documentation Priorities
+1. **Self-Hosting Setup Guides** - Docker, Unraid, Synology, QNAP deployment
+2. **Home Integration Tutorials** - Plex integration, reverse proxy setup, local DNS
+3. **Backup Strategy Guides** - Protect valuable music library investments
+4. **Troubleshooting for Home Users** - Common networking and permissions issues
+
+---
+
+## Technical Architecture for Home Users
+
+### Resource Efficiency Targets
+- **Raspberry Pi Compatibility** - Runs on modest ARM hardware
+- **NUC/Mini PC Optimization** - Efficient on Intel NUCs and similar devices
+- **Low Memory Footprint** - Reasonable performance with 2-4GB RAM
+- **Storage Optimization** - Efficient database and caching for home storage
+
+### Home Network Considerations  
+- **NAT/Firewall Friendly** - Works behind typical home router setups
+- **Local DNS Integration** - Supports .local domains and mDNS discovery
+- **Reverse Proxy Support** - Compatible with Traefik, nginx, Caddy
+- **Privacy First** - No telemetry, all data remains local, optional external integrations
+
+### Development Philosophy for Home Users
+- **Simple Deployment** - Docker Compose with minimal configuration required
+- **Low Maintenance** - Self-healing features, automatic updates, minimal admin tasks
+- **Documentation First** - Clear guides for non-technical home users
+- **Community Driven** - Feature requests guided by home user needs and feedback
+
+---
+
+## Long-Term Vision: Premier Self-Hosted Media Management
+
+**MVidarr aims to become the definitive self-hosted music video management solution**, specifically designed for home users who value:
+- **Privacy and Control** - Complete ownership of media libraries and metadata
+- **Community Integration** - Seamless work with existing home media infrastructure  
+- **Simplicity** - Professional features without enterprise complexity
+- **Extensibility** - APIs and integrations for home automation enthusiasts
+
+This roadmap positions MVidarr as the go-to solution for self-hosting enthusiasts who want professional media management capabilities in their home environments, with a focus on community adoption, simple deployment, and integration with existing home media ecosystems.
+

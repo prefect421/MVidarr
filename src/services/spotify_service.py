@@ -95,6 +95,13 @@ class SpotifyService:
         self._load_settings()
         return self._redirect_uri
 
+    @property
+    def enabled(self):
+        """Check if Spotify integration is enabled"""
+        self._load_settings()
+        # Spotify is enabled if we have client_id and client_secret
+        return bool(self._client_id and self._client_secret)
+
     def clear_cache(self):
         """Clear cached settings to force reload"""
         self._settings_loaded = False

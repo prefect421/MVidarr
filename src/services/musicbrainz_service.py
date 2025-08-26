@@ -38,17 +38,24 @@ class MusicBrainzService:
         if self._settings_loaded:
             return
 
-        try:
-            # MusicBrainz doesn't require API keys, but we allow disabling
-            self._enabled = (
-                settings.get("musicbrainz_enabled", "true").lower() == "true"
-            )
-            self._settings_loaded = True
-            logger.debug(f"MusicBrainz settings loaded - enabled: {self._enabled}")
-        except Exception as e:
-            logger.error(f"Failed to load MusicBrainz settings: {e}")
-            self._enabled = True  # Default to enabled since no auth required
-            self._settings_loaded = True
+        # TEMPORARY FIX: Force MusicBrainz to be enabled
+        # MusicBrainz doesn't require API keys and should always work
+        self._enabled = True
+        self._settings_loaded = True
+        logger.info("MusicBrainz forced to enabled (no API key required)")
+
+        # Original code for reference (commented out to force enable)
+        # try:
+        #     setting_value = settings.get("musicbrainz_enabled", "true")
+        #     logger.debug(f"Raw musicbrainz_enabled setting value: '{setting_value}' (type: {type(setting_value)})")
+        #     self._enabled = (setting_value.lower() == "true")
+        #     self._settings_loaded = True
+        #     logger.info(f"MusicBrainz settings loaded - enabled: {self._enabled}")
+        # except Exception as e:
+        #     logger.warning(f"Failed to load MusicBrainz settings: {e}")
+        #     logger.info("Defaulting MusicBrainz to enabled (no API key required)")
+        #     self._enabled = True  # Default to enabled since no auth required
+        #     self._settings_loaded = True
 
     @property
     def enabled(self):
@@ -81,7 +88,7 @@ class MusicBrainzService:
     def _make_request(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
         """Make rate-limited request to MusicBrainz API"""
         if not self.enabled:
-            logger.debug("MusicBrainz integration is disabled")
+            logger.warning("MusicBrainz integration is disabled - returning None")
             return None
 
         self._respect_rate_limit()

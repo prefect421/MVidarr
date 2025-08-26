@@ -1374,6 +1374,8 @@ def get_artist_detailed(artist_id):
                 "name": artist.name,
                 "sort_name": artist.name,
                 "imvdb_id": artist.imvdb_id,
+                "spotify_id": artist.spotify_id,
+                "lastfm_name": artist.lastfm_name,
                 "thumbnail_url": artist.thumbnail_url,
                 "thumbnail_path": artist.thumbnail_path,
                 "auto_download": artist.auto_download,
@@ -2658,6 +2660,54 @@ def update_artist_settings(artist_id):
                     artist.lastfm_name = None
                 else:
                     artist.lastfm_name = str(new_lastfm_name).strip()
+
+            # Handle AllMusic ID (stored in imvdb_metadata JSON field like MusicBrainz)
+            if "allmusic_id" in data:
+                new_allmusic_id = data["allmusic_id"]
+                if not isinstance(artist.imvdb_metadata, dict):
+                    artist.imvdb_metadata = {}
+                if new_allmusic_id == "" or new_allmusic_id is None:
+                    if "allmusic_id" in artist.imvdb_metadata:
+                        del artist.imvdb_metadata["allmusic_id"]
+                else:
+                    artist.imvdb_metadata["allmusic_id"] = str(new_allmusic_id).strip()
+                from sqlalchemy.orm.attributes import flag_modified
+
+                flag_modified(artist, "imvdb_metadata")
+
+            # Handle AllMusic metadata
+            if "allmusic_metadata" in data:
+                if not isinstance(artist.imvdb_metadata, dict):
+                    artist.imvdb_metadata = {}
+                artist.imvdb_metadata["allmusic_metadata"] = data["allmusic_metadata"]
+                from sqlalchemy.orm.attributes import flag_modified
+
+                flag_modified(artist, "imvdb_metadata")
+
+            # Handle Wikipedia URL (stored in imvdb_metadata JSON field)
+            if "wikipedia_url" in data:
+                new_wikipedia_url = data["wikipedia_url"]
+                if not isinstance(artist.imvdb_metadata, dict):
+                    artist.imvdb_metadata = {}
+                if new_wikipedia_url == "" or new_wikipedia_url is None:
+                    if "wikipedia_url" in artist.imvdb_metadata:
+                        del artist.imvdb_metadata["wikipedia_url"]
+                else:
+                    artist.imvdb_metadata["wikipedia_url"] = str(
+                        new_wikipedia_url
+                    ).strip()
+                from sqlalchemy.orm.attributes import flag_modified
+
+                flag_modified(artist, "imvdb_metadata")
+
+            # Handle Wikipedia metadata
+            if "wikipedia_metadata" in data:
+                if not isinstance(artist.imvdb_metadata, dict):
+                    artist.imvdb_metadata = {}
+                artist.imvdb_metadata["wikipedia_metadata"] = data["wikipedia_metadata"]
+                from sqlalchemy.orm.attributes import flag_modified
+
+                flag_modified(artist, "imvdb_metadata")
 
             # Update the updated_at timestamp
             artist.updated_at = datetime.utcnow()

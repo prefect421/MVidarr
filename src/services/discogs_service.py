@@ -45,6 +45,9 @@ class DiscogsService:
                 {"Authorization": f"Discogs token={self.token}"}
             )
             self._min_request_interval = 0.25  # Authenticated users get higher limits
+        else:
+            # No authentication - use higher rate limit interval for unauthenticated requests
+            self._min_request_interval = 2.5  # 25 requests per minute = ~2.4s interval
 
         # Cache settings
         self.cache_duration_hours = 24
@@ -79,6 +82,12 @@ class DiscogsService:
                 logger.warning(f"Rate limited by Discogs API, waiting {retry_after}s")
                 time.sleep(retry_after)
                 return self._make_request(endpoint, params)  # Retry once
+            elif response.status_code == 401:
+                # Authentication error - log as warning but don't fail completely
+                logger.warning(
+                    f"Discogs API authentication required for {endpoint}. Consider adding a personal access token."
+                )
+                return None
             elif response.status_code == 404:
                 logger.debug(f"Discogs API returned 404 for {endpoint}")
                 return None

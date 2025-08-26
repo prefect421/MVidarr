@@ -3631,12 +3631,19 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
     
     console.log('🔍 NESTED METADATA ACCESS:', {
         imvdbData_keys: Object.keys(imvdbData),
-        allmusicData: allmusicData,
-        spotifyData: spotifyData,
-        lastfmData: lastfmData,
-        wikipediaData: wikipediaData,
+        allmusicData_keys: allmusicData ? Object.keys(allmusicData) : 'no allmusic data',
+        allmusicData_full: allmusicData,
+        spotifyData_keys: spotifyData ? Object.keys(spotifyData) : 'no spotify data', 
+        spotifyData_full: spotifyData,
+        lastfmData_keys: lastfmData ? Object.keys(lastfmData) : 'no lastfm data',
+        lastfmData_full: lastfmData,
+        wikipediaData_keys: wikipediaData ? Object.keys(wikipediaData) : 'no wikipedia data',
+        wikipediaData_full: wikipediaData,
         imvdb_bio: imvdbData.bio,
-        imvdb_biography: imvdbData.biography
+        imvdb_biography: imvdbData.biography,
+        imvdb_allmusic_id: imvdbData.allmusic_id,
+        imvdb_musicbrainz_id: imvdbData.musicbrainz_id,
+        imvdb_discogs_id: imvdbData.discogs_id
     });
     
     const consolidated = {
