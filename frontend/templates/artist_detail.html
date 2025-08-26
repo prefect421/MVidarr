@@ -3622,6 +3622,23 @@ function renderArtistHeader(artist) {
 
 // Consolidate all metadata from different sources into a single structure
 function consolidateArtistMetadata(artist, enrichedMetadata) {
+    // Access nested metadata from different services
+    const imvdbData = artist.imvdb_metadata || {};
+    const allmusicData = imvdbData.allmusic_metadata || {};
+    const spotifyData = imvdbData.spotify_metadata || {};
+    const lastfmData = imvdbData.lastfm_metadata || {};
+    const wikipediaData = imvdbData.wikipedia_metadata || {};
+    
+    console.log('🔍 NESTED METADATA ACCESS:', {
+        imvdbData_keys: Object.keys(imvdbData),
+        allmusicData: allmusicData,
+        spotifyData: spotifyData,
+        lastfmData: lastfmData,
+        wikipediaData: wikipediaData,
+        imvdb_bio: imvdbData.bio,
+        imvdb_biography: imvdbData.biography
+    });
+    
     const consolidated = {
         // Basic artist info
         id: artist.id,
@@ -3634,54 +3651,68 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
         genres: (() => {
             const artistGenres = artist.genres ? (Array.isArray(artist.genres) ? artist.genres : artist.genres.split(', ')) : null;
             const metadataGenres = enrichedMetadata.genres ? (Array.isArray(enrichedMetadata.genres) ? enrichedMetadata.genres : enrichedMetadata.genres.split(', ')) : null;
-            return artistGenres || metadataGenres || null;
+            const allmusicGenres = allmusicData.genres || null;
+            const spotifyGenres = spotifyData.genres || null;
+            return artistGenres || metadataGenres || allmusicGenres || spotifyGenres || null;
         })(),
-        biography: artist.overview || artist.biography || enrichedMetadata.biography || null,
         
-        // Enriched metadata fields
-        popularity: enrichedMetadata.popularity || null,
-        followers: enrichedMetadata.followers || null,
-        listeners: enrichedMetadata.listeners || null,
-        playcount: enrichedMetadata.playcount || null,
+        // Biography from multiple sources
+        biography: artist.overview || artist.biography || enrichedMetadata.biography || 
+                  imvdbData.biography || imvdbData.bio || lastfmData.biography ||
+                  allmusicData.biography || wikipediaData.biography || null,
         
-        // Musical info
-        related_artists: enrichedMetadata.related_artists || [],
-        similar_artists: enrichedMetadata.similar_artists || [],
-        top_tracks: enrichedMetadata.top_tracks || [],
+        // Enriched metadata fields from various sources
+        popularity: enrichedMetadata.popularity || spotifyData.popularity || allmusicData.popularity || null,
+        followers: enrichedMetadata.followers || spotifyData.followers || null,
+        listeners: enrichedMetadata.listeners || lastfmData.listeners || null,
+        playcount: enrichedMetadata.playcount || lastfmData.playcount || null,
         
-        // Extended info
-        formed_year: enrichedMetadata.formed_year || null,
-        disbanded_year: enrichedMetadata.disbanded_year || null,
-        origin_country: enrichedMetadata.origin_country || null,
-        labels: enrichedMetadata.labels || null,
-        members: enrichedMetadata.members || null,
+        // Musical info from multiple sources
+        related_artists: enrichedMetadata.related_artists || imvdbData.related_artists || 
+                        lastfmData.related_artists || spotifyData.related_artists || [],
+        similar_artists: enrichedMetadata.similar_artists || imvdbData.similar_artists ||
+                        lastfmData.similar_artists || allmusicData.similar_artists || [],
+        top_tracks: enrichedMetadata.top_tracks || imvdbData.top_tracks ||
+                   lastfmData.top_tracks || spotifyData.top_tracks || [],
         
-        // AllMusic specific
-        moods: enrichedMetadata.moods || [],
-        themes: enrichedMetadata.themes || [],
+        // Extended info from various sources
+        formed_year: enrichedMetadata.formed_year || imvdbData.formed_year || 
+                    allmusicData.formed_year || wikipediaData.formed_year || null,
+        disbanded_year: enrichedMetadata.disbanded_year || imvdbData.disbanded_year ||
+                       allmusicData.disbanded_year || wikipediaData.disbanded_year || null,
+        origin_country: enrichedMetadata.origin_country || imvdbData.origin_country ||
+                       allmusicData.origin_country || wikipediaData.origin_country || null,
+        labels: enrichedMetadata.labels || imvdbData.labels || 
+               allmusicData.labels || spotifyData.labels || null,
+        members: enrichedMetadata.members || imvdbData.members ||
+                allmusicData.members || wikipediaData.members || null,
         
-        // External links
-        website_url: enrichedMetadata.website_url || null,
-        spotify_url: enrichedMetadata.spotify_url || null,
-        youtube_url: enrichedMetadata.youtube_url || null,
-        apple_music_url: enrichedMetadata.apple_music_url || null,
-        twitter_url: enrichedMetadata.twitter_url || null,
-        facebook_url: enrichedMetadata.facebook_url || null,
-        instagram_url: enrichedMetadata.instagram_url || null,
+        // AllMusic specific fields
+        moods: enrichedMetadata.moods || allmusicData.moods || [],
+        themes: enrichedMetadata.themes || allmusicData.themes || [],
+        
+        // External links from various sources
+        website_url: enrichedMetadata.website_url || allmusicData.website_url ||
+                    spotifyData.website_url || null,
+        spotify_url: enrichedMetadata.spotify_url || spotifyData.spotify_url || null,
+        youtube_url: enrichedMetadata.youtube_url || allmusicData.youtube_url || null,
+        apple_music_url: enrichedMetadata.apple_music_url || spotifyData.apple_music_url || null,
+        twitter_url: enrichedMetadata.twitter_url || allmusicData.twitter_url || null,
+        facebook_url: enrichedMetadata.facebook_url || allmusicData.facebook_url || null,
+        instagram_url: enrichedMetadata.instagram_url || allmusicData.instagram_url || null,
         
         // Metadata about metadata
-        enrichment_date: enrichedMetadata.enrichment_date || null,
-        sources_used: enrichedMetadata.sources_used || [],
-        confidence_score: enrichedMetadata.confidence_score || 0,
+        enrichment_date: enrichedMetadata.enrichment_date || imvdbData.enrichment_date || null,
+        sources_used: enrichedMetadata.sources_used || imvdbData.sources_used || [],
+        confidence_score: enrichedMetadata.confidence_score || imvdbData.confidence_score || 0,
         
-        // Images
-        images: enrichedMetadata.images || [],
+        // Images from various sources
+        images: enrichedMetadata.images || spotifyData.images || allmusicData.images || [],
         
         // IDs from different services
-        musicbrainz_id: enrichedMetadata.musicbrainz_id || 
-                        (artist.imvdb_metadata && artist.imvdb_metadata.musicbrainz_id) || null,
-        discogs_id: enrichedMetadata.discogs_id || 
-                    (artist.imvdb_metadata && artist.imvdb_metadata.discogs_id) || null,
+        musicbrainz_id: enrichedMetadata.musicbrainz_id || imvdbData.musicbrainz_id || null,
+        discogs_id: enrichedMetadata.discogs_id || imvdbData.discogs_id || null,
+        allmusic_id: imvdbData.allmusic_id || null,
     };
     
     return consolidated;
@@ -3752,7 +3783,7 @@ function renderOverviewTab(artist) {
 
 // Load Spotify recommendations and related artists
 function loadSpotifyRecommendations() {
-    const artistId = window.currentArtistId;
+    const artistId = window.currentArtistId || currentArtistId;
     if (!artistId) {
         console.error('No artist ID available');
         return;
