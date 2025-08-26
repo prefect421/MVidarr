@@ -3774,7 +3774,9 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
             console.log('🎵 CONSOLIDATION: related_artists result:', {
                 imvdbData_related_artists: imvdbData.related_artists,
                 spotifyData_related_artists: spotifyData.related_artists,
-                final_result: result
+                final_result: result,
+                imvdbData_keys: Object.keys(imvdbData),
+                checking_for_spotify_in_imvdb: imvdbData.spotify_metadata
             });
             return result;
         })(),
@@ -3898,6 +3900,16 @@ function renderSpotifyRecommendationsFromMetadata(metadata) {
                 external_urls: null
             }))
         };
+        
+        // TEMPORARY: Add mock related artists to test separate cards display
+        if (transformedData.related_artists.length === 0 && transformedData.recommendations.length > 0) {
+            console.log('🎵 TEMP: Adding mock related artists for testing separate cards');
+            transformedData.related_artists = [
+                { name: 'NOFX', popularity: null, genres: [], external_urls: null },
+                { name: 'The Offspring', popularity: null, genres: [], external_urls: null },
+                { name: 'Pennywise', popularity: null, genres: [], external_urls: null }
+            ];
+        }
         
         renderSpotifyRecommendations(transformedData);
     } else {
