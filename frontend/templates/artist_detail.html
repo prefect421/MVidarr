@@ -3906,13 +3906,9 @@ function renderSpotifyRecommendationsFromMetadata(metadata) {
         renderRecommendedArtists(metadata.related_artists || []);
     } else {
         console.log('🎵 No Spotify data found in enriched metadata');
-        content.innerHTML = `
-            <div class="empty-state">
-                <p>No Spotify recommendations available</p>
-                <p class="empty-state-hint">Use "Enrich from All Services" to populate Spotify recommendations and related artists.</p>
-                <p class="empty-state-hint">Requires Spotify API credentials configured in Settings > Services.</p>
-            </div>
-        `;
+        // Show empty state in both containers
+        renderSongRecommendations([]);
+        renderRecommendedArtists([]);
     }
 }
 
