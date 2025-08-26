@@ -258,12 +258,18 @@ class MetadataEnrichmentService:
         # Spotify metadata - check if enabled
         if hasattr(self.spotify, "enabled") and self.spotify.enabled:
             try:
+                logger.debug(f"🎵 SPOTIFY ENRICHMENT: Starting for {artist_data['name']}")
                 spotify_metadata = await self._get_spotify_metadata(artist_data)
                 if spotify_metadata:
+                    logger.debug(f"🎵 SPOTIFY ENRICHMENT: Got metadata: {spotify_metadata}")
+                    logger.debug(f"🎵 SPOTIFY ENRICHMENT: Related artists: {spotify_metadata.related_artists}")
+                    logger.debug(f"🎵 SPOTIFY ENRICHMENT: Top tracks: {spotify_metadata.top_tracks}")
                     metadata_sources["spotify"] = spotify_metadata
                     logger.debug(
                         f"Successfully gathered Spotify metadata for {artist_data['name']}"
                     )
+                else:
+                    logger.debug(f"🎵 SPOTIFY ENRICHMENT: No metadata returned for {artist_data['name']}")
             except Exception as e:
                 logger.warning(
                     f"Failed to get Spotify metadata for {artist_data['name']}: {e}"
@@ -376,18 +382,23 @@ class MetadataEnrichmentService:
         try:
             # Search for artist if we don't have Spotify ID
             spotify_artist = None
+            logger.debug(f"🎵 SPOTIFY METADATA: Processing {artist_data['name']}, spotify_id: {artist_data.get('spotify_id')}")
 
             if artist_data.get("spotify_id"):
                 # Get artist by ID
+                logger.debug(f"🎵 SPOTIFY METADATA: Getting artist by ID {artist_data['spotify_id']}")
                 spotify_artist = self.spotify._make_request(
                     f"artists/{artist_data['spotify_id']}"
                 )
+                logger.debug(f"🎵 SPOTIFY METADATA: Got artist by ID: {spotify_artist is not None}")
             else:
                 # Search for artist
+                logger.debug(f"🎵 SPOTIFY METADATA: Searching for artist {artist_data['name']}")
                 search_results = self.spotify.search_artist(
                     artist_data["name"], limit=5
                 )
                 artists = search_results.get("artists", {}).get("items", [])
+                logger.debug(f"🎵 SPOTIFY METADATA: Search returned {len(artists)} artists")
 
                 # Find best match
                 for candidate in artists:
@@ -398,29 +409,37 @@ class MetadataEnrichmentService:
                         break
 
             if not spotify_artist:
+                logger.debug(f"🎵 SPOTIFY METADATA: No matching artist found for {artist_data['name']}")
                 return None
+
+            logger.debug(f"🎵 SPOTIFY METADATA: Found artist: {spotify_artist.get('name')} (ID: {spotify_artist['id']})")
 
             # Get related artists
             related_artists = []
             try:
+                logger.debug(f"🎵 SPOTIFY METADATA: Getting related artists for {spotify_artist['id']}")
                 related_data = self.spotify._make_request(
                     f"artists/{spotify_artist['id']}/related-artists"
                 )
                 related_artists = [
                     a.get("name") for a in related_data.get("artists", [])[:5]
                 ]
+                logger.debug(f"🎵 SPOTIFY METADATA: Got {len(related_artists)} related artists: {related_artists}")
             except Exception as e:
-                logger.debug(f"Could not get related artists: {e}")
+                logger.warning(f"🎵 SPOTIFY METADATA: Could not get related artists: {e}")
 
             # Get top tracks
             top_tracks = []
             try:
+                logger.debug(f"🎵 SPOTIFY METADATA: Getting top tracks for {spotify_artist['id']}")
                 tracks_data = self.spotify.get_artist_top_tracks(spotify_artist["id"])
                 top_tracks = [t.get("name") for t in tracks_data.get("tracks", [])[:5]]
+                logger.debug(f"🎵 SPOTIFY METADATA: Got {len(top_tracks)} top tracks: {top_tracks}")
             except Exception as e:
-                logger.debug(f"Could not get top tracks: {e}")
+                logger.warning(f"🎵 SPOTIFY METADATA: Could not get top tracks: {e}")
 
             # Create metadata object
+            logger.debug(f"🎵 SPOTIFY METADATA: Creating ArtistMetadata with related_artists: {related_artists}, top_tracks: {top_tracks}")
             metadata = ArtistMetadata(
                 name=spotify_artist.get("name", artist_data["name"]),
                 source="spotify",
@@ -436,6 +455,7 @@ class MetadataEnrichmentService:
                 top_tracks=top_tracks,
                 raw_data=spotify_artist,
             )
+            logger.debug(f"🎵 SPOTIFY METADATA: Final metadata object - related_artists: {metadata.related_artists}, top_tracks: {metadata.top_tracks}")
 
             return metadata
 
