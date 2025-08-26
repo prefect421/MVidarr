@@ -2293,29 +2293,29 @@ div.metadata-section:hover,
     gap: 1rem;
 }
 
-.song-list {
+.song-list, .artist-list {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-.song-item {
+.song-item, .artist-item {
     padding: 0.75rem 0;
     border-bottom: 1px solid var(--border-secondary, #333);
 }
 
-.song-item:last-child {
+.song-item:last-child, .artist-item:last-child {
     border-bottom: none;
 }
 
-.song-title {
+.song-title, .artist-name {
     color: var(--accent-primary, #00d4ff);
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s ease;
 }
 
-.song-title:hover {
+.song-title:hover, .artist-name:hover {
     color: var(--accent-secondary, #00b8e6);
     text-decoration: underline;
 }
@@ -2454,7 +2454,7 @@ div.metadata-section:hover,
         gap: 1rem;
     }
     
-    .song-item {
+    .song-item, .artist-item {
         padding: 0.5rem 0;
     }
     
@@ -4026,42 +4026,6 @@ function renderSpotifyRecommendations(data) {
     
     let html = '';
     
-    // Related Artists Section
-    if (data.related_artists && data.related_artists.length > 0) {
-        html += `
-            <div class="spotify-section">
-                <h4><iconify-icon icon="mdi:account-group"></iconify-icon> Related Artists</h4>
-                <div class="artist-grid">
-        `;
-        
-        data.related_artists.forEach(artist => {
-            const searchUrl = `/discover?q=${encodeURIComponent(artist.name)}`;
-            html += `
-                <div class="artist-card">
-                    <div class="artist-info">
-                        <a href="${searchUrl}" class="artist-name" title="Search for ${artist.name}">
-                            ${artist.name}
-                        </a>
-                        <div class="artist-details">
-                            <span class="popularity">Popularity: ${artist.popularity}/100</span>
-                            ${artist.genres.length > 0 ? `<span class="genres">${artist.genres.slice(0, 3).join(', ')}</span>` : ''}
-                        </div>
-                    </div>
-                    ${artist.external_urls && artist.external_urls.spotify ? `
-                        <a href="${artist.external_urls.spotify}" target="_blank" class="spotify-link" title="Open in Spotify">
-                            <iconify-icon icon="mdi:spotify"></iconify-icon>
-                        </a>
-                    ` : ''}
-                </div>
-            `;
-        });
-        
-        html += `
-                </div>
-            </div>
-        `;
-    }
-    
     // Song Recommendations Section
     if (data.recommendations && data.recommendations.length > 0) {
         html += `
@@ -4078,6 +4042,31 @@ function renderSpotifyRecommendations(data) {
                 <li class="song-item">
                     <a href="${searchUrl}" class="song-title" title="Search for ${track.name}">
                         ${track.name}
+                    </a>
+                </li>
+            `;
+        });
+        
+        html += `
+                </ul>
+            </div>
+        `;
+    }
+    
+    // Related Artists Section
+    if (data.related_artists && data.related_artists.length > 0) {
+        html += `
+            <div class="spotify-section">
+                <h4><iconify-icon icon="mdi:account-group"></iconify-icon> Recommended Artists</h4>
+                <ul class="artist-list">
+        `;
+        
+        data.related_artists.forEach(artist => {
+            const searchUrl = `/discover?q=${encodeURIComponent(artist.name)}`;
+            html += `
+                <li class="artist-item">
+                    <a href="${searchUrl}" class="artist-name" title="Search for ${artist.name}">
+                        ${artist.name}
                     </a>
                 </li>
             `;
