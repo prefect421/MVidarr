@@ -2882,6 +2882,17 @@ div.metadata-section:hover,
             </div>
         </div>
         
+        <!-- Enrichment Information Panel -->
+        <div class="settings-panel enrichment-info">
+            <h3>🤖 Enrichment Information</h3>
+            <div id="enrichmentInfoPanel">
+                <div class="empty-state">
+                    <p>No enrichment data available</p>
+                    <p class="empty-state-hint">Use "Enrich from All Services" to populate metadata</p>
+                </div>
+            </div>
+        </div>
+        
         <!-- Enhanced Artist Metadata Editing Panel -->
         <div class="settings-panel enhanced-artist-editing">
             <h3>🎵 Enhanced Artist Metadata</h3>
@@ -3789,6 +3800,9 @@ function renderOverviewTab(artist) {
     
     // Display Spotify recommendations from enriched metadata if available
     renderSpotifyRecommendationsFromMetadata(consolidatedMetadata);
+    
+    // Update enrichment info panel in Settings tab
+    renderEnrichmentInfo(artist, consolidatedMetadata);
 }
 
 // Render Spotify recommendations from enriched metadata
@@ -3818,10 +3832,60 @@ function renderSpotifyRecommendationsFromMetadata(metadata) {
         content.innerHTML = `
             <div class="empty-state">
                 <p>No Spotify recommendations available</p>
-                <p class="empty-state-hint">Use "Enrich from All Services" to fetch similar artists and song recommendations from Spotify</p>
-                <button onclick="loadSpotifyRecommendations()" class="btn btn-sm btn-primary" id="spotifyRefreshBtn">
-                    <iconify-icon icon="tabler:refresh"></iconify-icon> Refresh Spotify Data
-                </button>
+                <p class="empty-state-hint">Spotify API access is required for recommendations. Configure Spotify credentials in Settings > Services.</p>
+                <p class="empty-state-hint">Note: The logs show "Error getting Spotify metadata: No access token available"</p>
+            </div>
+        `;
+    }
+}
+
+// Render enrichment info panel for Settings tab
+function renderEnrichmentInfo(artist, metadata) {
+    const panel = document.getElementById('enrichmentInfoPanel');
+    if (!panel) return;
+    
+    const hasEnrichmentData = metadata.enrichment_date;
+    
+    if (hasEnrichmentData) {
+        const sourcesUsed = metadata.sources_used || [];
+        const enrichmentDate = new Date(metadata.enrichment_date).toLocaleString();
+        const confidence = Math.round((metadata.confidence_score || 0) * 100);
+        
+        panel.innerHTML = `
+            <div class="enrichment-details">
+                <div class="enrichment-summary">
+                    <div class="enrichment-stat">
+                        <label>Last Enriched:</label>
+                        <span>${enrichmentDate}</span>
+                    </div>
+                    <div class="enrichment-stat">
+                        <label>Confidence Score:</label>
+                        <span>${confidence}%</span>
+                    </div>
+                    <div class="enrichment-stat">
+                        <label>Sources Used:</label>
+                        <span>${sourcesUsed.join(', ')}</span>
+                    </div>
+                </div>
+                <div class="enrichment-data">
+                    <h4>Available Data:</h4>
+                    <div class="data-grid">
+                        ${metadata.biography ? '<div class="data-item">✅ Biography</div>' : ''}
+                        ${metadata.playcount ? `<div class="data-item">✅ Play Count: ${metadata.playcount.toLocaleString()}</div>` : ''}
+                        ${metadata.listeners ? `<div class="data-item">✅ Listeners: ${metadata.listeners.toLocaleString()}</div>` : ''}
+                        ${metadata.wikipedia_url ? '<div class="data-item">✅ Wikipedia Link</div>' : ''}
+                        ${metadata.musicbrainz_id ? '<div class="data-item">✅ MusicBrainz ID</div>' : ''}
+                        ${metadata.discogs_id ? '<div class="data-item">✅ Discogs ID</div>' : ''}
+                        ${metadata.allmusic_id ? '<div class="data-item">✅ AllMusic ID</div>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        panel.innerHTML = `
+            <div class="empty-state">
+                <p>No enrichment data available</p>
+                <p class="empty-state-hint">Use "Enrich from All Services" to populate metadata</p>
             </div>
         `;
     }
@@ -6873,6 +6937,18 @@ function hideEnrichmentProgressModal() {
     }
 }
 
+function getSourceIcon(source) {
+    const icons = {
+        'lastfm': 'brand-lastfm',
+        'spotify': 'brand-spotify', 
+        'imvdb': 'database',
+        'musicbrainz': 'vinyl',
+        'allmusic': 'music',
+        'wikipedia': 'book'
+    };
+    return icons[source.toLowerCase()] || 'info';
+}
+
 function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
     console.log('🔍 INSIDE showEnrichmentResults with:', {
         sourcesUsed_type: typeof sourcesUsed,
@@ -6882,7 +6958,8 @@ function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
         enrichedFields_content: enrichedFields
     });
     
-    const modal = document.createElement('div');
+    try {
+        const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="enrichment-results-modal">
@@ -6927,10 +7004,17 @@ function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
     `;
     document.body.appendChild(modal);
     
-    // Auto-close after 5 seconds
-    setTimeout(() => {
-        modal.remove();
-    }, 5000);
+        // Auto-close after 5 seconds
+        setTimeout(() => {
+            modal.remove();
+        }, 5000);
+        
+        console.log('✅ SUCCESS MODAL DISPLAYED');
+    } catch (error) {
+        console.error('❌ ERROR CREATING SUCCESS MODAL:', error);
+        // Fallback: simple alert
+        alert(`Enrichment Complete! Sources: ${sourcesUsed.join(', ')}, Fields: ${enrichedFields.length}`);
+    }
 }
 
 function showEnrichmentError(message, failedSources = [], suggestions = []) {
