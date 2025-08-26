@@ -3650,6 +3650,12 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
         allmusic_data_full: allmusicData,
         imvdb_bio_check: imvdbData.bio,
         direct_biography_check: imvdbData.biography,
+        // Check ALL enriched fields that should be displaying
+        enriched_playcount: imvdbData.playcount,
+        enriched_listeners: imvdbData.listeners,
+        enriched_wikipedia_url: imvdbData.wikipedia_url,
+        enriched_confidence_score: imvdbData.confidence_score,
+        enriched_sources_used: imvdbData.sources_used,
         full_imvdb_data: imvdbData
     });
     
@@ -4070,13 +4076,24 @@ function renderMusicalInfo(artist, metadata) {
         artist_genres: artist.genres,
         metadata_genres: metadata.genres,
         metadata_keys: metadata ? Object.keys(metadata) : 'none',
+        // Check all possible popularity sources
+        popularity: metadata.popularity,
         spotify_popularity: metadata.spotify_popularity,
+        // Check all stat sources
+        playcount: metadata.playcount,
+        listeners: metadata.listeners,
+        followers: metadata.followers,
+        // Check arrays
         similar_artists: metadata.similar_artists,
         related_artists: metadata.related_artists,
         top_tracks: metadata.top_tracks,
+        // Check other fields
         labels: metadata.labels,
         moods: metadata.moods,
-        themes: metadata.themes
+        themes: metadata.themes,
+        // Check enriched status
+        enrichment_date: metadata.enrichment_date,
+        sources_used: metadata.sources_used
     });
     
     // Genres with enhanced styling and source attribution
@@ -4108,9 +4125,26 @@ function renderMusicalInfo(artist, metadata) {
     }
     
     // Spotify popularity if available
-    if (metadata.spotify_popularity) {
-        const popularityBar = createPopularityBar(metadata.spotify_popularity);
+    if (metadata.spotify_popularity || metadata.popularity) {
+        const popularityValue = metadata.spotify_popularity || metadata.popularity;
+        const popularityBar = createPopularityBar(popularityValue);
         musicalInfoHtml += createEnhancedMetadataItem('Popularity', popularityBar, 'trending-up', 'Spotify');
+    }
+    
+    // Last.fm statistics
+    if (metadata.playcount) {
+        const formattedPlaycount = (metadata.playcount / 1000000).toFixed(1) + 'M plays';
+        musicalInfoHtml += createEnhancedMetadataItem('Play Count', formattedPlaycount, 'play', 'Last.fm');
+    }
+    
+    if (metadata.listeners) {
+        const formattedListeners = (metadata.listeners / 1000).toFixed(0) + 'K listeners';
+        musicalInfoHtml += createEnhancedMetadataItem('Listeners', formattedListeners, 'users', 'Last.fm');
+    }
+    
+    if (metadata.followers) {
+        const formattedFollowers = (metadata.followers / 1000).toFixed(0) + 'K followers';
+        musicalInfoHtml += createEnhancedMetadataItem('Followers', formattedFollowers, 'user-plus', 'Spotify');
     }
     
     if (metadata.similar_artists && metadata.similar_artists.length > 0) {
