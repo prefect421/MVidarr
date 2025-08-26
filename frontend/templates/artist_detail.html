@@ -2293,6 +2293,33 @@ div.metadata-section:hover,
     gap: 1rem;
 }
 
+.song-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.song-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-secondary, #333);
+}
+
+.song-item:last-child {
+    border-bottom: none;
+}
+
+.song-title {
+    color: var(--accent-primary, #00d4ff);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.song-title:hover {
+    color: var(--accent-secondary, #00b8e6);
+    text-decoration: underline;
+}
+
 .artist-card, .song-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
@@ -2425,6 +2452,10 @@ div.metadata-section:hover,
     .artist-card, .song-card {
         flex-direction: column;
         gap: 1rem;
+    }
+    
+    .song-item {
+        padding: 0.5rem 0;
     }
     
     .song-actions {
@@ -4036,46 +4067,27 @@ function renderSpotifyRecommendations(data) {
         html += `
             <div class="spotify-section">
                 <h4><iconify-icon icon="mdi:music-note"></iconify-icon> Song Recommendations</h4>
-                <div class="song-grid">
+                <ul class="song-list">
         `;
         
         data.recommendations.forEach(track => {
-            const artistNames = track.artists.join(', ');
+            // Handle artists array properly - track.artists from enrichment service are objects with name property
+            const artistNames = Array.isArray(track.artists) 
+                ? track.artists.map(artist => typeof artist === 'string' ? artist : artist.name || 'Unknown').join(', ')
+                : 'Unknown';
             const searchUrl = `/search?q=${encodeURIComponent(track.name + ' ' + artistNames)}&source=universal`;
+            
             html += `
-                <div class="song-card">
-                    <div class="song-info">
-                        <a href="${searchUrl}" class="song-title" title="Search for ${track.name}">
-                            ${track.name}
-                        </a>
-                        <div class="song-artists">
-                            ${track.artists.map(artistName => 
-                                `<a href="/search?q=${encodeURIComponent(artistName)}&source=universal" class="artist-link">${artistName}</a>`
-                            ).join(', ')}
-                        </div>
-                        <div class="song-details">
-                            <span class="album">${track.album.name}</span>
-                            <span class="popularity">Popularity: ${track.popularity}/100</span>
-                        </div>
-                    </div>
-                    <div class="song-actions">
-                        ${track.preview_url ? `
-                            <button onclick="playPreview('${track.preview_url}')" class="btn btn-sm btn-secondary" title="Play preview">
-                                <iconify-icon icon="tabler:play"></iconify-icon>
-                            </button>
-                        ` : ''}
-                        ${track.external_urls && track.external_urls.spotify ? `
-                            <a href="${track.external_urls.spotify}" target="_blank" class="btn btn-sm btn-success" title="Open in Spotify">
-                                <iconify-icon icon="mdi:spotify"></iconify-icon>
-                            </a>
-                        ` : ''}
-                    </div>
-                </div>
+                <li class="song-item">
+                    <a href="${searchUrl}" class="song-title" title="Search for ${track.name}">
+                        ${track.name}
+                    </a>
+                </li>
             `;
         });
         
         html += `
-                </div>
+                </ul>
             </div>
         `;
     }
