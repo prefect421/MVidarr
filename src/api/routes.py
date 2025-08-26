@@ -17,6 +17,7 @@ from src.api.imvdb import imvdb_bp
 from src.api.lastfm import lastfm_bp
 from src.api.lidarr import lidarr_bp
 from src.api.metadata_enrichment import metadata_enrichment_bp
+from src.api.metadata_enrichment_spotify import spotify_enrichment_bp
 from src.api.metube import metube_bp
 from src.api.migrations import migrations_bp
 from src.api.musicbrainz import musicbrainz_bp
@@ -86,6 +87,7 @@ def register_routes(app):
     api_bp.register_blueprint(lastfm_bp)
     api_bp.register_blueprint(musicbrainz_bp)
     api_bp.register_blueprint(metadata_enrichment_bp)
+    api_bp.register_blueprint(spotify_enrichment_bp)
     api_bp.register_blueprint(plex_bp)
     api_bp.register_blueprint(lidarr_bp, url_prefix="/lidarr")
 

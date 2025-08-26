@@ -2180,7 +2180,14 @@ function loadSettings() {
             Object.keys(settings).forEach(key => {
                 const element = document.getElementById(key);
                 if (element) {
-                    element.value = settings[key].value;
+                    // Handle different input types correctly
+                    if (element.type === 'checkbox') {
+                        // For checkboxes, handle Python boolean string representations
+                        const value = settings[key].value;
+                        element.checked = (value === 'True' || value === 'true' || value === true || value === '1');
+                    } else {
+                        element.value = settings[key].value;
+                    }
                 }
             });
             
@@ -2282,7 +2289,12 @@ function saveSettings() {
     const inputs = document.querySelectorAll('input, select');
     inputs.forEach(input => {
         if (input.name) {
-            settingsData[input.name] = input.value;
+            // Handle different input types correctly
+            if (input.type === 'checkbox') {
+                settingsData[input.name] = input.checked;
+            } else {
+                settingsData[input.name] = input.value;
+            }
         }
     });
     

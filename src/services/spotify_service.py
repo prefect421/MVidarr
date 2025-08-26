@@ -360,6 +360,10 @@ class SpotifyService:
         params = {"ids": ",".join(track_ids)}
         return self._make_request("audio-features", params)
 
+    def get_related_artists(self, artist_id: str) -> Dict:
+        """Get related artists for a given artist"""
+        return self._make_request(f"artists/{artist_id}/related-artists")
+
     def create_playlist(
         self,
         name: str,

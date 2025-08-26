@@ -4,6 +4,19 @@
 
 {% block head %}
 <style>
+/* CACHE BUST: 2025-08-25-15-10 - Force browser to reload styles */
+
+/* Library Statistics card specific styling */
+.library-stats-card {
+    padding: 20px 20px 20px 20px !important;
+    border-radius: 12px !important;
+    border: 2px solid var(--border-primary, #444) !important;
+}
+
+.library-stats-card .stats-grid {
+    padding: 0 5px 5px 5px !important;
+}
+
 /* IMVDb ID management styles */
 .input-group {
     display: flex;
@@ -11,7 +24,228 @@
     gap: 5px;
 }
 
-/* Metadata Services Styles */
+/* External Services Grid - Overview Page */
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.2rem;
+    margin-top: 1rem;
+}
+
+.services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 0;
+}
+
+.service-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary, #333);
+    border-radius: 6px;
+    border-left: 3px solid var(--border-primary, #444);
+    transition: all 0.2s ease;
+}
+
+.service-item:hover {
+    background: var(--bg-quaternary, #3a3a3a);
+    border-left-color: var(--accent-primary, #00d4ff);
+}
+
+.service-main {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.service-name-link {
+    color: var(--text-accent, #00d4ff);
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.service-name-link:hover {
+    color: var(--accent-secondary, #00b8e6);
+    text-decoration: underline;
+}
+
+.service-status {
+    color: var(--text-secondary, #ccc);
+    font-size: 0.9rem;
+}
+
+.service-status.linked {
+    color: var(--success-color, #4CAF50);
+}
+
+.service-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.service-sync-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #ccc);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.service-sync-btn:hover {
+    background: var(--bg-secondary, #2a2a2a);
+    color: var(--accent-primary, #00d4ff);
+}
+
+.service-sync-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.service-card {
+    background: var(--bg-secondary, #2a2a2a);
+    border: 1px solid var(--border-primary, #444);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.service-card:hover {
+    border-color: var(--text-accent, #00d4ff);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.service-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--bg-tertiary, #333);
+    border-bottom: 1px solid var(--border-primary, #444);
+}
+
+.service-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.service-icon {
+    font-size: 1.5rem;
+    color: var(--text-accent, #00d4ff);
+}
+
+.service-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin: 0;
+}
+
+.service-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #ccc);
+    margin: 0.25rem 0 0 0;
+}
+
+.service-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.connection-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--bg-muted, #666);
+}
+
+.connection-indicator.connected {
+    background: var(--success-color, #4CAF50);
+    box-shadow: 0 0 4px rgba(76, 175, 80, 0.4);
+}
+
+.connection-indicator.disconnected {
+    background: var(--danger-color, #f44336);
+}
+
+.status-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary, #ccc);
+}
+
+.service-card-header .service-status .status-text {
+    color: var(--text-primary, #fff);
+}
+
+.service-card-body {
+    padding: 1rem;
+}
+
+.service-data {
+    display: grid;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.data-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border-secondary, #3a3a3a);
+}
+
+.data-item:last-child {
+    border-bottom: none;
+}
+
+.data-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #ccc);
+    font-weight: 500;
+}
+
+.data-value {
+    font-size: 0.85rem;
+    color: var(--text-primary, #fff);
+    text-align: right;
+    max-width: 60%;
+    word-break: break-word;
+}
+
+.service-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-secondary, #3a3a3a);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Metadata Services Styles - Settings Page */
 .metadata-services-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -1035,15 +1269,86 @@
 
 .metadata-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 1.5rem;
     align-items: start;
 }
 
-.metadata-section {
-    background: var(--bg-secondary, #2a2a2a);
-    border-radius: 10px;
-    border: 1px solid var(--border-secondary, #444);
+/* FORCE 2 COLUMNS - Maximum specificity override - CACHE BUST: 2025-08-25-14-21 */
+div.overview-layout div.metadata-grid,
+#overviewContent .metadata-grid,
+.tab-content.active .metadata-grid,
+.metadata-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-rows: auto !important;
+    gap: 1.5rem !important;
+    align-items: start !important;
+}
+
+/* Ensure full-width items span both columns */
+.metadata-section.full-width,
+.overview-layout .metadata-grid .metadata-section.full-width,
+div.metadata-grid .metadata-section.full-width {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+}
+
+/* OVERRIDE any auto-fit rules that may conflict */
+*[class*="grid"] {
+    grid-template-columns: revert !important;
+}
+
+/* Then re-apply our 2 column rule with maximum priority */
+.overview-layout .metadata-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    max-width: 100% !important;
+}
+
+/* Responsive: Switch to single column on smaller screens */
+@media (max-width: 768px) {
+    .metadata-grid,
+    #overviewContent .metadata-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.metadata-section,
+div.metadata-section,
+.overview-layout .metadata-section,
+.tab-content .metadata-section {
+    background: var(--bg-tertiary, #333) !important;
+    border: 2px solid var(--border-primary, #444) !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.metadata-section:hover,
+div.metadata-section:hover,
+.overview-layout .metadata-section:hover,
+.tab-content .metadata-section:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15) !important;
+    border-color: var(--text-accent, #00d4ff) !important;
+}
+
+.metadata-section.basic-info:hover {
+    border-color: var(--info-color, #2196F3);
+}
+
+.metadata-section.musical-info:hover {
+    border-color: var(--success-color, #4CAF50);
+}
+
+.metadata-section.statistics:hover {
+    border-color: var(--warning-color, #FF9800);
+}
+
+.metadata-section.activity:hover {
+    border-color: var(--accent-secondary, #00b8e6);
     overflow: hidden;
     transition: all 0.2s ease;
 }
@@ -1053,17 +1358,32 @@
     box-shadow: 0 4px 16px rgba(0, 212, 255, 0.1);
 }
 
-.metadata-section.full-width {
-    grid-column: 1 / -1;
-}
 
 .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.25rem;
-    background: var(--bg-tertiary, #333);
-    border-bottom: 1px solid var(--border-secondary, #444);
+    margin: -1rem -1rem 1rem -1rem;
+    background: linear-gradient(135deg, var(--bg-tertiary, #333) 0%, var(--bg-quaternary, #3a3a3a) 100%);
+    border-bottom: 3px solid var(--accent-primary, #00d4ff);
+    border-radius: 10px 10px 0 0;
+}
+
+.metadata-section.basic-info .section-header {
+    border-bottom-color: var(--info-color, #2196F3);
+}
+
+.metadata-section.musical-info .section-header {
+    border-bottom-color: var(--success-color, #4CAF50);
+}
+
+.metadata-section.statistics .section-header {
+    border-bottom-color: var(--warning-color, #FF9800);
+}
+
+.metadata-section.activity .section-header {
+    border-bottom-color: var(--accent-secondary, #00b8e6);
 }
 
 .section-header h3 {
@@ -1850,10 +2170,6 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
-    .metadata-grid {
-        grid-template-columns: 1fr;
-    }
-    
     .hero-content {
         flex-direction: column;
         align-items: stretch;
@@ -1872,6 +2188,248 @@
     
     .external-links-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Artist Header Actions */
+.artist-header-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary, #2a2a2a);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.artist-header-info {
+    flex: 1;
+}
+
+.artist-header-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+}
+
+.artist-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.artist-header-actions .btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.artist-header-actions .btn iconify-icon {
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .artist-header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .artist-header-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .artist-header-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .artist-header-actions .btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+/* Empty State Styling */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted, #888);
+}
+
+.empty-state-hint {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+}
+
+.empty-state p {
+    margin: 0.5rem 0;
+}
+
+/* Spotify Recommendations Styling */
+.spotify-section {
+    margin-bottom: 2rem;
+}
+
+.spotify-section h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.artist-grid, .song-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.artist-card, .song-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transition: all 0.2s ease;
+}
+
+.artist-card:hover, .song-card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.artist-info, .song-info {
+    flex-grow: 1;
+}
+
+.artist-name, .song-title {
+    font-weight: bold;
+    color: var(--accent-primary);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+}
+
+.artist-name:hover, .song-title:hover {
+    text-decoration: underline;
+}
+
+.artist-details, .song-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.song-artists {
+    margin-bottom: 0.5rem;
+}
+
+.artist-link {
+    color: var(--accent-primary);
+    text-decoration: none;
+}
+
+.artist-link:hover {
+    text-decoration: underline;
+}
+
+.popularity {
+    color: #1db954; /* Spotify green */
+    font-weight: 500;
+}
+
+.genres, .album {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.spotify-link {
+    color: #1db954;
+    font-size: 1.2rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(29, 185, 84, 0.1);
+    transition: all 0.2s ease;
+}
+
+.spotify-link:hover {
+    background: rgba(29, 185, 84, 0.2);
+    transform: scale(1.1);
+}
+
+.song-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.no-data-message iconify-icon {
+    font-size: 3rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.error-message {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    color: #f44336;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .artist-grid, .song-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .artist-card, .song-card {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .song-actions {
+        align-self: stretch;
+        justify-content: center;
     }
 }
 </style>
@@ -1913,40 +2471,73 @@
             <!-- Hero section with key info -->
             <div class="artist-hero-card">
                 <div class="hero-content">
-                    <div class="quick-stats" id="quickStats">
-                        <div class="loading-placeholder">Loading quick stats...</div>
-                    </div>
-                    <div class="metadata-actions">
-                        <button type="button" onclick="enrichMetadataAllSources()" class="btn btn-success btn-metadata-action">
-                            <iconify-icon icon="tabler:sparkles"></iconify-icon>
-                            Enrich from All Sources
-                        </button>
-                        <button type="button" onclick="showMetadataQualityAnalysis()" class="btn btn-info btn-metadata-action">
-                            <iconify-icon icon="tabler:chart-pie"></iconify-icon>
-                            Quality Analysis
-                        </button>
-                        <button type="button" onclick="showMetadataHistory()" class="btn btn-secondary btn-metadata-action">
-                            <iconify-icon icon="tabler:history"></iconify-icon>
-                            Enrichment History
-                        </button>
-                    </div>
+                    <!-- Metadata actions moved to artist header -->
                 </div>
             </div>
 
             <!-- Main content grid -->
-            <div class="metadata-grid">
-                <!-- Basic Information -->
-                <div class="metadata-section basic-info">
+            <div class="metadata-grid" style="display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 1.5rem !important;">
+                <!-- Row 1: Library Statistics (Full Width) -->
+                <div class="metadata-section statistics full-width library-stats-card" style="grid-column: 1 / -1 !important; width: 100% !important; border: 2px solid var(--border-primary, #444) !important;">
                     <div class="section-header">
-                        <h3><iconify-icon icon="tabler:info-circle"></iconify-icon> Basic Information</h3>
-                        <span class="data-quality-badge" id="basicInfoQuality">Loading...</span>
+                        <h3><iconify-icon icon="tabler:chart-bar"></iconify-icon> Library Statistics</h3>
                     </div>
-                    <div class="metadata-content" id="basicInfoContent">
-                        <div class="loading-placeholder">Loading basic information...</div>
+                    <div class="stats-grid" id="artistStats">
+                        <div class="loading-placeholder">Loading statistics...</div>
                     </div>
                 </div>
 
-                <!-- Musical Information -->
+                <!-- Row 2: Biography & Overview -->
+                <div class="metadata-section biography">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="tabler:book"></iconify-icon> Biography & Overview</h3>
+                        <span class="data-quality-badge" id="biographyQuality">Loading...</span>
+                    </div>
+                    <div class="metadata-content biography-content" id="biographyContent">
+                        <div class="loading-placeholder">Loading biography...</div>
+                    </div>
+                </div>
+
+                <!-- Row 2: External Services & Metadata -->
+                <div class="metadata-section external-services">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="tabler:cloud"></iconify-icon> Metadata Sources</h3>
+                        <div class="header-actions">
+                            <span class="data-quality-badge" id="externalServicesQuality">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="metadata-content">
+                        <div class="services-list" id="externalServicesContent">
+                            <div class="loading-placeholder">Loading external services...</div>
+                        </div>
+                        <div class="card-bottom-actions" style="margin-top: 15px; text-align: center;">
+                            <button onclick="refreshAllMetadataProviders()" class="btn btn-sm btn-secondary" title="Refresh all metadata from external sources">
+                                <iconify-icon icon="tabler:refresh"></iconify-icon>
+                                Refresh All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spotify Recommendations Section -->
+                <div class="metadata-section spotify-recommendations">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="mdi:spotify"></iconify-icon> Spotify Recommendations</h3>
+                        <div class="header-actions">
+                            <button onclick="loadSpotifyRecommendations()" class="btn btn-sm btn-primary" id="spotifyRefreshBtn">
+                                <iconify-icon icon="tabler:refresh"></iconify-icon>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="metadata-content">
+                        <div id="spotifyRecommendationsContent">
+                            <div class="loading-placeholder">Click refresh to load Spotify recommendations...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Musical Profile -->
                 <div class="metadata-section musical-info">
                     <div class="section-header">
                         <h3><iconify-icon icon="tabler:music"></iconify-icon> Musical Profile</h3>
@@ -1957,39 +2548,23 @@
                     </div>
                 </div>
 
-                <!-- External Links & IDs -->
-                <div class="metadata-section external-links">
+                <!-- Row 3: Basic Information -->
+                <div class="metadata-section basic-info">
                     <div class="section-header">
-                        <h3><iconify-icon icon="tabler:link"></iconify-icon> External Services</h3>
-                        <span class="data-quality-badge" id="externalLinksQuality">Loading...</span>
+                        <h3><iconify-icon icon="tabler:info-circle"></iconify-icon> Basic Information</h3>
+                        <span class="data-quality-badge" id="basicInfoQuality">Loading...</span>
                     </div>
-                    <div class="metadata-content" id="externalLinksContent">
-                        <div class="loading-placeholder">Loading external links...</div>
+                    <div class="metadata-content" id="basicInfoContent">
+                        <div class="loading-placeholder">Loading basic information...</div>
                     </div>
                 </div>
 
-                <!-- Biography & Description -->
-                <div class="metadata-section biography full-width">
-                    <div class="section-header">
-                        <h3><iconify-icon icon="tabler:book"></iconify-icon> Biography & Overview</h3>
-                        <span class="data-quality-badge" id="biographyQuality">Loading...</span>
-                    </div>
-                    <div class="metadata-content biography-content" id="biographyContent">
-                        <div class="loading-placeholder">Loading biography...</div>
-                    </div>
+                <!-- Row 4: Empty Cell -->
+                <div class="metadata-section empty-cell" style="visibility: hidden;">
+                    <!-- Empty placeholder for layout -->
                 </div>
 
-                <!-- Statistics Card -->
-                <div class="metadata-section statistics">
-                    <div class="section-header">
-                        <h3><iconify-icon icon="tabler:chart-bar"></iconify-icon> Library Statistics</h3>
-                    </div>
-                    <div class="stats-grid" id="artistStats">
-                        <div class="loading-placeholder">Loading statistics...</div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
+                <!-- Row 4: Recent Activity -->
                 <div class="metadata-section activity">
                     <div class="section-header">
                         <h3><iconify-icon icon="tabler:clock"></iconify-icon> Recent Activity</h3>
@@ -2478,202 +3053,7 @@
                         </div>
                     </div>
                     
-                    <!-- Metadata Services Section -->
-                    <div class="settings-section">
-                        <h4 class="section-title">
-                            <iconify-icon icon="tabler:database"></iconify-icon>
-                            Metadata Services
-                        </h4>
-                        <p class="section-description">Link and enrich this artist's metadata from external sources</p>
-                        
-                        <div class="metadata-services-grid">
-                            <!-- MusicBrainz -->
-                            <div class="metadata-service-card">
-                                <div class="service-header">
-                                    <div class="service-info">
-                                        <iconify-icon icon="simple-icons:musicbrainz" class="service-icon"></iconify-icon>
-                                        <div class="service-details">
-                                            <h5>MusicBrainz</h5>
-                                            <span class="service-description">Comprehensive music database</span>
-                                        </div>
-                                    </div>
-                                    <div class="service-status" id="musicbrainzStatus">
-                                        <span class="status-indicator unknown">Not Linked</span>
-                                    </div>
-                                </div>
-                                <div class="service-controls">
-                                    <input type="text" id="musicbrainzId" name="musicbrainz_id" 
-                                           placeholder="Enter MusicBrainz Artist ID" class="service-input">
-                                    <div class="service-actions">
-                                        <button type="button" onclick="searchMusicBrainz()" class="btn btn-secondary btn-sm">
-                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
-                                        </button>
-                                        <button type="button" onclick="enrichFromMusicBrainz()" class="btn btn-info btn-sm">
-                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
-                                        </button>
-                                        <button type="button" onclick="clearMusicBrainzId()" class="btn btn-outline btn-sm">
-                                            <iconify-icon icon="tabler:x"></iconify-icon>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="service-metadata" id="musicbrainzMetadata" style="display: none;">
-                                    <!-- Metadata preview will be populated here -->
-                                </div>
-                            </div>
 
-                            <!-- Last.fm -->
-                            <div class="metadata-service-card">
-                                <div class="service-header">
-                                    <div class="service-info">
-                                        <iconify-icon icon="simple-icons:lastdotfm" class="service-icon"></iconify-icon>
-                                        <div class="service-details">
-                                            <h5>Last.fm</h5>
-                                            <span class="service-description">Music recommendations & tags</span>
-                                        </div>
-                                    </div>
-                                    <div class="service-status" id="lastfmStatus">
-                                        <span class="status-indicator unknown">Not Linked</span>
-                                    </div>
-                                </div>
-                                <div class="service-controls">
-                                    <input type="text" id="lastfmArtist" name="lastfm_artist" 
-                                           placeholder="Enter Last.fm artist name" class="service-input">
-                                    <div class="service-actions">
-                                        <button type="button" onclick="searchLastfm()" class="btn btn-secondary btn-sm">
-                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
-                                        </button>
-                                        <button type="button" onclick="enrichFromLastfm()" class="btn btn-info btn-sm">
-                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
-                                        </button>
-                                        <button type="button" onclick="clearLastfmArtist()" class="btn btn-outline btn-sm">
-                                            <iconify-icon icon="tabler:x"></iconify-icon>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="service-metadata" id="lastfmMetadata" style="display: none;">
-                                    <!-- Metadata preview will be populated here -->
-                                </div>
-                            </div>
-
-                            <!-- Discogs -->
-                            <div class="metadata-service-card">
-                                <div class="service-header">
-                                    <div class="service-info">
-                                        <iconify-icon icon="simple-icons:discogs" class="service-icon"></iconify-icon>
-                                        <div class="service-details">
-                                            <h5>Discogs</h5>
-                                            <span class="service-description">Vinyl & music marketplace</span>
-                                        </div>
-                                    </div>
-                                    <div class="service-status" id="discogsStatus">
-                                        <span class="status-indicator unknown">Not Linked</span>
-                                    </div>
-                                </div>
-                                <div class="service-controls">
-                                    <input type="text" id="discogsId" name="discogs_id" 
-                                           placeholder="Enter Discogs Artist ID" class="service-input">
-                                    <div class="service-actions">
-                                        <button type="button" onclick="searchDiscogs()" class="btn btn-secondary btn-sm">
-                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
-                                        </button>
-                                        <button type="button" onclick="enrichFromDiscogs()" class="btn btn-info btn-sm">
-                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
-                                        </button>
-                                        <button type="button" onclick="clearDiscogsId()" class="btn btn-outline btn-sm">
-                                            <iconify-icon icon="tabler:x"></iconify-icon>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="service-metadata" id="discogsMetadata" style="display: none;">
-                                    <!-- Metadata preview will be populated here -->
-                                </div>
-                            </div>
-
-                            <!-- AllMusic -->
-                            <div class="metadata-service-card">
-                                <div class="service-header">
-                                    <div class="service-info">
-                                        <iconify-icon icon="tabler:music" class="service-icon"></iconify-icon>
-                                        <div class="service-details">
-                                            <h5>AllMusic</h5>
-                                            <span class="service-description">Music guide & reviews</span>
-                                        </div>
-                                    </div>
-                                    <div class="service-status" id="allmusicStatus">
-                                        <span class="status-indicator unknown">Not Linked</span>
-                                    </div>
-                                </div>
-                                <div class="service-controls">
-                                    <input type="text" id="allmusicId" name="allmusic_id" 
-                                           placeholder="Enter AllMusic Artist ID" class="service-input">
-                                    <div class="service-actions">
-                                        <button type="button" onclick="searchAllMusic()" class="btn btn-secondary btn-sm">
-                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
-                                        </button>
-                                        <button type="button" onclick="enrichFromAllMusic()" class="btn btn-info btn-sm">
-                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
-                                        </button>
-                                        <button type="button" onclick="clearAllMusicId()" class="btn btn-outline btn-sm">
-                                            <iconify-icon icon="tabler:x"></iconify-icon>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="service-metadata" id="allmusicMetadata" style="display: none;">
-                                    <!-- Metadata preview will be populated here -->
-                                </div>
-                            </div>
-
-                            <!-- Wikipedia -->
-                            <div class="metadata-service-card">
-                                <div class="service-header">
-                                    <div class="service-info">
-                                        <iconify-icon icon="simple-icons:wikipedia" class="service-icon"></iconify-icon>
-                                        <div class="service-details">
-                                            <h5>Wikipedia</h5>
-                                            <span class="service-description">Encyclopedia & biographies</span>
-                                        </div>
-                                    </div>
-                                    <div class="service-status" id="wikipediaStatus">
-                                        <span class="status-indicator unknown">Not Linked</span>
-                                    </div>
-                                </div>
-                                <div class="service-controls">
-                                    <input type="text" id="wikipediaTitle" name="wikipedia_title" 
-                                           placeholder="Enter Wikipedia page title" class="service-input">
-                                    <div class="service-actions">
-                                        <button type="button" onclick="searchWikipedia()" class="btn btn-secondary btn-sm">
-                                            <iconify-icon icon="tabler:search"></iconify-icon> Search
-                                        </button>
-                                        <button type="button" onclick="enrichFromWikipedia()" class="btn btn-info btn-sm">
-                                            <iconify-icon icon="tabler:download"></iconify-icon> Enrich
-                                        </button>
-                                        <button type="button" onclick="clearWikipediaTitle()" class="btn btn-outline btn-sm">
-                                            <iconify-icon icon="tabler:x"></iconify-icon>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="service-metadata" id="wikipediaMetadata" style="display: none;">
-                                    <!-- Metadata preview will be populated here -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Bulk Metadata Actions -->
-                        <div class="metadata-bulk-actions">
-                            <button type="button" onclick="enrichFromAllServices()" class="btn btn-success">
-                                <iconify-icon icon="tabler:sparkles"></iconify-icon>
-                                Enrich from All Services
-                            </button>
-                            <button type="button" onclick="autoMatchServices()" class="btn btn-primary">
-                                <iconify-icon icon="tabler:wand"></iconify-icon>
-                                Auto-Match Services
-                            </button>
-                            <button type="button" onclick="viewEnrichmentHistory()" class="btn btn-secondary">
-                                <iconify-icon icon="tabler:history"></iconify-icon>
-                                View History
-                            </button>
-                        </div>
-                    </div>
                     
                     <!-- Settings Section -->
                     <div class="settings-section">
@@ -3218,11 +3598,23 @@ function renderArtistHeader(artist) {
                         ${artist.monitored ? 'Monitored' : 'Not Monitored'}
                     </span>
                     ${artist.auto_download ? '<span class="header-stat auto-download">Auto-Download</span>' : ''}
-                    ${artist.imvdb_id ? '<span class="header-stat has-imvdb">IMVDb Linked</span>' : ''}
+                </div>
+                <div class="artist-header-actions">
+                    <button type="button" onclick="enrichFromAllServices()" class="btn btn-success">
+                        <iconify-icon icon="tabler:sparkles"></iconify-icon>
+                        Enrich from All Services
+                    </button>
+                    <button type="button" onclick="autoMatchServices()" class="btn btn-primary">
+                        <iconify-icon icon="tabler:wand"></iconify-icon>
+                        Auto-Match Services
+                    </button>
+                    <button type="button" onclick="viewEnrichmentHistory()" class="btn btn-secondary">
+                        <iconify-icon icon="tabler:history"></iconify-icon>
+                        Enrichment History
+                    </button>
                 </div>
                 ${artist.last_discovery ? `<p class="last-discovery">Last scan: ${new Date(artist.last_discovery).toLocaleString()}</p>` : ''}
             </div>
-            <!-- Removed redundant header buttons - functionality available via tabs -->
         </div>
     `;
     document.getElementById('artistHeader').innerHTML = headerHtml;
@@ -3231,39 +3623,234 @@ function renderArtistHeader(artist) {
 function renderOverviewTab(artist) {
     const metadata = artist.imvdb_metadata || {};
     
-    // Render quick stats in hero section
-    renderQuickStats(artist);
+    // Debug logging to understand the data structure
+    console.log('renderOverviewTab debug:', {
+        artist: artist,
+        imvdb_metadata: artist.imvdb_metadata,
+        metadata_keys: metadata ? Object.keys(metadata) : 'no keys',
+        has_enriched_data: metadata.enrichment_date ? true : false,
+        has_genres: !!artist.genres,
+        has_metadata_genres: !!metadata.genres,
+        enriched_metadata: metadata
+    });
+    
+    // Extract enriched metadata from deeper in the structure
+    let enrichedMetadata = { ...metadata };
+    
+    // Check if metadata services stored their data in sub-objects
+    if (metadata.allmusic_metadata) {
+        enrichedMetadata = { ...enrichedMetadata, ...metadata.allmusic_metadata };
+    }
+    if (metadata.spotify_metadata) {
+        enrichedMetadata = { ...enrichedMetadata, ...metadata.spotify_metadata };
+    }
+    if (metadata.musicbrainz_metadata) {
+        enrichedMetadata = { ...enrichedMetadata, ...metadata.musicbrainz_metadata };
+    }
+    if (metadata.lastfm_metadata) {
+        enrichedMetadata = { ...enrichedMetadata, ...metadata.lastfm_metadata };
+    }
+    if (metadata.wikipedia_metadata) {
+        enrichedMetadata = { ...enrichedMetadata, ...metadata.wikipedia_metadata };
+    }
+    
+    console.log('Enriched metadata structure:', enrichedMetadata);
     
     // Render each metadata section
-    renderBasicInfo(artist, metadata);
-    renderMusicalInfo(artist, metadata);
-    renderExternalLinks(artist, metadata);
-    renderBiography(artist, metadata);
+    renderBasicInfo(artist, enrichedMetadata);
+    renderMusicalInfo(artist, enrichedMetadata);
+    renderExternalLinks(artist, enrichedMetadata);
+    renderBiography(artist, enrichedMetadata);
     renderStatistics(artist);
     renderRecentActivity(artist);
 }
 
-function renderQuickStats(artist) {
-    const quickStatsHtml = `
-        <div class="quick-stat">
-            <span class="quick-stat-value">${artist.statistics.total_videos}</span>
-            <span class="quick-stat-label">Videos</span>
-        </div>
-        <div class="quick-stat">
-            <span class="quick-stat-value">${artist.statistics.downloaded_videos}</span>
-            <span class="quick-stat-label">Downloaded</span>
-        </div>
-        <div class="quick-stat">
-            <span class="quick-stat-value">${artist.statistics.wanted_videos}</span>
-            <span class="quick-stat-label">Wanted</span>
-        </div>
-        <div class="quick-stat">
-            <span class="quick-stat-value">${calculateDataCompleteness(artist)}%</span>
-            <span class="quick-stat-label">Complete</span>
-        </div>
-    `;
-    document.getElementById('quickStats').innerHTML = quickStatsHtml;
+// Load Spotify recommendations and related artists
+function loadSpotifyRecommendations() {
+    const artistId = window.currentArtistId;
+    if (!artistId) {
+        console.error('No artist ID available');
+        return;
+    }
+    
+    const button = document.getElementById('spotifyRefreshBtn');
+    const content = document.getElementById('spotifyRecommendationsContent');
+    
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<iconify-icon icon="tabler:loader-2"></iconify-icon> Loading...';
+    }
+    
+    if (content) {
+        content.innerHTML = '<div class="loading-placeholder"><iconify-icon icon="tabler:loader-2" class="loading-spinner"></iconify-icon> Loading Spotify recommendations...</div>';
+    }
+    
+    fetch(`/api/metadata-enrichment/spotify/recommendations/${artistId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error && !data.related_artists && !data.recommendations) {
+                throw new Error(data.error);
+            }
+            
+            renderSpotifyRecommendations(data);
+        })
+        .catch(error => {
+            console.error('Failed to load Spotify recommendations:', error);
+            if (content) {
+                content.innerHTML = `
+                    <div class="error-message">
+                        <iconify-icon icon="tabler:alert-circle"></iconify-icon>
+                        Failed to load recommendations: ${error.message}
+                    </div>
+                `;
+            }
+        })
+        .finally(() => {
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = '<iconify-icon icon="tabler:refresh"></iconify-icon> Refresh';
+            }
+        });
 }
+
+// Render Spotify recommendations data
+function renderSpotifyRecommendations(data) {
+    const content = document.getElementById('spotifyRecommendationsContent');
+    if (!content) return;
+    
+    let html = '';
+    
+    // Related Artists Section
+    if (data.related_artists && data.related_artists.length > 0) {
+        html += `
+            <div class="spotify-section">
+                <h4><iconify-icon icon="mdi:account-group"></iconify-icon> Related Artists</h4>
+                <div class="artist-grid">
+        `;
+        
+        data.related_artists.forEach(artist => {
+            const searchUrl = `/search?q=${encodeURIComponent(artist.name)}&source=universal`;
+            html += `
+                <div class="artist-card">
+                    <div class="artist-info">
+                        <a href="${searchUrl}" class="artist-name" title="Search for ${artist.name}">
+                            ${artist.name}
+                        </a>
+                        <div class="artist-details">
+                            <span class="popularity">Popularity: ${artist.popularity}/100</span>
+                            ${artist.genres.length > 0 ? `<span class="genres">${artist.genres.slice(0, 3).join(', ')}</span>` : ''}
+                        </div>
+                    </div>
+                    ${artist.external_urls && artist.external_urls.spotify ? `
+                        <a href="${artist.external_urls.spotify}" target="_blank" class="spotify-link" title="Open in Spotify">
+                            <iconify-icon icon="mdi:spotify"></iconify-icon>
+                        </a>
+                    ` : ''}
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    // Song Recommendations Section
+    if (data.recommendations && data.recommendations.length > 0) {
+        html += `
+            <div class="spotify-section">
+                <h4><iconify-icon icon="mdi:music-note"></iconify-icon> Song Recommendations</h4>
+                <div class="song-grid">
+        `;
+        
+        data.recommendations.forEach(track => {
+            const artistNames = track.artists.join(', ');
+            const searchUrl = `/search?q=${encodeURIComponent(track.name + ' ' + artistNames)}&source=universal`;
+            html += `
+                <div class="song-card">
+                    <div class="song-info">
+                        <a href="${searchUrl}" class="song-title" title="Search for ${track.name}">
+                            ${track.name}
+                        </a>
+                        <div class="song-artists">
+                            ${track.artists.map(artistName => 
+                                `<a href="/search?q=${encodeURIComponent(artistName)}&source=universal" class="artist-link">${artistName}</a>`
+                            ).join(', ')}
+                        </div>
+                        <div class="song-details">
+                            <span class="album">${track.album.name}</span>
+                            <span class="popularity">Popularity: ${track.popularity}/100</span>
+                        </div>
+                    </div>
+                    <div class="song-actions">
+                        ${track.preview_url ? `
+                            <button onclick="playPreview('${track.preview_url}')" class="btn btn-sm btn-secondary" title="Play preview">
+                                <iconify-icon icon="tabler:play"></iconify-icon>
+                            </button>
+                        ` : ''}
+                        ${track.external_urls && track.external_urls.spotify ? `
+                            <a href="${track.external_urls.spotify}" target="_blank" class="btn btn-sm btn-success" title="Open in Spotify">
+                                <iconify-icon icon="mdi:spotify"></iconify-icon>
+                            </a>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    if (html === '') {
+        html = `
+            <div class="no-data-message">
+                <iconify-icon icon="mdi:spotify"></iconify-icon>
+                <p>No Spotify recommendations available. Make sure the artist has a Spotify ID and your Spotify integration is configured.</p>
+            </div>
+        `;
+    }
+    
+    content.innerHTML = html;
+}
+
+// Handle audio preview playback
+function playPreview(previewUrl) {
+    // Stop any currently playing audio
+    const existingAudio = document.querySelector('audio.preview-audio');
+    if (existingAudio) {
+        existingAudio.pause();
+        existingAudio.remove();
+    }
+    
+    // Create and play new audio element
+    const audio = document.createElement('audio');
+    audio.src = previewUrl;
+    audio.className = 'preview-audio';
+    audio.controls = false;
+    audio.autoplay = true;
+    
+    // Add to DOM temporarily for playback
+    document.body.appendChild(audio);
+    
+    // Remove when done playing
+    audio.addEventListener('ended', () => {
+        audio.remove();
+    });
+    
+    // Remove after 30 seconds max (Spotify previews are 30s)
+    setTimeout(() => {
+        if (document.body.contains(audio)) {
+            audio.pause();
+            audio.remove();
+        }
+    }, 30000);
+}
+
+// renderQuickStats function removed - quick stats section was removed from layout
 
 function renderBasicInfo(artist, metadata) {
     let basicInfoHtml = '';
@@ -3362,122 +3949,180 @@ function renderMusicalInfo(artist, metadata) {
         }
     }
     
-    document.getElementById('musicalInfoContent').innerHTML = musicalInfoHtml || '<div class="loading-placeholder">No musical information available</div>';
+    if (!musicalInfoHtml) {
+        musicalInfoHtml = `
+            <div class="empty-state">
+                <p>No musical information available</p>
+                <p class="empty-state-hint">Use "Enrich from All Services" to fetch genres, styles, moods, and other musical data</p>
+            </div>
+        `;
+    }
+    
+    document.getElementById('musicalInfoContent').innerHTML = musicalInfoHtml;
     document.getElementById('musicalInfoQuality').className = 'data-quality-badge ' + calculateSectionQuality('musical', artist, metadata);
     document.getElementById('musicalInfoQuality').textContent = getQualityLabel(calculateSectionQuality('musical', artist, metadata));
 }
 
 function renderExternalLinks(artist, metadata) {
-    const links = [];
+    // This function is now replaced by renderExternalServices
+    renderExternalServices(artist, metadata);
+}
+
+function renderExternalServices(artist, metadata) {
+    const services = [
+        {
+            id: 'spotify',
+            name: 'Spotify',
+            searchFunction: 'searchSpotify',
+            syncFunction: 'syncFromSpotify',
+            connected: !!artist.spotify_id,
+            serviceId: artist.spotify_id
+        },
+        {
+            id: 'musicbrainz',
+            name: 'MusicBrainz',
+            searchFunction: 'searchMusicBrainz',
+            syncFunction: 'enrichFromMusicBrainz',
+            connected: !!(metadata.musicbrainz_id || (metadata.imvdb_metadata && metadata.imvdb_metadata.musicbrainz_id)),
+            serviceId: metadata.musicbrainz_id || (metadata.imvdb_metadata && metadata.imvdb_metadata.musicbrainz_id)
+        },
+        {
+            id: 'lastfm',
+            name: 'Last.fm',
+            searchFunction: 'searchLastfm',
+            syncFunction: 'enrichFromLastfm',
+            connected: !!artist.lastfm_name,
+            serviceId: artist.lastfm_name
+        },
+        {
+            id: 'imvdb',
+            name: 'IMVDb',
+            searchFunction: 'showImvdbIdentifyModal',
+            syncFunction: 'syncFromImvdb',
+            connected: !!artist.imvdb_id,
+            serviceId: artist.imvdb_id
+        },
+        {
+            id: 'discogs',
+            name: 'Discogs',
+            searchFunction: 'searchDiscogs',
+            syncFunction: 'enrichFromDiscogs',
+            connected: !!(metadata.discogs_id || (metadata.imvdb_metadata && metadata.imvdb_metadata.discogs_id)),
+            serviceId: metadata.discogs_id || (metadata.imvdb_metadata && metadata.imvdb_metadata.discogs_id)
+        },
+        {
+            id: 'allmusic',
+            name: 'AllMusic',
+            searchFunction: 'searchAllMusic',
+            syncFunction: 'enrichFromAllMusic',
+            connected: !!(metadata.allmusic_id || (metadata.imvdb_metadata && metadata.imvdb_metadata.allmusic_id)),
+            serviceId: metadata.allmusic_id || (metadata.imvdb_metadata && metadata.imvdb_metadata.allmusic_id) || 'Not Linked'
+        },
+        {
+            id: 'wikipedia',
+            name: 'Wikipedia',
+            searchFunction: 'searchWikipedia',
+            syncFunction: 'enrichFromWikipedia',
+            connected: !!(metadata.wikipedia_url || (metadata.imvdb_metadata && metadata.imvdb_metadata.wikipedia_url)),
+            serviceId: 'Connected' // Wikipedia uses URLs not IDs
+        }
+    ];
+
+    const servicesHtml = services.map(service => `
+        <div class="service-item-new">
+            <strong>
+                <a href="javascript:void(0)" onclick="${service.searchFunction}()" class="service-name-link" style="color: var(--text-accent, #00d4ff); text-decoration: none; font-weight: bold;">
+                    ${service.name}
+                </a>:
+            </strong>
+            <span class="service-id" style="margin-left: 5px; color: ${service.connected ? 'var(--success-color, #4CAF50)' : 'var(--text-muted, #888)'};">
+                ${service.connected ? (service.serviceId || 'Connected') : 'Not Linked'}
+            </span>
+            <button class="service-sync-btn-inline" onclick="${service.syncFunction}()" ${service.connected ? '' : 'disabled'} title="Sync metadata from ${service.name}" style="margin-left: 8px; background: none; border: none; color: var(--text-accent, #00d4ff); cursor: pointer; padding: 2px;">
+                <iconify-icon icon="tabler:refresh"></iconify-icon>
+            </button>
+            <br>
+        </div>
+    `).join('');
+
+    document.getElementById('externalServicesContent').innerHTML = servicesHtml;
     
-    // Service links
-    if (artist.imvdb_id) {
-        links.push({
-            icon: 'tabler:video',
-            label: 'IMVDb',
-            url: `https://imvdb.com/artist/${artist.imvdb_id}`,
-            id: artist.imvdb_id
+    // Update quality badge
+    const connectedServices = services.filter(s => s.connected).length;
+    const totalServices = services.length;
+    const qualityScore = (connectedServices / totalServices) * 100;
+    
+    let quality = 'poor';
+    if (qualityScore >= 75) quality = 'excellent';
+    else if (qualityScore >= 50) quality = 'good';
+    else if (qualityScore >= 25) quality = 'fair';
+    
+    document.getElementById('externalServicesQuality').className = 'data-quality-badge ' + quality;
+    document.getElementById('externalServicesQuality').textContent = `${connectedServices}/${totalServices} Connected`;
+}
+
+function showImvdbIdentifyModal() {
+    // Use the proper search function instead of opening external site
+    searchImvdb();
+}
+
+async function refreshAllMetadataProviders() {
+    const artistId = getCurrentArtistId();
+    if (!artistId) {
+        showError('No artist ID found');
+        return;
+    }
+    
+    showLoading('Refreshing all metadata providers...');
+    try {
+        const response = await apiRequest(`/api/metadata-enrichment/enrich/${artistId}`, {
+            method: 'POST',
+            body: JSON.stringify({
+                force_refresh: true
+            })
         });
+        
+        if (response.success) {
+            showSuccess('All metadata providers refreshed successfully');
+            // Refresh the artist data display
+            loadArtistDetails();
+        } else {
+            showError('Failed to refresh some metadata providers: ' + (response.errors?.join(', ') || 'Unknown error'));
+        }
+    } catch (error) {
+        showError('Failed to refresh metadata providers: ' + error.message);
     }
-    
-    if (artist.spotify_id) {
-        links.push({
-            icon: 'tabler:brand-spotify',
-            label: 'Spotify',
-            url: `https://open.spotify.com/artist/${artist.spotify_id}`,
-            id: artist.spotify_id
-        });
-    }
-    
-    if (artist.lastfm_name) {
-        links.push({
-            icon: 'tabler:music',
-            label: 'Last.fm',
-            url: `https://www.last.fm/music/${encodeURIComponent(artist.lastfm_name)}`,
-            id: artist.lastfm_name
-        });
-    }
-    
-    if (metadata.allmusic_url) {
-        links.push({
-            icon: 'tabler:disc',
-            label: 'AllMusic',
-            url: metadata.allmusic_url,
-            id: 'View Profile'
-        });
-    }
-    
-    // Social media links
-    if (artist.website_url) {
-        links.push({
-            icon: 'tabler:world',
-            label: 'Website',
-            url: artist.website_url,
-            id: 'Official Site'
-        });
-    }
-    
-    if (artist.youtube_url) {
-        links.push({
-            icon: 'tabler:brand-youtube',
-            label: 'YouTube',
-            url: artist.youtube_url,
-            id: 'Channel'
-        });
-    }
-    
-    if (artist.twitter_url) {
-        links.push({
-            icon: 'tabler:brand-twitter',
-            label: 'Twitter',
-            url: artist.twitter_url,
-            id: '@Profile'
-        });
-    }
-    
-    if (artist.facebook_url) {
-        links.push({
-            icon: 'tabler:brand-facebook',
-            label: 'Facebook',
-            url: artist.facebook_url,
-            id: 'Page'
-        });
-    }
-    
-    if (artist.instagram_url) {
-        links.push({
-            icon: 'tabler:brand-instagram',
-            label: 'Instagram',
-            url: artist.instagram_url,
-            id: '@Profile'
-        });
-    }
-    
-    if (links.length > 0) {
-        const linksHtml = `
-            <div class="external-links-grid">
-                ${links.map(link => `
-                    <a href="${link.url}" target="_blank" class="external-link">
-                        <iconify-icon icon="${link.icon}"></iconify-icon>
-                        <div>
-                            <div style="font-weight: 500;">${link.label}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">${link.id}</div>
-                        </div>
-                    </a>
-                `).join('')}
-            </div>
-        `;
-        document.getElementById('externalLinksContent').innerHTML = linksHtml;
-    } else {
-        document.getElementById('externalLinksContent').innerHTML = '<div class="loading-placeholder">No external links available</div>';
-    }
-    
-    document.getElementById('externalLinksQuality').className = 'data-quality-badge ' + calculateSectionQuality('external', artist, metadata);
-    document.getElementById('externalLinksQuality').textContent = getQualityLabel(calculateSectionQuality('external', artist, metadata));
 }
 
 function renderBiography(artist, metadata) {
-    const bio = artist.overview || artist.biography || metadata.biography;
+    // Check multiple possible sources for biography data
+    const bio = artist.overview || 
+                artist.biography || 
+                metadata.biography ||
+                (metadata.imvdb_metadata && metadata.imvdb_metadata.biography) ||
+                (metadata.imvdb_metadata && metadata.imvdb_metadata.overview) ||
+                (metadata.imvdb_metadata && metadata.imvdb_metadata.bio) ||
+                (artist.imvdb_metadata && artist.imvdb_metadata.biography) ||
+                (artist.imvdb_metadata && artist.imvdb_metadata.overview) ||
+                (artist.imvdb_metadata && artist.imvdb_metadata.bio);
+    
+    // Debug logging to understand data structure
+    console.log('Biography debug:', {
+        artistOverview: artist.overview,
+        artistBiography: artist.biography,
+        metadataBiography: metadata.biography,
+        imvdbMetadata: metadata.imvdb_metadata,
+        artistImvdbMetadata: artist.imvdb_metadata,
+        artistImvdbKeys: artist.imvdb_metadata ? Object.keys(artist.imvdb_metadata) : 'none',
+        finalBio: bio
+    });
+    
+    // Try to extract biography from nested structures
+    if (!bio && artist.imvdb_metadata && typeof artist.imvdb_metadata === 'object') {
+        const imvdbKeys = Object.keys(artist.imvdb_metadata);
+        console.log('IMVDb metadata keys:', imvdbKeys);
+        console.log('IMVDb metadata content:', artist.imvdb_metadata);
+    }
     
     if (bio) {
         const isLong = bio.length > 500;
@@ -3498,7 +4143,12 @@ function renderBiography(artist, metadata) {
         `;
         document.getElementById('biographyContent').innerHTML = biographyHtml;
     } else {
-        document.getElementById('biographyContent').innerHTML = '<div class="loading-placeholder">No biography available</div>';
+        document.getElementById('biographyContent').innerHTML = `
+            <div class="empty-state">
+                <p>No biography available</p>
+                <p class="empty-state-hint">Use "Enrich from All Services" to fetch biography from Wikipedia and other sources</p>
+            </div>
+        `;
     }
     
     document.getElementById('biographyQuality').className = 'data-quality-badge ' + (bio ? 'good' : 'none');
@@ -3651,7 +4301,7 @@ function calculateSectionQuality(section, artist, metadata) {
                 artist.imvdb_id,
                 artist.spotify_id,
                 artist.lastfm_name,
-                metadata.allmusic_url,
+                metadata.allmusic_id || (metadata.imvdb_metadata && metadata.imvdb_metadata.allmusic_id),
                 artist.website_url
             ].filter(Boolean).length;
             return externalScore >= 4 ? 'excellent' : externalScore >= 3 ? 'good' : externalScore >= 1 ? 'fair' : 'none';
@@ -3713,7 +4363,7 @@ function calculateEnhancedMetadataQuality(artist, metadata) {
         imvdb_id: { weight: 10, present: !!artist.imvdb_id },
         spotify_id: { weight: 8, present: !!artist.spotify_id },
         lastfm_name: { weight: 6, present: !!artist.lastfm_name },
-        allmusic_url: { weight: 5, present: !!metadata.allmusic_url },
+        allmusic_id: { weight: 5, present: !!(metadata.allmusic_id || (metadata.imvdb_metadata && metadata.imvdb_metadata.allmusic_id)) },
         website_url: { weight: 4, present: !!artist.website_url },
         youtube_url: { weight: 3, present: !!artist.youtube_url }
     };
@@ -5628,12 +6278,36 @@ function saveArtistSettings() {
     const formData = new FormData(document.getElementById('artistSettingsForm'));
     
     const settings = {
+        // Basic Info
         name: formData.get('name'),
+        sort_name: formData.get('sort_name'),
         folder_path: formData.get('folder_path'),
         keywords: formData.get('keywords'),
+        overview: formData.get('overview'),
+        
+        // Extended Info  
+        formed_year: formData.get('formed_year') || null,
+        disbanded_year: formData.get('disbanded_year') || null,
+        origin_country: formData.get('origin_country'),
+        genres: formData.get('genres'),
+        labels: formData.get('labels'), 
+        members: formData.get('members'),
+        
+        // External Links
+        website_url: formData.get('website_url'),
+        spotify_url: formData.get('spotify_url'),
+        youtube_url: formData.get('youtube_url'),
+        apple_music_url: formData.get('apple_music_url'),
+        twitter_url: formData.get('twitter_url'),
+        facebook_url: formData.get('facebook_url'),
+        instagram_url: formData.get('instagram_url'),
+        imvdb_id: formData.get('imvdb_id') || null,
+        
+        // Settings
         monitored: formData.get('monitored') === 'on',
         auto_download: formData.get('auto_download') === 'on',
-        imvdb_id: formData.get('imvdb_id') || null  // Include IMVDb ID, null if empty
+        quality_profile: formData.get('quality_profile'),
+        priority: formData.get('priority')
     };
     
     fetch(`/api/artists/${currentArtistId}/settings`, {
@@ -9424,6 +10098,7 @@ function executeMerge(sourceArtistId, targetArtistId) {
         mergeBtn.textContent = originalText;
     });
 }
+
 </script>
 
 <!-- Delete Video Confirmation Modal -->
