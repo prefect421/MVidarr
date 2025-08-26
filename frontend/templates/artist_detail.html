@@ -3622,18 +3622,33 @@ function renderArtistHeader(artist) {
 
 // Consolidate all metadata from different sources into a single structure
 function consolidateArtistMetadata(artist, enrichedMetadata) {
-    // The enrichment service stores data directly in imvdb_metadata, not in nested service objects
+    // There are TWO data storage patterns in this system:
+    // 1. Enrichment service data stored directly in imvdb_metadata (biography, enrichment_date, etc.)
+    // 2. IMVDb native metadata stored in nested service objects (allmusic_metadata, etc.)
     const imvdbData = artist.imvdb_metadata || {};
+    const allmusicData = imvdbData.allmusic_metadata || {};
+    const spotifyData = imvdbData.spotify_metadata || {};
+    const lastfmData = imvdbData.lastfm_metadata || {};
+    const wikipediaData = imvdbData.wikipedia_metadata || {};
     
-    console.log('🔍 ENRICHED METADATA ACCESS:', {
+    console.log('🔍 DUAL METADATA STRUCTURE ACCESS:', {
         imvdbData_keys: Object.keys(imvdbData),
+        // Enrichment service fields (stored directly)
         enrichment_date: imvdbData.enrichment_date,
-        has_biography: !!imvdbData.biography,
-        has_related_artists: !!imvdbData.related_artists,
-        has_top_tracks: !!imvdbData.top_tracks,
+        has_direct_biography: !!imvdbData.biography,
+        has_direct_related_artists: !!imvdbData.related_artists,
+        has_direct_top_tracks: !!imvdbData.top_tracks,
         sources_used: imvdbData.sources_used,
         confidence_score: imvdbData.confidence_score,
-        biography_preview: imvdbData.biography ? imvdbData.biography.substring(0, 100) + '...' : 'none',
+        // IMVDb native nested fields
+        has_allmusic_data: !!allmusicData && Object.keys(allmusicData).length > 0,
+        has_spotify_data: !!spotifyData && Object.keys(spotifyData).length > 0,
+        has_lastfm_data: !!lastfmData && Object.keys(lastfmData).length > 0,
+        has_wikipedia_data: !!wikipediaData && Object.keys(wikipediaData).length > 0,
+        allmusic_keys: allmusicData ? Object.keys(allmusicData) : 'none',
+        allmusic_bio_check: allmusicData.biography || allmusicData.bio,
+        imvdb_bio_check: imvdbData.bio,
+        direct_biography_check: imvdbData.biography,
         full_imvdb_data: imvdbData
     });
     
@@ -3645,54 +3660,61 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
         lastfm_name: artist.lastfm_name,
         imvdb_id: artist.imvdb_id,
         
-        // Core fields - handle genres as string or array
+        // Core fields - check both direct and nested sources
         genres: (() => {
             const artistGenres = artist.genres ? (Array.isArray(artist.genres) ? artist.genres : artist.genres.split(', ')) : null;
-            const metadataGenres = enrichedMetadata && enrichedMetadata.genres ? (Array.isArray(enrichedMetadata.genres) ? enrichedMetadata.genres : enrichedMetadata.genres.split(', ')) : null;
-            const imvdbGenres = imvdbData.genres ? (Array.isArray(imvdbData.genres) ? imvdbData.genres : imvdbData.genres.split(', ')) : null;
-            return artistGenres || metadataGenres || imvdbGenres || null;
+            const directGenres = imvdbData.genres ? (Array.isArray(imvdbData.genres) ? imvdbData.genres : imvdbData.genres.split(', ')) : null;
+            const allmusicGenres = allmusicData.genres ? (Array.isArray(allmusicData.genres) ? allmusicData.genres : allmusicData.genres.split(', ')) : null;
+            const spotifyGenres = spotifyData.genres ? (Array.isArray(spotifyData.genres) ? spotifyData.genres : spotifyData.genres.split(', ')) : null;
+            return artistGenres || directGenres || allmusicGenres || spotifyGenres || null;
         })(),
         
-        // Biography from enriched metadata (stored directly in imvdb_metadata)
-        biography: artist.overview || artist.biography || imvdbData.biography || null,
+        // Biography - check ALL possible sources (both direct and nested)
+        biography: artist.overview || artist.biography || imvdbData.biography || imvdbData.bio || 
+                  allmusicData.biography || allmusicData.bio || lastfmData.biography || 
+                  wikipediaData.biography || null,
         
-        // Enriched metadata fields (stored directly in imvdb_metadata)
-        popularity: imvdbData.popularity || null,
-        followers: imvdbData.followers || null,
-        listeners: imvdbData.listeners || null,
-        playcount: imvdbData.playcount || null,
+        // Enriched metadata fields - check both direct and nested sources
+        popularity: imvdbData.popularity || spotifyData.popularity || allmusicData.popularity || null,
+        followers: imvdbData.followers || spotifyData.followers || null,
+        listeners: imvdbData.listeners || lastfmData.listeners || null,
+        playcount: imvdbData.playcount || lastfmData.playcount || null,
         
-        // Musical info (stored directly in imvdb_metadata)
-        related_artists: imvdbData.related_artists || [],
-        similar_artists: imvdbData.similar_artists || [],
-        top_tracks: imvdbData.top_tracks || [],
+        // Musical info - check both direct and nested sources
+        related_artists: imvdbData.related_artists || lastfmData.related_artists || spotifyData.related_artists || [],
+        similar_artists: imvdbData.similar_artists || lastfmData.similar_artists || allmusicData.similar_artists || [],
+        top_tracks: imvdbData.top_tracks || lastfmData.top_tracks || spotifyData.top_tracks || [],
         
-        // Extended info (stored directly in imvdb_metadata)
-        formed_year: imvdbData.formed_year || null,
-        disbanded_year: imvdbData.disbanded_year || null,
-        origin_country: imvdbData.origin_country || null,
-        labels: imvdbData.labels || null,
-        members: imvdbData.members || null,
+        // Extended info - check both direct and nested sources
+        formed_year: imvdbData.formed_year || allmusicData.formed_year || wikipediaData.formed_year || null,
+        disbanded_year: imvdbData.disbanded_year || allmusicData.disbanded_year || wikipediaData.disbanded_year || null,
+        origin_country: imvdbData.origin_country || allmusicData.origin_country || wikipediaData.origin_country || null,
+        labels: imvdbData.labels || allmusicData.labels || spotifyData.labels || null,
+        members: imvdbData.members || allmusicData.members || wikipediaData.members || null,
         
-        // External links (stored directly in imvdb_metadata)
-        website_url: imvdbData.website_url || null,
-        spotify_url: imvdbData.spotify_url || null,
-        youtube_url: imvdbData.youtube_url || null,
-        apple_music_url: imvdbData.apple_music_url || null,
-        twitter_url: imvdbData.twitter_url || null,
-        facebook_url: imvdbData.facebook_url || null,
-        instagram_url: imvdbData.instagram_url || null,
+        // AllMusic specific fields
+        moods: imvdbData.moods || allmusicData.moods || [],
+        themes: imvdbData.themes || allmusicData.themes || [],
+        
+        // External links - check both direct and nested sources
+        website_url: imvdbData.website_url || allmusicData.website_url || spotifyData.website_url || null,
+        spotify_url: imvdbData.spotify_url || spotifyData.spotify_url || null,
+        youtube_url: imvdbData.youtube_url || allmusicData.youtube_url || null,
+        apple_music_url: imvdbData.apple_music_url || spotifyData.apple_music_url || null,
+        twitter_url: imvdbData.twitter_url || allmusicData.twitter_url || null,
+        facebook_url: imvdbData.facebook_url || allmusicData.facebook_url || null,
+        instagram_url: imvdbData.instagram_url || allmusicData.instagram_url || null,
         wikipedia_url: imvdbData.wikipedia_url || null,
         
-        // Metadata about metadata (stored directly in imvdb_metadata)
+        // Metadata about metadata - enrichment service fields
         enrichment_date: imvdbData.enrichment_date || null,
         sources_used: imvdbData.sources_used || [],
         confidence_score: imvdbData.confidence_score || 0,
         
-        // Images (stored directly in imvdb_metadata)
-        images: imvdbData.images || [],
+        // Images - check both direct and nested sources
+        images: imvdbData.images || spotifyData.images || allmusicData.images || [],
         
-        // IDs from different services (stored directly in imvdb_metadata)
+        // IDs from different services
         musicbrainz_id: imvdbData.musicbrainz_id || null,
         discogs_id: imvdbData.discogs_id || null,
         allmusic_id: imvdbData.allmusic_id || null,
@@ -4142,8 +4164,8 @@ function renderExternalServices(artist, metadata) {
             name: 'MusicBrainz',
             searchFunction: 'searchMusicBrainz',
             syncFunction: 'enrichFromMusicBrainz',
-            connected: !!(metadata.musicbrainz_id),
-            serviceId: metadata.musicbrainz_id
+            connected: !!(metadata.musicbrainz_id || (artist.imvdb_metadata && artist.imvdb_metadata.musicbrainz_id)),
+            serviceId: metadata.musicbrainz_id || (artist.imvdb_metadata && artist.imvdb_metadata.musicbrainz_id)
         },
         {
             id: 'lastfm',
@@ -4166,16 +4188,16 @@ function renderExternalServices(artist, metadata) {
             name: 'Discogs',
             searchFunction: 'searchDiscogs',
             syncFunction: 'enrichFromDiscogs',
-            connected: !!(metadata.discogs_id),
-            serviceId: metadata.discogs_id
+            connected: !!(metadata.discogs_id || (artist.imvdb_metadata && artist.imvdb_metadata.discogs_id)),
+            serviceId: metadata.discogs_id || (artist.imvdb_metadata && artist.imvdb_metadata.discogs_id)
         },
         {
             id: 'allmusic',
             name: 'AllMusic',
             searchFunction: 'searchAllMusic',
             syncFunction: 'enrichFromAllMusic',
-            connected: !!(metadata.allmusic_id),
-            serviceId: metadata.allmusic_id || 'Not Linked'
+            connected: !!(metadata.allmusic_id || (artist.imvdb_metadata && artist.imvdb_metadata.allmusic_id)),
+            serviceId: metadata.allmusic_id || (artist.imvdb_metadata && artist.imvdb_metadata.allmusic_id) || 'Not Linked'
         },
         {
             id: 'wikipedia',
