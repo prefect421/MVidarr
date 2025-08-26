@@ -6959,6 +6959,15 @@ function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
     });
     
     try {
+        // Ensure arrays are properly initialized
+        const safeSourcesUsed = Array.isArray(sourcesUsed) ? sourcesUsed : [];
+        const safeEnrichedFields = Array.isArray(enrichedFields) ? enrichedFields : [];
+        
+        console.log('🔍 CREATING ENRICHMENT MODAL with safe arrays:', {
+            safeSourcesUsed_length: safeSourcesUsed.length,
+            safeEnrichedFields_length: safeEnrichedFields.length
+        });
+        
         const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
@@ -6971,18 +6980,18 @@ function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
                 <div class="enrichment-summary">
                     <div class="summary-stats">
                         <div class="stat-item">
-                            <span class="stat-value">${sourcesUsed.length}</span>
+                            <span class="stat-value">${safeSourcesUsed.length}</span>
                             <span class="stat-label">Sources Used</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-value">${enrichedFields.length}</span>
+                            <span class="stat-value">${safeEnrichedFields.length}</span>
                             <span class="stat-label">Fields Updated</span>
                         </div>
                     </div>
                     <div class="sources-used">
                         <h4>Sources Successfully Processed:</h4>
                         <div class="source-badges">
-                            ${sourcesUsed.map(source => `
+                            ${safeSourcesUsed.map(source => `
                                 <span class="source-badge success">
                                     <iconify-icon icon="tabler:${getSourceIcon(source)}"></iconify-icon>
                                     ${source}
@@ -6990,11 +6999,11 @@ function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
                             `).join('')}
                         </div>
                     </div>
-                    ${enrichedFields.length > 0 ? `
+                    ${safeEnrichedFields.length > 0 ? `
                         <div class="enriched-fields">
                             <h4>Updated Fields:</h4>
                             <div class="field-badges">
-                                ${enrichedFields.map(field => `<span class="field-badge">${field}</span>`).join('')}
+                                ${safeEnrichedFields.map(field => `<span class="field-badge">${field}</span>`).join('')}
                             </div>
                         </div>
                     ` : ''}
@@ -7002,18 +7011,26 @@ function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
             </div>
         </div>
     `;
-    document.body.appendChild(modal);
     
+        console.log('🔍 APPENDING MODAL TO BODY');
+        document.body.appendChild(modal);
+        console.log('🔍 MODAL APPENDED, setting auto-close timeout');
+        
         // Auto-close after 5 seconds
         setTimeout(() => {
-            modal.remove();
+            if (modal.parentNode) {
+                modal.remove();
+                console.log('🔍 MODAL AUTO-CLOSED');
+            }
         }, 5000);
         
         console.log('✅ SUCCESS MODAL DISPLAYED');
     } catch (error) {
         console.error('❌ ERROR CREATING SUCCESS MODAL:', error);
-        // Fallback: simple alert
-        alert(`Enrichment Complete! Sources: ${sourcesUsed.join(', ')}, Fields: ${enrichedFields.length}`);
+        // Fallback: simple alert using safe arrays
+        const safeSourcesUsed = Array.isArray(sourcesUsed) ? sourcesUsed : [];
+        const safeEnrichedFields = Array.isArray(enrichedFields) ? enrichedFields : [];
+        alert(`Enrichment Complete! Sources: ${safeSourcesUsed.join(', ')}, Fields: ${safeEnrichedFields.length}`);
     }
 }
 
