@@ -173,8 +173,19 @@ class MetadataEnrichmentService:
                     session, artist, unified_metadata
                 )
 
+                logger.info(f"Committing enriched metadata for {artist_name}: {updated_fields}")
+                
                 # Commit changes
                 session.commit()
+                
+                logger.info(f"Successfully committed enriched metadata for {artist_name}")
+                
+                # Verify the data was actually saved
+                verification = session.query(Artist).filter(Artist.id == artist_id).first()
+                if verification and verification.imvdb_metadata:
+                    logger.info(f"Verification: Artist {artist_name} now has metadata with enrichment_date: {verification.imvdb_metadata.get('enrichment_date')}")
+                else:
+                    logger.error(f"Verification failed: Artist {artist_name} metadata was not saved properly")
 
                 # Validate that meaningful enrichment data was actually gathered
                 meaningful_fields = [
@@ -191,6 +202,9 @@ class MetadataEnrichmentService:
                 ]
 
                 has_meaningful_data = any(field for field in meaningful_fields)
+                
+                logger.info(f"Meaningful data check for {artist_name}: {has_meaningful_data}")
+                logger.info(f"Meaningful fields content: {[(i, bool(field)) for i, field in enumerate(meaningful_fields)]}")
 
                 if not has_meaningful_data:
                     result.errors.append(
