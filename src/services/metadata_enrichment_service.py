@@ -259,6 +259,20 @@ class MetadataEnrichmentService:
         if hasattr(self.spotify, "enabled") and self.spotify.enabled:
             try:
                 logger.debug(f"🎵 SPOTIFY ENRICHMENT: Starting for {artist_data['name']}")
+                
+                # Ensure Spotify has access token for enrichment (use client credentials)
+                try:
+                    if not self.spotify.access_token:
+                        logger.debug(f"🎵 SPOTIFY ENRICHMENT: Getting client credentials token")
+                        token_data = self.spotify.get_client_credentials_token()
+                        self.spotify.access_token = token_data.get("access_token")
+                        expires_in = token_data.get("expires_in", 3600)
+                        self.spotify.token_expires = datetime.now() + timedelta(seconds=expires_in)
+                        logger.debug(f"🎵 SPOTIFY ENRICHMENT: Got access token successfully")
+                except Exception as auth_e:
+                    logger.warning(f"🎵 SPOTIFY ENRICHMENT: Authentication failed: {auth_e}")
+                    raise auth_e
+                
                 spotify_metadata = await self._get_spotify_metadata(artist_data)
                 if spotify_metadata:
                     logger.debug(f"🎵 SPOTIFY ENRICHMENT: Got metadata: {spotify_metadata}")
