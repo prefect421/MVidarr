@@ -4024,10 +4024,15 @@ function renderSpotifyRecommendations(data) {
     const content = document.getElementById('spotifyRecommendationsContent');
     if (!content) return;
     
+    console.log('🎵 renderSpotifyRecommendations called with data:', data);
+    console.log('🎵 data.recommendations:', data.recommendations);
+    console.log('🎵 data.related_artists:', data.related_artists);
+    
     let html = '';
     
     // Song Recommendations Section
     if (data.recommendations && data.recommendations.length > 0) {
+        console.log('🎵 Rendering Song Recommendations section');
         html += `
             <div class="spotify-section">
                 <h4><iconify-icon icon="mdi:music-note"></iconify-icon> Song Recommendations</h4>
@@ -4055,6 +4060,7 @@ function renderSpotifyRecommendations(data) {
     
     // Related Artists Section
     if (data.related_artists && data.related_artists.length > 0) {
+        console.log('🎵 Rendering Recommended Artists section');
         html += `
             <div class="spotify-section">
                 <h4><iconify-icon icon="mdi:account-group"></iconify-icon> Recommended Artists</h4>
@@ -4079,6 +4085,7 @@ function renderSpotifyRecommendations(data) {
     }
     
     if (html === '') {
+        console.log('🎵 No Spotify data - showing empty state');
         html = `
             <div class="no-data-message">
                 <iconify-icon icon="mdi:spotify"></iconify-icon>
@@ -4087,7 +4094,9 @@ function renderSpotifyRecommendations(data) {
         `;
     }
     
+    console.log('🎵 Final HTML to be rendered:', html);
     content.innerHTML = html;
+    console.log('🎵 Content div after setting innerHTML:', content.innerHTML);
 }
 
 // Handle audio preview playback
