@@ -175,12 +175,23 @@ class MetadataEnrichmentService:
 
                 logger.info(f"Committing enriched metadata for {artist_name}: {updated_fields}")
                 
+                # Flush changes to database before verification
+                session.flush()
+                
+                # Verify the data was actually saved BEFORE final commit
+                verification = session.query(Artist).filter(Artist.id == artist_id).first()
+                if verification and verification.imvdb_metadata:
+                    logger.info(f"Pre-commit verification: Artist {artist_name} has metadata with enrichment_date: {verification.imvdb_metadata.get('enrichment_date')}")
+                else:
+                    logger.error(f"Pre-commit verification failed: Artist {artist_name} metadata was not updated properly")
+                
                 # Commit changes
                 session.commit()
                 
                 logger.info(f"Successfully committed enriched metadata for {artist_name}")
                 
-                # Verify the data was actually saved
+                # Verify the data was actually saved AFTER commit
+                session.refresh(verification)
                 verification = session.query(Artist).filter(Artist.id == artist_id).first()
                 if verification and verification.imvdb_metadata:
                     logger.info(f"Verification: Artist {artist_name} now has metadata with enrichment_date: {verification.imvdb_metadata.get('enrichment_date')}")
@@ -930,7 +941,12 @@ class MetadataEnrichmentService:
         existing_metadata["sources_used"] = list(metadata.raw_data.get("sources", {}).keys())
         existing_metadata["confidence_score"] = metadata.confidence
         
+        logger.info(f"Setting artist.imvdb_metadata to: {existing_metadata}")
+        logger.info(f"Artist.imvdb_metadata before assignment: {artist.imvdb_metadata}")
+        
         artist.imvdb_metadata = existing_metadata
+        
+        logger.info(f"Artist.imvdb_metadata after assignment: {artist.imvdb_metadata}")
         updated_fields["metadata"] = enriched_metadata
 
         # Update timestamps
