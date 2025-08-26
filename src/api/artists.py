@@ -712,20 +712,46 @@ def get_artist(artist_id):
                     )
                     metadata = None
 
+            # Safely serialize imvdb_metadata (where enrichment data is stored)
+            imvdb_metadata = None
+            if artist.imvdb_metadata:
+                try:
+                    # If imvdb_metadata is already a dict, use it; if it's a JSON string, parse it
+                    if isinstance(artist.imvdb_metadata, str):
+                        import json
+
+                        imvdb_metadata = json.loads(artist.imvdb_metadata)
+                    elif isinstance(artist.imvdb_metadata, dict):
+                        imvdb_metadata = artist.imvdb_metadata
+                    else:
+                        # For any other type (like SQLAlchemy objects), convert to string
+                        imvdb_metadata = str(artist.imvdb_metadata)
+                except Exception as imvdb_e:
+                    logger.warning(
+                        f"Failed to serialize imvdb_metadata for artist {artist_id}: {imvdb_e}"
+                    )
+                    imvdb_metadata = None
+
             return (
                 jsonify(
                     {
                         "id": artist.id,
                         "name": artist.name,
                         "imvdb_id": artist.imvdb_id,
+                        "spotify_id": artist.spotify_id,
+                        "lastfm_name": artist.lastfm_name,
                         "thumbnail_url": artist.thumbnail_url,
                         "auto_download": artist.auto_download,
                         "keywords": artist.keywords,
                         "monitored": artist.monitored,
                         "metadata": metadata,
+                        "imvdb_metadata": imvdb_metadata,
                         "genres": artist.genres,
+                        "overview": artist.overview,
+                        "biography": getattr(artist, 'biography', None),
                         "video_count": video_count,
                         "created_at": artist.created_at.isoformat(),
+                        "updated_at": artist.updated_at.isoformat() if artist.updated_at else None,
                     }
                 ),
                 200,
