@@ -6826,14 +6826,16 @@ function enrichMetadataAllSources(event) {
                 : (data.enriched_fields ? Object.keys(data.enriched_fields) : []);
             const enrichmentSummary = data.enrichment_summary || {};
             
-            // Show detailed success message with enrichment summary
-            console.log('🔍 CALLING SUCCESS MODAL with:', {
-                sourcesUsed, 
-                enrichedFields, 
-                enrichedFields_length: enrichedFields.length,
-                enrichmentSummary
-            });
-            showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary);
+            // Show simple success toast message
+            const sourcesText = sourcesUsed && sourcesUsed.length > 0 ? sourcesUsed.join(', ') : 'multiple sources';
+            const fieldsText = enrichedFields && enrichedFields.length > 0 ? `${enrichedFields.length} fields updated` : 'metadata updated';
+            
+            console.log('🔍 SHOWING SUCCESS TOAST for enrichment');
+            if (typeof showSuccess === 'function') {
+                showSuccess(`Metadata enriched from ${sourcesText}. ${fieldsText}.`);
+            } else {
+                alert(`Metadata enriched from ${sourcesText}. ${fieldsText}.`);
+            }
             
             // Reload artist data to show updated metadata with animation
             console.log('🔍 METADATA FOUND CHECK:', {
