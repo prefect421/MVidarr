@@ -3620,18 +3620,95 @@ function renderArtistHeader(artist) {
     document.getElementById('artistHeader').innerHTML = headerHtml;
 }
 
+// Consolidate all metadata from different sources into a single structure
+function consolidateArtistMetadata(artist, enrichedMetadata) {
+    const consolidated = {
+        // Basic artist info
+        id: artist.id,
+        name: artist.name,
+        spotify_id: artist.spotify_id,
+        lastfm_name: artist.lastfm_name,
+        imvdb_id: artist.imvdb_id,
+        
+        // Core fields - handle genres as string or array
+        genres: (() => {
+            const artistGenres = artist.genres ? (Array.isArray(artist.genres) ? artist.genres : artist.genres.split(', ')) : null;
+            const metadataGenres = enrichedMetadata.genres ? (Array.isArray(enrichedMetadata.genres) ? enrichedMetadata.genres : enrichedMetadata.genres.split(', ')) : null;
+            return artistGenres || metadataGenres || null;
+        })(),
+        biography: artist.overview || artist.biography || enrichedMetadata.biography || null,
+        
+        // Enriched metadata fields
+        popularity: enrichedMetadata.popularity || null,
+        followers: enrichedMetadata.followers || null,
+        listeners: enrichedMetadata.listeners || null,
+        playcount: enrichedMetadata.playcount || null,
+        
+        // Musical info
+        related_artists: enrichedMetadata.related_artists || [],
+        similar_artists: enrichedMetadata.similar_artists || [],
+        top_tracks: enrichedMetadata.top_tracks || [],
+        
+        // Extended info
+        formed_year: enrichedMetadata.formed_year || null,
+        disbanded_year: enrichedMetadata.disbanded_year || null,
+        origin_country: enrichedMetadata.origin_country || null,
+        labels: enrichedMetadata.labels || null,
+        members: enrichedMetadata.members || null,
+        
+        // AllMusic specific
+        moods: enrichedMetadata.moods || [],
+        themes: enrichedMetadata.themes || [],
+        
+        // External links
+        website_url: enrichedMetadata.website_url || null,
+        spotify_url: enrichedMetadata.spotify_url || null,
+        youtube_url: enrichedMetadata.youtube_url || null,
+        apple_music_url: enrichedMetadata.apple_music_url || null,
+        twitter_url: enrichedMetadata.twitter_url || null,
+        facebook_url: enrichedMetadata.facebook_url || null,
+        instagram_url: enrichedMetadata.instagram_url || null,
+        
+        // Metadata about metadata
+        enrichment_date: enrichedMetadata.enrichment_date || null,
+        sources_used: enrichedMetadata.sources_used || [],
+        confidence_score: enrichedMetadata.confidence_score || 0,
+        
+        // Images
+        images: enrichedMetadata.images || [],
+        
+        // IDs from different services
+        musicbrainz_id: enrichedMetadata.musicbrainz_id || 
+                        (artist.imvdb_metadata && artist.imvdb_metadata.musicbrainz_id) || null,
+        discogs_id: enrichedMetadata.discogs_id || 
+                    (artist.imvdb_metadata && artist.imvdb_metadata.discogs_id) || null,
+    };
+    
+    return consolidated;
+}
+
 function renderOverviewTab(artist) {
     const metadata = artist.imvdb_metadata || {};
     
     // Debug logging to understand the data structure
-    console.log('renderOverviewTab debug:', {
-        artist: artist,
-        imvdb_metadata: artist.imvdb_metadata,
+    console.log('🔍 METADATA DEBUG: renderOverviewTab:', {
+        artist_name: artist.name,
+        artist_id: artist.id,
+        artist_spotify_id: artist.spotify_id,
+        artist_genres: artist.genres,
+        raw_imvdb_metadata: artist.imvdb_metadata,
+        metadata_type: typeof artist.imvdb_metadata,
         metadata_keys: metadata ? Object.keys(metadata) : 'no keys',
         has_enriched_data: metadata.enrichment_date ? true : false,
-        has_genres: !!artist.genres,
-        has_metadata_genres: !!metadata.genres,
-        enriched_metadata: metadata
+        enrichment_date: metadata.enrichment_date,
+        sources_used: metadata.sources_used,
+        has_biography: !!metadata.biography,
+        has_genres_in_metadata: !!metadata.genres,
+        has_related_artists: !!metadata.related_artists,
+        has_top_tracks: !!metadata.top_tracks,
+        confidence_score: metadata.confidence_score,
+        popularity: metadata.popularity,
+        followers: metadata.followers
     });
     
     // Extract enriched metadata from deeper in the structure
@@ -3654,15 +3731,23 @@ function renderOverviewTab(artist) {
         enrichedMetadata = { ...enrichedMetadata, ...metadata.wikipedia_metadata };
     }
     
-    console.log('Enriched metadata structure:', enrichedMetadata);
+    // Consolidate all metadata into a single accessible structure
+    const consolidatedMetadata = consolidateArtistMetadata(artist, enrichedMetadata);
     
-    // Render each metadata section
-    renderBasicInfo(artist, enrichedMetadata);
-    renderMusicalInfo(artist, enrichedMetadata);
-    renderExternalLinks(artist, enrichedMetadata);
-    renderBiography(artist, enrichedMetadata);
+    console.log('🔍 CONSOLIDATED METADATA:', consolidatedMetadata);
+    
+    // Render each metadata section using consolidated metadata
+    renderBasicInfo(artist, consolidatedMetadata);
+    renderMusicalInfo(artist, consolidatedMetadata);
+    renderExternalLinks(artist, consolidatedMetadata);
+    renderBiography(artist, consolidatedMetadata);
     renderStatistics(artist);
     renderRecentActivity(artist);
+    
+    // Auto-load Spotify recommendations if artist has Spotify ID
+    if (artist.spotify_id) {
+        loadSpotifyRecommendations();
+    }
 }
 
 // Load Spotify recommendations and related artists
@@ -3901,9 +3986,28 @@ function renderBasicInfo(artist, metadata) {
 function renderMusicalInfo(artist, metadata) {
     let musicalInfoHtml = '';
     
+    // Debug logging for musical info
+    console.log('🔍 MUSICAL INFO DEBUG:', {
+        artist_name: artist.name,
+        artist_genres: artist.genres,
+        metadata_genres: metadata.genres,
+        metadata_keys: metadata ? Object.keys(metadata) : 'none',
+        spotify_popularity: metadata.spotify_popularity,
+        similar_artists: metadata.similar_artists,
+        related_artists: metadata.related_artists,
+        top_tracks: metadata.top_tracks,
+        labels: metadata.labels,
+        moods: metadata.moods,
+        themes: metadata.themes
+    });
+    
     // Genres with enhanced styling and source attribution
-    if ((artist.genres && artist.genres.length > 0) || (metadata.genres && metadata.genres.length > 0)) {
-        const genres = artist.genres || metadata.genres;
+    // Handle genres as either string or array
+    const artistGenres = artist.genres ? (Array.isArray(artist.genres) ? artist.genres : artist.genres.split(', ')) : null;
+    const metadataGenres = metadata.genres ? (Array.isArray(metadata.genres) ? metadata.genres : metadata.genres.split(', ')) : null;
+    
+    if ((artistGenres && artistGenres.length > 0) || (metadataGenres && metadataGenres.length > 0)) {
+        const genres = artistGenres || metadataGenres;
         const genreSource = artist.genres ? 'User' : getMetadataSource(metadata, 'genres');
         musicalInfoHtml += createEnhancedMetadataItem('Genres', createEnhancedTagList(genres, 'genre'), 'music', genreSource);
     }
@@ -4107,14 +4211,17 @@ function renderBiography(artist, metadata) {
                 (artist.imvdb_metadata && artist.imvdb_metadata.bio);
     
     // Debug logging to understand data structure
-    console.log('Biography debug:', {
+    console.log('🔍 BIOGRAPHY DEBUG:', {
+        artist_name: artist.name,
         artistOverview: artist.overview,
         artistBiography: artist.biography,
         metadataBiography: metadata.biography,
         imvdbMetadata: metadata.imvdb_metadata,
         artistImvdbMetadata: artist.imvdb_metadata,
         artistImvdbKeys: artist.imvdb_metadata ? Object.keys(artist.imvdb_metadata) : 'none',
-        finalBio: bio
+        metadata_keys: metadata ? Object.keys(metadata) : 'none',
+        finalBio: bio,
+        bio_length: bio ? bio.length : 0
     });
     
     // Try to extract biography from nested structures
