@@ -6709,10 +6709,23 @@ function enrichMetadataAllSources(event) {
         hideEnrichmentProgressModal();
         
         console.log('🔍 ENRICHMENT API RESPONSE:', data);
+        console.log('🔍 ENRICHMENT DETAILS:', {
+            success: data.success,
+            sources_used: data.sources_used,
+            enriched_fields: data.enriched_fields,
+            enriched_fields_type: typeof data.enriched_fields,
+            enriched_fields_keys: data.enriched_fields ? Object.keys(data.enriched_fields) : 'none',
+            metadata_found: data.metadata_found,
+            metadata_found_type: typeof data.metadata_found,
+            metadata_found_keys: data.metadata_found ? Object.keys(data.metadata_found) : 'none'
+        });
         
         if (data.success) {
             const sourcesUsed = data.sources_used || [];
-            const enrichedFields = data.enriched_fields || [];
+            // Handle enriched_fields as either array or object
+            const enrichedFields = Array.isArray(data.enriched_fields) 
+                ? data.enriched_fields 
+                : (data.enriched_fields ? Object.keys(data.enriched_fields) : []);
             const enrichmentSummary = data.enrichment_summary || {};
             
             // Show detailed success message with enrichment summary
