@@ -4035,7 +4035,7 @@ function renderSpotifyRecommendations(data) {
         `;
         
         data.related_artists.forEach(artist => {
-            const searchUrl = `/search?q=${encodeURIComponent(artist.name)}&source=universal`;
+            const searchUrl = `/discover?q=${encodeURIComponent(artist.name)}`;
             html += `
                 <div class="artist-card">
                     <div class="artist-info">
@@ -4071,11 +4071,8 @@ function renderSpotifyRecommendations(data) {
         `;
         
         data.recommendations.forEach(track => {
-            // Handle artists array properly - track.artists from enrichment service are objects with name property
-            const artistNames = Array.isArray(track.artists) 
-                ? track.artists.map(artist => typeof artist === 'string' ? artist : artist.name || 'Unknown').join(', ')
-                : 'Unknown';
-            const searchUrl = `/search?q=${encodeURIComponent(track.name + ' ' + artistNames)}&source=universal`;
+            // Use just the track name for the discover search
+            const searchUrl = `/discover?q=${encodeURIComponent(track.name)}`;
             
             html += `
                 <li class="song-item">
