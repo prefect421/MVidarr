@@ -3776,9 +3776,10 @@ function renderOverviewTab(artist) {
     renderRecentActivity(artist);
     
     // Auto-load Spotify recommendations if artist has Spotify ID
-    if (artist.spotify_id) {
-        loadSpotifyRecommendations();
-    }
+    // Temporarily disabled until endpoint registration is confirmed
+    // if (artist.spotify_id) {
+    //     loadSpotifyRecommendations();
+    // }
 }
 
 // Load Spotify recommendations and related artists
@@ -3801,7 +3802,10 @@ function loadSpotifyRecommendations() {
         content.innerHTML = '<div class="loading-placeholder"><iconify-icon icon="tabler:loader-2" class="loading-spinner"></iconify-icon> Loading Spotify recommendations...</div>';
     }
     
-    fetch(`/api/metadata-enrichment/spotify/recommendations/${artistId}`)
+    fetch(`/api/metadata-enrichment/spotify/recommendations/${artistId}`, {
+        method: 'GET',
+        credentials: 'include'  // Include cookies for session auth
+    })
         .then(response => response.json())
         .then(data => {
             if (data.error && !data.related_artists && !data.recommendations) {
@@ -3813,10 +3817,14 @@ function loadSpotifyRecommendations() {
         .catch(error => {
             console.error('Failed to load Spotify recommendations:', error);
             if (content) {
+                let errorMessage = error.message;
+                if (error.message.includes('404') || error.message.includes('Not Found')) {
+                    errorMessage = 'Spotify recommendations endpoint not available. The application may need to be restarted to register new API endpoints.';
+                }
                 content.innerHTML = `
                     <div class="error-message">
                         <iconify-icon icon="tabler:alert-circle"></iconify-icon>
-                        Failed to load recommendations: ${error.message}
+                        Failed to load recommendations: ${errorMessage}
                     </div>
                 `;
             }
