@@ -3647,6 +3647,7 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
         has_wikipedia_data: !!wikipediaData && Object.keys(wikipediaData).length > 0,
         allmusic_keys: allmusicData ? Object.keys(allmusicData) : 'none',
         allmusic_bio_check: allmusicData.biography || allmusicData.bio,
+        allmusic_data_full: allmusicData,
         imvdb_bio_check: imvdbData.bio,
         direct_biography_check: imvdbData.biography,
         full_imvdb_data: imvdbData
@@ -6706,6 +6707,8 @@ function enrichMetadataAllSources(event) {
     .then(data => {
         clearInterval(progressInterval);
         hideEnrichmentProgressModal();
+        
+        console.log('🔍 ENRICHMENT API RESPONSE:', data);
         
         if (data.success) {
             const sourcesUsed = data.sources_used || [];
