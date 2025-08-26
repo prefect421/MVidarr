@@ -2550,19 +2550,37 @@ div.metadata-section:hover,
                     </div>
                 </div>
 
-                <!-- Spotify Recommendations Section -->
-                <div class="metadata-section spotify-recommendations">
+                <!-- Song Recommendations Section -->
+                <div class="metadata-section song-recommendations">
                     <div class="section-header">
-                        <h3><iconify-icon icon="mdi:spotify"></iconify-icon> Spotify Recommendations</h3>
+                        <h3><iconify-icon icon="mdi:music-note"></iconify-icon> Song Recommendations</h3>
                         <div class="header-actions">
                             <small class="text-muted">Updated with metadata enrichment</small>
                         </div>
                     </div>
                     <div class="metadata-content">
-                        <div id="spotifyRecommendationsContent">
+                        <div id="songRecommendationsContent">
                             <div class="empty-state">
-                                <p>No Spotify recommendations available</p>
-                                <p class="empty-state-hint">Use "Enrich from All Services" to populate Spotify recommendations and related artists.</p>
+                                <p>No song recommendations available</p>
+                                <p class="empty-state-hint">Use "Enrich from All Services" to populate song recommendations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommended Artists Section -->
+                <div class="metadata-section recommended-artists">
+                    <div class="section-header">
+                        <h3><iconify-icon icon="mdi:account-group"></iconify-icon> Recommended Artists</h3>
+                        <div class="header-actions">
+                            <small class="text-muted">Updated with metadata enrichment</small>
+                        </div>
+                    </div>
+                    <div class="metadata-content">
+                        <div id="recommendedArtistsContent">
+                            <div class="empty-state">
+                                <p>No recommended artists available</p>
+                                <p class="empty-state-hint">Use "Enrich from All Services" to populate recommended artists.</p>
                             </div>
                         </div>
                     </div>
@@ -3860,8 +3878,8 @@ function renderOverviewTab(artist) {
 
 // Render Spotify recommendations from enriched metadata
 function renderSpotifyRecommendationsFromMetadata(metadata) {
-    const content = document.getElementById('spotifyRecommendationsContent');
-    if (!content) return;
+    // Updated to use separate containers
+    console.log('🎵 SPOTIFY DEBUG: renderSpotifyRecommendationsFromMetadata called');
     
     // Check if we have Spotify data in enriched metadata
     console.log('🎵 SPOTIFY DEBUG: Checking for Spotify data in metadata:', {
@@ -3883,35 +3901,9 @@ function renderSpotifyRecommendationsFromMetadata(metadata) {
             top_tracks: metadata.top_tracks
         });
         
-        // Transform simple string arrays from enrichment service into expected object structure
-        const transformedData = {
-            related_artists: (metadata.related_artists || []).map(artistName => ({
-                name: artistName,
-                popularity: null,
-                genres: [],
-                external_urls: null
-            })),
-            recommendations: (metadata.top_tracks || []).map(trackName => ({
-                name: trackName,
-                artists: [{ name: 'Unknown' }],
-                album: { name: 'Unknown', images: [] },
-                popularity: null,
-                preview_url: null,
-                external_urls: null
-            }))
-        };
-        
-        // TEMPORARY: Add mock related artists to test separate cards display
-        if (transformedData.related_artists.length === 0 && transformedData.recommendations.length > 0) {
-            console.log('🎵 TEMP: Adding mock related artists for testing separate cards');
-            transformedData.related_artists = [
-                { name: 'NOFX', popularity: null, genres: [], external_urls: null },
-                { name: 'The Offspring', popularity: null, genres: [], external_urls: null },
-                { name: 'Pennywise', popularity: null, genres: [], external_urls: null }
-            ];
-        }
-        
-        renderSpotifyRecommendations(transformedData);
+        // Populate separate containers for songs and artists
+        renderSongRecommendations(metadata.top_tracks || []);
+        renderRecommendedArtists(metadata.related_artists || []);
     } else {
         console.log('🎵 No Spotify data found in enriched metadata');
         content.innerHTML = `
@@ -4109,6 +4101,64 @@ function renderSpotifyRecommendations(data) {
     console.log('🎵 Final HTML to be rendered:', html);
     content.innerHTML = html;
     console.log('🎵 Content div after setting innerHTML:', content.innerHTML);
+}
+
+// Render song recommendations in separate card
+function renderSongRecommendations(tracks) {
+    const content = document.getElementById('songRecommendationsContent');
+    if (!content) return;
+    
+    if (tracks && tracks.length > 0) {
+        let html = '<ul class="song-list">';
+        tracks.forEach(trackName => {
+            const searchUrl = `/discover?q=${encodeURIComponent(trackName)}`;
+            html += `
+                <li class="song-item">
+                    <a href="${searchUrl}" class="song-title" title="Search for ${trackName}">
+                        ${trackName}
+                    </a>
+                </li>
+            `;
+        });
+        html += '</ul>';
+        content.innerHTML = html;
+    } else {
+        content.innerHTML = `
+            <div class="empty-state">
+                <p>No song recommendations available</p>
+                <p class="empty-state-hint">Use "Enrich from All Services" to populate song recommendations.</p>
+            </div>
+        `;
+    }
+}
+
+// Render recommended artists in separate card
+function renderRecommendedArtists(artists) {
+    const content = document.getElementById('recommendedArtistsContent');
+    if (!content) return;
+    
+    if (artists && artists.length > 0) {
+        let html = '<ul class="artist-list">';
+        artists.forEach(artistName => {
+            const searchUrl = `/discover?q=${encodeURIComponent(artistName)}`;
+            html += `
+                <li class="artist-item">
+                    <a href="${searchUrl}" class="artist-name" title="Search for ${artistName}">
+                        ${artistName}
+                    </a>
+                </li>
+            `;
+        });
+        html += '</ul>';
+        content.innerHTML = html;
+    } else {
+        content.innerHTML = `
+            <div class="empty-state">
+                <p>No recommended artists available</p>
+                <p class="empty-state-hint">Use "Enrich from All Services" to populate recommended artists.</p>
+            </div>
+        `;
+    }
 }
 
 // Handle audio preview playback
