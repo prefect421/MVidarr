@@ -2524,15 +2524,15 @@ div.metadata-section:hover,
                     <div class="section-header">
                         <h3><iconify-icon icon="mdi:spotify"></iconify-icon> Spotify Recommendations</h3>
                         <div class="header-actions">
-                            <button onclick="loadSpotifyRecommendations()" class="btn btn-sm btn-primary" id="spotifyRefreshBtn">
-                                <iconify-icon icon="tabler:refresh"></iconify-icon>
-                                Refresh
-                            </button>
+                            <small class="text-muted">Updated with metadata enrichment</small>
                         </div>
                     </div>
                     <div class="metadata-content">
                         <div id="spotifyRecommendationsContent">
-                            <div class="loading-placeholder">Click refresh to load Spotify recommendations...</div>
+                            <div class="empty-state">
+                                <p>No Spotify recommendations available</p>
+                                <p class="empty-state-hint">Use "Enrich from All Services" to populate Spotify recommendations and related artists.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3736,6 +3736,10 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
         musicbrainz_id: imvdbData.musicbrainz_id || null,
         discogs_id: imvdbData.discogs_id || null,
         allmusic_id: imvdbData.allmusic_id || null,
+        
+        // Spotify recommendations from enrichment service
+        related_artists: imvdbData.related_artists || spotifyData.related_artists || [],
+        top_tracks: imvdbData.top_tracks || spotifyData.top_tracks || [],
     };
     
     return consolidated;
@@ -3820,20 +3824,32 @@ function renderSpotifyRecommendationsFromMetadata(metadata) {
             top_tracks: metadata.top_tracks
         });
         
-        // Format the data structure to match what renderSpotifyRecommendations expects
-        const spotifyData = {
-            related_artists: metadata.related_artists || [],
-            recommendations: metadata.top_tracks || []  // top_tracks serves as recommendations
+        // Transform simple string arrays from enrichment service into expected object structure
+        const transformedData = {
+            related_artists: (metadata.related_artists || []).map(artistName => ({
+                name: artistName,
+                popularity: null,
+                genres: [],
+                external_urls: null
+            })),
+            recommendations: (metadata.top_tracks || []).map(trackName => ({
+                name: trackName,
+                artists: [{ name: 'Unknown' }],
+                album: { name: 'Unknown', images: [] },
+                popularity: null,
+                preview_url: null,
+                external_urls: null
+            }))
         };
         
-        renderSpotifyRecommendations(spotifyData);
+        renderSpotifyRecommendations(transformedData);
     } else {
         console.log('🎵 No Spotify data found in enriched metadata');
         content.innerHTML = `
             <div class="empty-state">
                 <p>No Spotify recommendations available</p>
-                <p class="empty-state-hint">Spotify API access is required for recommendations. Configure Spotify credentials in Settings > Services.</p>
-                <p class="empty-state-hint">Note: The logs show "Error getting Spotify metadata: No access token available"</p>
+                <p class="empty-state-hint">Use "Enrich from All Services" to populate Spotify recommendations and related artists.</p>
+                <p class="empty-state-hint">Requires Spotify API credentials configured in Settings > Services.</p>
             </div>
         `;
     }
