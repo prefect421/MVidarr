@@ -6729,13 +6729,26 @@ function enrichMetadataAllSources(event) {
             const enrichmentSummary = data.enrichment_summary || {};
             
             // Show detailed success message with enrichment summary
+            console.log('🔍 CALLING SUCCESS MODAL with:', {
+                sourcesUsed, 
+                enrichedFields, 
+                enrichedFields_length: enrichedFields.length,
+                enrichmentSummary
+            });
             showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary);
             
             // Reload artist data to show updated metadata with animation
+            console.log('🔍 METADATA FOUND CHECK:', {
+                has_metadata_found: !!data.metadata_found,
+                metadata_found_content: data.metadata_found
+            });
             if (data.metadata_found) {
+                console.log('🔍 UPDATING ARTIST DATA AND RELOADING...');
                 currentArtistData = { ...currentArtistData, ...data.metadata_found };
                 animateMetadataUpdate();
                 loadArtistDetails(); // Refresh the entire view
+            } else {
+                console.log('❌ NO metadata_found, not reloading view');
             }
         } else {
             const errorMessage = data.error || 'Failed to enrich metadata';
@@ -6827,6 +6840,14 @@ function hideEnrichmentProgressModal() {
 }
 
 function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
+    console.log('🔍 INSIDE showEnrichmentResults with:', {
+        sourcesUsed_type: typeof sourcesUsed,
+        sourcesUsed_length: sourcesUsed ? sourcesUsed.length : 'none',
+        enrichedFields_type: typeof enrichedFields,
+        enrichedFields_length: enrichedFields ? enrichedFields.length : 'none',
+        enrichedFields_content: enrichedFields
+    });
+    
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
