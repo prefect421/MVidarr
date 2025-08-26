@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from src.database.connection import get_db
 from src.database.models import Artist, Video
@@ -946,7 +947,11 @@ class MetadataEnrichmentService:
         
         artist.imvdb_metadata = existing_metadata
         
+        # CRITICAL: Mark the JSON field as modified so SQLAlchemy knows to save it
+        flag_modified(artist, 'imvdb_metadata')
+        
         logger.info(f"Artist.imvdb_metadata after assignment: {artist.imvdb_metadata}")
+        logger.info(f"Marked imvdb_metadata as modified for SQLAlchemy tracking")
         updated_fields["metadata"] = enriched_metadata
 
         # Update timestamps
