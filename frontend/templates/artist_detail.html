@@ -3738,8 +3738,24 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
         allmusic_id: imvdbData.allmusic_id || null,
         
         // Spotify recommendations from enrichment service
-        related_artists: imvdbData.related_artists || spotifyData.related_artists || [],
-        top_tracks: imvdbData.top_tracks || spotifyData.top_tracks || [],
+        related_artists: (() => {
+            const result = imvdbData.related_artists || spotifyData.related_artists || [];
+            console.log('🎵 CONSOLIDATION: related_artists result:', {
+                imvdbData_related_artists: imvdbData.related_artists,
+                spotifyData_related_artists: spotifyData.related_artists,
+                final_result: result
+            });
+            return result;
+        })(),
+        top_tracks: (() => {
+            const result = imvdbData.top_tracks || spotifyData.top_tracks || [];
+            console.log('🎵 CONSOLIDATION: top_tracks result:', {
+                imvdbData_top_tracks: imvdbData.top_tracks,
+                spotifyData_top_tracks: spotifyData.top_tracks,
+                final_result: result
+            });
+            return result;
+        })(),
     };
     
     return consolidated;
@@ -3815,6 +3831,16 @@ function renderSpotifyRecommendationsFromMetadata(metadata) {
     if (!content) return;
     
     // Check if we have Spotify data in enriched metadata
+    console.log('🎵 SPOTIFY DEBUG: Checking for Spotify data in metadata:', {
+        metadata_keys: metadata ? Object.keys(metadata) : 'no metadata',
+        related_artists: metadata.related_artists,
+        top_tracks: metadata.top_tracks,
+        related_artists_type: typeof metadata.related_artists,
+        top_tracks_type: typeof metadata.top_tracks,
+        related_artists_length: metadata.related_artists ? metadata.related_artists.length : 'no length',
+        top_tracks_length: metadata.top_tracks ? metadata.top_tracks.length : 'no length'
+    });
+    
     const hasRelatedArtists = metadata.related_artists && metadata.related_artists.length > 0;
     const hasTopTracks = metadata.top_tracks && metadata.top_tracks.length > 0;
     
