@@ -901,7 +901,21 @@ class MetadataEnrichmentService:
         existing_metadata = (
             artist.imvdb_metadata if isinstance(artist.imvdb_metadata, dict) else {}
         )
-        existing_metadata.update(enriched_metadata)
+        
+        # Merge enriched metadata, ensuring enriched data takes precedence over existing null values
+        for key, value in enriched_metadata.items():
+            # Only update if the enriched value is meaningful (not None, not empty)
+            if value is not None and value != "" and value != []:
+                existing_metadata[key] = value
+            # If existing field is null/empty and we have a meaningful enriched value, use it
+            elif key not in existing_metadata or existing_metadata[key] in [None, "", []]:
+                existing_metadata[key] = value
+                
+        # Ensure enrichment_date is always updated to show fresh data
+        existing_metadata["enrichment_date"] = datetime.now().isoformat()
+        existing_metadata["sources_used"] = list(metadata.raw_data.get("sources", {}).keys())
+        existing_metadata["confidence_score"] = metadata.confidence
+        
         artist.imvdb_metadata = existing_metadata
         updated_fields["metadata"] = enriched_metadata
 
