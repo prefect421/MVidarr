@@ -290,3 +290,37 @@ def get_available_quality_levels():
     except Exception as e:
         logger.error(f"Error getting quality levels: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@video_quality_bp.route("/check-all-qualities", methods=["POST"])
+def check_all_video_qualities():
+    """Manually trigger quality checks for multiple videos"""
+    try:
+        data = request.get_json() or {}
+        limit = data.get("limit", 50)  # Check up to 50 videos by default
+        only_unchecked = data.get("only_unchecked", True)
+        
+        from src.services.youtube_quality_check_service import youtube_quality_check_service
+        
+        logger.info(f"Starting manual quality check for up to {limit} videos (only_unchecked={only_unchecked})")
+        
+        # Run the quality check
+        summary = youtube_quality_check_service.check_all_videos(
+            limit=limit, 
+            only_unchecked=only_unchecked
+        )
+        
+        logger.info(f"Quality check completed: {summary}")
+        
+        return jsonify({
+            "success": True,
+            "summary": summary,
+            "message": f"Quality check completed: {summary['successful_checks']}/{summary['total_checked']} videos checked successfully"
+        })
+
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f"Error running quality check: {e}")
+        logger.error(f"Full traceback: {error_trace}")
+        return jsonify({"success": False, "error": str(e)}), 500

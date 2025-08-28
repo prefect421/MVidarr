@@ -120,48 +120,63 @@ class YouTubeQualityCheckService:
             line = line.strip()
             
             # Skip headers, empty lines, and storyboard formats
-            if not line or line.startswith('ID') or line.startswith('-') or 'storyboard' in line:
+            if not line or line.startswith('ID') or line.startswith('-') or 'storyboard' in line or 'images' in line:
                 continue
                 
-            # Parse format line: ID EXT RESOLUTION FPS CH | FILESIZE TBR PROTO | VCODEC VBR ACODEC ASR MORE
-            parts = line.split()
-            if len(parts) < 3:
+            # Skip audio-only formats
+            if 'audio only' in line:
+                continue
+                
+            # Parse format line using regex to be more flexible
+            # Look for resolution pattern like "256x144", "426x240", "1920x1080"
+            resolution_match = re.search(r'(\d+)x(\d+)', line)
+            if not resolution_match:
                 continue
                 
             try:
-                format_id = parts[0]
-                extension = parts[1]
-                resolution = parts[2] if parts[2] != 'audio' else None
+                width = int(resolution_match.group(1))
+                height = int(resolution_match.group(2))
+                resolution = f"{width}x{height}"
                 
-                # Skip audio-only formats
-                if resolution is None or resolution == 'only':
+                # Extract format ID (first field)
+                parts = line.split()
+                if len(parts) < 1:
                     continue
+                    
+                format_id = parts[0]
                 
-                # Extract height from resolution (e.g., "1920x1080" -> 1080)
-                height = None
-                if 'x' in resolution:
-                    try:
-                        height = int(resolution.split('x')[1])
-                    except (ValueError, IndexError):
-                        pass
+                # Try to extract extension (second field, but be flexible)
+                extension = "mp4"  # default
+                if len(parts) > 1 and parts[1] in ['mp4', 'webm', 'mkv', '3gp', 'flv']:
+                    extension = parts[1]
                 
-                if height:
-                    quality_dict = {
-                        "format_id": format_id,
-                        "extension": extension,
-                        "resolution": resolution,
-                        "height": height,
-                        "quality_label": f"{height}p"
-                    }
-                    qualities.append(quality_dict)
+                quality_dict = {
+                    "format_id": format_id,
+                    "extension": extension,
+                    "resolution": resolution,
+                    "width": width,
+                    "height": height,
+                    "quality_label": f"{height}p"
+                }
+                qualities.append(quality_dict)
                     
             except (IndexError, ValueError) as e:
                 # Skip malformed lines
+                logger.debug(f"Skipping malformed format line: {line}")
                 continue
                 
-        # Sort by height (highest first)
+        # Sort by height (highest first) and deduplicate by height
         qualities.sort(key=lambda x: x["height"], reverse=True)
-        return qualities
+        
+        # Remove duplicates by height, keeping the first (highest quality) of each resolution
+        seen_heights = set()
+        unique_qualities = []
+        for quality in qualities:
+            if quality["height"] not in seen_heights:
+                seen_heights.add(quality["height"])
+                unique_qualities.append(quality)
+                
+        return unique_qualities
 
     def _get_max_quality(self, qualities: List[Dict]) -> Optional[str]:
         """
@@ -233,10 +248,8 @@ class YouTubeQualityCheckService:
                 if only_unchecked:
                     week_ago = datetime.utcnow() - timedelta(days=7)
                     query = query.filter(
-                        and_(
-                            Video.quality_check_date.is_(None),
-                            Video.quality_check_date < week_ago
-                        )
+                        (Video.quality_check_date.is_(None)) |
+                        (Video.quality_check_date < week_ago)
                     )
 
                 if limit:
@@ -285,29 +298,35 @@ class YouTubeQualityCheckService:
         Returns:
             True if video can be upgraded to better quality
         """
-        # Must have quality check data
-        if not video.quality_check_date or video.quality_check_status != "success":
-            return False
+        # If no quality check has been performed yet, allow upgrade attempts
+        # This maintains backward compatibility and doesn't block existing functionality
+        if not video.quality_check_date:
+            return True
+            
+        # If quality check failed, still allow upgrade attempts (fallback behavior)
+        if video.quality_check_status != "success":
+            return True
             
         # Must have current quality
         current_quality = video.quality
         if not current_quality:
-            return False
+            return True  # Allow upgrade attempt if current quality unknown
             
         # Must have max available quality
         max_available = video.max_available_quality
         if not max_available:
-            return False
+            return True  # Allow upgrade attempt if max quality unknown
             
         # Compare qualities (extract numeric height)
         try:
             current_height = int(re.sub(r'[^\d]', '', current_quality))
             max_height = int(re.sub(r'[^\d]', '', max_available))
             
+            # Only block upgrade if we're certain current quality is >= max available
             return max_height > current_height
             
         except (ValueError, TypeError):
-            return False
+            return True  # Allow upgrade attempt if quality parsing fails
 
 
 # Global service instance

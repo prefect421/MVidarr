@@ -1085,6 +1085,7 @@ input:checked + .slider:before {
                 <button onclick="scanVideoFiles()" class="btn btn-info">Scan Video Files</button>
                 <button onclick="populateArtistThumbnails()" class="btn btn-warning">Populate Artist Thumbnails</button>
                 <button onclick="fixMissingVideos()" class="btn btn-warning">Fix Missing Videos</button>
+                <button onclick="checkVideoQualities()" class="btn btn-success">Check Video Qualities</button>
                 <button onclick="refreshStats()" class="btn btn-light">Refresh Stats</button>
             </div>
             <div id="indexing-progress" class="progress-container" style="display: none;">
@@ -2737,6 +2738,88 @@ function proceedFixMissingVideos() {
         
         if (typeof showError === 'function') {
             showError('Failed to fix missing videos: ' + error.message);
+        }
+    });
+}
+
+function checkVideoQualities() {
+    const message = 'This will check YouTube for available video qualities to improve upgrade recommendations. This may take several minutes for large libraries. Continue?';
+    
+    if (typeof toastConfirm === 'function') {
+        toastConfirm(message, () => {
+            proceedCheckVideoQualities();
+        });
+    } else {
+        if (confirm(message)) {
+            proceedCheckVideoQualities();
+        }
+    }
+}
+
+function proceedCheckVideoQualities() {
+    showProgress('Checking video qualities on YouTube...');
+    
+    fetch('/api/video-quality/check-all-qualities', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            limit: 50,  // Check first 50 videos
+            only_unchecked: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgress();
+        if (data.error) {
+            showResults('<span class="error">Quality check failed: ' + data.error + '</span>');
+        } else {
+            const stats = data.summary;
+            const result = `
+                <div class="quality-check-results">
+                    <h4>🎬 Video Quality Check Complete</h4>
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <strong>Videos checked:</strong> ${stats.total_checked}
+                        </div>
+                        <div class="result-item">
+                            <strong>Successful checks:</strong> ${stats.successful_checks}
+                        </div>
+                        <div class="result-item">
+                            <strong>Failed checks:</strong> ${stats.failed_checks}
+                        </div>
+                        <div class="result-item">
+                            <strong>Videos skipped:</strong> ${stats.skipped}
+                        </div>
+                    </div>
+                    ${stats.successful_checks > 0 ? 
+                        `<p class="success-message">✅ Successfully checked ${stats.successful_checks} videos for available qualities!</p>` :
+                        `<p class="info-message">ℹ️ No videos were checked. They may already have recent quality data.</p>`
+                    }
+                    ${stats.failed_checks > 0 ? 
+                        `<p class="warning-message">⚠️ ${stats.failed_checks} quality checks failed. Check logs for details.</p>` : ''
+                    }
+                </div>
+            `;
+            showResults(result);
+            
+            // Show success toast
+            if (typeof showSuccess === 'function') {
+                showSuccess(`Quality check complete: ${stats.successful_checks}/${stats.total_checked} videos checked successfully`);
+            }
+            
+            // Refresh stats to show updated data
+            loadIndexingStats();
+        }
+    })
+    .catch(error => {
+        hideProgress();
+        console.error('Error checking video qualities:', error);
+        showResults('<span class="error">Quality check failed: ' + error.message + '</span>');
+        
+        if (typeof showError === 'function') {
+            showError('Failed to check video qualities: ' + error.message);
         }
     });
 }
