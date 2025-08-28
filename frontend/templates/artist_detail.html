@@ -3110,6 +3110,7 @@ div.metadata-section:hover,
                                 <input type="url" id="instagramUrlSetting" name="instagram_url">
                                 <small class="field-hint">Official Instagram account</small>
                             </div>
+                            
                         </div>
                     </div>
                     
@@ -3691,33 +3692,7 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
     const lastfmData = imvdbData.lastfm_metadata || {};
     const wikipediaData = imvdbData.wikipedia_metadata || {};
     
-    console.log('🔍 DUAL METADATA STRUCTURE ACCESS:', {
-        imvdbData_keys: Object.keys(imvdbData),
-        // Enrichment service fields (stored directly)
-        enrichment_date: imvdbData.enrichment_date,
-        has_direct_biography: !!imvdbData.biography,
-        has_direct_related_artists: !!imvdbData.related_artists,
-        has_direct_top_tracks: !!imvdbData.top_tracks,
-        sources_used: imvdbData.sources_used,
-        confidence_score: imvdbData.confidence_score,
-        // IMVDb native nested fields
-        has_allmusic_data: !!allmusicData && Object.keys(allmusicData).length > 0,
-        has_spotify_data: !!spotifyData && Object.keys(spotifyData).length > 0,
-        has_lastfm_data: !!lastfmData && Object.keys(lastfmData).length > 0,
-        has_wikipedia_data: !!wikipediaData && Object.keys(wikipediaData).length > 0,
-        allmusic_keys: allmusicData ? Object.keys(allmusicData) : 'none',
-        allmusic_bio_check: allmusicData.biography || allmusicData.bio,
-        allmusic_data_full: allmusicData,
-        imvdb_bio_check: imvdbData.bio,
-        direct_biography_check: imvdbData.biography,
-        // Check ALL enriched fields that should be displaying
-        enriched_playcount: imvdbData.playcount,
-        enriched_listeners: imvdbData.listeners,
-        enriched_wikipedia_url: imvdbData.wikipedia_url,
-        enriched_confidence_score: imvdbData.confidence_score,
-        enriched_sources_used: imvdbData.sources_used,
-        full_imvdb_data: imvdbData
-    });
+    // Prepare consolidated metadata structure
     
     const consolidated = {
         // Basic artist info
@@ -3783,28 +3758,15 @@ function consolidateArtistMetadata(artist, enrichedMetadata) {
         
         // IDs from different services
         musicbrainz_id: imvdbData.musicbrainz_id || null,
-        discogs_id: imvdbData.discogs_id || null,
         allmusic_id: imvdbData.allmusic_id || null,
         
-        // Spotify recommendations from enrichment service
+        // Spotify recommendations from enrichment service (stored directly in imvdbData)
         related_artists: (() => {
-            const result = imvdbData.related_artists || spotifyData.related_artists || [];
-            console.log('🎵 CONSOLIDATION: related_artists result:', {
-                imvdbData_related_artists: imvdbData.related_artists,
-                spotifyData_related_artists: spotifyData.related_artists,
-                final_result: result,
-                imvdbData_keys: Object.keys(imvdbData),
-                checking_for_spotify_in_imvdb: imvdbData.spotify_metadata
-            });
+            const result = imvdbData.related_artists || [];
             return result;
         })(),
         top_tracks: (() => {
-            const result = imvdbData.top_tracks || spotifyData.top_tracks || [];
-            console.log('🎵 CONSOLIDATION: top_tracks result:', {
-                imvdbData_top_tracks: imvdbData.top_tracks,
-                spotifyData_top_tracks: spotifyData.top_tracks,
-                final_result: result
-            });
+            const result = imvdbData.top_tracks || [];
             return result;
         })(),
     };
@@ -3816,25 +3778,7 @@ function renderOverviewTab(artist) {
     const metadata = artist.imvdb_metadata || {};
     
     // Debug logging to understand the data structure
-    console.log('🔍 METADATA DEBUG: renderOverviewTab:', {
-        artist_name: artist.name,
-        artist_id: artist.id,
-        artist_spotify_id: artist.spotify_id,
-        artist_genres: artist.genres,
-        raw_imvdb_metadata: artist.imvdb_metadata,
-        metadata_type: typeof artist.imvdb_metadata,
-        metadata_keys: metadata ? Object.keys(metadata) : 'no keys',
-        has_enriched_data: metadata.enrichment_date ? true : false,
-        enrichment_date: metadata.enrichment_date,
-        sources_used: metadata.sources_used,
-        has_biography: !!metadata.biography,
-        has_genres_in_metadata: !!metadata.genres,
-        has_related_artists: !!metadata.related_artists,
-        has_top_tracks: !!metadata.top_tracks,
-        confidence_score: metadata.confidence_score,
-        popularity: metadata.popularity,
-        followers: metadata.followers
-    });
+    // Overview tab rendering with metadata
     
     // Extract enriched metadata from deeper in the structure
     let enrichedMetadata = { ...metadata };
@@ -3859,7 +3803,7 @@ function renderOverviewTab(artist) {
     // Consolidate all metadata into a single accessible structure
     const consolidatedMetadata = consolidateArtistMetadata(artist, enrichedMetadata);
     
-    console.log('🔍 CONSOLIDATED METADATA:', consolidatedMetadata);
+    // Consolidated metadata prepared
     
     // Render each metadata section using consolidated metadata
     renderBasicInfo(artist, consolidatedMetadata);
@@ -3879,21 +3823,13 @@ function renderOverviewTab(artist) {
 // Render Spotify recommendations from enriched metadata
 function renderSpotifyRecommendationsFromMetadata(metadata) {
     // Updated to use separate containers
-    console.log('🎵 SPOTIFY DEBUG: renderSpotifyRecommendationsFromMetadata called');
     
-    // Check if we have Spotify data in enriched metadata
-    console.log('🎵 SPOTIFY DEBUG: Checking for Spotify data in metadata:', {
-        metadata_keys: metadata ? Object.keys(metadata) : 'no metadata',
-        related_artists: metadata.related_artists,
-        top_tracks: metadata.top_tracks,
-        related_artists_type: typeof metadata.related_artists,
-        top_tracks_type: typeof metadata.top_tracks,
-        related_artists_length: metadata.related_artists ? metadata.related_artists.length : 'no length',
-        top_tracks_length: metadata.top_tracks ? metadata.top_tracks.length : 'no length'
-    });
+    console.log('🎵 renderSpotifyRecommendationsFromMetadata called with metadata:', metadata);
     
     const hasRelatedArtists = metadata.related_artists && metadata.related_artists.length > 0;
     const hasTopTracks = metadata.top_tracks && metadata.top_tracks.length > 0;
+    
+    console.log('🎵 Has related artists:', hasRelatedArtists, 'Has top tracks:', hasTopTracks);
     
     if (hasRelatedArtists || hasTopTracks) {
         console.log('🎵 Displaying Spotify data from enriched metadata:', {
@@ -3905,7 +3841,7 @@ function renderSpotifyRecommendationsFromMetadata(metadata) {
         renderSongRecommendations(metadata.top_tracks || []);
         renderRecommendedArtists(metadata.related_artists || []);
     } else {
-        console.log('🎵 No Spotify data found in enriched metadata');
+        console.log('🎵 No Spotify data found in enriched metadata, showing empty states');
         // Show empty state in both containers
         renderSongRecommendations([]);
         renderRecommendedArtists([]);
@@ -3948,7 +3884,6 @@ function renderEnrichmentInfo(artist, metadata) {
                         ${metadata.listeners ? `<div class="data-item">✅ Listeners: ${metadata.listeners.toLocaleString()}</div>` : ''}
                         ${metadata.wikipedia_url ? '<div class="data-item">✅ Wikipedia Link</div>' : ''}
                         ${metadata.musicbrainz_id ? '<div class="data-item">✅ MusicBrainz ID</div>' : ''}
-                        ${metadata.discogs_id ? '<div class="data-item">✅ Discogs ID</div>' : ''}
                         ${metadata.allmusic_id ? '<div class="data-item">✅ AllMusic ID</div>' : ''}
                     </div>
                 </div>
@@ -3973,15 +3908,21 @@ function loadSpotifyRecommendations() {
     }
     
     const button = document.getElementById('spotifyRefreshBtn');
-    const content = document.getElementById('spotifyRecommendationsContent');
+    const songContent = document.getElementById('songRecommendationsContent');
+    const artistContent = document.getElementById('recommendedArtistsContent');
     
     if (button) {
         button.disabled = true;
         button.innerHTML = '<iconify-icon icon="tabler:loader-2"></iconify-icon> Loading...';
     }
     
-    if (content) {
-        content.innerHTML = '<div class="loading-placeholder"><iconify-icon icon="tabler:loader-2" class="loading-spinner"></iconify-icon> Loading Spotify recommendations...</div>';
+    // Show loading state in both containers
+    const loadingHtml = '<div class="loading-placeholder"><iconify-icon icon="tabler:loader-2" class="loading-spinner"></iconify-icon> Loading recommendations...</div>';
+    if (songContent) {
+        songContent.innerHTML = loadingHtml;
+    }
+    if (artistContent) {
+        artistContent.innerHTML = loadingHtml;
     }
     
     fetch(`/api/metadata-enrichment/spotify/recommendations/${artistId}`, {
@@ -3994,21 +3935,29 @@ function loadSpotifyRecommendations() {
                 throw new Error(data.error);
             }
             
-            renderSpotifyRecommendations(data);
+            // Render to separate containers
+            renderSongRecommendations(data.recommendations || []);
+            renderRecommendedArtists(data.related_artists || []);
         })
         .catch(error => {
             console.error('Failed to load Spotify recommendations:', error);
-            if (content) {
-                let errorMessage = error.message;
-                if (error.message.includes('404') || error.message.includes('Not Found')) {
-                    errorMessage = 'Spotify recommendations endpoint not available. The application may need to be restarted to register new API endpoints.';
-                }
-                content.innerHTML = `
-                    <div class="error-message">
-                        <iconify-icon icon="tabler:alert-circle"></iconify-icon>
-                        Failed to load recommendations: ${errorMessage}
-                    </div>
-                `;
+            let errorMessage = error.message;
+            if (error.message.includes('404') || error.message.includes('Not Found')) {
+                errorMessage = 'Spotify recommendations endpoint not available. The application may need to be restarted to register new API endpoints.';
+            }
+            
+            const errorHtml = `
+                <div class="error-message">
+                    <iconify-icon icon="tabler:alert-circle"></iconify-icon>
+                    Failed to load recommendations: ${errorMessage}
+                </div>
+            `;
+            
+            if (songContent) {
+                songContent.innerHTML = errorHtml;
+            }
+            if (artistContent) {
+                artistContent.innerHTML = errorHtml;
             }
         })
         .finally(() => {
@@ -4024,8 +3973,6 @@ function renderSpotifyRecommendations(data) {
     const content = document.getElementById('spotifyRecommendationsContent');
     if (!content) return;
     
-    console.log('🎵 renderSpotifyRecommendations called with data:', data);
-    console.log('🎵 data.recommendations:', data.recommendations);
     console.log('🎵 data.related_artists:', data.related_artists);
     
     let html = '';
@@ -4094,9 +4041,7 @@ function renderSpotifyRecommendations(data) {
         `;
     }
     
-    console.log('🎵 Final HTML to be rendered:', html);
     content.innerHTML = html;
-    console.log('🎵 Content div after setting innerHTML:', content.innerHTML);
 }
 
 // Render song recommendations in separate card
@@ -4104,9 +4049,13 @@ function renderSongRecommendations(tracks) {
     const content = document.getElementById('songRecommendationsContent');
     if (!content) return;
     
+    console.log('🎵 renderSongRecommendations called with:', tracks);
+    
     if (tracks && tracks.length > 0) {
         let html = '<ul class="song-list">';
-        tracks.forEach(trackName => {
+        tracks.forEach(track => {
+            // Handle both string and object formats
+            const trackName = typeof track === 'string' ? track : (track.name || track);
             const searchUrl = `/discover?q=${encodeURIComponent(trackName)}`;
             html += `
                 <li class="song-item">
@@ -4133,9 +4082,13 @@ function renderRecommendedArtists(artists) {
     const content = document.getElementById('recommendedArtistsContent');
     if (!content) return;
     
+    console.log('🎵 renderRecommendedArtists called with:', artists);
+    
     if (artists && artists.length > 0) {
         let html = '<ul class="artist-list">';
-        artists.forEach(artistName => {
+        artists.forEach(artist => {
+            // Handle both string and object formats
+            const artistName = typeof artist === 'string' ? artist : (artist.name || artist);
             const searchUrl = `/discover?q=${encodeURIComponent(artistName)}`;
             html += `
                 <li class="artist-item">
@@ -4242,30 +4195,6 @@ function renderMusicalInfo(artist, metadata) {
     let musicalInfoHtml = '';
     
     // Debug logging for musical info
-    console.log('🔍 MUSICAL INFO DEBUG:', {
-        artist_name: artist.name,
-        artist_genres: artist.genres,
-        metadata_genres: metadata.genres,
-        metadata_keys: metadata ? Object.keys(metadata) : 'none',
-        // Check all possible popularity sources
-        popularity: metadata.popularity,
-        spotify_popularity: metadata.spotify_popularity,
-        // Check all stat sources
-        playcount: metadata.playcount,
-        listeners: metadata.listeners,
-        followers: metadata.followers,
-        // Check arrays
-        similar_artists: metadata.similar_artists,
-        related_artists: metadata.related_artists,
-        top_tracks: metadata.top_tracks,
-        // Check other fields
-        labels: metadata.labels,
-        moods: metadata.moods,
-        themes: metadata.themes,
-        // Check enriched status
-        enrichment_date: metadata.enrichment_date,
-        sources_used: metadata.sources_used
-    });
     
     // Genres with enhanced styling and source attribution
     // Handle genres as either string or array
@@ -4390,14 +4319,6 @@ function renderExternalServices(artist, metadata) {
             serviceId: artist.imvdb_id
         },
         {
-            id: 'discogs',
-            name: 'Discogs',
-            searchFunction: 'searchDiscogs',
-            syncFunction: 'enrichFromDiscogs',
-            connected: !!(metadata.discogs_id || (artist.imvdb_metadata && artist.imvdb_metadata.discogs_id)),
-            serviceId: metadata.discogs_id || (artist.imvdb_metadata && artist.imvdb_metadata.discogs_id)
-        },
-        {
             id: 'allmusic',
             name: 'AllMusic',
             searchFunction: 'searchAllMusic',
@@ -4474,7 +4395,7 @@ async function refreshAllMetadataProviders() {
             // Refresh the artist data display
             loadArtistDetails();
         } else {
-            showError('Failed to refresh some metadata providers: ' + (response.errors?.join(', ') || 'Unknown error'));
+            showError('Failed to refresh some metadata providers: ' + (response.errors && response.errors.join(', ') || 'Unknown error'));
         }
     } catch (error) {
         showError('Failed to refresh metadata providers: ' + error.message);
@@ -4492,17 +4413,6 @@ function renderBiography(artist, metadata) {
                 (artist.imvdb_metadata && artist.imvdb_metadata.bio);
     
     // Debug logging to understand data structure
-    console.log('🔍 BIOGRAPHY DEBUG:', {
-        artist_name: artist.name,
-        artistOverview: artist.overview,
-        artistBiography: artist.biography,
-        consolidatedMetadataBiography: metadata.biography,
-        artistImvdbMetadata: artist.imvdb_metadata,
-        artistImvdbKeys: artist.imvdb_metadata ? Object.keys(artist.imvdb_metadata) : 'none',
-        consolidatedMetadata_keys: metadata ? Object.keys(metadata) : 'none',
-        finalBio: bio,
-        bio_length: bio ? bio.length : 0
-    });
     
     // Try to extract biography from nested structures
     if (!bio && artist.imvdb_metadata && typeof artist.imvdb_metadata === 'object') {
@@ -5148,17 +5058,6 @@ function renderVideosTab(videos) {
 }
 
 
-function showTab(tabName) {
-    // Update tab buttons
-    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(tabName + 'Tab').classList.add('active');
-    
-    // Update tab content
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.getElementById(tabName + 'Content').classList.add('active');
-    
-    activeTab = tabName;
-}
 
 function discoverVideos() {
     if (!currentArtistId) return;
@@ -5234,6 +5133,7 @@ function discoverVideos() {
 }
 
 function renderDiscoverResults(data) {
+    console.log('🔧 Entering renderDiscoverResults function at line:', new Error().stack.split('\n')[1]);
     const resultsDiv = document.getElementById('discoverResults');
     const summaryDiv = document.getElementById('discoverSummary');
     const videosDiv = document.getElementById('discoveredVideosGrid');
@@ -5248,55 +5148,9 @@ function renderDiscoverResults(data) {
     const artistName = data.artist_name || (currentArtistData ? currentArtistData.name : 'Unknown Artist');
     const discoveryDate = data.discovery_date ? new Date(data.discovery_date) : new Date();
     
-    summaryDiv.innerHTML = `
-        <div class="discover-summary-header">
-            <h4>Discovery Results for ${artistName}</h4>
-            <span class="discovery-date">${discoveryDate.toLocaleString()}</span>
-        </div>
-        
-        <div class="discover-summary-stats">
-            <span class="summary-stat primary">
-                <strong>${data.total_discovered}</strong> videos found
-            </span>
-            <span class="summary-stat success">
-                <strong>${data.imported_count}</strong> imported
-            </span>
-            <span class="summary-stat info">
-                <strong>${data.skipped_count}</strong> already exist
-            </span>
-            ${data.filtered_count ? `
-                <span class="summary-stat warning">
-                    <strong>${data.filtered_count}</strong> filtered out
-                </span>
-            ` : ''}
-        </div>
-        
-        <div class="discover-summary-details">
-            <div class="summary-section">
-                <strong>Processing:</strong>
-                ${statistics.total_fetched || 0} total found 
-                (${statistics.imvdb_videos || 0} IMVDb + ${statistics.youtube_videos || 0} YouTube) →
-                ${statistics.after_filtering || 0} after filtering →
-                ${statistics.new_videos || 0} new videos
-            </div>
-            
-            ${Object.keys(filtersApplied).length > 0 ? `
-                <div class="summary-section">
-                    <strong>Filters:</strong>
-                    ${filtersApplied.year_from || filtersApplied.year_to ? 
-                        `Year: ${filtersApplied.year_from || '∞'} - ${filtersApplied.year_to || '∞'}` : ''}
-                    ${filtersApplied.directors_filter && filtersApplied.directors_filter.length > 0 ? 
-                        `Directors: ${filtersApplied.directors_filter.join(', ')}` : ''}
-                    ${!filtersApplied.include_existing ? 'Excluding existing videos' : ''}
-                </div>
-            ` : ''}
-            
-            <div class="summary-section">
-                <strong>Sorting:</strong>
-                By ${data.sorting?.sort_by || 'year'} (${data.sorting?.sort_order || 'desc'})
-            </div>
-        </div>
-    `;
+    console.log('🔧 About to set summaryDiv.innerHTML at line:', new Error().stack.split('\n')[1]);
+    // Simplified template to isolate syntax error
+    summaryDiv.innerHTML = '<div>Test content</div>';
     
     // Render discovery statistics
     const newVideosCount = data.discovered_videos ? data.discovered_videos.filter(v => !v.already_exists && !v.imported).length : 0;
@@ -5368,19 +5222,16 @@ function renderDiscoverResults(data) {
                 <div class="discovered-video-info">
                     <h5>${video.title}</h5>
                     <div class="discovered-video-metadata">
-                        ${video.year ? `<span class="meta-year">📅 ${video.year}</span>` : ''}
-                        ${video.source === 'youtube' ? `
-                            ${video.channel_title ? `<span class="meta-channel">📺 ${video.channel_title}</span>` : ''}
-                            ${video.view_count ? `<span class="meta-views">👁️ ${formatNumber(video.view_count)} views</span>` : ''}
-                            ${video.like_count ? `<span class="meta-likes">👍 ${formatNumber(video.like_count)}</span>` : ''}
-                            ${video.published_at ? `<span class="meta-published">📅 ${new Date(video.published_at).toLocaleDateString()}</span>` : ''}
-                        ` : `
-                            ${video.directors && video.directors.length > 0 ? `<span class="meta-directors">🎥 ${video.directors.join(', ')}</span>` : ''}
-                            ${video.producers && video.producers.length > 0 ? `<span class="meta-producers">🎤 ${video.producers.join(', ')}</span>` : ''}
-                            ${video.album ? `<span class="meta-album">💿 ${video.album}</span>` : ''}
-                            ${video.genre ? `<span class="meta-genre">🎵 ${video.genre}</span>` : ''}
-                        `}
-                        ${video.duration ? `<span class="meta-duration">⏱️ ${formatDuration(video.duration)}</span>` : ''}
+                        ${video.year ? '<span class="meta-year">📅 ' + video.year + '</span>' : ''}
+                        ${video.source === 'youtube' && video.channel_title ? '<span class="meta-channel">📺 ' + video.channel_title + '</span>' : ''}
+                        ${video.source === 'youtube' && video.view_count ? '<span class="meta-views">👁️ ' + formatNumber(video.view_count) + ' views</span>' : ''}
+                        ${video.source === 'youtube' && video.like_count ? '<span class="meta-likes">👍 ' + formatNumber(video.like_count) + '</span>' : ''}
+                        ${video.source === 'youtube' && video.published_at ? '<span class="meta-published">📅 ' + new Date(video.published_at).toLocaleDateString() + '</span>' : ''}
+                        ${video.source !== 'youtube' && video.directors && video.directors.length > 0 ? '<span class="meta-directors">🎥 ' + video.directors.join(', ') + '</span>' : ''}
+                        ${video.source !== 'youtube' && video.producers && video.producers.length > 0 ? '<span class="meta-producers">🎤 ' + video.producers.join(', ') + '</span>' : ''}
+                        ${video.source !== 'youtube' && video.album ? '<span class="meta-album">💿 ' + video.album + '</span>' : ''}
+                        ${video.source !== 'youtube' && video.genre ? '<span class="meta-genre">🎵 ' + video.genre + '</span>' : ''}
+                        ${video.duration ? '<span class="meta-duration">⏱️ ' + formatDuration(video.duration) + '</span>' : ''}
                     </div>
                     
                     ${video.description ? `
@@ -5391,7 +5242,7 @@ function renderDiscoverResults(data) {
                     
                     <div class="discovered-video-actions">
                         ${!video.already_exists && !video.imported ? `
-                            <button onclick="importSingleVideo('${video.youtube_id || video.imvdb_id}', '${video.youtube_id ? 'youtube' : 'imvdb'}', this)" class="btn btn-small btn-primary" data-video-data='${JSON.stringify(video)}' data-debug-source='${video.source || 'imvdb'}' data-debug-youtube='${video.youtube_id || 'none'}' data-debug-imvdb='${video.imvdb_id || 'none'}'>🚀 Import</button>
+                            <button onclick="importSingleVideo('${video.youtube_id || video.imvdb_id}', '${video.youtube_id ? 'youtube' : 'imvdb'}', this)" class="btn btn-small btn-primary" data-video-data="${JSON.stringify(video).replace(/'/g, '&apos;')}" data-debug-source="${video.source || 'imvdb'}" data-debug-youtube="${video.youtube_id || 'none'}" data-debug-imvdb="${video.imvdb_id || 'none'}">🚀 Import</button>
                         ` : ''}
                         ${video.already_exists && video.existing_video_id ? `
                             <button onclick="viewVideoDetails(${video.existing_video_id})" class="btn btn-small btn-info">🔍 View Details</button>
@@ -5979,8 +5830,8 @@ function deleteVideo(id) {
         return;
     }
     
-    const title = videoCard.querySelector('h4')?.textContent || 'Unknown Video';
-    const artistElement = videoCard.closest('.video-card')?.querySelector('.video-metadata');
+    const title = (videoCard.querySelector('h4') && videoCard.querySelector('h4').textContent) || 'Unknown Video';
+    const artistElement = videoCard.closest('.video-card') && videoCard.closest('.video-card').querySelector('.video-metadata');
     const artist = artistElement ? 'Unknown Artist' : 'Unknown Artist'; // Artist info not readily available in this template
     
     // Fetch video details to get YouTube URL
@@ -6350,10 +6201,8 @@ function importSingleVideo(videoId, source = 'imvdb', buttonElement = null) {
     if (buttonElement && buttonElement.dataset && buttonElement.dataset.videoData) {
         try {
             videoData = JSON.parse(buttonElement.dataset.videoData);
-            console.log('Parsed video data:', videoData);
         } catch (e) {
             console.error('Failed to parse video data:', e);
-            console.log('Raw video data string:', buttonElement.dataset.videoData);
         }
     }
     
@@ -6361,25 +6210,21 @@ function importSingleVideo(videoId, source = 'imvdb', buttonElement = null) {
     if (videoData) {
         if (videoData.youtube_id && videoData.youtube_id === videoId) {
             source = 'youtube';
-            console.log('Auto-corrected source to youtube based on video data');
         } else if (videoData.imvdb_id && videoData.imvdb_id === videoId) {
             source = 'imvdb';
-            console.log('Auto-corrected source to imvdb based on video data');
         }
     }
     
     // Additional safeguard: YouTube IDs are typically 11 characters
     if (videoId && videoId.length === 11 && !videoId.match(/^\d+$/)) {
         source = 'youtube';
-        console.log('Auto-corrected source to youtube based on ID format');
     }
     
     // Debug logging
-    console.log('Importing video:', { videoId, source, currentArtistId, videoData });
     
     // Debug button attributes
     if (buttonElement) {
-        console.log('Button debug info:', {
+        console.log('Debug button attributes:', {
             debugSource: buttonElement.dataset.debugSource,
             debugYoutube: buttonElement.dataset.debugYoutube,
             debugImvdb: buttonElement.dataset.debugImvdb
@@ -6397,7 +6242,6 @@ function importSingleVideo(videoId, source = 'imvdb', buttonElement = null) {
     const bodyKey = source === 'youtube' ? 'youtube_id' : 'imvdb_id';
     
     // Debug logging
-    console.log('Using endpoint:', endpoint, 'with body key:', bodyKey);
     
     // Prepare request body
     const requestBody = {
@@ -6417,7 +6261,6 @@ function importSingleVideo(videoId, source = 'imvdb', buttonElement = null) {
         requestBody.channel_title = videoData.channel_title || '';
     }
     
-    console.log('Request body:', requestBody);
     
     fetch(endpoint, {
         method: 'POST',
@@ -6585,8 +6428,8 @@ function sortVideos() {
             case 'title':
                 return aTitle.localeCompare(bTitle);
             case 'year':
-                const aYear = a.querySelector('.video-year')?.textContent || '0';
-                const bYear = b.querySelector('.video-year')?.textContent || '0';
+                const aYear = (a.querySelector('.video-year') && a.querySelector('.video-year').textContent) || '0';
+                const bYear = (b.querySelector('.video-year') && b.querySelector('.video-year').textContent) || '0';
                 return parseInt(bYear) - parseInt(aYear);
             case 'status':
                 return a.dataset.status.localeCompare(b.dataset.status);
@@ -6626,29 +6469,49 @@ function refreshDownloads() {
 }
 
 function populateSettings(artist) {
+    // Get enriched metadata
+    const metadata = artist.imvdb_metadata || {};
+    
     // Basic Info
     document.getElementById('artistNameSetting').value = artist.name || '';
     document.getElementById('sortNameSetting').value = artist.sort_name || '';
     document.getElementById('folderPathSetting').value = artist.folder_path || '';
     document.getElementById('keywordsSetting').value = (artist.keywords || []).join(', ');
-    document.getElementById('overviewSetting').value = artist.overview || artist.biography || '';
+    document.getElementById('overviewSetting').value = artist.overview || artist.biography || metadata.biography || '';
     
-    // Extended Info
-    document.getElementById('formedYearSetting').value = artist.formed_year || '';
-    document.getElementById('disbandedYearSetting').value = artist.disbanded_year || '';
-    document.getElementById('originCountrySetting').value = artist.origin_country || '';
-    document.getElementById('genresSetting').value = (artist.genres || []).join(', ');
-    document.getElementById('labelsSetting').value = (artist.labels || []).join(', ');
-    document.getElementById('membersSetting').value = artist.members || '';
+    // Extended Info - check both direct artist fields and enriched metadata
+    document.getElementById('formedYearSetting').value = artist.formed_year || metadata.formed_year || '';
+    document.getElementById('disbandedYearSetting').value = artist.disbanded_year || metadata.disbanded_year || '';
+    document.getElementById('originCountrySetting').value = artist.origin_country || metadata.origin_country || '';
     
-    // External Links
-    document.getElementById('websiteUrlSetting').value = artist.website_url || '';
-    document.getElementById('spotifyUrlSetting').value = artist.spotify_url || '';
-    document.getElementById('youtubeUrlSetting').value = artist.youtube_url || '';
-    document.getElementById('appleMusicUrlSetting').value = artist.apple_music_url || '';
-    document.getElementById('twitterUrlSetting').value = artist.twitter_url || '';
-    document.getElementById('facebookUrlSetting').value = artist.facebook_url || '';
-    document.getElementById('instagramUrlSetting').value = artist.instagram_url || '';
+    // Genres - handle both string and array formats
+    let genresValue = '';
+    if (artist.genres) {
+        genresValue = Array.isArray(artist.genres) ? artist.genres.join(', ') : artist.genres;
+    } else if (metadata.genres) {
+        genresValue = Array.isArray(metadata.genres) ? metadata.genres.join(', ') : metadata.genres;
+    }
+    document.getElementById('genresSetting').value = genresValue;
+    
+    // Labels - handle both string and array formats  
+    let labelsValue = '';
+    if (artist.labels) {
+        labelsValue = Array.isArray(artist.labels) ? artist.labels.join(', ') : artist.labels;
+    } else if (metadata.labels) {
+        labelsValue = Array.isArray(metadata.labels) ? metadata.labels.join(', ') : metadata.labels;
+    }
+    document.getElementById('labelsSetting').value = labelsValue;
+    
+    document.getElementById('membersSetting').value = artist.members || metadata.members || '';
+    
+    // External Links - check both direct artist fields and enriched metadata
+    document.getElementById('websiteUrlSetting').value = artist.website_url || metadata.website_url || '';
+    document.getElementById('spotifyUrlSetting').value = artist.spotify_url || metadata.spotify_url || '';
+    document.getElementById('youtubeUrlSetting').value = artist.youtube_url || metadata.youtube_url || '';
+    document.getElementById('appleMusicUrlSetting').value = artist.apple_music_url || metadata.apple_music_url || '';
+    document.getElementById('twitterUrlSetting').value = artist.twitter_url || metadata.twitter_url || '';
+    document.getElementById('facebookUrlSetting').value = artist.facebook_url || metadata.facebook_url || '';
+    document.getElementById('instagramUrlSetting').value = artist.instagram_url || metadata.instagram_url || '';
     document.getElementById('imvdbIdSetting').value = artist.imvdb_id || '';
     
     // Settings
@@ -6749,7 +6612,7 @@ function clearImvdbId() {
 }
 
 function searchImvdbId() {
-    const artistName = currentArtistData?.name || document.getElementById('nameSetting').value;
+    const artistName = (currentArtistData && currentArtistData.name) || document.getElementById('nameSetting').value;
     
     if (!artistName) {
         showError('Artist name is required to search for IMVDb ID');
@@ -6837,7 +6700,7 @@ function closeModal(button) {
 // switchMetadataTab function removed - no longer needed for single-page design
 
 function importFromImvdb() {
-    if (!currentArtistId || !currentArtistData?.imvdb_id) {
+    if (!currentArtistId || !(currentArtistData && currentArtistData.imvdb_id)) {
         showError('No IMVDb ID found for this artist');
         return;
     }
@@ -6913,17 +6776,6 @@ function enrichMetadataAllSources(event) {
         clearInterval(progressInterval);
         hideEnrichmentProgressModal();
         
-        console.log('🔍 ENRICHMENT API RESPONSE:', data);
-        console.log('🔍 ENRICHMENT DETAILS:', {
-            success: data.success,
-            sources_used: data.sources_used,
-            enriched_fields: data.enriched_fields,
-            enriched_fields_type: typeof data.enriched_fields,
-            enriched_fields_keys: data.enriched_fields ? Object.keys(data.enriched_fields) : 'none',
-            metadata_found: data.metadata_found,
-            metadata_found_type: typeof data.metadata_found,
-            metadata_found_keys: data.metadata_found ? Object.keys(data.metadata_found) : 'none'
-        });
         
         if (data.success) {
             const sourcesUsed = data.sources_used || [];
@@ -6952,8 +6804,23 @@ function enrichMetadataAllSources(event) {
             if (data.metadata_found) {
                 console.log('🔍 UPDATING ARTIST DATA AND RELOADING...');
                 currentArtistData = { ...currentArtistData, ...data.metadata_found };
-                animateMetadataUpdate();
-                loadArtistDetails(); // Refresh the entire view
+                
+                // Also search for thumbnail if artist doesn't have one
+                if (!currentArtistData.thumbnail_url) {
+                    console.log('🔍 Artist has no thumbnail, searching for one...');
+                    searchArtistThumbnail().then(() => {
+                        console.log('🔍 Thumbnail search completed, refreshing view...');
+                        animateMetadataUpdate();
+                        loadArtistDetails(); // Refresh the entire view
+                    }).catch(error => {
+                        console.log('🔍 Thumbnail search failed, continuing with metadata update...');
+                        animateMetadataUpdate();
+                        loadArtistDetails(); // Refresh the entire view
+                    });
+                } else {
+                    animateMetadataUpdate();
+                    loadArtistDetails(); // Refresh the entire view
+                }
             } else {
                 console.log('❌ NO metadata_found, not reloading view');
             }
@@ -7059,13 +6926,6 @@ function getSourceIcon(source) {
 }
 
 function showEnrichmentResults(sourcesUsed, enrichedFields, enrichmentSummary) {
-    console.log('🔍 INSIDE showEnrichmentResults with:', {
-        sourcesUsed_type: typeof sourcesUsed,
-        sourcesUsed_length: sourcesUsed ? sourcesUsed.length : 'none',
-        enrichedFields_type: typeof enrichedFields,
-        enrichedFields_length: enrichedFields ? enrichedFields.length : 'none',
-        enrichedFields_content: enrichedFields
-    });
     
     try {
         // Ensure arrays are properly initialized
@@ -7205,14 +7065,14 @@ function validateMetadata() {
     const warnings = [];
     
     // Validate required fields
-    if (!formData.get('name')?.trim()) {
+    if (!(formData.get('name') && formData.get('name').trim())) {
         errors.push('Artist name is required');
     }
     
     // Validate URLs
     const urlFields = ['website_url', 'spotify_url', 'youtube_url', 'apple_music_url', 'twitter_url', 'facebook_url', 'instagram_url'];
     urlFields.forEach(field => {
-        const value = formData.get(field)?.trim();
+        const value = formData.get(field) && formData.get(field).trim();
         if (value && !isValidUrl(value)) {
             errors.push(`Invalid URL format for ${field.replace('_', ' ')}`);
         }
@@ -7236,11 +7096,11 @@ function validateMetadata() {
     }
     
     // Check for warnings
-    if (!formData.get('overview')?.trim()) {
+    if (!(formData.get('overview') && formData.get('overview').trim())) {
         warnings.push('Biography/overview is empty');
     }
     
-    if (!formData.get('genres')?.trim()) {
+    if (!(formData.get('genres') && formData.get('genres').trim())) {
         warnings.push('No genres specified');
     }
     
@@ -7629,9 +7489,9 @@ function exportFilteredVideos() {
     const exportData = visibleVideos.map(card => {
         const title = card.querySelector('.video-info h4').textContent;
         const status = card.dataset.status;
-        const year = card.querySelector('.video-year')?.textContent || '';
-        const directors = card.querySelector('.video-directors')?.textContent || '';
-        const duration = card.querySelector('.video-duration')?.textContent || '';
+        const year = (card.querySelector('.video-year') && card.querySelector('.video-year').textContent) || '';
+        const directors = (card.querySelector('.video-directors') && card.querySelector('.video-directors').textContent) || '';
+        const duration = (card.querySelector('.video-duration') && card.querySelector('.video-duration').textContent) || '';
         
         return {
             title,
@@ -8066,7 +7926,7 @@ function showImvdbMatchModal(matches) {
             <button onclick="closeImvdbMatchModal()" style="position: absolute; top: 15px; right: 20px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px;" onmouseover="this.style.background='#c82333'" onmouseout="this.style.background='#dc3545'">&times;</button>
         </div>
         <div style="margin-bottom: 20px;">
-            <p style="color: #fff;"><strong>Select the correct match for "${currentArtistData?.name || 'this artist'}" (${matches.length} results found):</strong></p>
+            <p style="color: #fff;"><strong>Select the correct match for "${(currentArtistData && currentArtistData.name) || 'this artist'}" (${matches.length} results found):</strong></p>
         </div>
         <div style="max-height: 400px; overflow-y: auto; border: 1px solid #444; border-radius: 5px; background: #333;">
             ${matches.map(match => `
@@ -8195,11 +8055,9 @@ function proceedUpdateMetadata() {
     const statusDiv = document.getElementById('metadataStatus');
     let loadingDiv = null; // Declare at function scope for .finally() access
     
-    console.log('statusDiv found:', !!statusDiv); // Debug log
     
     if (statusDiv) {
         loadingDiv = statusDiv.querySelector('.loading-placeholder');
-        console.log('loadingDiv found:', !!loadingDiv); // Debug log
         
         // Fallback: create loading indicator if it doesn't exist
         if (!loadingDiv) {
@@ -8208,7 +8066,6 @@ function proceedUpdateMetadata() {
             loadingDiv.textContent = 'Updating metadata...';
             loadingDiv.style.display = 'none';
             statusDiv.appendChild(loadingDiv);
-            console.log('Created fallback loadingDiv'); // Debug log
         }
     }
     
@@ -8390,7 +8247,7 @@ function setupDeletionListeners() {
     const confirmBtn = document.getElementById('confirmDeleteBtn');
     
     confirmationInput.addEventListener('input', function() {
-        const artistName = currentArtistData?.name || '';
+        const artistName = (currentArtistData && currentArtistData.name) || '';
         confirmBtn.disabled = this.value.trim() !== artistName;
     });
 }
@@ -9954,6 +9811,72 @@ function searchThumbnailProvider(provider) {
     searchAllProviders();
 }
 
+// Search for artist thumbnail during enrichment (no IMVDb per user requirements)
+async function searchArtistThumbnail() {
+    if (!currentArtistId || !currentArtistData) {
+        throw new Error('Artist not loaded');
+    }
+    
+    console.log('🔍 Searching for artist thumbnail using priority sources (Wikipedia, YouTube)...');
+    
+    try {
+        // Call the artist thumbnail search endpoint (which now excludes IMVDb)
+        const response = await fetch(`/api/artists/${currentArtistId}/thumbnail/search`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Thumbnail search failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.results && data.results.length > 0) {
+            // Use the first result (highest priority)
+            const bestResult = data.results[0];
+            console.log(`🔍 Found thumbnail from ${bestResult.source}: ${bestResult.url}`);
+            
+            // Upload the thumbnail from URL using the upload endpoint
+            const uploadResponse = await fetch(`/api/artists/${currentArtistId}/thumbnail/upload`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    url: bestResult.url,
+                    source: bestResult.source.toLowerCase(),
+                    upload_type: 'url'
+                }),
+                credentials: 'include'
+            });
+            
+            if (uploadResponse.ok) {
+                const uploadData = await uploadResponse.json();
+                if (uploadData.success) {
+                    console.log(`✅ Successfully uploaded thumbnail from ${bestResult.source}`);
+                    // Update current artist data with new thumbnail
+                    currentArtistData.thumbnail_url = uploadData.thumbnail_url;
+                    return true;
+                } else {
+                    throw new Error(uploadData.error || 'Failed to upload thumbnail');
+                }
+            } else {
+                throw new Error(`Thumbnail upload failed: ${uploadResponse.status}`);
+            }
+        } else {
+            console.log('🔍 No thumbnails found from priority sources');
+            return false;
+        }
+    } catch (error) {
+        console.log(`🔍 Thumbnail search error: ${error.message}`);
+        throw error;
+    }
+}
+
 function selectSearchResult(url) {
     document.getElementById('thumbnailUrlInput').value = url;
     switchUploadTab('url');
@@ -10090,7 +10013,7 @@ function exportThumbnail() {
     // Download the large version of the thumbnail
     const link = document.createElement('a');
     link.href = `/api/artists/${currentArtistId}/thumbnail/large`;
-    link.download = `${artistData?.name || 'artist'}_thumbnail.jpg`;
+    link.download = `${(artistData && artistData.name) || 'artist'}_thumbnail.jpg`;
     link.click();
 }
 
@@ -10398,7 +10321,7 @@ async function addVideosToPlaylist() {
             throw new Error(addData.error || 'Failed to add videos to playlist');
         }
         
-        const playlistName = newPlaylistName || document.getElementById('playlistSelect').selectedOptions[0]?.text.split(' (')[0] || 'playlist';
+        const playlistName = newPlaylistName || (document.getElementById('playlistSelect').selectedOptions[0] && document.getElementById('playlistSelect').selectedOptions[0].text.split(' (')[0]) || 'playlist';
         showSuccess(`Added ${videoIds.length} videos to ${playlistName}`);
         
         // Clear selection and hide modal
@@ -10462,49 +10385,6 @@ function updateSelectionUI() {
     }
 }
 
-// Tab navigation function
-function showTab(tabName) {
-    // Hide all tab contents
-    const tabContents = document.querySelectorAll('.tab-content');
-    tabContents.forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Remove active class from all tab buttons
-    const tabButtons = document.querySelectorAll('.tab-button');
-    tabButtons.forEach(button => {
-        button.classList.remove('active');
-    });
-    
-    // Show the selected tab content
-    const selectedTab = document.getElementById(tabName + 'Content');
-    if (selectedTab) {
-        selectedTab.classList.add('active');
-    }
-    
-    // Add active class to the clicked tab button
-    const selectedButton = document.getElementById(tabName + 'Tab');
-    if (selectedButton) {
-        selectedButton.classList.add('active');
-    }
-    
-    // Load tab-specific data if needed
-    switch(tabName) {
-        case 'videos':
-            // Load videos if not already loaded
-            if (!window.videosLoaded) {
-                loadArtistVideos();
-                window.videosLoaded = true;
-            }
-            break;
-        case 'discover':
-            // Load discovery data if needed
-            break;
-        case 'settings':
-            // Load settings if needed
-            break;
-    }
-}
 
 function executeMerge(sourceArtistId, targetArtistId) {
     const selectedOption = document.querySelector('input[name="mergeOption"]:checked').value;

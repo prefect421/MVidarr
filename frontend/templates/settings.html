@@ -614,42 +614,7 @@ input:checked + .slider:before {
                     </div>
                 </div>
 
-                <!-- Discogs -->
-                <div class="metadata-provider">
-                    <div class="provider-header">
-                        <h3>💿 Discogs</h3>
-                        <div class="form-group inline">
-                            <label class="switch">
-                                <input type="checkbox" id="discogs_enabled" name="discogs_enabled">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="provider-config">
-                        <div class="form-group">
-                            <label for="discogs_token">Personal Access Token:</label>
-                            <input type="password" id="discogs_token" name="discogs_token" 
-                                   placeholder="Get from https://discogs.com/settings/developers">
-                            <div class="help-text">Optional - increases rate limits significantly</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="discogs_rate_limit">Rate Limit (requests/minute):</label>
-                            <input type="number" id="discogs_rate_limit" name="discogs_rate_limit" 
-                                   min="25" max="240" value="60" step="5">
-                            <div class="help-text">25/min without token, 240/min with token</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="discogs_priority">Priority:</label>
-                            <select id="discogs_priority" name="discogs_priority">
-                                <option value="1">Highest</option>
-                                <option value="2">High</option>
-                                <option value="3" selected>Medium</option>
-                                <option value="4">Low</option>
-                                <option value="5">Lowest</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+                <!-- Discogs integration removed -->
 
                 <!-- AllMusic -->
                 <div class="metadata-provider">

@@ -871,10 +871,7 @@ function clearLastfm() {
     showSuccess('Last.fm data cleared');
 }
 
-function clearDiscogs() {
-    updateServiceStatus('discogsStatus', 'unknown', 'Not Linked');
-    showSuccess('Discogs data cleared');
-}
+// Discogs functions removed
 
 function clearAllMusic() {
     updateServiceStatus('allmusicStatus', 'unknown', 'Not Linked');
@@ -1252,65 +1249,9 @@ async function enrichFromLastfm() {
     }
 }
 
-async function searchDiscogs() {
-    const artistName = getCurrentArtistName();
-    if (!artistName) {
-        showWarning('Please enter an artist name first');
-        return;
-    }
-    
-    showLoading('Searching Discogs...');
-    try {
-        const response = await apiRequest(`/api/metadata-enrichment/search/discogs?artist=${encodeURIComponent(artistName)}`);
-        
-        // Handle authentication message
-        if (response.authentication_required && response.message) {
-            showWarning(response.message);
-            return;
-        }
-        
-        displaySearchResults('discogs', response.results || []);
-        
-        if (response.results && response.results.length > 0) {
-            showSuccess('Discogs search completed');
-        } else {
-            showInfo('No Discogs results found');
-        }
-    } catch (error) {
-        showError('Discogs search failed: ' + error.message);
-    }
-}
+// Discogs search function removed
 
-async function enrichFromDiscogs() {
-    const artistId = getCurrentArtistId();
-    if (!artistId) {
-        showWarning('No artist selected');
-        return;
-    }
-    
-    const discogsId = document.getElementById('discogsId')?.value;
-    if (!discogsId) {
-        showWarning('Please enter a Discogs ID first');
-        return;
-    }
-    
-    showLoading('Enriching from Discogs...');
-    try {
-        const response = await apiRequest(`/api/metadata-enrichment/enrich/${artistId}`, {
-            method: 'POST',
-            body: JSON.stringify({ 
-                source: 'discogs',
-                discogs_id: discogsId 
-            })
-        });
-        updateServiceStatus('discogs', 'linked');
-        showSuccess('Artist enriched from Discogs');
-        setTimeout(() => window.location.reload(), 1500);
-    } catch (error) {
-        showError('Discogs enrichment failed: ' + error.message);
-        updateServiceStatus('discogs', 'error');
-    }
-}
+// Discogs enrich function removed
 
 async function searchAllMusic() {
     const artistName = getCurrentArtistName();
@@ -1443,16 +1384,55 @@ async function autoMatchServices() {
     try {
         const response = await apiRequest(`/api/metadata-enrichment/auto-match/${artistId}`);
         if (response.matches) {
-            // Populate found matches in the input fields
-            Object.entries(response.matches).forEach(([service, data]) => {
-                const inputId = `${service}Id` || `${service}Artist` || `${service}Title`;
-                const inputElement = document.getElementById(inputId);
-                if (inputElement && data.id) {
-                    inputElement.value = data.id;
-                    updateServiceStatus(service, 'linked');
+            let linkedCount = 0;
+            
+            // Link found matches directly using the same logic as manual search
+            for (const [service, data] of Object.entries(response.matches)) {
+                try {
+                    const artistId = getCurrentArtistId();
+                    
+                    switch(service) {
+                        case 'spotify':
+                            if (data.id) {
+                                await linkSpotifyArtist(data.id, data.name);
+                                linkedCount++;
+                            }
+                            break;
+                        case 'lastfm':
+                            await linkLastfmResult(artistId, data);
+                            linkedCount++;
+                            break;
+                        case 'imvdb':
+                            await linkImvdbResult(artistId, data);
+                            linkedCount++;
+                            break;
+                        case 'musicbrainz':
+                            await linkMusicBrainzResult(artistId, data);
+                            linkedCount++;
+                            break;
+                        case 'allmusic':
+                            await linkAllMusicResult(artistId, data);
+                            linkedCount++;
+                            break;
+                        case 'wikipedia':
+                            await linkWikipediaResult(artistId, data);
+                            linkedCount++;
+                            break;
+                        default:
+                            console.warn(`Auto-match linking not implemented for ${service}`);
+                    }
+                } catch (error) {
+                    console.error(`Failed to auto-link ${service}:`, error);
                 }
-            });
-            showSuccess(`Auto-matched ${Object.keys(response.matches).length} services`);
+            }
+            
+            if (linkedCount > 0) {
+                showSuccess(`Auto-matched and linked ${linkedCount} services`);
+                // Refresh the page to show updated metadata
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                showWarning('Services found but none could be linked');
+            }
         }
     } catch (error) {
         showError('Auto-matching failed: ' + error.message);
@@ -1485,10 +1465,7 @@ function clearLastfmArtist() {
     updateServiceStatus('lastfm', 'unknown');
 }
 
-function clearDiscogsId() {
-    document.getElementById('discogsId').value = '';
-    updateServiceStatus('discogs', 'unknown');
-}
+// Discogs clear function removed
 
 function clearAllMusicId() {
     document.getElementById('allmusicId').value = '';
@@ -1652,9 +1629,6 @@ async function linkSelectedResult(service, result) {
             case 'lastfm':
                 await linkLastfmResult(artistId, result);
                 break;
-            case 'discogs':
-                await linkDiscogsResult(artistId, result);
-                break;
             case 'allmusic':
                 await linkAllMusicResult(artistId, result);
                 break;
@@ -1692,17 +1666,7 @@ async function linkLastfmResult(artistId, result) {
     return response;
 }
 
-async function linkDiscogsResult(artistId, result) {
-    // Update the artist's discogs_id and metadata
-    const response = await apiRequest(`/api/artists/${artistId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-            discogs_id: result.id,
-            discogs_metadata: result
-        })
-    });
-    return response;
-}
+// Discogs link function removed
 
 async function linkAllMusicResult(artistId, result) {
     // Update the artist's allmusic metadata
@@ -1887,9 +1851,6 @@ window.MVidarr = {
     searchLastfm,
     enrichFromLastfm,
     clearLastfm,
-    searchDiscogs,
-    enrichFromDiscogs,
-    clearDiscogs,
     searchAllMusic,
     enrichFromAllMusic,
     clearAllMusic,

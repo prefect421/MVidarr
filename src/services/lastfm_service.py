@@ -31,12 +31,12 @@ class LastFmService:
 
     def refresh_credentials(self):
         """Refresh API credentials from environment or settings"""
-        # Import the global settings instance
-        from src.services.settings_service import settings
+        # Use SettingsService class methods directly for better Flask context handling
+        from src.services.settings_service import SettingsService
 
         # Try environment variables first, then settings
-        self.api_key = os.getenv("LASTFM_API_KEY") or settings.get("lastfm_api_key")
-        self.api_secret = os.getenv("LASTFM_API_SECRET") or settings.get(
+        self.api_key = os.getenv("LASTFM_API_KEY") or SettingsService.get("lastfm_api_key")
+        self.api_secret = os.getenv("LASTFM_API_SECRET") or SettingsService.get(
             "lastfm_api_secret"
         )
         logger.debug(
@@ -369,7 +369,32 @@ class LastFmService:
             "tags": [
                 tag.get("name") for tag in artist_info.get("tags", {}).get("tag", [])
             ],
+            # Extract similar artists from the artist info if available
+            "similar": [
+                similar.get("name") for similar in artist_info.get("similar", {}).get("artist", [])
+            ] if "similar" in artist_info else [],
         }
+
+    def get_similar_artists(self, artist_name: str, limit: int = 5) -> List[str]:
+        """Get similar artists from Last.fm"""
+        try:
+            params = {"artist": artist_name, "limit": limit}
+            data = self._make_request("artist.getSimilar", params)
+            
+            similar_artists = data.get("similarartists", {})
+            artists = []
+            
+            for artist_data in similar_artists.get("artist", []):
+                artist_name = artist_data.get("name")
+                if artist_name:
+                    artists.append(artist_name)
+            
+            logger.debug(f"🎵 LAST.FM: Found {len(artists)} similar artists: {artists}")
+            return artists
+            
+        except Exception as e:
+            logger.warning(f"🎵 LAST.FM: Could not get similar artists: {e}")
+            return []
 
     def get_loved_tracks(
         self, username: str = None, limit: int = 50, page: int = 1

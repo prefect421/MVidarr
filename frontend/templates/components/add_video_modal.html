@@ -492,7 +492,6 @@ function searchForVideos() {
     const songTitle = document.getElementById('songTitleInput').value.trim();
     const artistName = document.getElementById('artistNameInput').value.trim();
     
-    console.log('🔍 Starting video search:', { songTitle, artistName });
     
     if (!songTitle) {
         alert('Please enter a song title to search for videos.');
@@ -500,7 +499,6 @@ function searchForVideos() {
     }
     
     const searchQuery = artistName ? `${artistName} ${songTitle}` : songTitle;
-    console.log('📝 Search query:', searchQuery);
     
     // Show loading state
     const resultsDiv = document.getElementById('videoSearchResults');
@@ -514,9 +512,6 @@ function searchForVideos() {
         searchIMVDb(searchQuery, artistName, songTitle),
         searchYouTube(searchQuery, artistName, songTitle)
     ]).then(([imvdbResults, youtubeResults]) => {
-        console.log('🎬 IMVDb results:', imvdbResults.length);
-        console.log('📺 YouTube results:', youtubeResults.length);
-        console.log('🔍 Combined results:', [...imvdbResults, ...youtubeResults].length);
         displayModalSearchResults([...imvdbResults, ...youtubeResults]);
     }).catch(error => {
         console.error('❌ Error searching for videos:', error);
@@ -527,7 +522,6 @@ function searchForVideos() {
 // Search Provider Functions
 async function searchIMVDb(searchQuery, artistName, songTitle) {
     try {
-        console.log('🎬 Searching IMVDb...', { searchQuery, artistName, songTitle });
         
         let imvdbArtistId = null;
         if (artistName) {
@@ -557,7 +551,6 @@ async function searchIMVDb(searchQuery, artistName, songTitle) {
         }
         
         const videoData = await videoResponse.json();
-        console.log('🎬 IMVDb API response:', videoData);
         const videos = videoData.results || [];
         console.log('🎬 IMVDb videos array:', videos);
         

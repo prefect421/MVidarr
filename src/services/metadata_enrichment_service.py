@@ -17,7 +17,6 @@ from sqlalchemy.orm.attributes import flag_modified
 from src.database.connection import get_db
 from src.database.models import Artist, Video
 from src.services.allmusic_service import allmusic_service
-from src.services.discogs_service import discogs_service
 from src.services.imvdb_service import imvdb_service
 from src.services.lastfm_service import lastfm_service
 from src.services.musicbrainz_service import musicbrainz_service
@@ -47,7 +46,6 @@ class ArtistMetadata:
     lastfm_name: Optional[str] = None
     imvdb_id: Optional[str] = None
     mbid: Optional[str] = None  # MusicBrainz ID
-    discogs_id: Optional[str] = None  # Discogs ID
 
     # Rich metadata
     biography: Optional[str] = None
@@ -90,7 +88,6 @@ class MetadataEnrichmentService:
         self.imvdb = imvdb_service
         self.musicbrainz = musicbrainz_service
         self.allmusic = allmusic_service
-        self.discogs = discogs_service
 
         # Configuration
         self.min_confidence_threshold = 0.7
@@ -98,25 +95,67 @@ class MetadataEnrichmentService:
         self.similar_artists_limit = 10
         self.cache_duration_hours = 24
 
-        # Source weights for confidence calculation
-        self.source_weights = {
+        # Default source weights for confidence calculation
+        self.default_source_weights = {
             "spotify": 0.9,
             "musicbrainz": 0.95,  # Most authoritative source
             "allmusic": 0.88,  # High quality music metadata
-            "discogs": 0.87,  # Comprehensive release information
-            "imvdb": 0.85,
             "lastfm": 0.8,
             "wikipedia": 0.7,
         }
 
+    def _get_source_priorities(self) -> Dict[str, float]:
+        """Get user-configured source priorities/weights from database"""
+        from src.services.settings_service import SettingsService as settings
+        
+        # Get user-configured source priorities from database settings
+        # Higher priority number = higher importance, convert to 0-1 weight scale
+        try:
+            priority_settings = {
+                "musicbrainz": settings.get_int("musicbrainz_priority", 3),
+                "allmusic": settings.get_int("allmusic_priority", 4), 
+                "lastfm": settings.get_int("lastfm_metadata_priority", 2),
+                "wikipedia": settings.get_int("wikipedia_priority", 5),
+                "spotify": 4,  # Default for Spotify since not in current settings
+            }
+            
+            # Convert priority rankings to weights (0.5-0.95 scale)
+            # Priority 1 = 0.5, Priority 5 = 0.95  
+            max_priority = max(priority_settings.values())
+            user_priorities = {}
+            
+            for source, priority in priority_settings.items():
+                if priority > 0:  # Only include enabled sources
+                    # Convert priority rank to weight: higher priority = higher weight
+                    weight = 0.5 + (priority / max_priority) * 0.45
+                    user_priorities[source] = round(weight, 2)
+                    
+            logger.debug(f"Using user-configured metadata source priorities: {user_priorities}")
+            return user_priorities
+            
+        except Exception as e:
+            logger.warning(f"Error reading user metadata priorities, using defaults: {e}")
+            return self.default_source_weights
+
+    @property
+    def source_weights(self) -> Dict[str, float]:
+        """Get current source weights based on user configuration"""
+        return self._get_source_priorities()
+
     async def enrich_artist_metadata(
-        self, artist_id: int, force_refresh: bool = False
+        self, artist_id: int, force_refresh: bool = False, app_context=None
     ) -> EnrichmentResult:
         """
         Enrich artist metadata from multiple sources with intelligent aggregation
         """
         start_time = time.time()
         result = EnrichmentResult(success=False, artist_id=artist_id)
+
+        # Set up Flask app context if provided to ensure database and settings access
+        app_context_manager = None
+        if app_context:
+            app_context_manager = app_context.app_context()
+            app_context_manager.__enter__()
 
         try:
             with get_db() as session:
@@ -169,7 +208,8 @@ class MetadataEnrichmentService:
                     )
                     return result
 
-                # Update artist record
+                # Update artist record - ensure artist is bound to current session
+                artist = session.merge(artist)
                 updated_fields = self._update_artist_record(
                     session, artist, unified_metadata
                 )
@@ -245,6 +285,13 @@ class MetadataEnrichmentService:
         except Exception as e:
             logger.error(f"Error enriching metadata for artist {artist_id}: {str(e)}")
             result.errors.append(str(e))
+        finally:
+            # Clean up Flask app context
+            if app_context_manager:
+                try:
+                    app_context_manager.__exit__(None, None, None)
+                except Exception as e:
+                    logger.warning(f"Error cleaning up app context: {e}")
 
         result.processing_time = time.time() - start_time
         return result
@@ -311,24 +358,11 @@ class MetadataEnrichmentService:
                 f"Last.fm integration disabled or not configured, skipping for {artist_data['name']}"
             )
 
-        # IMVDb metadata - always try since we have API key
-        imvdb_api_key = settings.get("imvdb_api_key", "")
-        if imvdb_api_key:
-            try:
-                imvdb_metadata = await self._get_imvdb_metadata(artist_data)
-                if imvdb_metadata:
-                    metadata_sources["imvdb"] = imvdb_metadata
-                    logger.debug(
-                        f"Successfully gathered IMVDb metadata for {artist_data['name']}"
-                    )
-            except Exception as e:
-                logger.warning(
-                    f"Failed to get IMVDb metadata for {artist_data['name']}: {e}"
-                )
-        else:
-            logger.debug(
-                f"IMVDb API key not configured, skipping for {artist_data['name']}"
-            )
+        # IMVDb metadata - DISABLED per user requirements
+        # IMVDb should only be used for searching artists and videos, not as a metadata source
+        logger.debug(
+            f"IMVDb metadata collection disabled per configuration for {artist_data['name']}"
+        )
 
         # MusicBrainz metadata - check if enabled
         if hasattr(self.musicbrainz, "enabled") and self.musicbrainz.enabled:
@@ -366,23 +400,7 @@ class MetadataEnrichmentService:
                 f"AllMusic integration disabled, skipping for {artist_data['name']}"
             )
 
-        # Discogs metadata - check if enabled
-        if hasattr(self.discogs, "enabled") and self.discogs.enabled:
-            try:
-                discogs_metadata = await self._get_discogs_metadata(artist_data)
-                if discogs_metadata:
-                    metadata_sources["discogs"] = discogs_metadata
-                    logger.debug(
-                        f"Successfully gathered Discogs metadata for {artist_data['name']}"
-                    )
-            except Exception as e:
-                logger.warning(
-                    f"Failed to get Discogs metadata for {artist_data['name']}: {e}"
-                )
-        else:
-            logger.debug(
-                f"Discogs integration disabled, skipping for {artist_data['name']}"
-            )
+        # Discogs integration removed
 
         logger.info(
             f"Gathered metadata from {len(metadata_sources)} sources for {artist_data['name']}: {list(metadata_sources.keys())}"
@@ -435,12 +453,19 @@ class MetadataEnrichmentService:
                 related_data = self.spotify._make_request(
                     f"artists/{spotify_artist['id']}/related-artists"
                 )
-                related_artists = [
-                    a.get("name") for a in related_data.get("artists", [])[:5]
-                ]
-                logger.debug(f"🎵 SPOTIFY METADATA: Got {len(related_artists)} related artists: {related_artists}")
+                logger.debug(f"🎵 SPOTIFY METADATA: Raw related artists response: {related_data}")
+                
+                if related_data and "artists" in related_data:
+                    related_artists = [
+                        a.get("name") for a in related_data.get("artists", [])[:5]
+                    ]
+                    logger.debug(f"🎵 SPOTIFY METADATA: Processed {len(related_artists)} related artists: {related_artists}")
+                else:
+                    logger.warning(f"🎵 SPOTIFY METADATA: No 'artists' key in related artists response: {related_data}")
+                    
             except Exception as e:
                 logger.warning(f"🎵 SPOTIFY METADATA: Could not get related artists: {e}")
+                logger.exception(f"🎵 SPOTIFY METADATA: Full exception details:")
 
             # Get top tracks
             top_tracks = []
@@ -491,15 +516,13 @@ class MetadataEnrichmentService:
             # Get similar artists
             similar_artists = []
             try:
-                similar_data = self.lastfm.get_artist_similar(
-                    artist_data["name"], self.similar_artists_limit
+                artist_name = artist_data.get("lastfm_name") or artist_data["name"]
+                similar_artists = self.lastfm.get_similar_artists(
+                    artist_name, self.similar_artists_limit
                 )
-                similar_artists = [
-                    a.get("name")
-                    for a in similar_data.get("similarartists", {}).get("artist", [])
-                ]
+                logger.debug(f"🎵 LAST.FM METADATA: Got {len(similar_artists)} similar artists: {similar_artists}")
             except Exception as e:
-                logger.debug(f"Could not get similar artists: {e}")
+                logger.debug(f"🎵 LAST.FM METADATA: Could not get similar artists: {e}")
 
             # Get top tracks
             top_tracks = []
@@ -617,6 +640,8 @@ class MetadataEnrichmentService:
                 metadata.raw_data["area"] = mb_metadata["area"]
             if mb_metadata.get("type"):
                 metadata.raw_data["type"] = mb_metadata["type"]
+            if mb_metadata.get("labels"):
+                metadata.raw_data["labels"] = mb_metadata["labels"]
             if mb_metadata.get("external_urls"):
                 metadata.raw_data["external_urls"] = mb_metadata["external_urls"]
 
@@ -680,60 +705,7 @@ class MetadataEnrichmentService:
             logger.error(f"Error getting AllMusic metadata: {e}")
             return None
 
-    async def _get_discogs_metadata(
-        self, artist_data: Dict
-    ) -> Optional[ArtistMetadata]:
-        """Get enhanced metadata from Discogs"""
-        try:
-            # Get metadata from Discogs service
-            discogs_metadata = self.discogs.get_artist_metadata_for_enrichment(
-                artist_data["name"]
-            )
-
-            if not discogs_metadata:
-                return None
-
-            # Convert to ArtistMetadata format
-            metadata = ArtistMetadata(
-                name=discogs_metadata.get("name", artist_data["name"]),
-                source="discogs",
-                confidence=discogs_metadata.get("confidence", 0.87),
-                genres=discogs_metadata.get("genres", []),
-                biography=discogs_metadata.get("biography"),
-                images=discogs_metadata.get("images", []),
-                discogs_id=discogs_metadata.get("discogs_id"),
-                raw_data=discogs_metadata.get("raw_data", {}),
-            )
-
-            # Add Discogs-specific fields if available
-            if discogs_metadata.get("discogs_id"):
-                metadata.raw_data["discogs_id"] = discogs_metadata["discogs_id"]
-            if discogs_metadata.get("real_name"):
-                metadata.raw_data["real_name"] = discogs_metadata["real_name"]
-            if discogs_metadata.get("aliases"):
-                metadata.raw_data["aliases"] = discogs_metadata["aliases"]
-            if discogs_metadata.get("name_variations"):
-                metadata.raw_data["name_variations"] = discogs_metadata[
-                    "name_variations"
-                ]
-            if discogs_metadata.get("external_urls"):
-                metadata.raw_data["external_urls"] = discogs_metadata["external_urls"]
-            if discogs_metadata.get("members"):
-                metadata.raw_data["members"] = discogs_metadata["members"]
-            if discogs_metadata.get("groups"):
-                metadata.raw_data["groups"] = discogs_metadata["groups"]
-            if discogs_metadata.get("data_quality"):
-                metadata.raw_data["data_quality"] = discogs_metadata["data_quality"]
-            if discogs_metadata.get("discography_count"):
-                metadata.raw_data["discography_count"] = discogs_metadata[
-                    "discography_count"
-                ]
-
-            return metadata
-
-        except Exception as e:
-            logger.error(f"Error getting Discogs metadata: {e}")
-            return None
+    # Discogs metadata function removed
 
     def _aggregate_metadata(
         self, metadata_sources: Dict[str, ArtistMetadata]
@@ -825,19 +797,35 @@ class MetadataEnrichmentService:
         self, unified: ArtistMetadata, sources: Dict[str, ArtistMetadata]
     ):
         """Aggregate list fields by merging and deduplicating"""
-        # Related/similar artists
-        all_related = set()
-        for metadata in sources.values():
-            all_related.update(metadata.related_artists)
-            all_related.update(metadata.similar_artists)
+        # Related/similar artists (prefer Spotify, then Last.fm, then MusicBrainz, then others)
+        # Priority: Spotify related_artists > Last.fm similar_artists > MusicBrainz > aggregate
+        spotify_related = sources.get("spotify", ArtistMetadata("", "")).related_artists
+        lastfm_similar = sources.get("lastfm", ArtistMetadata("", "")).similar_artists
+        musicbrainz_related = sources.get("musicbrainz", ArtistMetadata("", "")).related_artists
+        
+        if spotify_related:
+            unified.related_artists = spotify_related[: self.similar_artists_limit]
+            logger.debug(f"🎵 AGGREGATION: Using Spotify related artists: {unified.related_artists}")
+        elif lastfm_similar:
+            unified.related_artists = lastfm_similar[: self.similar_artists_limit]
+            logger.debug(f"🎵 AGGREGATION: Using Last.fm similar artists as fallback: {unified.related_artists}")
+        elif musicbrainz_related:
+            unified.related_artists = musicbrainz_related[: self.similar_artists_limit]
+            logger.debug(f"🎵 AGGREGATION: Using MusicBrainz related artists as fallback: {unified.related_artists}")
+        else:
+            # Final fallback: aggregate from all sources
+            all_related = set()
+            for metadata in sources.values():
+                all_related.update(metadata.related_artists)
+                all_related.update(metadata.similar_artists)
+            unified.related_artists = list(all_related)[: self.similar_artists_limit]
+            logger.debug(f"🎵 AGGREGATION: Using aggregated related/similar artists: {unified.related_artists}")
 
-        unified.related_artists = list(all_related)[: self.similar_artists_limit]
-
-        # Top tracks (prefer Last.fm, then Spotify)
-        if sources.get("lastfm", ArtistMetadata("", "")).top_tracks:
-            unified.top_tracks = sources["lastfm"].top_tracks
-        elif sources.get("spotify", ArtistMetadata("", "")).top_tracks:
+        # Top tracks (prefer Spotify, then Last.fm for track recommendations)
+        if sources.get("spotify", ArtistMetadata("", "")).top_tracks:
             unified.top_tracks = sources["spotify"].top_tracks
+        elif sources.get("lastfm", ArtistMetadata("", "")).top_tracks:
+            unified.top_tracks = sources["lastfm"].top_tracks
 
         # Images (prefer Spotify)
         if sources.get("spotify", ArtistMetadata("", "")).images:
@@ -861,8 +849,6 @@ class MetadataEnrichmentService:
                 unified.imvdb_id = metadata.imvdb_id
             if metadata.mbid and not unified.mbid:
                 unified.mbid = metadata.mbid
-            if metadata.discogs_id and not unified.discogs_id:
-                unified.discogs_id = metadata.discogs_id
 
     def _calculate_overall_confidence(
         self, sources: Dict[str, ArtistMetadata]
@@ -908,23 +894,36 @@ class MetadataEnrichmentService:
                 artist.imvdb_metadata["musicbrainz_id"] = metadata.mbid
                 updated_fields["musicbrainz_id"] = metadata.mbid
 
-        # Store Discogs ID in metadata JSON since there's no dedicated field
-        if metadata.discogs_id:
-            if not artist.imvdb_metadata:
-                artist.imvdb_metadata = {}
-            if artist.imvdb_metadata.get("discogs_id") != metadata.discogs_id:
-                artist.imvdb_metadata["discogs_id"] = metadata.discogs_id
-                updated_fields["discogs_id"] = metadata.discogs_id
 
         # Update genres
         if metadata.genres:
-            genres_str = ", ".join(metadata.genres)
-            if artist.genres != genres_str:
-                artist.genres = genres_str
-                updated_fields["genres"] = genres_str
+            genres_list = metadata.genres
+            if artist.genres != genres_list:
+                artist.genres = genres_list  # Store as JSON array
+                updated_fields["genres"] = genres_list
 
         # Extract extended information from raw data
         extended_info = self._extract_extended_information(metadata)
+        
+        # Update labels from enriched metadata
+        if extended_info.get("labels"):
+            labels_list = extended_info["labels"]
+            if isinstance(labels_list, str):
+                labels_list = [labels_list]  # Convert single string to list
+            if artist.labels != labels_list:
+                artist.labels = labels_list
+                updated_fields["labels"] = labels_list
+                
+        # Update members from enriched metadata  
+        if extended_info.get("members"):
+            members_str = extended_info["members"]
+            if isinstance(members_str, list):
+                members_str = ", ".join(members_str)  # Convert list to string
+            if artist.members != members_str:
+                artist.members = members_str
+                updated_fields["members"] = members_str
+
+        # Extract external links from metadata  
         external_links = self._extract_external_links(metadata)
 
         # Update metadata JSON
@@ -1131,7 +1130,116 @@ class MetadataEnrichmentService:
                 if "country" in imvdb_data:
                     extended_info["origin_country"] = imvdb_data["country"]
 
+            # Extract from MusicBrainz data (most authoritative source)
+            if "musicbrainz" in sources:
+                musicbrainz_data = sources["musicbrainz"]
+                
+                # Formation/disbanded years from life_span (most reliable)
+                life_span = musicbrainz_data.get("life_span", {})
+                if isinstance(life_span, dict):
+                    if life_span.get("begin"):
+                        try:
+                            # Parse YYYY-MM-DD or YYYY format
+                            begin_date = life_span["begin"]
+                            formed_year = int(begin_date.split("-")[0]) if begin_date else None
+                            if formed_year and not extended_info.get("formed_year"):
+                                extended_info["formed_year"] = formed_year
+                        except (ValueError, AttributeError, IndexError):
+                            pass
+                    
+                    if life_span.get("end"):
+                        try:
+                            # Parse YYYY-MM-DD or YYYY format
+                            end_date = life_span["end"]
+                            disbanded_year = int(end_date.split("-")[0]) if end_date else None
+                            if disbanded_year and not extended_info.get("disbanded_year"):
+                                extended_info["disbanded_year"] = disbanded_year
+                        except (ValueError, AttributeError, IndexError):
+                            pass
+                
+                # Origin country/area (most authoritative)
+                if musicbrainz_data.get("country") and not extended_info.get("origin_country"):
+                    extended_info["origin_country"] = musicbrainz_data["country"]
+                elif musicbrainz_data.get("area") and not extended_info.get("origin_country"):
+                    extended_info["origin_country"] = musicbrainz_data["area"]
+                
+                # Artist type information
+                if musicbrainz_data.get("type"):
+                    extended_info["artist_type"] = musicbrainz_data["type"]
+                
+                # Aliases (alternative names)
+                if musicbrainz_data.get("aliases"):
+                    aliases = musicbrainz_data["aliases"]
+                    if isinstance(aliases, list) and aliases:
+                        extended_info["aliases"] = [alias for alias in aliases if alias]
+                
+                # Record labels (most authoritative)
+                if musicbrainz_data.get("labels"):
+                    labels = musicbrainz_data["labels"]
+                    if isinstance(labels, list) and labels:
+                        extended_info["labels"] = [label for label in labels if label]
+                
+                # Sort name (for proper alphabetization)
+                if musicbrainz_data.get("sort_name"):
+                    extended_info["sort_name"] = musicbrainz_data["sort_name"]
+                
+                # Begin area (where artist was formed, more specific than country)
+                if musicbrainz_data.get("begin_area") and not extended_info.get("origin_area"):
+                    extended_info["origin_area"] = musicbrainz_data["begin_area"]
+                
+                # Disambiguation (helps identify the specific artist)
+                if musicbrainz_data.get("disambiguation"):
+                    extended_info["disambiguation"] = musicbrainz_data["disambiguation"]
+                
+                # Additional genres from MusicBrainz tags (supplement existing genres)
+                mb_tags = musicbrainz_data.get("tags", [])
+                mb_genres = musicbrainz_data.get("genres", [])
+                
+                if mb_tags or mb_genres:
+                    all_mb_genres = []
+                    if isinstance(mb_tags, list):
+                        all_mb_genres.extend(mb_tags)
+                    if isinstance(mb_genres, list):
+                        all_mb_genres.extend(mb_genres)
+                    
+                    if all_mb_genres:
+                        # Filter to music-related genres only
+                        music_genres = [g for g in all_mb_genres if self._is_music_genre(g)]
+                        if music_genres and not extended_info.get("additional_genres"):
+                            extended_info["additional_genres"] = music_genres[:10]  # Limit to avoid clutter
+
         return extended_info
+
+    def _is_music_genre(self, genre: str) -> bool:
+        """Check if a tag/genre is music-related and not a general descriptor"""
+        if not genre or not isinstance(genre, str):
+            return False
+        
+        genre_lower = genre.lower().strip()
+        
+        # Skip very general or non-musical tags
+        skip_tags = {
+            "seen live", "favorite", "favourites", "awesome", "great", "good", "bad", 
+            "love", "hate", "cool", "hot", "new", "old", "best", "worst", "top",
+            "albums i own", "artists i've seen live", "male", "female", "american", 
+            "british", "english", "canadian", "australian", "instrumental", "vocal",
+            "solo", "group", "band", "artist", "singer", "musician", "composer"
+        }
+        
+        if genre_lower in skip_tags:
+            return False
+            
+        # Skip country names (these should go in origin_country)
+        country_indicators = ["american", "british", "canadian", "australian", "german", "french", "japanese"]
+        if any(country in genre_lower for country in country_indicators):
+            return False
+        
+        # Skip decades (these are time periods, not genres)
+        if any(decade in genre_lower for decade in ["60s", "70s", "80s", "90s", "00s", "10s", "20s"]):
+            return False
+            
+        # Accept anything that looks like a legitimate music genre
+        return len(genre_lower) > 2
 
     def _extract_external_links(self, metadata: ArtistMetadata) -> Dict:
         """Extract external links from aggregated metadata"""
@@ -1186,6 +1294,31 @@ class MetadataEnrichmentService:
                 for social_key in ["twitter", "facebook", "instagram", "youtube"]:
                     if social_key in imvdb_data:
                         external_links[f"{social_key}_url"] = imvdb_data[social_key]
+
+            # Extract from MusicBrainz data
+            if "musicbrainz" in sources:
+                musicbrainz_data = sources["musicbrainz"]
+                
+                # MusicBrainz external URLs (most authoritative source)
+                if "external_urls" in musicbrainz_data:
+                    mb_urls = musicbrainz_data["external_urls"]
+                    
+                    # Map MusicBrainz URLs to our standard format
+                    url_mapping = {
+                        "homepage": "website_url",
+                        "spotify": "spotify_url", 
+                        "youtube": "youtube_url",
+                        "twitter": "twitter_url",
+                        "facebook": "facebook_url",
+                        "instagram": "instagram_url",
+                        "apple_music": "apple_music_url"
+                    }
+                    
+                    for mb_key, our_key in url_mapping.items():
+                        if mb_key in mb_urls and mb_urls[mb_key]:
+                            # MusicBrainz is authoritative, only override if we don't have it
+                            if not external_links.get(our_key):
+                                external_links[our_key] = mb_urls[mb_key]
 
         return external_links
 
@@ -1366,14 +1499,14 @@ class MetadataEnrichmentService:
         return links
 
     async def enrich_multiple_artists(
-        self, artist_ids: List[int], force_refresh: bool = False
+        self, artist_ids: List[int], force_refresh: bool = False, app_context=None
     ) -> List[EnrichmentResult]:
         """Enrich metadata for multiple artists"""
         results = []
 
         for artist_id in artist_ids:
             try:
-                result = await self.enrich_artist_metadata(artist_id, force_refresh)
+                result = await self.enrich_artist_metadata(artist_id, force_refresh, app_context)
                 results.append(result)
 
                 # Rate limiting between requests
@@ -1421,69 +1554,9 @@ class MetadataEnrichmentService:
                 updated_fields = []
                 errors = []
 
-                # 1. IMVDb enrichment (primary video metadata source)
-                try:
-                    if not current_imvdb_id or force_refresh:
-                        # Search for video on IMVDb
-                        search_results = imvdb_service.search_videos(
-                            artist_name, video_title
-                        )
-
-                        if search_results and len(search_results) > 0:
-                            best_match = search_results[0]
-                            imvdb_id = best_match.get("id")
-
-                            if imvdb_id:
-                                # Get detailed video metadata
-                                video_details = imvdb_service.get_video_by_id(
-                                    str(imvdb_id)
-                                )
-                                if video_details:
-                                    metadata_sources["imvdb"] = video_details
-
-                                    # Update video with IMVDb metadata
-                                    if not current_imvdb_id:
-                                        video.imvdb_id = str(imvdb_id)
-                                        updated_fields.append("imvdb_id")
-
-                                    if video_details.get("year") and not video.year:
-                                        video.year = video_details["year"]
-                                        updated_fields.append("year")
-
-                                    if (
-                                        video_details.get("directors")
-                                        and not video.directors
-                                    ):
-                                        video.directors = ", ".join(
-                                            video_details["directors"]
-                                        )
-                                        updated_fields.append("directors")
-
-                                    if (
-                                        video_details.get("producers")
-                                        and not video.producers
-                                    ):
-                                        video.producers = ", ".join(
-                                            video_details["producers"]
-                                        )
-                                        updated_fields.append("producers")
-
-                                    # Additional metadata fields
-                                    if video_details.get("genre") and not video.genres:
-                                        # Store as JSON list for consistency with model
-                                        video.genres = (
-                                            [video_details["genre"]]
-                                            if isinstance(video_details["genre"], str)
-                                            else video_details["genre"]
-                                        )
-                                        updated_fields.append("genres")
-
-                                    if video_details.get("album") and not video.album:
-                                        video.album = video_details["album"]
-                                        updated_fields.append("album")
-                except Exception as e:
-                    errors.append(f"IMVDb enrichment failed: {str(e)}")
-                    logger.warning(f"IMVDb enrichment failed for video {video_id}: {e}")
+                # 1. IMVDb video enrichment - DISABLED per user requirements
+                # IMVDb should only be used for searching, not as a metadata source
+                logger.debug(f"IMVDb video enrichment disabled per configuration for video {video_id}")
 
                 # 2. Spotify enrichment (for track metadata)
                 try:
@@ -1626,13 +1699,7 @@ class MetadataEnrichmentService:
                     .count()
                 )
 
-                # Count artists with Discogs IDs (stored in JSON metadata)
-                with_discogs = (
-                    session.query(Artist)
-                    .filter(Artist.imvdb_metadata.isnot(None))
-                    .filter(Artist.imvdb_metadata.contains('"discogs_id"'))
-                    .count()
-                )
+                # Discogs integration removed
 
                 # Artists with enriched metadata
                 enriched_artists = (
@@ -1669,9 +1736,8 @@ class MetadataEnrichmentService:
                         + with_lastfm
                         + with_imvdb
                         + with_musicbrainz
-                        + with_discogs
                     )
-                    / (total_artists * 5)  # Updated to include MusicBrainz and Discogs
+                    / (total_artists * 4)  # Updated to include MusicBrainz
                     * 100
                     if total_artists > 0
                     else 0
@@ -1708,11 +1774,6 @@ class MetadataEnrichmentService:
                             if total_artists > 0
                             else 0
                         ),
-                        "discogs": (
-                            round(with_discogs / total_artists * 100, 1)
-                            if total_artists > 0
-                            else 0
-                        ),
                     },
                     "external_id_counts": {
                         "linked": {
@@ -1720,14 +1781,12 @@ class MetadataEnrichmentService:
                             "lastfm": with_lastfm,
                             "imvdb": with_imvdb,
                             "musicbrainz": with_musicbrainz,
-                            "discogs": with_discogs,
                         },
                         "missing": {
                             "spotify": missing_spotify,
                             "lastfm": missing_lastfm,
                             "imvdb": missing_imvdb,
                             "musicbrainz": total_artists - with_musicbrainz,
-                            "discogs": total_artists - with_discogs,
                         },
                     },
                     "data_quality": {

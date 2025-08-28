@@ -660,7 +660,7 @@ function loadArtists(page = 1, resetPage = false) {
             console.error('Error loading artists from advanced search:', error);
             
             // Fallback to basic artists endpoint
-            console.log('Falling back to basic artists endpoint...');
+            // Fall back to basic artists endpoint
             
             const basicParams = new URLSearchParams();
             basicParams.append('page', page);
@@ -808,7 +808,7 @@ function setupModal() {
 
 function showAddArtistModal() {
     const modal = document.getElementById('addArtistModal');
-    console.log('Showing Add Artist modal');
+    // Show Add Artist modal
     
     // Show the modal using our proven overlay approach
     modal.style.cssText = `
@@ -883,7 +883,7 @@ function showAddArtistModal() {
     }
     
     modal.classList.add('show');
-    console.log('Add Artist modal displayed with enhanced visibility');
+    // Add Artist modal displayed with enhanced visibility
 }
 
 function hideAddArtistModal() {

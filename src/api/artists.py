@@ -799,13 +799,30 @@ def add_artist():
 
             session.add(artist)
             session.commit()
-
+            
+            artist_id = artist.id
+            artist_name = artist.name
+            
+            # Run auto-match and metadata enrichment for newly added artist
+            from src.services.artist_auto_processing_service import artist_auto_processing_service
+            
+            # Refresh the artist instance to ensure it's bound to the session
+            session.refresh(artist)
+            auto_processing_results = artist_auto_processing_service.process_new_artist(artist, session)
+            
+            # Get a fresh artist instance after auto-processing to get metadata enrichment updates
+            # Don't try to refresh the original object as it may have been invalidated by metadata enrichment
+            fresh_artist = session.query(Artist).filter_by(id=artist_id).first()
+            if fresh_artist:
+                artist = fresh_artist
+            
             return (
                 jsonify(
                     {
-                        "id": artist.id,
-                        "name": artist.name,
+                        "id": artist_id,
+                        "name": artist_name,
                         "message": "Artist added successfully",
+                        "auto_processing": auto_processing_results,
                     }
                 ),
                 201,
@@ -933,33 +950,48 @@ def import_artist_from_imvdb():
             # Fetch detailed artist data from IMVDb
             artist_data = imvdb_service.get_artist(imvdb_id)
             if not artist_data:
-                return jsonify({"error": "Artist not found on IMVDb"}), 404
+                return jsonify({
+                    "error": "Unable to retrieve artist from IMVDb. This could be due to an invalid ID or IMVDb service issues. Please try again later or verify the IMVDb ID."
+                }), 404
 
-            # Extract thumbnail URL
+            # Skip IMVDb thumbnail extraction per user requirements
+            # IMVDb should only be used for searching, not as a metadata or thumbnail source
             thumbnail_url = None
-            if "image" in artist_data:
-                if isinstance(artist_data["image"], dict):
-                    thumbnail_url = (
-                        artist_data["image"].get("l")
-                        or artist_data["image"].get("m")
-                        or artist_data["image"].get("s")
-                    )
-                elif isinstance(artist_data["image"], str):
-                    thumbnail_url = artist_data["image"]
 
-            # Extract and validate artist name
-            artist_name = artist_data.get("name")
-            # Ensure artist_name is a string if it exists (fix for integer name issue)
-            if artist_name:
-                artist_name = str(artist_name)
+            # Extract and validate artist name - handle nested structures
+            artist_name = None
+            
+            # Try multiple possible locations for the artist name
+            name_candidates = [
+                artist_data.get("name"),  # Direct name field
+                artist_data.get("artist", {}).get("name") if isinstance(artist_data.get("artist"), dict) else None,  # Nested in artist object
+                artist_data.get("entity", {}).get("name") if isinstance(artist_data.get("entity"), dict) else None,  # Nested in entity object
+                artist_data.get("data", {}).get("name") if isinstance(artist_data.get("data"), dict) else None,  # Nested in data object
+            ]
+            
+            # Find the first non-empty name
+            for candidate in name_candidates:
+                if candidate:
+                    artist_name = str(candidate).strip()
+                    if artist_name:
+                        break
+            
             if not artist_name:
                 # Try to extract from slug if name is not available
-                if artist_data.get("slug"):
-                    slug = str(artist_data.get("slug"))
-                    artist_name = slug.replace("-", " ").title()
-                else:
+                slug_candidates = [
+                    artist_data.get("slug"),
+                    artist_data.get("artist", {}).get("slug") if isinstance(artist_data.get("artist"), dict) else None,
+                    artist_data.get("entity", {}).get("slug") if isinstance(artist_data.get("entity"), dict) else None,
+                ]
+                
+                for slug in slug_candidates:
+                    if slug:
+                        artist_name = str(slug).replace("-", " ").title()
+                        break
+                
+                if not artist_name:
                     return (
-                        jsonify({"error": "Artist name not available from IMVDb"}),
+                        jsonify({"error": "Artist name not available from IMVDb data structure"}),
                         400,
                     )
 
@@ -980,11 +1012,40 @@ def import_artist_from_imvdb():
             )
 
             session.add(artist)
+            session.flush()  # Get the ID for auto-processing
+            
+            # Run auto-processing for newly imported artist
+            try:
+                from src.services.artist_auto_processing_service import artist_auto_processing_service
+                # Ensure artist is bound to session for auto-processing
+                session.refresh(artist)
+                auto_processing_results = artist_auto_processing_service.process_new_artist(artist, session)
+                match_count = auto_processing_results.get("auto_match", {}).get("match_count", 0)
+                logger.info(f"Auto-processing completed for imported artist {artist_name} - {match_count} services matched")
+                
+                # Get a fresh artist instance after auto-processing to get metadata enrichment updates
+                # Don't try to refresh the original object as it may have been invalidated by metadata enrichment
+                artist = session.query(Artist).filter_by(imvdb_id=imvdb_id).first()
+                if not artist:
+                    logger.error(f"Could not find artist after auto-processing for IMVDb ID {imvdb_id}")
+                    return jsonify({"error": "Artist lost during processing"}), 500
+                        
+            except Exception as e:
+                logger.error(f"Auto-processing failed for imported artist {artist_name}: {e}")
+                logger.error(f"Auto-processing traceback for {artist_name}:", exc_info=True)
+            
+            # Capture artist data before commits - artist should be fresh from query above
+            artist_id = artist.id
+            artist_name_final = artist.name
+            artist_imvdb_id = artist.imvdb_id
+            
             session.commit()
 
             # Download thumbnail if available
             if thumbnail_url:
                 try:
+                    # Refresh artist to ensure it's bound to session after commit
+                    session.refresh(artist)
                     thumbnail_path = thumbnail_service.download_artist_thumbnail(
                         artist.name, thumbnail_url
                     )
@@ -993,15 +1054,15 @@ def import_artist_from_imvdb():
                         session.commit()
                 except Exception as e:
                     logger.warning(
-                        f"Failed to download thumbnail for {artist.name}: {e}"
+                        f"Failed to download thumbnail for {artist_name_final}: {e}"
                     )
 
             return (
                 jsonify(
                     {
-                        "id": artist.id,
-                        "name": artist.name,
-                        "imvdb_id": artist.imvdb_id,
+                        "id": artist_id,
+                        "name": artist_name_final,
+                        "imvdb_id": artist_imvdb_id,
                         "message": "Artist imported successfully",
                     }
                 ),
@@ -1406,6 +1467,13 @@ def get_artist_detailed(artist_id):
                 "thumbnail_path": artist.thumbnail_path,
                 "auto_download": artist.auto_download,
                 "keywords": artist.keywords or [],
+                "genres": (
+                    artist.genres if isinstance(artist.genres, list) 
+                    else artist.genres.split(", ") if isinstance(artist.genres, str) and artist.genres.strip()
+                    else []
+                ),
+                "labels": artist.labels or [],
+                "members": artist.members,
                 "monitored": artist.monitored,
                 "folder_path": ensure_artist_folder_path(artist, session),
                 "last_discovery": (
@@ -2272,7 +2340,7 @@ def update_artist(artist_id):
 
 @artists_bp.route("/populate-thumbnails", methods=["POST"])
 def populate_artist_thumbnails():
-    """Populate artist thumbnails from IMVDb"""
+    """Populate artist thumbnails from multiple sources (Wikipedia, YouTube) per user priority settings"""
     try:
         # Get optional limit from request
         data = request.get_json() or {}
@@ -2304,7 +2372,7 @@ def populate_artist_thumbnails():
                 )
 
             logger.info(
-                f"Processing {len(artist_data_list)} artists for thumbnail population"
+                f"Processing {len(artist_data_list)} artists for thumbnail population using priority sources (Wikipedia, YouTube)"
             )
 
             updated_count = 0
@@ -2322,117 +2390,101 @@ def populate_artist_thumbnails():
                 try:
                     logger.info(f"Processing artist: {artist_name}")
 
-                    # Search for artist on IMVDb outside of session
-                    artist_data = imvdb_service.search_artist(artist_name)
+                    # Search for thumbnails using priority sources (no IMVDb per user requirements)
+                    thumbnail_url = None
+                    thumbnail_source = None
 
-                    if artist_data:
-                        # Debug: Log the artist data structure
-                        logger.debug(f"Artist data for {artist_name}: {artist_data}")
+                    # 1. Try Wikipedia (highest priority for thumbnails)
+                    try:
+                        wiki_thumbnail_url = wikipedia_service.search_artist_thumbnail(artist_name)
+                        if wiki_thumbnail_url:
+                            thumbnail_url = wiki_thumbnail_url
+                            thumbnail_source = "Wikipedia"
+                            logger.info(f"Found Wikipedia thumbnail for {artist_name}: {thumbnail_url}")
+                    except Exception as wiki_e:
+                        logger.warning(f"Wikipedia thumbnail search failed for {artist_name}: {wiki_e}")
 
-                        # Extract thumbnail URL and validate it's not just the main site
-                        thumbnail_url = None
-                        if "image" in artist_data:
-                            image_data = artist_data["image"]
-                            logger.info(f"Image data for {artist_name}: {image_data}")
+                    # 2. Try YouTube as fallback if no Wikipedia thumbnail
+                    if not thumbnail_url:
+                        try:
+                            from src.services.youtube_search_service import search_artist_channel_thumbnail
+                            youtube_thumbnail = search_artist_channel_thumbnail(artist_name)
+                            if youtube_thumbnail:
+                                thumbnail_url = youtube_thumbnail
+                                thumbnail_source = "YouTube"
+                                logger.info(f"Found YouTube thumbnail for {artist_name}: {thumbnail_url}")
+                        except Exception as youtube_e:
+                            logger.warning(f"YouTube thumbnail search failed for {artist_name}: {youtube_e}")
 
-                            if isinstance(image_data, dict):
-                                # Try different image sizes
-                                thumbnail_url = (
-                                    image_data.get("l")
-                                    or image_data.get("m")
-                                    or image_data.get("s")
-                                    or image_data.get("o")
-                                    or image_data.get("b")  # original
-                                )  # big
-                            elif isinstance(image_data, str):
-                                # Only use the URL if it's not just the main IMVDb site
-                                if image_data and image_data != "https://imvdb.com/":
-                                    thumbnail_url = image_data
-
-                        logger.info(
-                            f"Extracted thumbnail URL for {artist_name}: {thumbnail_url}"
+                    if thumbnail_url:
+                        # Download and save thumbnail
+                        thumbnail_path = (
+                            thumbnail_service.download_artist_thumbnail(
+                                artist_name, thumbnail_url
+                            )
                         )
 
-                        if thumbnail_url and thumbnail_url != "https://imvdb.com/":
-                            # Download and save thumbnail
-                            thumbnail_path = (
-                                thumbnail_service.download_artist_thumbnail(
-                                    artist_name, thumbnail_url
+                        if thumbnail_path:
+                            # Update artist with thumbnail info - use fresh query to ensure session binding
+                            try:
+                                artist_to_update = (
+                                    session.query(Artist)
+                                    .filter_by(id=artist_id)
+                                    .first()
                                 )
+                                if artist_to_update:
+                                    artist_to_update.thumbnail_url = thumbnail_url
+                                    artist_to_update.thumbnail_path = thumbnail_path
+                                    artist_to_update.thumbnail_source = thumbnail_source.lower()  # Track source
+                                    session.flush()  # Flush immediately to catch any issues
+                                    updated_count += 1
+                            except Exception as update_error:
+                                logger.error(
+                                    f"Failed to update artist {artist_name} in database: {update_error}"
+                                )
+                                results.append(
+                                    {
+                                        "artist_id": artist_id,
+                                        "artist_name": artist_name,
+                                        "status": "db_error",
+                                        "error": f"Database update failed: {str(update_error)}",
+                                    }
+                                )
+                                continue
+
+                            results.append(
+                                {
+                                    "artist_id": artist_id,
+                                    "artist_name": artist_name,
+                                    "status": "success",
+                                    "thumbnail_url": thumbnail_url,
+                                    "thumbnail_source": thumbnail_source,
+                                }
                             )
 
-                            if thumbnail_path:
-                                # Update artist with thumbnail info - use fresh query to ensure session binding
-                                try:
-                                    artist_to_update = (
-                                        session.query(Artist)
-                                        .filter_by(id=artist_id)
-                                        .first()
-                                    )
-                                    if artist_to_update:
-                                        artist_to_update.thumbnail_url = thumbnail_url
-                                        artist_to_update.thumbnail_path = thumbnail_path
-                                        artist_to_update.imvdb_id = artist_data.get(
-                                            "id"
-                                        )
-                                        session.flush()  # Flush immediately to catch any issues
-                                        updated_count += 1
-                                except Exception as update_error:
-                                    logger.error(
-                                        f"Failed to update artist {artist_name} in database: {update_error}"
-                                    )
-                                    results.append(
-                                        {
-                                            "artist_id": artist_id,
-                                            "artist_name": artist_name,
-                                            "status": "db_error",
-                                            "error": f"Database update failed: {str(update_error)}",
-                                        }
-                                    )
-                                    continue
-
-                                results.append(
-                                    {
-                                        "artist_id": artist_id,
-                                        "artist_name": artist_name,
-                                        "status": "success",
-                                        "thumbnail_url": thumbnail_url,
-                                    }
-                                )
-
-                                logger.info(f"Updated thumbnail for {artist_name}")
-                            else:
-                                results.append(
-                                    {
-                                        "artist_id": artist_id,
-                                        "artist_name": artist_name,
-                                        "status": "failed",
-                                        "error": "Failed to download thumbnail",
-                                    }
-                                )
-                                logger.warning(
-                                    f"Failed to download thumbnail for {artist_name}"
-                                )
+                            logger.info(f"Updated thumbnail for {artist_name} from {thumbnail_source}")
                         else:
                             results.append(
                                 {
                                     "artist_id": artist_id,
                                     "artist_name": artist_name,
-                                    "status": "no_thumbnail",
-                                    "error": "No thumbnail available",
+                                    "status": "failed",
+                                    "error": "Failed to download thumbnail",
                                 }
                             )
-                            logger.info(f"No thumbnail available for {artist_name}")
+                            logger.warning(
+                                f"Failed to download thumbnail for {artist_name}"
+                            )
                     else:
                         results.append(
                             {
                                 "artist_id": artist_id,
                                 "artist_name": artist_name,
-                                "status": "not_found",
-                                "error": "Artist not found on IMVDb",
+                                "status": "no_thumbnail",
+                                "error": "No thumbnail found from Wikipedia or YouTube",
                             }
                         )
-                        logger.info(f"Artist not found on IMVDb: {artist_name}")
+                        logger.info(f"No thumbnail available for {artist_name} from priority sources")
 
                 except Exception as e:
                     results.append(
@@ -2735,6 +2787,38 @@ def update_artist_settings(artist_id):
 
                 flag_modified(artist, "imvdb_metadata")
 
+            # Handle genres
+            if "genres" in data:
+                if isinstance(data["genres"], str):
+                    # Convert comma-separated string to list
+                    genres = [
+                        g.strip() for g in data["genres"].split(",") if g.strip()
+                    ]
+                elif isinstance(data["genres"], list):
+                    genres = data["genres"]
+                else:
+                    genres = []
+                artist.genres = genres
+
+            # Handle labels (record labels)
+            if "labels" in data:
+                if isinstance(data["labels"], str):
+                    # Convert comma-separated string to list
+                    labels = [
+                        l.strip() for l in data["labels"].split(",") if l.strip()
+                    ]
+                elif isinstance(data["labels"], list):
+                    labels = data["labels"]
+                else:
+                    labels = []
+                artist.labels = labels
+
+            # Handle members (band members)
+            if "members" in data:
+                artist.members = (
+                    data["members"].strip() if data["members"] else None
+                )
+
             # Update the updated_at timestamp
             artist.updated_at = datetime.utcnow()
 
@@ -2756,6 +2840,9 @@ def update_artist_settings(artist_id):
                             "imvdb_metadata": artist.imvdb_metadata,
                             "folder_path": ensure_artist_folder_path(artist, session),
                             "keywords": artist.keywords or [],
+                            "genres": artist.genres or [],
+                            "labels": artist.labels or [],
+                            "members": artist.members,
                             "monitored": artist.monitored,
                             "auto_download": artist.auto_download,
                             "updated_at": artist.updated_at.isoformat(),
@@ -2893,7 +2980,7 @@ def update_artist_thumbnail(artist_id):
 
 @artists_bp.route("/<int:artist_id>/thumbnail/search", methods=["POST"])
 def search_artist_thumbnail(artist_id):
-    """Search for artist thumbnail using multiple sources (IMVDb, Wikipedia, YouTube)"""
+    """Search for artist thumbnail using multiple sources (Wikipedia, YouTube)"""
     try:
         with get_db() as session:
             artist = session.query(Artist).filter_by(id=artist_id).first()
@@ -2906,34 +2993,8 @@ def search_artist_thumbnail(artist_id):
         # Search all sources simultaneously
         results = []
 
-        # Search IMVDb
-        try:
-            artist_data = imvdb_service.search_artist(artist_name)
-            if artist_data and "image" in artist_data:
-                image_data = artist_data["image"]
-                thumbnail_url = None
-
-                if isinstance(image_data, dict):
-                    # Prefer larger images: o (original) > l (large) > b (big) > m (medium) > s (small)
-                    thumbnail_url = (
-                        image_data.get("o")
-                        or image_data.get("l")
-                        or image_data.get("b")
-                        or image_data.get("m")
-                        or image_data.get("s")
-                    )
-                elif isinstance(image_data, str) and image_data != "https://imvdb.com/":
-                    thumbnail_url = image_data
-
-                if thumbnail_url:
-                    results.append(
-                        {"url": thumbnail_url, "source": "IMVDb", "quality": "high"}
-                    )
-                    logger.info(
-                        f"Found thumbnail for {artist_name} from IMVDb: {thumbnail_url}"
-                    )
-        except Exception as imvdb_e:
-            logger.warning(f"IMVDb search failed for {artist_name}: {imvdb_e}")
+        # Skip IMVDb thumbnail search per user requirements
+        # IMVDb should only be used for searching artists and videos, not as metadata or thumbnail source
 
         # Search Wikipedia
         try:

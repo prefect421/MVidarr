@@ -278,8 +278,22 @@ class VideoIndexingService:
 
         session.add(artist)
         session.flush()  # Get the ID
-
+        
         logger.info(f"Created new artist: {clean_name}")
+        
+        # Run auto-processing for newly created artist
+        try:
+            from src.services.artist_auto_processing_service import artist_auto_processing_service
+            # Ensure artist is bound to session for auto-processing
+            session.refresh(artist)
+            auto_processing_results = artist_auto_processing_service.process_new_artist(artist, session)
+            # Refresh artist after auto-processing to get any metadata enrichment updates
+            session.refresh(artist)
+            match_count = auto_processing_results.get("auto_match", {}).get("match_count", 0)
+            logger.info(f"Auto-processing completed for {clean_name} - {match_count} services matched")
+        except Exception as e:
+            logger.warning(f"Auto-processing failed for newly created artist {clean_name}: {e}")
+        
         return artist
 
     def fetch_imvdb_metadata(self, artist_name: str, title: str) -> Optional[Dict]:

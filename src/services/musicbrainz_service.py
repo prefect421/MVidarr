@@ -182,11 +182,14 @@ class MusicBrainzService:
 
         # Process relationships for additional metadata
         urls = {}
+        labels = []
         relations_data = data.get("relations", [])
         if relations_data:
             for relation in relations_data:
                 try:
                     rel_type = relation.get("type")
+                    
+                    # Extract URL relationships
                     if rel_type in [
                         "official homepage",
                         "social network",
@@ -203,8 +206,25 @@ class MusicBrainzService:
                                     urls["lastfm"] = url
                                 elif "youtube.com" in url or "youtu.be" in url:
                                     urls["youtube"] = url
+                                elif "twitter.com" in url or "x.com" in url:
+                                    urls["twitter"] = url
+                                elif "facebook.com" in url:
+                                    urls["facebook"] = url
+                                elif "instagram.com" in url:
+                                    urls["instagram"] = url
+                                elif "music.apple.com" in url or "itunes.apple.com" in url:
+                                    urls["apple_music"] = url
                                 elif rel_type == "official homepage":
                                     urls["homepage"] = url
+                    
+                    # Extract label relationships
+                    elif relation.get("target-type") == "label":
+                        label_info = relation.get("label")
+                        if label_info and isinstance(label_info, dict):
+                            label_name = label_info.get("name")
+                            if label_name and label_name not in labels:
+                                labels.append(label_name)
+                                
                 except Exception as e:
                     # Skip problematic relations
                     continue
@@ -225,6 +245,7 @@ class MusicBrainzService:
             "aliases": [alias.get("name") for alias in data.get("aliases", [])],
             "tags": [tag.get("name") for tag in data.get("tags", [])],
             "genres": [genre.get("name") for genre in data.get("genres", [])],
+            "labels": labels,  # Add extracted labels
             "disambiguation": data.get("disambiguation", ""),
             "annotation": self._safe_get_annotation(data),
             "external_urls": urls,
@@ -299,6 +320,7 @@ class MusicBrainzService:
             # Core metadata
             "genres": artist_data.get("genres", [])
             + artist_data.get("tags", [])[:5],  # Use tags as additional genres
+            "labels": artist_data.get("labels", []),  # Add record labels
             "mbid": artist_data.get("mbid"),
             # Rich metadata
             "country": artist_data.get("country"),

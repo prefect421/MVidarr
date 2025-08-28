@@ -320,6 +320,8 @@ class Artist(Base):
     genres = Column(
         JSON, nullable=True
     )  # Artist genres (automatically updated from videos)
+    labels = Column(JSON, nullable=True)  # Record labels associated with the artist
+    members = Column(Text, nullable=True)  # Band members (stored as text)
     monitored = Column(Boolean, default=True)
     source = Column(
         String(50), nullable=True

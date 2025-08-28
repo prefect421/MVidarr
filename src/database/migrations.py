@@ -195,6 +195,68 @@ class Migration_002_AddDynamicPlaylists(Migration):
             raise
 
 
+class Migration_003_AddArtistLabelsMembers(Migration):
+    """Add labels and members fields to artists table"""
+
+    def __init__(self):
+        super().__init__("003", "Add labels and members fields to artists table")
+
+    def up(self, connection):
+        """Add labels and members columns"""
+        try:
+            # Add labels column (JSON for record labels)
+            try:
+                connection.execute(
+                    text("ALTER TABLE artists ADD COLUMN labels JSON NULL COMMENT 'Record labels associated with the artist'")
+                )
+                logger.info("Added labels column to artists table")
+            except OperationalError as e:
+                if "Duplicate column name" in str(e) or "already exists" in str(e):
+                    logger.info("Column labels already exists")
+                else:
+                    raise
+
+            # Add members column (TEXT for band members)
+            try:
+                connection.execute(
+                    text("ALTER TABLE artists ADD COLUMN members TEXT NULL COMMENT 'Band members (stored as text)'")
+                )
+                logger.info("Added members column to artists table")
+            except OperationalError as e:
+                if "Duplicate column name" in str(e) or "already exists" in str(e):
+                    logger.info("Column members already exists")
+                else:
+                    raise
+
+            logger.info("Artist labels and members migration completed successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to add artist labels and members columns: {e}")
+            raise
+
+    def down(self, connection):
+        """Remove labels and members columns"""
+        try:
+            # Drop columns
+            columns = ["members", "labels"]
+            for column in columns:
+                try:
+                    connection.execute(
+                        text(f"ALTER TABLE artists DROP COLUMN {column}")
+                    )
+                    logger.info(f"Dropped {column} column from artists table")
+                except OperationalError as e:
+                    if "doesn't exist" in str(e):
+                        logger.info(f"Column {column} already doesn't exist")
+                    else:
+                        logger.error(f"Error dropping column {column}: {e}")
+
+            logger.info("Artist labels and members rollback completed")
+        except Exception as e:
+            logger.error(f"Failed to rollback artist labels and members migration: {e}")
+            raise
+
+
 class MigrationManager:
     """Manages database migrations"""
 
@@ -202,6 +264,7 @@ class MigrationManager:
         self.migrations: List[Migration] = [
             Migration_001_AddPlaylistThumbnailUrl(),
             Migration_002_AddDynamicPlaylists(),
+            Migration_003_AddArtistLabelsMembers(),
             # Add new migrations here
         ]
 

@@ -21,14 +21,26 @@ class IMVDbService:
         self.base_url = "https://imvdb.com/api/v1"
         self.rate_limit_delay = 1.0  # Seconds between requests
         self.last_request_time = 0
+        self._api_key = None
 
     def get_api_key(self):
         """Get API key from settings"""
+        # Use SettingsService class methods directly for better Flask context handling
+        from src.services.settings_service import SettingsService
+        
         # Force reload settings cache
-        settings.reload_cache()
-        api_key = settings.get("imvdb_api_key", "")
+        SettingsService.reload_cache()
+        api_key = SettingsService.get("imvdb_api_key", "")
+        self._api_key = api_key  # Cache for consistency
         logger.debug(f"IMVDb API key: {'SET' if api_key else 'NOT SET'}")
         return api_key
+
+    @property
+    def api_key(self):
+        """Property to access API key consistently"""
+        if self._api_key is None:
+            return self.get_api_key()
+        return self._api_key
 
     def _rate_limit(self):
         """Implement rate limiting for API requests"""
@@ -41,7 +53,9 @@ class IMVDbService:
 
         self.last_request_time = time.time()
 
-    def _make_request(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
+    def _make_request(
+        self, endpoint: str, params: Dict = None, retry_auth: bool = True
+    ) -> Optional[Dict]:
         """Make a request to the IMVDb API"""
         api_key = self.get_api_key()
         if not api_key:
@@ -65,17 +79,38 @@ class IMVDbService:
             if response.status_code == 200:
                 return response.json()
             elif response.status_code == 401:
+                # Authentication error - try refreshing API key once
+                if retry_auth:
+                    logger.info(
+                        "IMVDb authentication failed, refreshing API key and retrying"
+                    )
+                    old_key = self._api_key
+                    new_key = self.get_api_key()
+                    if new_key != old_key:
+                        return self._make_request(endpoint, params, retry_auth=False)
+
                 logger.error(
                     "IMVDb API authentication failed. Please check your API key in Settings > External Services. Get your API key from https://imvdb.com/developers/api"
                 )
                 return None
+            elif response.status_code == 403:
+                logger.error(
+                    f"IMVDb API access forbidden for {endpoint}. Your API key may lack permissions for this endpoint."
+                )
+                return None
             elif response.status_code == 429:
-                logger.warning("IMVDb rate limit exceeded")
-                time.sleep(5)  # Wait longer for rate limit
+                retry_after = int(response.headers.get("Retry-After", 60))
+                logger.warning(f"IMVDb rate limit exceeded, waiting {retry_after}s")
+                time.sleep(retry_after)
+                return self._make_request(
+                    endpoint, params, retry_auth=False
+                )  # Retry once
+            elif response.status_code == 404:
+                logger.debug(f"IMVDb API returned 404 for {endpoint}")
                 return None
             else:
                 logger.error(
-                    f"IMVDb API error: {response.status_code} - {response.text}"
+                    f"IMVDb API error: {response.status_code} - {response.text[:200]}"
                 )
                 return None
 
@@ -418,12 +453,15 @@ class IMVDbService:
             else:
                 # Return the first (best) match
                 artist = response["results"][0]
+                
+                # Extract and normalize the artist name
+                extracted_name = self._extract_artist_name(artist)
+                if extracted_name and not artist.get("name"):
+                    artist["name"] = extracted_name
+                
                 logger.info(
-                    f"Found artist: {artist.get('name', artist_name)}, ID: {artist.get('id')}"
+                    f"Found artist: {extracted_name or artist.get('name', artist_name)}, ID: {artist.get('id')}"
                 )
-                logger.info(
-                    f"Full artist data structure: {artist}"
-                )  # Use INFO to ensure it shows
                 return artist
 
         # If no results and the name contains common YouTube suffixes, try without them
@@ -454,8 +492,14 @@ class IMVDbService:
                         else:
                             # Return the first (best) match
                             artist = response["results"][0]
+                            
+                            # Extract and normalize the artist name
+                            extracted_name = self._extract_artist_name(artist)
+                            if extracted_name and not artist.get("name"):
+                                artist["name"] = extracted_name
+                            
                             logger.info(
-                                f"Found artist with cleaned name: {artist.get('name', cleaned_name)}, ID: {artist.get('id')}"
+                                f"Found artist with cleaned name: {extracted_name or artist.get('name', cleaned_name)}, ID: {artist.get('id')}"
                             )
                             return artist
 
@@ -488,6 +532,47 @@ class IMVDbService:
         )
         return []
 
+    def _extract_artist_name(self, artist_data: Dict) -> Optional[str]:
+        """
+        Extract artist name from IMVDb data structure, handling nested formats
+        
+        Args:
+            artist_data: Raw artist data from IMVDb API
+            
+        Returns:
+            Artist name string or None
+        """
+        if not artist_data:
+            return None
+            
+        # Try multiple possible locations for the artist name
+        name_candidates = [
+            artist_data.get("name"),  # Direct name field
+            artist_data.get("artist", {}).get("name") if isinstance(artist_data.get("artist"), dict) else None,  # Nested in artist object
+            artist_data.get("entity", {}).get("name") if isinstance(artist_data.get("entity"), dict) else None,  # Nested in entity object
+            artist_data.get("data", {}).get("name") if isinstance(artist_data.get("data"), dict) else None,  # Nested in data object
+        ]
+        
+        # Find the first non-empty name
+        for candidate in name_candidates:
+            if candidate:
+                name = str(candidate).strip()
+                if name:
+                    return name
+        
+        # Fallback to slug if name is not available
+        slug_candidates = [
+            artist_data.get("slug"),
+            artist_data.get("artist", {}).get("slug") if isinstance(artist_data.get("artist"), dict) else None,
+            artist_data.get("entity", {}).get("slug") if isinstance(artist_data.get("entity"), dict) else None,
+        ]
+        
+        for slug in slug_candidates:
+            if slug:
+                return str(slug).replace("-", " ").title()
+        
+        return None
+
     def get_artist(self, artist_id: str) -> Optional[Dict]:
         """
         Get detailed artist information by IMVDb ID
@@ -501,9 +586,17 @@ class IMVDbService:
         response = self._make_request(f"entity/{artist_id}")
 
         if response:
-            logger.info(f"Retrieved artist details for IMVDb ID: {artist_id}")
+            # Extract and normalize the artist name
+            artist_name = self._extract_artist_name(response)
+            if artist_name and not response.get("name"):
+                # If we extracted a name but the response doesn't have one at the top level,
+                # add it for consistency
+                response["name"] = artist_name
+                
+            logger.info(f"Retrieved artist details for IMVDb ID: {artist_id}, Name: {artist_name}")
             return response
 
+        logger.warning(f"Failed to retrieve artist details for IMVDb ID: {artist_id}")
         return None
 
     def find_best_video_match(self, artist: str, title: str) -> Optional[Dict]:
@@ -1318,28 +1411,88 @@ class IMVDbService:
         Returns:
             Dictionary with connection status
         """
-        # Reload settings cache to get the latest API key
-        settings.reload_cache()
-        self.api_key = settings.get("imvdb_api_key", "")
+        status = {
+            "service": "IMVDb",
+            "status": "unknown",
+            "message": "",
+            "authenticated": False,
+            "help_url": "https://imvdb.com/developers/api",
+        }
 
-        if not self.api_key:
-            return {
-                "status": "error",
-                "message": "IMVDb API key not configured. Please configure your API key in Settings > External Services.",
-                "help_url": "https://imvdb.com/developers/api",
-            }
+        # Get the latest API key
+        api_key = self.get_api_key()
+
+        if not api_key:
+            status.update(
+                {
+                    "status": "error",
+                    "message": "IMVDb API key not configured. Please configure your API key in Settings > External Services.",
+                }
+            )
+            return status
 
         # Try a simple search request
-        response = self._make_request("search/videos", {"q": "test"})
+        try:
+            logger.debug("Testing IMVDb API connection...")
+            response = self._make_request(
+                "search/videos", {"q": "test", "limit": 1}, retry_auth=False
+            )
 
-        if response is not None:
-            return {"status": "success", "message": "IMVDb API connection successful"}
-        else:
-            return {
-                "status": "error",
-                "message": "Failed to connect to IMVDb API. Please check your API key and internet connection.",
-                "help_url": "https://imvdb.com/developers/api",
-            }
+            if response is not None:
+                status.update(
+                    {
+                        "status": "success",
+                        "message": "IMVDb API connection successful",
+                        "authenticated": True,
+                        "results_returned": len(response.get("results", [])),
+                        "api_key_configured": True,
+                    }
+                )
+
+                # Try to get additional API info if available
+                try:
+                    # Test with a known artist search to validate broader functionality
+                    artist_test = self._make_request(
+                        "search/entities", {"q": "test", "limit": 1}, retry_auth=False
+                    )
+                    if artist_test:
+                        status["artist_search_working"] = True
+                        status["message"] += " (full API functionality confirmed)"
+                    else:
+                        status["artist_search_working"] = False
+                        status[
+                            "message"
+                        ] += " (video search working, artist search may have issues)"
+                except Exception as e:
+                    logger.debug(f"IMVDb artist search test failed: {e}")
+                    status["artist_search_working"] = False
+
+            else:
+                status.update(
+                    {
+                        "status": "error",
+                        "message": "Failed to connect to IMVDb API. Please check your API key and internet connection.",
+                    }
+                )
+
+        except Exception as e:
+            logger.error(f"IMVDb connection test failed: {e}")
+            status.update(
+                {"status": "error", "message": f"Connection test failed: {str(e)}"}
+            )
+
+        return status
+
+    def get_service_status(self) -> Dict:
+        """Get comprehensive service status information"""
+        return {
+            "service": "IMVDb",
+            "base_url": self.base_url,
+            "api_key_configured": bool(self.api_key),
+            "rate_limit_delay": self.rate_limit_delay,
+            "last_request_time": self.last_request_time,
+            "user_agent": "MVidarr/1.0",
+        }
 
 
 # Convenience instance

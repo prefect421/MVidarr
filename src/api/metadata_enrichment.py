@@ -31,13 +31,16 @@ def enrich_artist_metadata(artist_id: int):
             request.json.get("force_refresh", False) if request.is_json else False
         )
 
-        # Run async enrichment
+        # Run async enrichment with Flask app context
+        from flask import current_app
+        
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
+            # Pass Flask app context to async function
             result = loop.run_until_complete(
                 metadata_enrichment_service.enrich_artist_metadata(
-                    artist_id, force_refresh
+                    artist_id, force_refresh, app_context=current_app
                 )
             )
         finally:
@@ -154,13 +157,15 @@ def enrich_multiple_artists():
         except (ValueError, TypeError):
             return jsonify({"error": "All artist_ids must be valid integers"}), 400
 
-        # Run async batch enrichment
+        # Run async batch enrichment with Flask app context
+        from flask import current_app
+        
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             results = loop.run_until_complete(
                 metadata_enrichment_service.enrich_multiple_artists(
-                    artist_ids, force_refresh
+                    artist_ids, force_refresh, app_context=current_app
                 )
             )
         finally:
@@ -392,13 +397,15 @@ def auto_enrich_candidates():
             # Extract artist IDs
             artist_ids = [artist.id for artist in candidates]
 
-        # Run batch enrichment
+        # Run batch enrichment with Flask app context
+        from flask import current_app
+        
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             results = loop.run_until_complete(
                 metadata_enrichment_service.enrich_multiple_artists(
-                    artist_ids, force_refresh
+                    artist_ids, force_refresh, app_context=current_app
                 )
             )
         finally:
@@ -820,49 +827,7 @@ def search_lastfm():
         return jsonify({"error": str(e)}), 500
 
 
-@metadata_enrichment_bp.route("/search/discogs", methods=["GET"])
-@auth_required
-def search_discogs():
-    """Search Discogs for artist information"""
-    try:
-        artist_name = request.args.get("artist")
-        if not artist_name:
-            return jsonify({"error": "artist parameter is required"}), 400
-
-        # Import the discogs service
-        from src.services.discogs_service import discogs_service
-
-        # Check if Discogs is properly configured
-        if not discogs_service.token:
-            return (
-                jsonify(
-                    {
-                        "results": [],
-                        "message": "Discogs API requires authentication. Please configure a personal access token in Settings.",
-                        "authentication_required": True,
-                    }
-                ),
-                200,
-            )
-
-        results = discogs_service.search_artist(artist_name)
-        if results is None:
-            return (
-                jsonify(
-                    {
-                        "results": [],
-                        "message": "Discogs search failed. Please check authentication settings.",
-                        "authentication_required": not bool(discogs_service.token),
-                    }
-                ),
-                200,
-            )
-
-        return jsonify({"results": results or []}), 200
-
-    except Exception as e:
-        logger.error(f"Failed to search Discogs for artist '{artist_name}': {e}")
-        return jsonify({"error": str(e)}), 500
+# Discogs search endpoint removed - service discontinued
 
 
 @metadata_enrichment_bp.route("/search/allmusic", methods=["GET"])
@@ -1059,4 +1024,321 @@ def search_imvdb():
                 ),
                 200,
             )
+        return jsonify({"error": str(e)}), 500
+
+
+@metadata_enrichment_bp.route("/auto-match/<int:artist_id>", methods=["GET"])
+@auth_required
+def auto_match_services(artist_id: int):
+    """Automatically match artist to external service IDs"""
+    try:
+        with get_db() as session:
+            artist = session.query(Artist).filter(Artist.id == artist_id).first()
+
+            if not artist:
+                return jsonify({"error": "Artist not found"}), 404
+
+            artist_name = artist.name
+            logger.info(
+                f"Auto-matching services for artist: {artist_name} (ID: {artist_id})"
+            )
+
+            matches = {}
+
+            # Search Spotify
+            try:
+                from src.services.spotify_service import spotify_service
+
+                # Ensure Spotify has access token
+                if not spotify_service.access_token:
+                    logger.debug(
+                        "Spotify access token not available, getting client credentials token"
+                    )
+                    token_data = spotify_service.get_client_credentials_token()
+                    if token_data:
+                        spotify_service.access_token = token_data.get("access_token")
+                        logger.debug("Spotify client credentials token obtained")
+                    else:
+                        logger.debug("Failed to get Spotify client credentials token")
+
+                if spotify_service.access_token:
+                    logger.debug(
+                        f"Spotify access token available, searching for: {artist_name}"
+                    )
+                    spotify_results = spotify_service.search_artist(
+                        artist_name, limit=5
+                    )
+                    if (
+                        spotify_results
+                        and "artists" in spotify_results
+                        and spotify_results["artists"]["items"]
+                    ):
+                        best_match = spotify_results["artists"]["items"][0]
+                        matches["spotify"] = {
+                            "id": best_match.get("id"),
+                            "name": best_match.get("name"),
+                            "url": best_match.get("external_urls", {}).get("spotify"),
+                            "followers": best_match.get("followers", {}).get(
+                                "total", 0
+                            ),
+                            "popularity": best_match.get("popularity", 0),
+                        }
+                        logger.debug(
+                            f"Found Spotify match: {best_match.get('name')} (ID: {best_match.get('id')})"
+                        )
+                    else:
+                        logger.debug(f"No Spotify results found for: {artist_name}")
+                else:
+                    logger.debug("No Spotify access token available")
+
+            except Exception as e:
+                logger.warning(f"Failed to search Spotify for auto-match: {e}")
+
+            # Search Last.fm
+            try:
+                from src.services.lastfm_service import lastfm_service
+
+                # Refresh credentials before checking
+                lastfm_service.refresh_credentials()
+                if lastfm_service.api_key:
+                    logger.debug(
+                        f"Last.fm API key available, searching for: {artist_name}"
+                    )
+                    lastfm_results = lastfm_service.search_artist(artist_name)
+                    if lastfm_results and len(lastfm_results) > 0:
+                        best_match = lastfm_results[0]
+                        matches["lastfm"] = {
+                            "id": best_match.get(
+                                "name"
+                            ),  # Last.fm uses name as identifier
+                            "name": best_match.get("name"),
+                            "url": best_match.get("url"),
+                            "listeners": best_match.get("listeners", 0),
+                            "playcount": best_match.get("playcount", 0),
+                        }
+                        logger.debug(f"Found Last.fm match: {best_match.get('name')}")
+                    else:
+                        logger.debug(f"No Last.fm results found for: {artist_name}")
+                else:
+                    logger.debug("Last.fm API key not configured")
+
+            except Exception as e:
+                logger.warning(f"Failed to search Last.fm for auto-match: {e}")
+
+            # Search IMVDb
+            try:
+                from src.services.imvdb_service import imvdb_service
+
+                # Check API key availability
+                api_key = imvdb_service.get_api_key()
+                if api_key:
+                    logger.info(
+                        f"🎵 AUTO-MATCH: IMVDb API key available, searching for: {artist_name}"
+                    )
+                    imvdb_results = imvdb_service.search_artists(artist_name, limit=5)
+                    logger.info(f"🎵 AUTO-MATCH: IMVDb raw results: {imvdb_results}")
+                    if imvdb_results and len(imvdb_results) > 0:
+                        best_match = imvdb_results[0]
+                        logger.info(
+                            f"🎵 AUTO-MATCH: IMVDb best match structure: {best_match}"
+                        )
+
+                        # Extract artist name from nested structure - more comprehensive approach
+                        artist_name_from_result = None
+
+                        # Check all possible nested structures
+                        if "entity" in best_match and isinstance(
+                            best_match["entity"], dict
+                        ):
+                            entity = best_match["entity"]
+                            logger.info(
+                                f"🎵 AUTO-MATCH: IMVDb entity structure: {entity}"
+                            )
+                            artist_name_from_result = (
+                                entity.get("name")
+                                or entity.get("slug")
+                                or entity.get("title")
+                            )
+
+                        # Direct field checks
+                        if not artist_name_from_result:
+                            artist_name_from_result = (
+                                best_match.get("name")
+                                or best_match.get("title")
+                                or best_match.get("slug")
+                            )
+
+                        # Check if there's a url_slug field
+                        if not artist_name_from_result:
+                            artist_name_from_result = best_match.get("url_slug")
+
+                        # As a last resort, check if there are any string values that might be the name
+                        if not artist_name_from_result:
+                            for key, value in best_match.items():
+                                if (
+                                    isinstance(value, str)
+                                    and len(value) > 2
+                                    and value.lower() != "artist"
+                                ):
+                                    artist_name_from_result = value
+                                    logger.info(
+                                        f"🎵 AUTO-MATCH: Using fallback artist name from field '{key}': {value}"
+                                    )
+                                    break
+
+                        # Build URL
+                        url = best_match.get("url")
+                        if not url and best_match.get("slug"):
+                            url = f"https://imvdb.com/n/{best_match.get('slug')}"
+                        elif not url and best_match.get("url_slug"):
+                            url = f"https://imvdb.com/n/{best_match.get('url_slug')}"
+                        elif not url and best_match.get("id"):
+                            url = f"https://imvdb.com/artist/{best_match.get('id')}"
+
+                        matches["imvdb"] = {
+                            "id": str(best_match.get("id", "")),
+                            "name": artist_name_from_result or artist_name,
+                            "url": url,
+                            "video_count": best_match.get("video_count", 0),
+                            "slug": best_match.get("slug", "")
+                            or best_match.get("url_slug", ""),
+                        }
+                        logger.info(
+                            f"🎵 AUTO-MATCH: Final IMVDb match: {artist_name_from_result} (ID: {best_match.get('id')})"
+                        )
+                    else:
+                        logger.info(
+                            f"🎵 AUTO-MATCH: No IMVDb results found for: {artist_name}"
+                        )
+                else:
+                    logger.info("🎵 AUTO-MATCH: IMVDb API key not configured")
+
+            except Exception as e:
+                logger.warning(f"Failed to search IMVDb for auto-match: {e}")
+
+            # Search MusicBrainz
+            try:
+                from src.services.musicbrainz_service import musicbrainz_service
+
+                logger.debug(f"MusicBrainz searching for: {artist_name}")
+                mb_results = musicbrainz_service.search_artist(artist_name)
+                if mb_results and len(mb_results) > 0:
+                    best_match = mb_results[0]
+                    matches["musicbrainz"] = {
+                        "id": best_match.get("mbid"),
+                        "mbid": best_match.get("mbid"),  # Include both for compatibility
+                        "name": best_match.get("name"),
+                        "score": best_match.get("confidence", 0),
+                        "country": best_match.get("country"),
+                        "type": best_match.get("type"),
+                    }
+                    logger.debug(
+                        f"Found MusicBrainz match: {best_match.get('name')} (ID: {best_match.get('mbid')})"
+                    )
+                else:
+                    logger.debug(f"No MusicBrainz results found for: {artist_name}")
+
+            except Exception as e:
+                logger.warning(f"Failed to search MusicBrainz for auto-match: {e}")
+
+            # Discogs search removed - service discontinued
+
+            # Search AllMusic (basic web scraping approach)
+            try:
+                import requests
+                from urllib.parse import quote
+
+                logger.debug(f"AllMusic searching for: {artist_name}")
+                search_url = (
+                    f"https://www.allmusic.com/search/artists/{quote(artist_name)}"
+                )
+                headers = {
+                    "User-Agent": "MVidarr/0.9.8 (https://github.com/prefect421/mvidarr)"
+                }
+
+                response = requests.get(search_url, headers=headers, timeout=10)
+                if (
+                    response.status_code == 200
+                    and artist_name.lower() in response.text.lower()
+                ):
+                    matches["allmusic"] = {
+                        "id": artist_name.lower().replace(" ", "-"),
+                        "name": artist_name,
+                        "url": f"https://www.allmusic.com/artist/{artist_name.lower().replace(' ', '-')}",
+                        "source": "allmusic",
+                    }
+                    logger.debug(f"Found AllMusic match for: {artist_name}")
+                else:
+                    logger.debug(f"No AllMusic match found for: {artist_name}")
+
+            except Exception as e:
+                logger.warning(f"Failed to search AllMusic for auto-match: {e}")
+
+            # Search Wikipedia
+            try:
+                import requests
+
+                logger.debug(f"Wikipedia searching for: {artist_name}")
+                url = "https://en.wikipedia.org/w/api.php"
+                params = {
+                    "action": "opensearch",
+                    "search": artist_name,
+                    "limit": 5,
+                    "namespace": 0,
+                    "format": "json",
+                }
+                headers = {
+                    "User-Agent": "MVidarr/0.9.8 (https://github.com/prefect421/mvidarr) - Media Library Manager"
+                }
+
+                response = requests.get(url, params=params, headers=headers, timeout=10)
+                response.raise_for_status()
+
+                data = response.json()
+                if len(data) >= 4 and data[1]:  # Check if titles exist
+                    titles = data[1]
+                    urls = data[3] if len(data) > 3 else []
+
+                    if titles and len(titles) > 0:
+                        best_title = titles[0]
+                        best_url = (
+                            urls[0]
+                            if urls
+                            else f"https://en.wikipedia.org/wiki/{best_title.replace(' ', '_')}"
+                        )
+
+                        matches["wikipedia"] = {
+                            "id": best_title.replace(" ", "_"),
+                            "name": best_title,
+                            "url": best_url,
+                            "source": "wikipedia",
+                        }
+                        logger.debug(f"Found Wikipedia match: {best_title}")
+                    else:
+                        logger.debug(f"No Wikipedia results found for: {artist_name}")
+                else:
+                    logger.debug(f"No Wikipedia results found for: {artist_name}")
+
+            except Exception as e:
+                logger.warning(f"Failed to search Wikipedia for auto-match: {e}")
+
+            # Count successful matches
+            match_count = len(matches)
+
+            return (
+                jsonify(
+                    {
+                        "success": True,
+                        "artist_id": artist_id,
+                        "artist_name": artist_name,
+                        "matches": matches,
+                        "match_count": match_count,
+                        "message": f"Found {match_count} service matches for {artist_name}",
+                    }
+                ),
+                200,
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to auto-match services for artist {artist_id}: {e}")
         return jsonify({"error": str(e)}), 500
