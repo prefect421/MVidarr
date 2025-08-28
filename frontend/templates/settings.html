@@ -887,6 +887,15 @@ input:checked + .slider:before {
             </div>
             
             <div class="form-group">
+                <label for="auto_delete_original_on_upgrade">Auto-delete Original Files on Upgrade:</label>
+                <select id="auto_delete_original_on_upgrade" name="auto_delete_original_on_upgrade">
+                    <option value="true">Enabled (Save Disk Space)</option>
+                    <option value="false">Disabled (Keep Both Files)</option>
+                </select>
+                <small class="help-text">Automatically delete lower quality files after successful quality upgrades</small>
+            </div>
+            
+            <div class="form-group">
                 <label>Cookie Status:</label>
                 <div id="cookie-status" class="status-display">
                     <span class="status-loading">Checking...</span>

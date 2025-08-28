@@ -561,6 +561,9 @@ class YtDlpService:
             with get_db() as session:
                 video = session.query(Video).filter(Video.id == video_id).first()
                 if video:
+                    # Store original file path for potential cleanup
+                    original_file_path = video.local_path
+                    
                     video.status = status
                     if file_path:
                         video.local_path = file_path
@@ -570,6 +573,12 @@ class YtDlpService:
                             video.local_path = file_path
                             if not file_size:
                                 file_size = os.path.getsize(file_path)
+                                
+                            # Handle quality upgrade file cleanup
+                            if original_file_path and original_file_path != file_path:
+                                self._handle_quality_upgrade_cleanup(
+                                    video, original_file_path, file_path
+                                )
 
                             # Automatically extract FFmpeg metadata for newly downloaded videos
                             try:
@@ -689,6 +698,91 @@ class YtDlpService:
                     logger.warning(f"Database download {db_download_id} not found")
         except Exception as e:
             logger.error(f"Failed to update database download {db_download_id}: {e}")
+
+    def _handle_quality_upgrade_cleanup(self, video, original_file_path: str, new_file_path: str):
+        """Handle cleanup of original files during quality upgrades"""
+        try:
+            # Check if this is a quality upgrade (indicated by metadata or title)
+            is_upgrade = False
+            
+            # Check video metadata for upgrade flag
+            if hasattr(video, 'video_metadata') and video.video_metadata:
+                is_upgrade = video.video_metadata.get("upgrade_requested", False)
+            
+            # Also check if this looks like an upgrade based on file paths
+            # (new file in same directory, different filename)
+            if not is_upgrade and original_file_path and new_file_path:
+                original_dir = os.path.dirname(original_file_path)
+                new_dir = os.path.dirname(new_file_path) 
+                # Same directory but different files suggests upgrade
+                is_upgrade = (original_dir == new_dir and 
+                             os.path.basename(original_file_path) != os.path.basename(new_file_path))
+            
+            if not is_upgrade:
+                return  # Not a quality upgrade, don't delete anything
+                
+            # Check user preference for auto-deletion
+            auto_delete = settings.get("auto_delete_original_on_upgrade", True)
+            if not auto_delete:
+                logger.info(f"Original file cleanup disabled for video {video.id}")
+                return
+                
+            # Verify the original file exists and new file is different
+            if not os.path.exists(original_file_path):
+                logger.debug(f"Original file already doesn't exist: {original_file_path}")
+                return
+                
+            if not os.path.exists(new_file_path):
+                logger.warning(f"New file doesn't exist yet, skipping cleanup: {new_file_path}")
+                return
+                
+            if os.path.samefile(original_file_path, new_file_path):
+                logger.debug(f"Original and new files are the same, no cleanup needed")
+                return
+                
+            # Compare file sizes to ensure new file is reasonable
+            original_size = os.path.getsize(original_file_path)
+            new_size = os.path.getsize(new_file_path)
+            
+            # Basic sanity check - new file shouldn't be much smaller (might indicate failed download)
+            if new_size < original_size * 0.5:  # New file is less than 50% of original
+                logger.warning(
+                    f"New file ({new_size} bytes) is much smaller than original ({original_size} bytes), "
+                    f"skipping cleanup for safety. Video {video.id}"
+                )
+                return
+                
+            # Safe to delete original file
+            logger.info(
+                f"Quality upgrade cleanup: Deleting original file {original_file_path} "
+                f"({original_size} bytes) for video {video.id}"
+            )
+            
+            # Create backup info before deletion
+            backup_info = {
+                "deleted_file_path": original_file_path,
+                "deleted_file_size": original_size,
+                "deleted_at": datetime.utcnow().isoformat(),
+                "replaced_by": new_file_path,
+                "replaced_by_size": new_size
+            }
+            
+            # Delete the original file
+            os.remove(original_file_path)
+            
+            # Update video metadata with cleanup info
+            if not hasattr(video, 'video_metadata') or not video.video_metadata:
+                video.video_metadata = {}
+            video.video_metadata["quality_upgrade_cleanup"] = backup_info
+            
+            logger.info(
+                f"Successfully deleted original file and updated metadata for video {video.id}. "
+                f"Saved {original_size} bytes of disk space."
+            )
+            
+        except Exception as e:
+            logger.error(f"Error during quality upgrade cleanup for video {video.id}: {e}")
+            # Don't raise the exception - cleanup failure shouldn't break the download
 
     def get_queue(self) -> Dict:
         """Get current download queue status"""

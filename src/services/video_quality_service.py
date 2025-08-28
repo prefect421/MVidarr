@@ -676,6 +676,19 @@ class VideoQualityService:
                     if artist:
                         artist_name = artist.name
 
+                # Mark video for upgrade in database BEFORE queuing download
+                video.video_metadata = video.video_metadata or {}
+                video.video_metadata.update(
+                    {
+                        "upgrade_requested": True,
+                        "upgrade_requested_at": datetime.utcnow().isoformat(),
+                        "upgrade_from_quality": current_analysis.get("current_quality"),
+                        "upgrade_target_quality": user_prefs.get("default_quality"),
+                        "original_file_path": video.local_path,  # Store for cleanup
+                    }
+                )
+                session.commit()  # Commit the upgrade flag immediately
+
                 # Queue the upgrade download
                 download_result = ytdlp_service.add_music_video_download(
                     artist=artist_name,
@@ -687,23 +700,6 @@ class VideoQualityService:
                 )
 
                 if download_result.get("success"):
-                    # Re-query the video to ensure it's bound to the session
-                    video = session.query(Video).filter(Video.id == video_id).first()
-                    if video:
-                        # Mark video for upgrade in database
-                        video.video_metadata = video.video_metadata or {}
-                        video.video_metadata.update(
-                            {
-                                "upgrade_requested": True,
-                                "upgrade_requested_at": datetime.utcnow().isoformat(),
-                                "upgrade_from_quality": current_analysis.get(
-                                    "current_quality"
-                                ),
-                                "upgrade_target_quality": user_prefs.get("default_quality"),
-                            }
-                        )
-                        session.commit()
-
                     return {
                         "success": True,
                         "message": "Video upgrade queued",

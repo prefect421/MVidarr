@@ -325,3 +325,69 @@ def check_all_video_qualities():
         logger.error(f"Error running quality check: {e}")
         logger.error(f"Full traceback: {error_trace}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@video_quality_bp.route("/cleanup-stats", methods=["GET"])
+def get_cleanup_statistics():
+    """Get statistics about quality upgrade cleanup operations"""
+    try:
+        from src.database.connection import get_db
+        from src.database.models import Video
+        
+        stats = {
+            "total_cleanups": 0,
+            "total_space_saved_bytes": 0,
+            "total_space_saved_mb": 0,
+            "total_space_saved_gb": 0,
+            "recent_cleanups": [],
+            "average_space_saved_mb": 0
+        }
+        
+        with get_db() as session:
+            # Query videos that have cleanup metadata
+            videos_with_cleanup = session.query(Video).filter(
+                Video.video_metadata.contains('"quality_upgrade_cleanup"')
+            ).all()
+            
+            total_bytes_saved = 0
+            recent_cleanups = []
+            
+            for video in videos_with_cleanup:
+                if video.video_metadata and "quality_upgrade_cleanup" in video.video_metadata:
+                    cleanup_info = video.video_metadata["quality_upgrade_cleanup"]
+                    
+                    deleted_size = cleanup_info.get("deleted_file_size", 0)
+                    total_bytes_saved += deleted_size
+                    
+                    # Add to recent cleanups (latest first)
+                    recent_cleanups.append({
+                        "video_id": video.id,
+                        "video_title": video.title,
+                        "artist_name": video.artist.name if video.artist else "Unknown",
+                        "deleted_file_path": cleanup_info.get("deleted_file_path", ""),
+                        "space_saved_mb": round(deleted_size / (1024*1024), 2),
+                        "deleted_at": cleanup_info.get("deleted_at", ""),
+                        "replaced_by_size_mb": round(cleanup_info.get("replaced_by_size", 0) / (1024*1024), 2)
+                    })
+            
+            # Sort recent cleanups by deletion date (newest first)
+            recent_cleanups.sort(key=lambda x: x.get("deleted_at", ""), reverse=True)
+            
+            # Calculate statistics
+            stats["total_cleanups"] = len(videos_with_cleanup)
+            stats["total_space_saved_bytes"] = total_bytes_saved
+            stats["total_space_saved_mb"] = round(total_bytes_saved / (1024*1024), 2)
+            stats["total_space_saved_gb"] = round(total_bytes_saved / (1024*1024*1024), 2)
+            stats["recent_cleanups"] = recent_cleanups[:20]  # Latest 20 cleanups
+            
+            if len(videos_with_cleanup) > 0:
+                stats["average_space_saved_mb"] = round(stats["total_space_saved_mb"] / len(videos_with_cleanup), 2)
+        
+        return jsonify({"success": True, "statistics": stats})
+        
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f"Error getting cleanup statistics: {e}")
+        logger.error(f"Full traceback: {error_trace}")
+        return jsonify({"success": False, "error": str(e)}), 500
