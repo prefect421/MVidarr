@@ -341,6 +341,23 @@ class YtDlpService:
                     "--no-check-certificate",  # Skip SSL certificate verification if needed
                 ]
 
+                # Add SABR workarounds if enabled in settings
+                enable_sabr_workarounds = settings.get("enable_sabr_workarounds", True)
+                if enable_sabr_workarounds:
+                    cmd.extend([
+                        "--extractor-args", "youtube:player_client=web,mweb,android,ios",
+                    ])
+                    logger.debug(f"Download {download_id}: SABR workarounds enabled")
+
+                # Add throttling if enabled in settings  
+                enable_throttled_downloads = settings.get("enable_throttled_downloads", True)
+                if enable_throttled_downloads:
+                    cmd.extend([
+                        "--throttled-rate", "100K",  # Slower download to avoid detection
+                        "--sleep-requests", "1",  # Wait between requests
+                    ])
+                    logger.debug(f"Download {download_id}: Throttled downloads enabled")
+
                 logger.info(
                     f"Download {download_id} using quality format: {quality_format}"
                 )

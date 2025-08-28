@@ -310,8 +310,31 @@ class VideoQualityService:
             # Final fallback
             format_parts.append("best")
 
+            # Add SABR-friendly fallbacks that prioritize combined formats
+            # These are more likely to work around YouTube's streaming restrictions
+            sabr_fallbacks = []
+            
+            # Add MP4 format preferences if enabled
+            prefer_mp4_formats = settings.get("prefer_mp4_formats", True)
+            if prefer_mp4_formats:
+                sabr_fallbacks.extend([
+                    "best[height<=1080][ext=mp4]",  # Prefer mp4 container
+                    "best[height<=720][ext=mp4]", 
+                    "best[ext=mp4]",  # Any mp4 format
+                ])
+            
+            # Add standard fallbacks
+            sabr_fallbacks.extend([
+                "best[height<=1080]",  # Original fallbacks
+                "best[height<=720]",
+                "worst[height>=480]",  # Better than very low quality
+            ])
+            
+            # Combine original format parts with SABR fallbacks
+            all_formats = format_parts + sabr_fallbacks
+            
             # Join with forward slashes for yt-dlp format selection
-            format_string = "/".join(format_parts)
+            format_string = "/".join(all_formats)
 
             self.logger.debug(
                 f"Generated yt-dlp format string for user {user_id}, artist {artist_id}: {format_string}"

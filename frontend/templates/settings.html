@@ -854,6 +854,50 @@ input:checked + .slider:before {
             </div>
         </div>
         
+        <!-- YouTube SABR Workarounds Section -->
+        <div class="settings-section">
+            <h2>YouTube Download Enhancements</h2>
+            <p class="section-description">Settings to work around YouTube's streaming restrictions (SABR) that limit access to higher quality formats</p>
+            
+            <div class="form-group">
+                <label for="enable_sabr_workarounds">Enable SABR Workarounds:</label>
+                <select id="enable_sabr_workarounds" name="enable_sabr_workarounds">
+                    <option value="true">Enabled (Recommended)</option>
+                    <option value="false">Disabled</option>
+                </select>
+                <small class="help-text">Uses alternative player clients (web, mobile, android, ios) to access restricted formats</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="enable_throttled_downloads">Enable Throttled Downloads:</label>
+                <select id="enable_throttled_downloads" name="enable_throttled_downloads">
+                    <option value="true">Enabled (Safer)</option>
+                    <option value="false">Disabled (Faster)</option>
+                </select>
+                <small class="help-text">Slower download speeds and request delays to avoid YouTube detection</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="prefer_mp4_formats">Prefer MP4 Formats:</label>
+                <select id="prefer_mp4_formats" name="prefer_mp4_formats">
+                    <option value="true">Enabled (Better Compatibility)</option>
+                    <option value="false">Disabled</option>
+                </select>
+                <small class="help-text">Prioritizes MP4 container formats which are less likely to be SABR-restricted</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Cookie Status:</label>
+                <div id="cookie-status" class="status-display">
+                    <span class="status-loading">Checking...</span>
+                </div>
+                <button onclick="checkCookieStatus()" class="btn btn-secondary btn-sm">
+                    <iconify-icon icon="mdi:refresh"></iconify-icon> Check Status
+                </button>
+                <small class="help-text">Browser cookies from logged-in YouTube sessions can significantly improve format availability</small>
+            </div>
+        </div>
+        
         <!-- Video Quality Management Section -->
         <div class="settings-section">
             <h2>Video Quality Management</h2>
@@ -4623,6 +4667,26 @@ async function checkCookieStatusSettings() {
     } catch (error) {
         console.error('Failed to check cookie status:', error);
         document.getElementById('cookieStatusSettings').innerHTML = '<span class="status-text">❓ Status unknown</span>';
+    }
+}
+
+async function checkCookieStatus() {
+    try {
+        const response = await fetch('/api/ytdlp/cookie-status');
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('cookie-status');
+        
+        if (data.cookies_available) {
+            const fileSize = (data.file_size / 1024).toFixed(1);
+            const modifiedDate = new Date(data.modified_time * 1000).toLocaleDateString();
+            statusDiv.innerHTML = `<span class="status-text success">✅ Cookies available (${fileSize} KB, updated ${modifiedDate})</span>`;
+        } else {
+            statusDiv.innerHTML = '<span class="status-text warning">⚠️ No cookies found - Higher quality formats may be unavailable</span>';
+        }
+    } catch (error) {
+        console.error('Failed to check yt-dlp cookie status:', error);
+        document.getElementById('cookie-status').innerHTML = '<span class="status-text error">❌ Error checking cookie status</span>';
     }
 }
 

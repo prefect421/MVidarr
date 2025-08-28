@@ -47,6 +47,7 @@ from src.api.vlc_streaming import vlc_bp
 from src.api.webhooks import webhooks_bp
 from src.api.youtube import youtube_bp
 from src.api.youtube_playlists import youtube_playlists_bp
+from src.api.ytdlp import ytdlp_bp
 
 
 def register_routes(app):
@@ -72,6 +73,7 @@ def register_routes(app):
     api_bp.register_blueprint(video_indexing_bp)
     api_bp.register_blueprint(video_quality_bp)
     api_bp.register_blueprint(metube_bp)
+    api_bp.register_blueprint(ytdlp_bp)
     api_bp.register_blueprint(video_discovery_bp)
     api_bp.register_blueprint(vlc_bp)
     api_bp.register_blueprint(optimization_bp)
