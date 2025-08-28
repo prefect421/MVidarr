@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request
 from src.services.ytdlp_service import ytdlp_service
 from src.utils.logger import get_logger
 
-ytdlp_bp = Blueprint("ytdlp", __name__, url_prefix="/api/ytdlp")
+ytdlp_bp = Blueprint("ytdlp", __name__, url_prefix="/ytdlp")
 logger = get_logger("mvidarr.api.ytdlp")
 
 
@@ -16,11 +16,19 @@ def get_cookie_status():
     """Get current cookie file status for SABR workarounds"""
     try:
         status = ytdlp_service.get_cookie_status()
+        logger.debug(f"Cookie status result: {status}")
+        
+        # Ensure we always return a valid JSON response
+        if not isinstance(status, dict):
+            status = {"cookies_available": False, "error": "Invalid status response"}
+            
         return jsonify(status)
 
     except Exception as e:
         logger.error(f"Error getting cookie status: {e}")
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        return jsonify({"cookies_available": False, "error": str(e)}), 500
 
 
 @ytdlp_bp.route("/health", methods=["GET"])

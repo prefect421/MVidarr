@@ -819,35 +819,6 @@ input:checked + .slider:before {
                 <small class="help-text">Comma-separated list of language codes (e.g., en.*, es, fr). Use 'en.*' to match any English variant.</small>
             </div>
             
-            <!-- YouTube Cookie Authentication -->
-            <div class="form-group cookie-management-section">
-                <label>🍪 YouTube Authentication:</label>
-                <div class="cookie-upload-container">
-                    <div id="cookieStatusSettings" class="cookie-status">
-                        <span class="status-text">Checking cookie status...</span>
-                    </div>
-                    
-                    <div class="cookie-actions">
-                        <button type="button" id="uploadCookieBtnSettings" class="btn btn-success btn-sm" onclick="document.getElementById('cookieFileInputSettings').click()">
-                            📤 Upload Cookies
-                        </button>
-                        <button type="button" id="deleteCookieBtnSettings" class="btn btn-danger btn-sm" onclick="deleteCookiesSettings()" style="display: none;">
-                            🗑️ Delete Cookies
-                        </button>
-                        <button type="button" class="btn btn-info btn-sm" onclick="showCookieInstructionsSettings()">
-                            ❓ Help
-                        </button>
-                    </div>
-                    
-                    <input type="file" id="cookieFileInputSettings" accept=".txt,.cookies" style="display: none;" onchange="uploadCookiesSettings(this)">
-                    
-                    <small class="help-text">
-                        Upload your YouTube cookies to enable downloads of age-restricted videos. 
-                        The cookie file should be in Netscape format exported from your browser.
-                    </small>
-                </div>
-            </div>
-            
             <div class="form-group">
                 <label for="max_concurrent_downloads">Max Concurrent Downloads:</label>
                 <input type="number" id="max_concurrent_downloads" name="max_concurrent_downloads" min="1" max="10">
@@ -904,6 +875,35 @@ input:checked + .slider:before {
                     <iconify-icon icon="mdi:refresh"></iconify-icon> Check Status
                 </button>
                 <small class="help-text">Browser cookies from logged-in YouTube sessions can significantly improve format availability</small>
+            </div>
+            
+            <!-- YouTube Cookie Authentication Management -->
+            <div class="form-group cookie-management-section">
+                <label>🍪 YouTube Cookie Authentication:</label>
+                <div class="cookie-upload-container">
+                    <div id="cookieStatusSettings" class="cookie-status">
+                        <span class="status-text">Checking cookie status...</span>
+                    </div>
+                    
+                    <div class="cookie-actions">
+                        <button type="button" id="uploadCookieBtnSettings" class="btn btn-success btn-sm" onclick="document.getElementById('cookieFileInputSettings').click()">
+                            📤 Upload Cookies
+                        </button>
+                        <button type="button" id="deleteCookieBtnSettings" class="btn btn-danger btn-sm" onclick="deleteCookiesSettings()" style="display: none;">
+                            🗑️ Delete Cookies
+                        </button>
+                        <button type="button" class="btn btn-info btn-sm" onclick="showCookieInstructionsSettings()">
+                            ❓ Help
+                        </button>
+                    </div>
+                    
+                    <input type="file" id="cookieFileInputSettings" accept=".txt,.cookies" style="display: none;" onchange="uploadCookiesSettings(this)">
+                    
+                    <small class="help-text">
+                        Upload your YouTube cookies to enable downloads of age-restricted videos and improve access to higher quality formats. 
+                        The cookie file should be in Netscape format exported from your browser.
+                    </small>
+                </div>
             </div>
         </div>
         
@@ -2267,6 +2267,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load certificate status
     loadCertificateStatus();
+    
+    // Check cookie status for both systems
+    checkCookieStatusSettings();  // MeTube cookies (upload/delete functionality)
+    checkCookieStatus();          // yt-dlp cookies (SABR workarounds)
     
     // Set up authentication toggle event listener
     const authToggle = document.getElementById('require_authentication');
@@ -4682,7 +4686,24 @@ async function checkCookieStatusSettings() {
 async function checkCookieStatus() {
     try {
         const response = await fetch('/api/ytdlp/cookie-status');
-        const data = await response.json();
+        
+        // Debug: check response status and content type
+        console.log('Cookie status response status:', response.status);
+        console.log('Cookie status response headers:', response.headers.get('content-type'));
+        
+        // Get response text first to debug JSON parsing issues
+        const responseText = await response.text();
+        console.log('Cookie status raw response:', responseText);
+        
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Failed to parse cookie status JSON:', parseError);
+            document.getElementById('cookie-status').innerHTML = '<span class="status-text error">❌ Invalid response format</span>';
+            return;
+        }
         
         const statusDiv = document.getElementById('cookie-status');
         
