@@ -297,12 +297,13 @@ def check_all_video_qualities():
     """Manually trigger quality checks for multiple videos"""
     try:
         data = request.get_json() or {}
-        limit = data.get("limit", 50)  # Check up to 50 videos by default
+        limit = data.get("limit")  # None means check all videos
         only_unchecked = data.get("only_unchecked", True)
         
         from src.services.youtube_quality_check_service import youtube_quality_check_service
         
-        logger.info(f"Starting manual quality check for up to {limit} videos (only_unchecked={only_unchecked})")
+        limit_msg = f"up to {limit}" if limit else "all"
+        logger.info(f"Starting manual quality check for {limit_msg} videos (only_unchecked={only_unchecked})")
         
         # Run the quality check
         summary = youtube_quality_check_service.check_all_videos(

@@ -2743,7 +2743,7 @@ function proceedFixMissingVideos() {
 }
 
 function checkVideoQualities() {
-    const message = 'This will check YouTube for available video qualities to improve upgrade recommendations. This may take several minutes for large libraries. Continue?';
+    const message = 'This will check YouTube for available video qualities for ALL videos in your library to improve upgrade recommendations. This may take a long time for large libraries (2+ seconds per video). Continue?';
     
     if (typeof toastConfirm === 'function') {
         toastConfirm(message, () => {
@@ -2757,7 +2757,7 @@ function checkVideoQualities() {
 }
 
 function proceedCheckVideoQualities() {
-    showProgress('Checking video qualities on YouTube...');
+    showProgress('Checking video qualities on YouTube for all videos in library...');
     
     fetch('/api/video-quality/check-all-qualities', {
         method: 'POST',
@@ -2765,7 +2765,7 @@ function proceedCheckVideoQualities() {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            limit: 50,  // Check first 50 videos
+            limit: null,  // Check ALL videos in library
             only_unchecked: true
         })
     })

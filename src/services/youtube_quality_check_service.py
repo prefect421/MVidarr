@@ -256,10 +256,19 @@ class YouTubeQualityCheckService:
                     query = query.limit(limit)
 
                 videos = query.all()
+                total_videos = len(videos)
                 
-                logger.info(f"Starting quality check for {len(videos)} videos")
-
+                logger.info(f"Starting quality check for {total_videos} videos")
+                
+                # Process videos with progress logging
+                processed_count = 0
                 for video in videos:
+                    processed_count += 1
+                    
+                    # Log progress every 10 videos
+                    if processed_count % 10 == 0 or processed_count == total_videos:
+                        logger.info(f"Quality check progress: {processed_count}/{total_videos} videos processed")
+                    
                     try:
                         # Check this video's quality
                         check_result = self.check_video_quality(video)
@@ -271,6 +280,7 @@ class YouTubeQualityCheckService:
                         summary["total_checked"] += 1
                         if check_result["success"]:
                             summary["successful_checks"] += 1
+                            logger.debug(f"Video {video.id} ({video.title[:30]}...): Found max quality {check_result.get('max_available_quality')}")
                         else:
                             summary["failed_checks"] += 1
                             summary["errors"].append(f"Video {video.id}: {check_result['error']}")
