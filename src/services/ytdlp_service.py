@@ -175,7 +175,7 @@ class YtDlpService:
                     )
                 )
                 logger.info(
-                    f"Using quality format string for download {download_id}: {quality_format_string}"
+                    f"Using quality format string: {quality_format_string}"
                 )
             except Exception as quality_error:
                 logger.warning(

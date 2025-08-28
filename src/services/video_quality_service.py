@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from src.database.connection import get_db
 from src.database.models import Artist, Setting, User, Video, VideoStatus
+from src.services.youtube_quality_check_service import youtube_quality_check_service
 from src.services.settings_service import settings
 from src.utils.logger import get_logger
 from src.utils.performance_monitor import monitor_performance
@@ -396,9 +397,15 @@ class VideoQualityService:
             if video.video_metadata:
                 metadata = video.video_metadata
                 analysis["current_width"] = metadata.get("width")
-                analysis["current_height"] = (
-                    metadata.get("height") or analysis["current_height"]
-                )
+                
+                # Ensure height is an integer
+                metadata_height = metadata.get("height")
+                if metadata_height is not None:
+                    try:
+                        metadata_height = int(metadata_height)
+                        analysis["current_height"] = metadata_height
+                    except (ValueError, TypeError):
+                        pass  # Keep existing current_height
                 analysis["codec_info"] = {
                     "video_codec": metadata.get("video_codec"),
                     "audio_codec": metadata.get("audio_codec"),
@@ -427,6 +434,12 @@ class VideoQualityService:
             quality_score = 0
             if analysis["current_height"]:
                 height = analysis["current_height"]
+                # Ensure height is numeric for comparisons
+                try:
+                    height = int(height)
+                except (ValueError, TypeError):
+                    height = 0
+                    
                 if height >= 2160:
                     quality_score = 100  # 4K
                 elif height >= 1440:
@@ -443,7 +456,8 @@ class VideoQualityService:
                     quality_score = 10  # Below 360p
 
                 # Bonus for good codecs
-                video_codec = analysis["codec_info"].get("video_codec", "").lower()
+                video_codec = analysis["codec_info"].get("video_codec") or ""
+                video_codec = video_codec.lower() if video_codec else ""
                 if "h264" in video_codec or "h265" in video_codec:
                     quality_score += 5
                 elif "av1" in video_codec:
@@ -453,6 +467,12 @@ class VideoQualityService:
 
             # Determine if upgrade is recommended
             current_height = analysis["current_height"] or 0
+            # Ensure current_height is numeric for comparison
+            try:
+                current_height = int(current_height) if current_height else 0
+            except (ValueError, TypeError):
+                current_height = 0
+                
             if current_height < 1080:  # Recommend upgrade for anything below 1080p
                 analysis["upgrade_recommended"] = True
 
@@ -466,7 +486,7 @@ class VideoQualityService:
 
     @monitor_performance("video_quality.find_upgradeable_videos")
     def find_upgradeable_videos(
-        self, user_id: Optional[int] = None, limit: int = 100
+        self, user_id: Optional[int] = None, limit: int = 0
     ) -> List[Dict[str, any]]:
         """
         Find videos that could benefit from quality upgrades
@@ -483,21 +503,27 @@ class VideoQualityService:
         try:
             with get_db() as session:
                 # Get videos with known quality below 1080p
-                videos = (
-                    session.query(Video)
-                    .filter(
-                        Video.status == VideoStatus.DOWNLOADED,
-                        Video.local_path.isnot(None),
-                        Video.quality.isnot(None),
-                    )
-                    .limit(limit * 2)
-                    .all()
-                )  # Get extra to filter
+                # Build query
+                query = session.query(Video).filter(
+                    Video.status == VideoStatus.DOWNLOADED,
+                    Video.local_path.isnot(None),
+                    Video.quality.isnot(None),
+                )
+                
+                # Apply limit only if specified (0 means no limit)
+                if limit > 0:
+                    query = query.limit(limit * 2)  # Get extra to filter
+                
+                videos = query.all()
 
                 user_preferences = self.get_user_quality_preferences(user_id)
                 target_quality = user_preferences.get("default_quality", "1080p")
 
                 for video in videos:
+                    # Use YouTube quality check data if available
+                    if not youtube_quality_check_service.is_video_upgradeable(video):
+                        continue
+                        
                     analysis = self.analyze_video_quality(video)
 
                     if analysis["upgrade_recommended"]:
@@ -532,7 +558,11 @@ class VideoQualityService:
                     key=lambda x: x["upgrade_priority"], reverse=True
                 )
 
-                return upgradeable_videos[:limit]
+                # Apply limit only if specified (0 means no limit)
+                if limit > 0:
+                    return upgradeable_videos[:limit]
+                else:
+                    return upgradeable_videos
 
         except Exception as e:
             self.logger.error(f"Error finding upgradeable videos: {e}")
@@ -546,6 +576,12 @@ class VideoQualityService:
 
         # Base priority on current quality
         current_height = analysis.get("current_height", 0)
+        # Ensure height is numeric for comparisons
+        try:
+            current_height = int(current_height) if current_height else 0
+        except (ValueError, TypeError):
+            current_height = 0
+            
         if current_height <= 360:
             priority += 50  # High priority for very low quality
         elif current_height <= 480:
@@ -586,10 +622,12 @@ class VideoQualityService:
                 if not video:
                     return {"success": False, "error": "Video not found"}
 
-                if not video.original_url:
+                # Use youtube_url or url as the source URL
+                video_url = video.youtube_url or video.url
+                if not video_url:
                     return {
                         "success": False,
-                        "error": "No original URL available for upgrade",
+                        "error": "No source URL available for upgrade",
                     }
 
                 # Analyze current quality
@@ -619,26 +657,29 @@ class VideoQualityService:
                 download_result = ytdlp_service.add_music_video_download(
                     artist=artist_name,
                     title=f"{video.title} (Quality Upgrade)",
-                    url=video.original_url,
+                    url=video_url,
                     quality="best",  # Will be overridden by format string
                     video_id=video_id,
                     download_subtitles=False,
                 )
 
                 if download_result.get("success"):
-                    # Mark video for upgrade in database
-                    video.video_metadata = video.video_metadata or {}
-                    video.video_metadata.update(
-                        {
-                            "upgrade_requested": True,
-                            "upgrade_requested_at": datetime.utcnow().isoformat(),
-                            "upgrade_from_quality": current_analysis.get(
-                                "current_quality"
-                            ),
-                            "upgrade_target_quality": user_prefs.get("default_quality"),
-                        }
-                    )
-                    session.commit()
+                    # Re-query the video to ensure it's bound to the session
+                    video = session.query(Video).filter(Video.id == video_id).first()
+                    if video:
+                        # Mark video for upgrade in database
+                        video.video_metadata = video.video_metadata or {}
+                        video.video_metadata.update(
+                            {
+                                "upgrade_requested": True,
+                                "upgrade_requested_at": datetime.utcnow().isoformat(),
+                                "upgrade_from_quality": current_analysis.get(
+                                    "current_quality"
+                                ),
+                                "upgrade_target_quality": user_prefs.get("default_quality"),
+                            }
+                        )
+                        session.commit()
 
                     return {
                         "success": True,

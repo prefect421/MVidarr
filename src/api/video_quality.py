@@ -106,7 +106,7 @@ def find_upgradeable_videos():
     """Find videos that could benefit from quality upgrades"""
     try:
         user_id = request.args.get("user_id", type=int)
-        limit = int(request.args.get("limit", 50))
+        limit = int(request.args.get("limit", 0))  # 0 means no limit
 
         upgradeable_videos = video_quality_service.find_upgradeable_videos(
             user_id, limit
@@ -169,13 +169,48 @@ def bulk_upgrade_videos():
 @video_quality_bp.route("/statistics", methods=["GET"])
 def get_quality_statistics():
     """Get system-wide video quality statistics"""
+    # Add debugging
+    try:
+        from flask import current_app
+        current_app.logger.info("Statistics endpoint called")
+        stats = video_quality_service.get_quality_statistics()
+        current_app.logger.info("Statistics retrieved successfully")
+        
+        # Ensure all values are JSON serializable
+        def clean_for_json(obj):
+            if isinstance(obj, dict):
+                return {str(k) if k is not None else "unknown": clean_for_json(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_for_json(item) for item in obj]
+            elif obj is None:
+                return "none"
+            else:
+                return obj
+        
+        cleaned_stats = clean_for_json(stats)
+        current_app.logger.info("Statistics cleaned for JSON serialization")
+        return jsonify({"success": True, "statistics": cleaned_stats})
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        from flask import current_app
+        current_app.logger.error(f"Error getting quality statistics: {e}")
+        current_app.logger.error(f"Full traceback: {error_trace}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@video_quality_bp.route("/test-statistics", methods=["GET"])  
+def test_quality_statistics():
+    """Get system-wide video quality statistics"""
     try:
         stats = video_quality_service.get_quality_statistics()
 
         return jsonify({"success": True, "statistics": stats})
 
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
         logger.error(f"Error getting quality statistics: {e}")
+        logger.error(f"Full traceback: {error_trace}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
