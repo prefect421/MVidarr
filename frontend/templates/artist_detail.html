@@ -6964,22 +6964,19 @@ function enrichMetadataAllSources(event) {
                 console.log('🔍 UPDATING ARTIST DATA AND RELOADING...');
                 currentArtistData = { ...currentArtistData, ...data.metadata_found };
                 
-                // Also search for thumbnail if artist doesn't have one
-                if (!currentArtistData.thumbnail_url) {
-                    console.log('🔍 Artist has no thumbnail, searching for one...');
-                    searchArtistThumbnail().then(() => {
-                        console.log('🔍 Thumbnail search completed, refreshing view...');
-                        animateMetadataUpdate();
-                        loadArtistDetails(); // Refresh the entire view
-                    }).catch(error => {
-                        console.log('🔍 Thumbnail search failed, continuing with metadata update...');
-                        animateMetadataUpdate();
-                        loadArtistDetails(); // Refresh the entire view
-                    });
-                } else {
+                // Always search for better thumbnail during enrichment
+                console.log('🔍 Searching for artist thumbnail during enrichment...');
+                console.log('🔍 Current thumbnail URL:', currentArtistData.thumbnail_url);
+                searchArtistThumbnail().then(() => {
+                    console.log('🔍 Thumbnail search completed, refreshing view...');
                     animateMetadataUpdate();
                     loadArtistDetails(); // Refresh the entire view
-                }
+                }).catch(error => {
+                    console.log('🔍 Thumbnail search failed, continuing with metadata update...');
+                    console.error('Thumbnail search error:', error);
+                    animateMetadataUpdate();
+                    loadArtistDetails(); // Refresh the entire view
+                });
             } else {
                 console.log('❌ NO metadata_found, not reloading view');
             }
