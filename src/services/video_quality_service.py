@@ -281,6 +281,16 @@ class VideoQualityService:
 
             format_parts = []
 
+            # PRIORITIZE separate video+audio streams first - they bypass YouTube SABR restrictions
+            # These are most likely to successfully download high quality content
+            if max_height >= 720:
+                # Add separate video+audio combinations that work around SABR
+                quality_heights = [2160, 1440, 1080, 720]  # 4K, 1440p, 1080p, 720p
+                for height in quality_heights:
+                    if min_height <= height <= max_height:
+                        format_parts.append(f"bestvideo[height<={height}]+bestaudio")
+
+            # Add traditional single-stream formats as secondary options
             if default_quality == QualityLevel.BEST_AVAILABLE.value:
                 # Best available within limits
                 if max_height < 9999:
@@ -303,35 +313,26 @@ class VideoQualityService:
                     ):
                         format_parts.append(f"best[height<={height}]")
 
-                # Add separate video+audio fallback
-                if max_height >= 720:
-                    format_parts.append(f"bestvideo[height<={max_height}]+bestaudio")
-
-            # Final fallback
-            format_parts.append("best")
-
-            # Add SABR-friendly fallbacks that prioritize combined formats
-            # These are more likely to work around YouTube's streaming restrictions
-            sabr_fallbacks = []
-            
-            # Add MP4 format preferences if enabled
+            # Add MP4-specific formats as they're generally more reliable
             prefer_mp4_formats = settings.get("prefer_mp4_formats", True)
             if prefer_mp4_formats:
-                sabr_fallbacks.extend([
-                    "best[height<=1080][ext=mp4]",  # Prefer mp4 container
+                mp4_formats = [
+                    f"best[height<={max_height}][ext=mp4]",  # Prefer mp4 container
+                    "best[height<=1080][ext=mp4]",
                     "best[height<=720][ext=mp4]", 
                     "best[ext=mp4]",  # Any mp4 format
-                ])
-            
-            # Add standard fallbacks
-            sabr_fallbacks.extend([
-                "best[height<=1080]",  # Original fallbacks
-                "best[height<=720]",
+                ]
+                format_parts.extend(mp4_formats)
+
+            # Final safety fallbacks
+            format_parts.extend([
+                "bestvideo+bestaudio",  # Any separate streams
+                "best",  # Any format available
                 "worst[height>=480]",  # Better than very low quality
             ])
             
-            # Combine original format parts with SABR fallbacks
-            all_formats = format_parts + sabr_fallbacks
+            # Use all format parts directly
+            all_formats = format_parts
             
             # Join with forward slashes for yt-dlp format selection
             format_string = "/".join(all_formats)
@@ -689,10 +690,11 @@ class VideoQualityService:
                 )
                 session.commit()  # Commit the upgrade flag immediately
 
-                # Queue the upgrade download
+                # Queue the upgrade download with timestamp to ensure uniqueness
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 download_result = ytdlp_service.add_music_video_download(
                     artist=artist_name,
-                    title=f"{video.title} (Quality Upgrade)",
+                    title=f"{video.title} (Quality Upgrade {timestamp})",
                     url=video_url,
                     quality="best",  # Will be overridden by format string
                     video_id=video_id,

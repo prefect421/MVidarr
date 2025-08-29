@@ -134,44 +134,76 @@ input:checked + .slider:before {
 
     <div class="settings-container">
 
-    <!-- Settings Tabs -->
-    <div class="settings-tabs" role="tablist" aria-label="Settings categories">
-        <button class="settings-tab-btn active" onclick="switchTab(event, 'general-tab')" 
-                role="tab" aria-selected="true" aria-controls="general-tab" id="tab-general">
-            <iconify-icon icon="mdi:cog" class="tab-icon" aria-hidden="true"></iconify-icon> General
-        </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'security-tab')"
-                role="tab" aria-selected="false" aria-controls="security-tab" id="tab-security">
-            <iconify-icon icon="mdi:shield-lock" class="tab-icon" aria-hidden="true"></iconify-icon> Security
-        </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'services-tab')"
-                role="tab" aria-selected="false" aria-controls="services-tab" id="tab-services">
-            <iconify-icon icon="mdi:link" class="tab-icon" aria-hidden="true"></iconify-icon> Services
-        </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'downloads-tab')"
-                role="tab" aria-selected="false" aria-controls="downloads-tab" id="tab-downloads">
-            <iconify-icon icon="mdi:download" class="tab-icon" aria-hidden="true"></iconify-icon> Downloads
-        </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'database-tab')"
-                role="tab" aria-selected="false" aria-controls="database-tab" id="tab-database">
-            <iconify-icon icon="mdi:database" class="tab-icon" aria-hidden="true"></iconify-icon> Database
-        </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'system-tab')"
-                role="tab" aria-selected="false" aria-controls="system-tab" id="tab-system">
-            <iconify-icon icon="mdi:tools" class="tab-icon" aria-hidden="true"></iconify-icon> System
-        </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'themes-tab')"
-                role="tab" aria-selected="false" aria-controls="themes-tab" id="tab-themes">
-            <iconify-icon icon="mdi:palette" class="tab-icon" aria-hidden="true"></iconify-icon> Themes
-        </button>
-        <button class="settings-tab-btn" onclick="switchTab(event, 'blacklist-tab')"
-                role="tab" aria-selected="false" aria-controls="blacklist-tab" id="tab-blacklist">
-            <iconify-icon icon="tabler:list-x" class="tab-icon" aria-hidden="true"></iconify-icon> Blacklist
-        </button>
-    </div>
+    <!-- Settings Layout with Sidebar -->
+    <div class="settings-layout">
+        <!-- Left Sidebar Navigation -->
+        <nav class="settings-sidebar" role="tablist" aria-label="Settings categories">
+            <div class="sidebar-header">
+                <h3>Settings</h3>
+            </div>
+            <ul class="sidebar-nav">
+                <li>
+                    <button class="settings-tab-btn active" onclick="switchTab(event, 'general-tab')" 
+                            role="tab" aria-selected="true" aria-controls="general-tab" id="tab-general">
+                        <iconify-icon icon="mdi:cog" class="tab-icon" aria-hidden="true"></iconify-icon> 
+                        <span>General</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="settings-tab-btn" onclick="switchTab(event, 'security-tab')"
+                            role="tab" aria-selected="false" aria-controls="security-tab" id="tab-security">
+                        <iconify-icon icon="mdi:shield-lock" class="tab-icon" aria-hidden="true"></iconify-icon> 
+                        <span>Security</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="settings-tab-btn" onclick="switchTab(event, 'services-tab')"
+                            role="tab" aria-selected="false" aria-controls="services-tab" id="tab-services">
+                        <iconify-icon icon="mdi:link" class="tab-icon" aria-hidden="true"></iconify-icon> 
+                        <span>Services</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="settings-tab-btn" onclick="switchTab(event, 'downloads-tab')"
+                            role="tab" aria-selected="false" aria-controls="downloads-tab" id="tab-downloads">
+                        <iconify-icon icon="mdi:download" class="tab-icon" aria-hidden="true"></iconify-icon> 
+                        <span>Downloads</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="settings-tab-btn" onclick="switchTab(event, 'database-tab')"
+                            role="tab" aria-selected="false" aria-controls="database-tab" id="tab-database">
+                        <iconify-icon icon="mdi:database" class="tab-icon" aria-hidden="true"></iconify-icon> 
+                        <span>Database</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="settings-tab-btn" onclick="switchTab(event, 'system-tab')"
+                            role="tab" aria-selected="false" aria-controls="system-tab" id="tab-system">
+                        <iconify-icon icon="mdi:tools" class="tab-icon" aria-hidden="true"></iconify-icon> 
+                        <span>System</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="settings-tab-btn" onclick="switchTab(event, 'themes-tab')"
+                            role="tab" aria-selected="false" aria-controls="themes-tab" id="tab-themes">
+                        <iconify-icon icon="mdi:palette" class="tab-icon" aria-hidden="true"></iconify-icon> 
+                        <span>Themes</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="settings-tab-btn" onclick="switchTab(event, 'blacklist-tab')"
+                            role="tab" aria-selected="false" aria-controls="blacklist-tab" id="tab-blacklist">
+                        <iconify-icon icon="tabler:list-x" class="tab-icon" aria-hidden="true"></iconify-icon> 
+                        <span>Blacklist</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
 
-    <!-- Tab Content -->
-    <div class="settings-tab-content">
+        <!-- Main Content Area -->
+        <main class="settings-main-content">
+            <div class="settings-tab-content">
 
         <!-- General Tab -->
         <div id="general-tab" class="settings-tab-panel active" role="tabpanel" aria-labelledby="tab-general">
@@ -1895,8 +1927,9 @@ input:checked + .slider:before {
             </div>
         </div>
         
-    </div>
-    </div>
+            </div> <!-- Close settings-tab-content -->
+        </main> <!-- Close settings-main-content -->
+    </div> <!-- Close settings-layout -->
     
     <!-- Duplicate Save Settings button at bottom -->
     <div class="settings-actions bottom-actions">
@@ -5058,17 +5091,48 @@ async function loadCertificateStatus() {
     padding: 20px;
 }
 
-/* Settings Tab Styles */
-.settings-tabs {
+/* Settings Layout Styles */
+.settings-layout {
     display: flex;
-    border-bottom: 2px solid var(--border-primary, #38383a);
-    margin-bottom: 2rem;
+    gap: 2rem;
+    min-height: 600px;
+}
+
+.settings-sidebar {
+    width: 250px;
     background: var(--bg-secondary, #2c2c2e);
-    border-radius: 8px 8px 0 0;
-    overflow-x: auto;
+    border-radius: 8px;
+    padding: 0;
+    border: 1px solid var(--border-primary, #38383a);
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-primary, #38383a);
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    color: var(--text-primary, #ffffff);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav li {
+    margin: 0;
 }
 
 .settings-tab-btn {
+    width: 100%;
     background: none;
     border: none;
     padding: 1rem 1.5rem;
@@ -5076,12 +5140,12 @@ async function loadCertificateStatus() {
     font-size: 0.95rem;
     font-weight: 500;
     color: var(--text-muted, #98989d);
-    border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
-    white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    text-align: left;
+    border-left: 3px solid transparent;
 }
 
 .settings-tab-btn:hover {
@@ -5091,12 +5155,18 @@ async function loadCertificateStatus() {
 
 .settings-tab-btn.active {
     color: var(--text-accent, #a8b9be);
-    border-bottom-color: var(--text-accent, #a8b9be);
     background: var(--bg-tertiary, #3a3a3a);
+    border-left-color: var(--text-accent, #a8b9be);
 }
 
 .tab-icon {
     font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.settings-main-content {
+    flex: 1;
+    min-width: 0;
 }
 
 .settings-tab-content {
@@ -5119,20 +5189,37 @@ async function loadCertificateStatus() {
 
 /* Responsive tabs */
 @media (max-width: 768px) {
-    .settings-tabs {
+    .settings-layout {
         flex-direction: column;
-        border-radius: 8px;
+        gap: 1rem;
+    }
+    
+    .settings-sidebar {
+        width: 100%;
+        position: static;
+    }
+    
+    .sidebar-nav {
+        display: flex;
+        overflow-x: auto;
+        gap: 0;
+        padding: 0.5rem;
+    }
+    
+    .sidebar-nav li {
+        flex-shrink: 0;
     }
     
     .settings-tab-btn {
-        text-align: left;
-        border-bottom: 1px solid var(--border-primary, #38383a);
-        border-right: none;
+        white-space: nowrap;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        min-width: 100px;
     }
     
     .settings-tab-btn.active {
-        border-bottom: 1px solid var(--border-primary, #38383a);
-        border-left: 3px solid var(--text-accent, #a8b9be);
+        border-left-color: transparent;
+        border-bottom-color: var(--text-accent, #a8b9be);
     }
 }
 

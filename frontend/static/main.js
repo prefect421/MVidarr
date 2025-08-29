@@ -1758,6 +1758,7 @@ async function testMetadataServices() {
         const services = [
             { name: 'MusicBrainz', endpoint: '/api/musicbrainz/test' },
             { name: 'Last.fm', endpoint: '/api/lastfm/test', method: 'POST' },
+            { name: 'Spotify', endpoint: '/api/spotify/test', method: 'POST' },
             { name: 'IMVDb', endpoint: '/api/video-indexing/imvdb/test' }
         ];
         
@@ -1765,10 +1766,23 @@ async function testMetadataServices() {
         
         for (const service of services) {
             try {
-                const response = await apiRequest(service.endpoint, {
-                    method: service.method || 'GET'
+                // Use direct fetch instead of apiRequest to handle 503 responses properly
+                const response = await fetch(service.endpoint, {
+                    method: service.method || 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
-                results.push(`${service.name}: ${response.success ? '✅' : '❌'}`);
+                
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    const isSuccess = data.success || false;
+                    const status = data.status || 'unknown';
+                    results.push(`${service.name}: ${isSuccess ? '✅ Connected' : '❌ Disconnected'} (${status})`);
+                } else {
+                    results.push(`${service.name}: ❌ Invalid response`);
+                }
             } catch (error) {
                 results.push(`${service.name}: ❌ (${error.message})`);
             }

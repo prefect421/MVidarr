@@ -3374,6 +3374,30 @@ div.metadata-section:hover,
             <button type="button" onclick="confirmDeleteArtist()" class="btn btn-danger">
                 🗑️ Delete Artist
             </button>
+            
+            <!-- Analysis Results Container -->
+            <div id="analysisResults" class="analysis-results" style="display: none;">
+                <div class="results-container">
+                    <h4>Deletion Impact Analysis</h4>
+                    <div id="dependencySummary"></div>
+                    <div id="dependencyDetails"></div>
+                    
+                    <!-- Deletion Options -->
+                    <div id="deletionOptions" style="display: none;" class="deletion-confirmation-section">
+                        <h4>Confirm Deletion</h4>
+                        <p>Type <strong>"DELETE"</strong> to confirm this action:</p>
+                        <input type="text" id="confirmationText" placeholder="Type DELETE to confirm" class="form-control">
+                        <div class="button-group">
+                            <button id="confirmDeleteBtn" class="btn btn-danger" disabled onclick="deleteArtist()">
+                                Permanently Delete Artist
+                            </button>
+                            <button class="btn btn-secondary" onclick="cancelDeletion()">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -3537,6 +3561,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     setupEventListeners();
+    setupDeletionListeners();
 });
 
 function setupEventListeners() {
@@ -8141,12 +8166,43 @@ function confirmDeleteArtist() {
         return;
     }
     
-    const artistName = currentArtistData.name;
-    const confirmed = confirm(`Are you sure you want to delete "${artistName}"?\n\nThis will permanently remove:\n• The artist record\n• All associated videos\n• All download history\n• Thumbnail images\n\nThis action cannot be undone.`);
+    // Show analysis loading
+    const analysisDiv = document.getElementById('analysisResults');
+    const summaryDiv = document.getElementById('dependencySummary');
+    const detailsDiv = document.getElementById('dependencyDetails');
     
-    if (confirmed) {
-        deleteArtist();
-    }
+    summaryDiv.innerHTML = '<div class="loading">Analyzing dependencies...</div>';
+    detailsDiv.innerHTML = '';
+    analysisDiv.style.display = 'block';
+    
+    // For now, show a basic confirmation since API endpoint doesn't exist yet
+    setTimeout(() => {
+        summaryDiv.innerHTML = `
+            <div class="dependency-summary-grid">
+                <div class="dependency-stat">
+                    <span class="stat-number">⚠️</span>
+                    <span class="stat-label">Deletion Impact</span>
+                </div>
+                <div class="dependency-stat">
+                    <span class="stat-number">📁</span>
+                    <span class="stat-label">All Artist Data</span>
+                </div>
+            </div>
+        `;
+        detailsDiv.innerHTML = `
+            <div class="breakdown-section">
+                <h5>⚠️ This will permanently delete:</h5>
+                <ul>
+                    <li>Artist record and metadata</li>
+                    <li>All associated videos</li>
+                    <li>Download history</li>
+                    <li>Thumbnail images</li>
+                </ul>
+                <p><strong>This action cannot be undone.</strong></p>
+            </div>
+        `;
+        document.getElementById('deletionOptions').style.display = 'block';
+    }, 500);
 }
 
 function renderDependencyAnalysis(analysis) {
@@ -8246,10 +8302,11 @@ function setupDeletionListeners() {
     const confirmationInput = document.getElementById('confirmationText');
     const confirmBtn = document.getElementById('confirmDeleteBtn');
     
-    confirmationInput.addEventListener('input', function() {
-        const artistName = (currentArtistData && currentArtistData.name) || '';
-        confirmBtn.disabled = this.value.trim() !== artistName;
-    });
+    if (confirmationInput && confirmBtn) {
+        confirmationInput.addEventListener('input', function() {
+            confirmBtn.disabled = this.value.trim().toUpperCase() !== 'DELETE';
+        });
+    }
 }
 
 function updateFileOptions(deletionMethod) {

@@ -36,6 +36,9 @@ class YtDlpService:
         self.download_history = []
         self._next_id = 1
         self.custom_cookie_file = None
+        
+        # Auto-load existing cookie file at startup
+        self._load_existing_cookie_file()
 
     def _get_next_id(self) -> int:
         """Get next unique download ID"""
@@ -340,14 +343,26 @@ class YtDlpService:
                     "--ignore-errors",  # Continue on errors
                     "--no-check-certificate",  # Skip SSL certificate verification if needed
                 ]
+                
+                # Force overwrite for quality upgrades to ensure higher quality downloads
+                if "(Quality Upgrade)" in download_entry.get("title", ""):
+                    cmd.extend(["--force-overwrites"])
+                    # Also ensure no caching issues by using --no-cache-dir
+                    cmd.extend(["--no-cache-dir"])
+                    logger.info(f"Download {download_id}: Force overwrite and no cache enabled for quality upgrade")
 
-                # Add SABR workarounds if enabled in settings
+                # Add YouTube extractor args to handle PO Token and SABR issues
                 enable_sabr_workarounds = settings.get("enable_sabr_workarounds", True)
                 if enable_sabr_workarounds:
+                    youtube_extractor_args = [
+                        "youtube:player_client=web,mweb",  # Avoid android client that requires PO Token
+                        "youtube:formats=missing_pot",  # Enable formats that might be missing PO Token
+                        "youtube:skip=hls,dash",  # Skip problematic streaming formats
+                    ]
                     cmd.extend([
-                        "--extractor-args", "youtube:player_client=web,mweb,android,ios",
+                        "--extractor-args", ";".join(youtube_extractor_args),
                     ])
-                    logger.debug(f"Download {download_id}: SABR workarounds enabled")
+                    logger.debug(f"Download {download_id}: YouTube extractor args enabled: {youtube_extractor_args}")
 
                 # Add throttling if enabled in settings  
                 enable_throttled_downloads = settings.get("enable_throttled_downloads", True)
@@ -387,6 +402,12 @@ class YtDlpService:
                 cmd.append(download_entry["url"])
 
                 try:
+                    # Set up environment with explicit temp directory
+                    env = os.environ.copy()
+                    env['TMPDIR'] = '/tmp'
+                    env['TEMP'] = '/tmp'
+                    env['TMP'] = '/tmp'
+                    
                     # Execute yt-dlp
                     process = subprocess.Popen(
                         cmd,
@@ -394,6 +415,7 @@ class YtDlpService:
                         stderr=subprocess.STDOUT,
                         text=True,
                         universal_newlines=True,
+                        env=env,
                     )
 
                     # Monitor progress
@@ -1013,6 +1035,27 @@ class YtDlpService:
                 return {"cookies_available": False, "error": str(e)}
         else:
             return {"cookies_available": False}
+
+    def _load_existing_cookie_file(self):
+        """Auto-load existing cookie file at startup if available"""
+        import os
+        
+        # Check standard cookie locations
+        cookie_paths = [
+            "data/cookies/youtube_cookies.txt",
+            "cookies.txt", 
+            "youtube_cookies.txt"
+        ]
+        
+        for path in cookie_paths:
+            full_path = os.path.join(os.getcwd(), path)
+            if os.path.exists(full_path) and os.path.getsize(full_path) > 0:
+                logger.info(f"Auto-loading existing cookie file: {full_path}")
+                self.custom_cookie_file = full_path
+                break
+        
+        if not self.custom_cookie_file:
+            logger.debug("No existing cookie file found to auto-load")
 
     def health_check(self) -> Dict:
         """Check if yt-dlp is available and working"""

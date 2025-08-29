@@ -927,6 +927,10 @@ function renderVideoDetails(video) {
             ${video.status !== 'DOWNLOADED' ? `<button onclick="downloadVideo()" class="btn btn-primary">Download</button>` : ''}
             ${video.local_path ? `<button onclick="playLocalVideo()" class="btn btn-secondary">Play Local</button>` : ''}
             ${video.video_url ? `<button onclick="playExternalVideo()" class="btn btn-secondary">Play on YouTube</button>` : ''}
+            <button id="upgradeQualityBtn" onclick="checkQualityUpgrade()" class="btn btn-warning" style="display: none;">
+                <iconify-icon icon="material-symbols:high-quality" style="margin-right: 5px;"></iconify-icon>
+                Upgrade Quality
+            </button>
             <button onclick="editVideo()" class="btn btn-info">Edit Details</button>
             <button onclick="refreshMetadata()" class="btn btn-info">Refresh Metadata</button>
             ${video.local_path ? `<button onclick="extractFFmpegMetadata()" class="btn btn-secondary">Extract FFmpeg Metadata</button>` : ''}
@@ -935,6 +939,9 @@ function renderVideoDetails(video) {
         </div>
     `;
     document.getElementById('videoActionsSection').innerHTML = actionsHtml;
+    
+    // Check if quality upgrade is available for this video
+    checkVideoUpgradeAvailability(video);
     
     // Render stats
     const statsHtml = `
@@ -1522,6 +1529,122 @@ function loadAllSubtitleTracks() {
     }, 100);
 }
 
+// Quality Upgrade Functions
+function checkVideoUpgradeAvailability(video) {
+    // Only check for downloaded videos with video URLs
+    if (!video || video.status !== 'DOWNLOADED' || !video.video_url) {
+        return;
+    }
+    
+    // Make API call to check if video is upgradeable
+    fetch(`/api/video-quality/analyze/${video.id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.analysis) {
+                const analysis = data.analysis;
+                const upgradeBtn = document.getElementById('upgradeQualityBtn');
+                
+                if (analysis.upgrade_recommended) {
+                    // Show upgrade button with current quality info
+                    upgradeBtn.style.display = 'inline-block';
+                    
+                    // Update button text with quality info
+                    const currentQuality = analysis.current_quality || 'Unknown';
+                    const currentHeight = analysis.current_height;
+                    const qualityText = currentHeight ? `${currentHeight}p` : currentQuality;
+                    
+                    upgradeBtn.innerHTML = `
+                        <iconify-icon icon="material-symbols:high-quality" style="margin-right: 5px;"></iconify-icon>
+                        Upgrade Quality (from ${qualityText})
+                    `;
+                    
+                    // Store analysis data for later use
+                    upgradeBtn.dataset.videoId = video.id;
+                    upgradeBtn.dataset.currentQuality = qualityText;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error checking upgrade availability:', error);
+        });
+}
+
+function checkQualityUpgrade() {
+    const upgradeBtn = document.getElementById('upgradeQualityBtn');
+    const videoId = upgradeBtn.dataset.videoId;
+    const currentQuality = upgradeBtn.dataset.currentQuality;
+    
+    if (!videoId) {
+        showError('Video ID not found');
+        return;
+    }
+    
+    // Show confirmation dialog
+    const confirmed = confirm(
+        `Upgrade video quality from ${currentQuality}?\n\n` +
+        'This will:\n' +
+        '• Download the highest available quality\n' +
+        '• Replace the current video file\n' +
+        '• Automatically clean up the original file\n\n' +
+        'This process may take a few minutes depending on file size.'
+    );
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    // Update button to show loading state
+    const originalText = upgradeBtn.innerHTML;
+    upgradeBtn.innerHTML = `
+        <iconify-icon icon="material-symbols:downloading" style="margin-right: 5px;"></iconify-icon>
+        Upgrading Quality...
+    `;
+    upgradeBtn.disabled = true;
+    
+    // Trigger quality upgrade
+    fetch(`/api/video-quality/upgrade/${videoId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: null // Optional user ID for preferences
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showSuccess(
+                `Quality upgrade started successfully!\n` +
+                `Upgrading from ${result.current_quality} to ${result.target_quality}`
+            );
+            
+            // Hide upgrade button since upgrade is in progress
+            upgradeBtn.style.display = 'none';
+            
+            // Refresh video details after a short delay to show new status
+            setTimeout(() => {
+                loadVideoDetails();
+            }, 2000);
+            
+        } else {
+            showError('Upgrade failed: ' + (result.error || 'Unknown error'));
+            
+            // Restore button
+            upgradeBtn.innerHTML = originalText;
+            upgradeBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error starting quality upgrade:', error);
+        showError('Error starting quality upgrade: ' + error.message);
+        
+        // Restore button
+        upgradeBtn.innerHTML = originalText;
+        upgradeBtn.disabled = false;
+    });
+}
+
 </script>
 
 <style>
@@ -1658,6 +1781,32 @@ function loadAllSubtitleTracks() {
 
 #subtitleStatus {
     font-size: 0.9em;
+}
+
+/* Quality Upgrade Button Styles */
+#upgradeQualityBtn {
+    background: linear-gradient(45deg, #ff9800, #f57c00);
+    border: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#upgradeQualityBtn:hover {
+    background: linear-gradient(45deg, #f57c00, #e65100);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+#upgradeQualityBtn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#upgradeQualityBtn iconify-icon {
+    vertical-align: middle;
 }
 </style>
 

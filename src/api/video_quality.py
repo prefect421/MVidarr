@@ -129,7 +129,14 @@ def find_upgradeable_videos():
 def upgrade_video_quality(video_id):
     """Upgrade a video to higher quality"""
     try:
-        data = request.get_json() or {}
+        # Handle both JSON and empty requests
+        try:
+            data = request.get_json() or {}
+        except Exception as json_error:
+            logger.warning(f"JSON parsing error for video upgrade {video_id}: {json_error}")
+            # Fallback to empty data if JSON parsing fails
+            data = {}
+        
         user_id = data.get("user_id")
 
         result = video_quality_service.upgrade_video_quality(video_id, user_id)
@@ -139,6 +146,8 @@ def upgrade_video_quality(video_id):
 
     except Exception as e:
         logger.error(f"Error upgrading video {video_id}: {e}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
