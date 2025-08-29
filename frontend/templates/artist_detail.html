@@ -4,7 +4,7 @@
 
 {% block head %}
 <style>
-/* CACHE BUST: 2025-08-29-16-45 - Fixed mobile flex expansion preventing compact buttons */
+/* CACHE BUST: 2025-08-29-17-00 - Higher specificity selectors to override buttons.css */
 
 /* Library Statistics card specific styling - match artist navigation */
 .library-stats-card {
@@ -2222,17 +2222,19 @@ div.metadata-section:hover,
     flex-wrap: wrap !important;
 }
 
-.artist-header-actions .btn {
+div.artist-header-actions button.btn {
     font-size: 0.8rem !important;
     padding: 0.4rem 0.6rem !important;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
     gap: 0.3rem !important;
     flex: 0 0 auto !important;
+    min-width: auto !important;
+    width: auto !important;
 }
 
-.artist-header-actions .btn iconify-icon {
+div.artist-header-actions button.btn iconify-icon {
     font-size: 0.9rem !important;
 }
 
@@ -2254,12 +2256,14 @@ div.metadata-section:hover,
         justify-content: center;
     }
     
-    .artist-header-actions .btn {
+    div.artist-header-actions button.btn {
         flex: 0 0 auto !important;
-        justify-content: center;
+        justify-content: center !important;
         font-size: 0.8rem !important;
         padding: 0.4rem 0.6rem !important;
         gap: 0.3rem !important;
+        min-width: auto !important;
+        width: auto !important;
     }
 }
 
@@ -3680,16 +3684,16 @@ function renderArtistHeader(artist) {
                     ${artist.auto_download ? '<span class="header-stat auto-download">Auto-Download</span>' : ''}
                 </div>
                 <div class="artist-header-actions">
-                    <button type="button" onclick="enrichMetadataAllSources(event)" class="btn btn-success">
-                        <iconify-icon icon="tabler:sparkles"></iconify-icon>
+                    <button type="button" onclick="enrichMetadataAllSources(event)" class="btn btn-success" style="font-size: 0.8rem; padding: 0.4rem 0.6rem; flex: 0 0 auto; gap: 0.3rem; min-width: auto; width: auto;">
+                        <iconify-icon icon="tabler:sparkles" style="font-size: 0.9rem;"></iconify-icon>
                         Enrich from All Services
                     </button>
-                    <button type="button" onclick="autoMatchServices()" class="btn btn-primary">
-                        <iconify-icon icon="tabler:wand"></iconify-icon>
+                    <button type="button" onclick="autoMatchServices()" class="btn btn-primary" style="font-size: 0.8rem; padding: 0.4rem 0.6rem; flex: 0 0 auto; gap: 0.3rem; min-width: auto; width: auto;">
+                        <iconify-icon icon="tabler:wand" style="font-size: 0.9rem;"></iconify-icon>
                         Auto-Match Services
                     </button>
-                    <button type="button" onclick="viewEnrichmentHistory()" class="btn btn-secondary">
-                        <iconify-icon icon="tabler:history"></iconify-icon>
+                    <button type="button" onclick="viewEnrichmentHistory()" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.6rem; flex: 0 0 auto; gap: 0.3rem; min-width: auto; width: auto;">
+                        <iconify-icon icon="tabler:history" style="font-size: 0.9rem;"></iconify-icon>
                         Enrichment History
                     </button>
                 </div>
