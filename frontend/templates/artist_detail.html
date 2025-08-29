@@ -2541,12 +2541,6 @@ div.metadata-section:hover,
                         <div class="services-list" id="externalServicesContent">
                             <div class="loading-placeholder">Loading external services...</div>
                         </div>
-                        <div class="card-bottom-actions" style="margin-top: 15px; text-align: center;">
-                            <button onclick="refreshAllMetadataProviders()" class="btn btn-sm btn-secondary" title="Refresh all metadata from external sources">
-                                <iconify-icon icon="tabler:refresh"></iconify-icon>
-                                Refresh All
-                            </button>
-                        </div>
                     </div>
                 </div>
 
@@ -2554,9 +2548,6 @@ div.metadata-section:hover,
                 <div class="metadata-section song-recommendations">
                     <div class="section-header">
                         <h3><iconify-icon icon="mdi:music-note"></iconify-icon> Song Recommendations</h3>
-                        <div class="header-actions">
-                            <small class="text-muted">Updated with metadata enrichment</small>
-                        </div>
                     </div>
                     <div class="metadata-content">
                         <div id="songRecommendationsContent">
@@ -2572,9 +2563,6 @@ div.metadata-section:hover,
                 <div class="metadata-section recommended-artists">
                     <div class="section-header">
                         <h3><iconify-icon icon="mdi:account-group"></iconify-icon> Recommended Artists</h3>
-                        <div class="header-actions">
-                            <small class="text-muted">Updated with metadata enrichment</small>
-                        </div>
                     </div>
                     <div class="metadata-content">
                         <div id="recommendedArtistsContent">
@@ -4173,43 +4161,50 @@ function playPreview(previewUrl) {
 function renderBasicInfo(artist, metadata) {
     let basicInfoHtml = '';
     
-    // Core information with enhanced display
-    basicInfoHtml += createEnhancedMetadataItem('Added', new Date(artist.created_at).toLocaleDateString(), 'calendar', artist.source || 'Manual');
-    basicInfoHtml += createEnhancedMetadataItem('Updated', new Date(artist.updated_at).toLocaleDateString(), 'clock', 'System');
+    // Core information - clean display without source attribution
+    basicInfoHtml += createCleanMetadataItem('Added', new Date(artist.created_at).toLocaleDateString(), 'calendar');
+    basicInfoHtml += createCleanMetadataItem('Updated', new Date(artist.updated_at).toLocaleDateString(), 'clock');
     
     if (artist.source) {
         const sourceIcon = getSourceIcon(artist.source);
-        basicInfoHtml += createEnhancedMetadataItem('Source', artist.source, sourceIcon, 'Discovery');
+        basicInfoHtml += createCleanMetadataItem('Source', artist.source, sourceIcon);
     }
     
     if (artist.last_discovery) {
-        basicInfoHtml += createEnhancedMetadataItem('Last Discovery', new Date(artist.last_discovery).toLocaleDateString(), 'search', 'Auto-Discovery');
+        basicInfoHtml += createCleanMetadataItem('Last Discovery', new Date(artist.last_discovery).toLocaleDateString(), 'search');
     }
     
-    // Formation/active years with visual timeline
+    // Formation/active years - clean display
     if (artist.formed_year || metadata.formed_year) {
         const formedYear = artist.formed_year || metadata.formed_year;
         let yearText = formedYear.toString();
-        let status = 'Active';
         if (artist.disbanded_year || metadata.disbanded_year) {
             const disbandedYear = artist.disbanded_year || metadata.disbanded_year;
             yearText += ` - ${disbandedYear}`;
-            status = 'Disbanded';
         }
-        basicInfoHtml += createEnhancedMetadataItem('Active Years', yearText, 'timeline', status);
+        basicInfoHtml += createCleanMetadataItem('Active Years', yearText, 'timeline');
     }
     
     if (artist.origin_country || metadata.origin_country) {
         const origin = artist.origin_country || metadata.origin_country;
-        basicInfoHtml += createEnhancedMetadataItem('Origin', origin, 'location', getRegionFromCountry(origin));
+        basicInfoHtml += createCleanMetadataItem('Origin', origin, 'location');
     }
     
-    // Members with count badge
+    // Members - clean display with human readable text
     if (artist.members || metadata.members) {
         const members = artist.members || metadata.members;
-        const memberText = Array.isArray(members) ? members.join(', ') : members;
-        const memberCount = Array.isArray(members) ? members.length : (members.split(',').length || 1);
-        basicInfoHtml += createEnhancedMetadataItem('Members', memberText, 'users', `${memberCount} members`, true);
+        let memberText = Array.isArray(members) ? members.join(', ') : members;
+        
+        // Clean up member text - remove any leading quality indicators
+        const leadingLinesToRemove = [
+            /^Good\s*/i, /^Excellent\s*/i, /^Fair\s*/i, /^Poor\s*/i, /^None\s*/i, /^User\s*/i
+        ];
+        leadingLinesToRemove.forEach(pattern => {
+            memberText = memberText.replace(pattern, '');
+        });
+        memberText = memberText.trim();
+        
+        basicInfoHtml += createCleanMetadataItem('Members', memberText, 'users', true);
     }
     
     document.getElementById('basicInfoContent').innerHTML = basicInfoHtml;
@@ -4221,55 +4216,58 @@ function renderMusicalInfo(artist, metadata) {
     
     // Debug logging for musical info
     
-    // Genres with enhanced styling and source attribution
-    // Handle genres as either string or array
+    // Genres with enhanced styling - create human readable comma-separated list
     const artistGenres = artist.genres ? (Array.isArray(artist.genres) ? artist.genres : artist.genres.split(', ')) : null;
     const metadataGenres = metadata.genres ? (Array.isArray(metadata.genres) ? metadata.genres : metadata.genres.split(', ')) : null;
     
     if ((artistGenres && artistGenres.length > 0) || (metadataGenres && metadataGenres.length > 0)) {
         const genres = artistGenres || metadataGenres;
-        const genreSource = artist.genres ? 'User' : getMetadataSource(metadata, 'genres');
-        musicalInfoHtml += createEnhancedMetadataItem('Genres', createEnhancedTagList(genres, 'genre'), 'music', genreSource);
+        // Create human readable comma-separated list instead of individual tags
+        const genreText = genres.join(', ');
+        musicalInfoHtml += createCleanMetadataItem('Genres', genreText, 'music');
     }
     
-    // Labels with record label styling
+    // Labels with record label styling - create human readable comma-separated list
     if (artist.labels || metadata.labels) {
         const labels = artist.labels || metadata.labels;
         const labelArray = Array.isArray(labels) ? labels : [labels];
-        const labelSource = artist.labels ? 'User' : getMetadataSource(metadata, 'labels');
-        musicalInfoHtml += createEnhancedMetadataItem('Labels', createEnhancedTagList(labelArray, 'label'), 'building', labelSource);
+        // Create human readable comma-separated list instead of individual tags
+        const labelText = labelArray.join(', ');
+        musicalInfoHtml += createCleanMetadataItem('Labels', labelText, 'building');
     }
     
-    // AllMusic-specific fields with enhanced display
+    // AllMusic-specific fields - create human readable comma-separated lists
     if (metadata.moods && metadata.moods.length > 0) {
-        musicalInfoHtml += createEnhancedMetadataItem('Moods', createEnhancedTagList(metadata.moods, 'mood'), 'heart', 'AllMusic');
+        const moodsText = metadata.moods.join(', ');
+        musicalInfoHtml += createCleanMetadataItem('Moods', moodsText, 'heart');
     }
     
     if (metadata.themes && metadata.themes.length > 0) {
-        musicalInfoHtml += createEnhancedMetadataItem('Themes', createEnhancedTagList(metadata.themes, 'theme'), 'palette', 'AllMusic');
+        const themesText = metadata.themes.join(', ');
+        musicalInfoHtml += createCleanMetadataItem('Themes', themesText, 'palette');
     }
     
-    // Spotify popularity if available
+    // Spotify popularity if available - remove source attribution
     if (metadata.spotify_popularity || metadata.popularity) {
         const popularityValue = metadata.spotify_popularity || metadata.popularity;
         const popularityBar = createPopularityBar(popularityValue);
-        musicalInfoHtml += createEnhancedMetadataItem('Popularity', popularityBar, 'trending-up', 'Spotify');
+        musicalInfoHtml += createCleanMetadataItem('Popularity', popularityBar, 'trending-up');
     }
     
-    // Last.fm statistics
+    // Last.fm statistics - remove source attribution
     if (metadata.playcount) {
         const formattedPlaycount = (metadata.playcount / 1000000).toFixed(1) + 'M plays';
-        musicalInfoHtml += createEnhancedMetadataItem('Play Count', formattedPlaycount, 'play', 'Last.fm');
+        musicalInfoHtml += createCleanMetadataItem('Play Count', formattedPlaycount, 'play');
     }
     
     if (metadata.listeners) {
         const formattedListeners = (metadata.listeners / 1000).toFixed(0) + 'K listeners';
-        musicalInfoHtml += createEnhancedMetadataItem('Listeners', formattedListeners, 'users', 'Last.fm');
+        musicalInfoHtml += createCleanMetadataItem('Listeners', formattedListeners, 'users');
     }
     
     if (metadata.followers) {
         const formattedFollowers = (metadata.followers / 1000).toFixed(0) + 'K followers';
-        musicalInfoHtml += createEnhancedMetadataItem('Followers', formattedFollowers, 'user-plus', 'Spotify');
+        musicalInfoHtml += createCleanMetadataItem('Followers', formattedFollowers, 'user-plus');
     }
     
     if (metadata.similar_artists && metadata.similar_artists.length > 0) {
@@ -4371,9 +4369,6 @@ function renderExternalServices(artist, metadata) {
             <span class="service-id" style="margin-left: 5px; color: ${service.connected ? 'var(--success-color, #4CAF50)' : 'var(--text-muted, #888)'};">
                 ${service.connected ? (service.serviceId || 'Connected') : 'Not Linked'}
             </span>
-            <button class="service-sync-btn-inline" onclick="${service.syncFunction}()" ${service.connected ? '' : 'disabled'} title="Sync metadata from ${service.name}" style="margin-left: 8px; background: none; border: none; color: var(--text-accent, #00d4ff); cursor: pointer; padding: 2px;">
-                <iconify-icon icon="tabler:refresh"></iconify-icon>
-            </button>
             <br>
         </div>
     `).join('');
@@ -4447,19 +4442,39 @@ function renderBiography(artist, metadata) {
     }
     
     if (bio) {
-        const isLong = bio.length > 500;
-        const shortBio = isLong ? bio.substring(0, 500) + '...' : bio;
+        // Clean up biography text - remove leading quality indicators or source prefixes
+        let cleanBio = bio;
+        
+        // Remove common leading lines that might appear from data sources
+        const leadingLinesToRemove = [
+            /^Good\s*/i,           // Remove "Good" at start
+            /^Excellent\s*/i,     // Remove "Excellent" at start  
+            /^Fair\s*/i,          // Remove "Fair" at start
+            /^Poor\s*/i,          // Remove "Poor" at start
+            /^None\s*/i,          // Remove "None" at start
+            /^User\s*/i           // Remove "User" at start
+        ];
+        
+        leadingLinesToRemove.forEach(pattern => {
+            cleanBio = cleanBio.replace(pattern, '');
+        });
+        
+        // Trim any extra whitespace
+        cleanBio = cleanBio.trim();
+        
+        const isLong = cleanBio.length > 500;
+        const shortBio = isLong ? cleanBio.substring(0, 500) + '...' : cleanBio;
         
         const biographyHtml = `
             <div class="biography-text" id="biographyText">
-                ${isLong ? shortBio : bio}
+                ${isLong ? shortBio : cleanBio}
             </div>
             ${isLong ? `
                 <button class="biography-toggle" onclick="toggleBiography()">
                     <span id="biographyToggleText">Read More</span>
                 </button>
                 <div class="biography-full" id="biographyFull" style="display: none;">
-                    ${bio}
+                    ${cleanBio}
                 </div>
             ` : ''}
         `;
@@ -4956,6 +4971,21 @@ function createEnhancedTagList(items, tagType = 'default') {
     return `<div class="metadata-tags enhanced">${items.map(item => 
         `<span class="metadata-tag ${typeClass}" title="${item}">${item}</span>`
     ).join('')}</div>`;
+}
+
+function createCleanMetadataItem(label, value, icon = 'info', fullWidth = false) {
+    if (!value) return '';
+    return `
+        <div class="metadata-item enhanced ${fullWidth ? 'full-width' : ''}">
+            <div class="metadata-header">
+                <span class="metadata-label">
+                    <iconify-icon icon="tabler:${icon}"></iconify-icon>
+                    ${label}:
+                </span>
+            </div>
+            <div class="metadata-value">${value}</div>
+        </div>
+    `;
 }
 
 function getSourceIcon(source) {
