@@ -6,11 +6,12 @@
 <style>
 /* CACHE BUST: 2025-08-25-15-10 - Force browser to reload styles */
 
-/* Library Statistics card specific styling */
+/* Library Statistics card specific styling - match artist navigation */
 .library-stats-card {
-    padding: 20px 20px 20px 20px !important;
+    padding: 20px !important;
     border-radius: 12px !important;
-    border: 2px solid var(--border-primary, #444) !important;
+    border: 2px solid var(--accent-primary, #00bcd4) !important;
+    margin-bottom: 1.5rem !important;
 }
 
 .library-stats-card .stats-grid {
@@ -2509,7 +2510,7 @@ div.metadata-section:hover,
             <!-- Main content grid -->
             <div class="metadata-grid" style="display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 1.5rem !important;">
                 <!-- Row 1: Library Statistics (Full Width) -->
-                <div class="metadata-section statistics full-width library-stats-card" style="grid-column: 1 / -1 !important; width: 100% !important; border: 2px solid var(--border-primary, #444) !important;">
+                <div class="metadata-section statistics full-width library-stats-card" style="grid-column: 1 / -1 !important; width: 100% !important;">
                     <div class="section-header">
                         <h3><iconify-icon icon="tabler:chart-bar"></iconify-icon> Library Statistics</h3>
                     </div>
