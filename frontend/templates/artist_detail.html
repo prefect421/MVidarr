@@ -4195,14 +4195,8 @@ function renderBasicInfo(artist, metadata) {
         const members = artist.members || metadata.members;
         let memberText = Array.isArray(members) ? members.join(', ') : members;
         
-        // Clean up member text - remove any leading quality indicators
-        const leadingLinesToRemove = [
-            /^Good\s*/i, /^Excellent\s*/i, /^Fair\s*/i, /^Poor\s*/i, /^None\s*/i, /^User\s*/i
-        ];
-        leadingLinesToRemove.forEach(pattern => {
-            memberText = memberText.replace(pattern, '');
-        });
-        memberText = memberText.trim();
+        // Enhanced cleaning - same as biography cleaning
+        memberText = cleanMetadataText(memberText);
         
         basicInfoHtml += createCleanMetadataItem('Members', memberText, 'users', true);
     }
@@ -4222,8 +4216,9 @@ function renderMusicalInfo(artist, metadata) {
     
     if ((artistGenres && artistGenres.length > 0) || (metadataGenres && metadataGenres.length > 0)) {
         const genres = artistGenres || metadataGenres;
-        // Create human readable comma-separated list instead of individual tags
-        const genreText = genres.join(', ');
+        // Create human readable comma-separated list and clean it
+        let genreText = genres.join(', ');
+        genreText = cleanMetadataText(genreText);
         musicalInfoHtml += createCleanMetadataItem('Genres', genreText, 'music');
     }
     
@@ -4231,19 +4226,22 @@ function renderMusicalInfo(artist, metadata) {
     if (artist.labels || metadata.labels) {
         const labels = artist.labels || metadata.labels;
         const labelArray = Array.isArray(labels) ? labels : [labels];
-        // Create human readable comma-separated list instead of individual tags
-        const labelText = labelArray.join(', ');
+        // Create human readable comma-separated list and clean it
+        let labelText = labelArray.join(', ');
+        labelText = cleanMetadataText(labelText);
         musicalInfoHtml += createCleanMetadataItem('Labels', labelText, 'building');
     }
     
     // AllMusic-specific fields - create human readable comma-separated lists
     if (metadata.moods && metadata.moods.length > 0) {
-        const moodsText = metadata.moods.join(', ');
+        let moodsText = metadata.moods.join(', ');
+        moodsText = cleanMetadataText(moodsText);
         musicalInfoHtml += createCleanMetadataItem('Moods', moodsText, 'heart');
     }
     
     if (metadata.themes && metadata.themes.length > 0) {
-        const themesText = metadata.themes.join(', ');
+        let themesText = metadata.themes.join(', ');
+        themesText = cleanMetadataText(themesText);
         musicalInfoHtml += createCleanMetadataItem('Themes', themesText, 'palette');
     }
     
@@ -4442,43 +4440,8 @@ function renderBiography(artist, metadata) {
     }
     
     if (bio) {
-        // Debug logging to understand the exact format
-        console.log('Original bio for cleaning:', JSON.stringify(bio));
-        
-        // Clean up biography text - remove leading quality indicators or source prefixes
-        let cleanBio = bio;
-        
-        // Remove common leading lines that might appear from data sources
-        // Handle both inline and line-based patterns
-        const leadingLinesToRemove = [
-            /^Good\s*\n*/i,           // Remove "Good" at start with optional newline
-            /^Good\s+/i,              // Remove "Good" followed by space
-            /^Excellent\s*\n*/i,      // Remove "Excellent" at start with optional newline
-            /^Excellent\s+/i,         // Remove "Excellent" followed by space
-            /^Fair\s*\n*/i,           // Remove "Fair" at start with optional newline
-            /^Fair\s+/i,              // Remove "Fair" followed by space
-            /^Poor\s*\n*/i,           // Remove "Poor" at start with optional newline
-            /^Poor\s+/i,              // Remove "Poor" followed by space
-            /^None\s*\n*/i,           // Remove "None" at start with optional newline
-            /^None\s+/i,              // Remove "None" followed by space
-            /^User\s*\n*/i,           // Remove "User" at start with optional newline
-            /^User\s+/i,              // Remove "User" followed by space
-            /^\s*Good\s*$/m,          // Remove standalone "Good" on its own line
-            /^\s*Excellent\s*$/m,     // Remove standalone "Excellent" on its own line
-            /^\s*Fair\s*$/m,          // Remove standalone "Fair" on its own line
-            /^\s*Poor\s*$/m,          // Remove standalone "Poor" on its own line
-            /^\s*User\s*$/m           // Remove standalone "User" on its own line
-        ];
-        
-        leadingLinesToRemove.forEach(pattern => {
-            cleanBio = cleanBio.replace(pattern, '');
-        });
-        
-        // Remove any resulting empty lines at the start and trim whitespace
-        cleanBio = cleanBio.replace(/^\s*\n+/g, '').trim();
-        
-        // Debug logging to see the result
-        console.log('Cleaned bio:', JSON.stringify(cleanBio));
+        // Use the same cleaning function as other metadata sections
+        const cleanBio = cleanMetadataText(bio);
         
         const isLong = cleanBio.length > 500;
         const shortBio = isLong ? cleanBio.substring(0, 500) + '...' : cleanBio;
@@ -5004,6 +4967,65 @@ function createCleanMetadataItem(label, value, icon = 'info', fullWidth = false)
             <div class="metadata-value">${value}</div>
         </div>
     `;
+}
+
+function cleanMetadataText(text) {
+    if (!text) return text;
+    
+    // Debug logging
+    console.log('Cleaning metadata text:', JSON.stringify(text));
+    
+    let cleanText = text;
+    
+    // Enhanced patterns to remove quality indicators and source prefixes
+    const patternsToRemove = [
+        /^Good\s*\n*/i,           // Remove "Good" at start with optional newline
+        /^Good\s+/i,              // Remove "Good" followed by space
+        /^Excellent\s*\n*/i,      // Remove "Excellent" at start with optional newline
+        /^Excellent\s+/i,         // Remove "Excellent" followed by space
+        /^Fair\s*\n*/i,           // Remove "Fair" at start with optional newline
+        /^Fair\s+/i,              // Remove "Fair" followed by space
+        /^Poor\s*\n*/i,           // Remove "Poor" at start with optional newline
+        /^Poor\s+/i,              // Remove "Poor" followed by space
+        /^None\s*\n*/i,           // Remove "None" at start with optional newline
+        /^None\s+/i,              // Remove "None" followed by space
+        /^User\s*\n*/i,           // Remove "User" at start with optional newline
+        /^User\s+/i,              // Remove "User" followed by space
+        /^\s*Good\s*$/m,          // Remove standalone "Good" on its own line
+        /^\s*Excellent\s*$/m,     // Remove standalone "Excellent" on its own line
+        /^\s*Fair\s*$/m,          // Remove standalone "Fair" on its own line
+        /^\s*Poor\s*$/m,          // Remove standalone "Poor" on its own line
+        /^\s*User\s*$/m,          // Remove standalone "User" on its own line
+        /,\s*Good\s*,/gi,         // Remove "Good" from middle of comma-separated lists
+        /,\s*Excellent\s*,/gi,    // Remove "Excellent" from middle of comma-separated lists
+        /,\s*Fair\s*,/gi,         // Remove "Fair" from middle of comma-separated lists
+        /,\s*Poor\s*,/gi,         // Remove "Poor" from middle of comma-separated lists
+        /,\s*User\s*,/gi,         // Remove "User" from middle of comma-separated lists
+        /,\s*Good\s*$/gi,         // Remove "Good" at end of comma-separated lists
+        /,\s*Excellent\s*$/gi,    // Remove "Excellent" at end of comma-separated lists
+        /,\s*Fair\s*$/gi,         // Remove "Fair" at end of comma-separated lists
+        /,\s*Poor\s*$/gi,         // Remove "Poor" at end of comma-separated lists
+        /,\s*User\s*$/gi,         // Remove "User" at end of comma-separated lists
+        /^Good\s*,\s*/gi,         // Remove "Good" at start of comma-separated lists
+        /^Excellent\s*,\s*/gi,    // Remove "Excellent" at start of comma-separated lists
+        /^Fair\s*,\s*/gi,         // Remove "Fair" at start of comma-separated lists
+        /^Poor\s*,\s*/gi,         // Remove "Poor" at start of comma-separated lists
+        /^User\s*,\s*/gi          // Remove "User" at start of comma-separated lists
+    ];
+    
+    patternsToRemove.forEach(pattern => {
+        cleanText = cleanText.replace(pattern, '');
+    });
+    
+    // Clean up any resulting double commas or spaces
+    cleanText = cleanText.replace(/,\s*,/g, ',').replace(/^\s*,\s*/, '').replace(/,\s*$/, '');
+    
+    // Remove any resulting empty lines at the start and trim whitespace
+    cleanText = cleanText.replace(/^\s*\n+/g, '').trim();
+    
+    console.log('Cleaned metadata text:', JSON.stringify(cleanText));
+    
+    return cleanText;
 }
 
 function getSourceIcon(source) {
