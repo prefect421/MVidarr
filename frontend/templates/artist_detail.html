@@ -4248,27 +4248,27 @@ function renderMusicalInfo(artist, metadata) {
         musicalInfoHtml += createCleanMetadataItem('Themes', themesText, 'palette');
     }
     
-    // Spotify popularity if available - remove source attribution
+    // Spotify popularity if available - with source attribution
     if (metadata.spotify_popularity || metadata.popularity) {
         const popularityValue = metadata.spotify_popularity || metadata.popularity;
         const popularityBar = createPopularityBar(popularityValue);
-        musicalInfoHtml += createCleanMetadataItem('Popularity', popularityBar, 'trending-up');
+        musicalInfoHtml += createMetadataItemWithSource('Popularity', popularityBar, 'Spotify', 'trending-up');
     }
     
-    // Last.fm statistics - remove source attribution
+    // Last.fm statistics - with source attribution
     if (metadata.playcount) {
         const formattedPlaycount = (metadata.playcount / 1000000).toFixed(1) + 'M plays';
-        musicalInfoHtml += createCleanMetadataItem('Play Count', formattedPlaycount, 'play');
+        musicalInfoHtml += createMetadataItemWithSource('Play Count', formattedPlaycount, 'Last.fm', 'play');
     }
     
     if (metadata.listeners) {
         const formattedListeners = (metadata.listeners / 1000).toFixed(0) + 'K listeners';
-        musicalInfoHtml += createCleanMetadataItem('Listeners', formattedListeners, 'users');
+        musicalInfoHtml += createMetadataItemWithSource('Listeners', formattedListeners, 'Last.fm', 'users');
     }
     
     if (metadata.followers) {
         const formattedFollowers = (metadata.followers / 1000).toFixed(0) + 'K followers';
-        musicalInfoHtml += createCleanMetadataItem('Followers', formattedFollowers, 'user-plus');
+        musicalInfoHtml += createMetadataItemWithSource('Followers', formattedFollowers, 'Last.fm', 'user-plus');
     }
     
     if (metadata.similar_artists && metadata.similar_artists.length > 0) {
@@ -4955,6 +4955,22 @@ function createEnhancedTagList(items, tagType = 'default') {
     return `<div class="metadata-tags enhanced">${items.map(item => 
         `<span class="metadata-tag ${typeClass}" title="${item}">${item}</span>`
     ).join('')}</div>`;
+}
+
+function createMetadataItemWithSource(label, value, source, icon = 'info', fullWidth = false) {
+    if (!value) return '';
+    return `
+        <div class="metadata-item enhanced ${fullWidth ? 'full-width' : ''}">
+            <div class="metadata-header">
+                <span class="metadata-label">
+                    <iconify-icon icon="tabler:${icon}"></iconify-icon>
+                    ${label}:
+                </span>
+                <span class="metadata-source">${source}</span>
+            </div>
+            <div class="metadata-value">${value}</div>
+        </div>
+    `;
 }
 
 function createCleanMetadataItem(label, value, icon = 'info', fullWidth = false) {
