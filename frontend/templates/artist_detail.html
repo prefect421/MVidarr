@@ -4110,14 +4110,14 @@ function renderRecommendedArtists(artists) {
     console.log('🎵 renderRecommendedArtists called with:', artists);
     
     if (artists && artists.length > 0) {
-        let html = '<ul class="artist-list">';
+        let html = '<ul class="song-list">';
         artists.forEach(artist => {
             // Handle both string and object formats
             const artistName = typeof artist === 'string' ? artist : (artist.name || artist);
             const searchUrl = `/discover?q=${encodeURIComponent(artistName)}`;
             html += `
-                <li class="artist-item">
-                    <a href="${searchUrl}" class="artist-name" title="Search for ${artistName}">
+                <li class="song-item">
+                    <a href="${searchUrl}" class="song-title" title="Search for ${artistName}">
                         ${artistName}
                     </a>
                 </li>
