@@ -10707,14 +10707,19 @@ function executeMerge(sourceArtistId, targetArtistId) {
 
 <!-- Force layout styles at the very end to override external CSS -->
 <style>
-/* FINAL OVERRIDE - CACHE BUST: 2025-08-29-17-30 */
+/* FINAL OVERRIDE - CACHE BUST: 2025-08-29-17-35 - Remove debug borders, uniform button width, reduce spacing */
+div.artist-header-content {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
 div.artist-header-content div.artist-header-stats {
     display: flex !important;
     align-items: flex-start !important;
     justify-content: space-between !important;
     gap: 1rem !important;
     flex-wrap: nowrap !important;
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0.3rem !important;
 }
 
 div.artist-header-content div.artist-header-stats div.stats-left {
@@ -10729,16 +10734,18 @@ div.artist-header-content div.artist-header-stats div.stats-right {
     display: flex !important;
     align-items: flex-start !important;
     flex: 0 0 auto !important;
-    border: 2px solid red !important;
 }
 
 div.artist-header-content div.artist-header-stats div.stats-right div.action-stack {
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.5rem !important;
+    gap: 0.3rem !important;
     align-items: flex-end !important;
-    min-width: 200px !important;
-    border: 2px solid green !important;
+}
+
+div.artist-header-content div.artist-header-stats div.stats-right div.action-stack button {
+    width: 200px !important;
+    justify-content: center !important;
 }
 </style>
 
