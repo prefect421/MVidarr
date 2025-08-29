@@ -10704,4 +10704,42 @@ function executeMerge(sourceArtistId, targetArtistId) {
         </div>
     </div>
 </div>
+
+<!-- Force layout styles at the very end to override external CSS -->
+<style>
+/* FINAL OVERRIDE - CACHE BUST: 2025-08-29-17-30 */
+div.artist-header-content div.artist-header-stats {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+    flex-wrap: nowrap !important;
+    margin-bottom: 0.5rem !important;
+}
+
+div.artist-header-content div.artist-header-stats div.stats-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    flex-wrap: wrap !important;
+    flex: 1 !important;
+}
+
+div.artist-header-content div.artist-header-stats div.stats-right {
+    display: flex !important;
+    align-items: flex-start !important;
+    flex: 0 0 auto !important;
+    border: 2px solid red !important;
+}
+
+div.artist-header-content div.artist-header-stats div.stats-right div.action-stack {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    align-items: flex-end !important;
+    min-width: 200px !important;
+    border: 2px solid green !important;
+}
+</style>
+
 {% endblock %}
