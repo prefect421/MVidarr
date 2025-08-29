@@ -17,6 +17,51 @@ logger = logging.getLogger(__name__)
 themes_bp = Blueprint("themes", __name__)
 
 
+def extract_built_in_theme_data():
+    """Extract hardcoded built-in theme data for merging with database records"""
+    return {
+        "default": {
+            # Default theme variables
+            "--bg-primary": "#1a1a1a",
+            "--bg-secondary": "#2d2d2d",
+            "--bg-tertiary": "#3a3a3a",
+            "--text-primary": "#ffffff",
+            "--text-secondary": "#cccccc",
+            "--text-accent": "#4a9eff",
+            "--btn-primary-bg": "#4a9eff",
+            "--btn-primary-text": "#ffffff",
+            "--border-primary": "#444444",
+            "--success": "#28a745",
+            "--warning": "#ffc107",
+            "--error": "#dc3545",
+            "--info": "#17a2b8",
+            "--sidebar-bg": "#1a1a1a",
+            "--search-bar-bg": "#333333",
+            "--top-bar-bg": "#1a1a1a",
+        },
+        "cyber": {
+            # Cyber theme variables with updated button color
+            "--bg-primary": "#000000",
+            "--bg-secondary": "#0d1117",
+            "--bg-tertiary": "#161b22",
+            "--text-primary": "#00fff7",
+            "--text-secondary": "#7dd3fc",
+            "--text-accent": "#00fff7",
+            "--btn-primary-bg": "#78f5fc",
+            "--btn-primary-text": "#000000",
+            "--border-primary": "#00fff7",
+            "--success": "#00ff00",
+            "--warning": "#ffff00",
+            "--error": "#ff0000",
+            "--info": "#00ffff",
+            "--sidebar-bg": "#000000",
+            "--search-bar-bg": "#161b22",
+            "--top-bar-bg": "#0d1117",
+        }
+        # Add other themes as needed when they require updates
+    }
+
+
 def simple_auth_required(f):
     """
     Simple authentication decorator compatible with MVidarr's simple auth system
@@ -177,9 +222,26 @@ def get_themes():
                 set()
             )  # Track which built-in themes have been customized
 
+            # Get the latest hardcoded built-in theme definitions
+            hardcoded_themes = extract_built_in_theme_data()
+            
             for theme in themes:
                 try:
                     theme_dict = theme.to_dict()
+                    
+                    # If this is a built-in theme with a database record, merge with latest hardcoded definition
+                    if theme.is_built_in and theme.name in hardcoded_themes:
+                        hardcoded_data = hardcoded_themes[theme.name]
+                        # Update the database theme with any new properties from hardcoded definition
+                        if theme.theme_data:
+                            # Merge hardcoded updates into existing theme data
+                            updated_theme_data = hardcoded_data.copy()
+                            updated_theme_data.update(theme.theme_data)
+                            theme_dict["theme_data"] = updated_theme_data
+                        else:
+                            # Use hardcoded data if no database theme_data exists
+                            theme_dict["theme_data"] = hardcoded_data
+                    
                     custom_themes.append(theme_dict)
                     if theme.is_built_in:
                         custom_theme_names.add(theme.name)
