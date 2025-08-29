@@ -10031,16 +10031,14 @@ async function searchArtistThumbnail() {
             const bestResult = data.results[0];
             console.log(`🔍 Found thumbnail from ${bestResult.source}: ${bestResult.url}`);
             
-            // Upload the thumbnail from URL using the upload endpoint
-            const uploadResponse = await fetch(`/api/artists/${currentArtistId}/thumbnail/upload`, {
-                method: 'POST',
+            // Download and set the thumbnail from URL using the correct PUT endpoint
+            const uploadResponse = await fetch(`/api/artists/${currentArtistId}/thumbnail`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    url: bestResult.url,
-                    source: bestResult.source.toLowerCase(),
-                    upload_type: 'url'
+                    thumbnail_url: bestResult.url
                 }),
                 credentials: 'include'
             });
@@ -10048,15 +10046,15 @@ async function searchArtistThumbnail() {
             if (uploadResponse.ok) {
                 const uploadData = await uploadResponse.json();
                 if (uploadData.success) {
-                    console.log(`✅ Successfully uploaded thumbnail from ${bestResult.source}`);
+                    console.log(`✅ Successfully downloaded and set thumbnail from ${bestResult.source}`);
                     // Update current artist data with new thumbnail
-                    currentArtistData.thumbnail_url = uploadData.thumbnail_url;
+                    currentArtistData.thumbnail_url = uploadData.thumbnail_url || bestResult.url;
                     return true;
                 } else {
-                    throw new Error(uploadData.error || 'Failed to upload thumbnail');
+                    throw new Error(uploadData.error || 'Failed to download thumbnail');
                 }
             } else {
-                throw new Error(`Thumbnail upload failed: ${uploadResponse.status}`);
+                throw new Error(`Thumbnail download failed: ${uploadResponse.status}`);
             }
         } else {
             console.log('🔍 No thumbnails found from priority sources');
