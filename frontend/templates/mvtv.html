@@ -1199,8 +1199,8 @@ class MvTVPlayer {
         
         await this.loadVideo(nextIndex);
         
-        // Auto-play if currently playing
-        if (this.isPlaying) {
+        // Auto-play if currently playing and not in cinematic mode
+        if (this.isPlaying && !isCinematicMode) {
             this.videoPlayer.play();
         }
     }
@@ -1223,8 +1223,8 @@ class MvTVPlayer {
         
         await this.loadVideo(prevIndex);
         
-        // Auto-play if currently playing
-        if (this.isPlaying) {
+        // Auto-play if currently playing and not in cinematic mode
+        if (this.isPlaying && !isCinematicMode) {
             this.videoPlayer.play();
         }
     }
@@ -1258,8 +1258,8 @@ class MvTVPlayer {
             }
             
             await this.loadVideo(0); // Always load index 0 since we removed preceding items
-            // Auto-play if currently playing
-            if (this.isPlaying) {
+            // Auto-play if currently playing and not in cinematic mode
+            if (this.isPlaying && !isCinematicMode) {
                 this.videoPlayer.play();
             }
         }
@@ -1533,9 +1533,9 @@ function exitCinematicMode() {
     const currentTime = cinematicVideoPlayer.currentTime;
     mvtvPlayer.videoPlayer.currentTime = currentTime;
     
-    // Pause cinematic player and resume main player
+    // Pause cinematic player and keep main player paused
     cinematicVideoPlayer.pause();
-    mvtvPlayer.videoPlayer.play();
+    mvtvPlayer.videoPlayer.pause(); // Keep main player paused after exiting cinematic mode
     
     // Hide cinematic mode
     cinematicMode.classList.remove('active');
