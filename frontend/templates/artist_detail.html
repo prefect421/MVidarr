@@ -4442,25 +4442,43 @@ function renderBiography(artist, metadata) {
     }
     
     if (bio) {
+        // Debug logging to understand the exact format
+        console.log('Original bio for cleaning:', JSON.stringify(bio));
+        
         // Clean up biography text - remove leading quality indicators or source prefixes
         let cleanBio = bio;
         
         // Remove common leading lines that might appear from data sources
+        // Handle both inline and line-based patterns
         const leadingLinesToRemove = [
-            /^Good\s*/i,           // Remove "Good" at start
-            /^Excellent\s*/i,     // Remove "Excellent" at start  
-            /^Fair\s*/i,          // Remove "Fair" at start
-            /^Poor\s*/i,          // Remove "Poor" at start
-            /^None\s*/i,          // Remove "None" at start
-            /^User\s*/i           // Remove "User" at start
+            /^Good\s*\n*/i,           // Remove "Good" at start with optional newline
+            /^Good\s+/i,              // Remove "Good" followed by space
+            /^Excellent\s*\n*/i,      // Remove "Excellent" at start with optional newline
+            /^Excellent\s+/i,         // Remove "Excellent" followed by space
+            /^Fair\s*\n*/i,           // Remove "Fair" at start with optional newline
+            /^Fair\s+/i,              // Remove "Fair" followed by space
+            /^Poor\s*\n*/i,           // Remove "Poor" at start with optional newline
+            /^Poor\s+/i,              // Remove "Poor" followed by space
+            /^None\s*\n*/i,           // Remove "None" at start with optional newline
+            /^None\s+/i,              // Remove "None" followed by space
+            /^User\s*\n*/i,           // Remove "User" at start with optional newline
+            /^User\s+/i,              // Remove "User" followed by space
+            /^\s*Good\s*$/m,          // Remove standalone "Good" on its own line
+            /^\s*Excellent\s*$/m,     // Remove standalone "Excellent" on its own line
+            /^\s*Fair\s*$/m,          // Remove standalone "Fair" on its own line
+            /^\s*Poor\s*$/m,          // Remove standalone "Poor" on its own line
+            /^\s*User\s*$/m           // Remove standalone "User" on its own line
         ];
         
         leadingLinesToRemove.forEach(pattern => {
             cleanBio = cleanBio.replace(pattern, '');
         });
         
-        // Trim any extra whitespace
-        cleanBio = cleanBio.trim();
+        // Remove any resulting empty lines at the start and trim whitespace
+        cleanBio = cleanBio.replace(/^\s*\n+/g, '').trim();
+        
+        // Debug logging to see the result
+        console.log('Cleaned bio:', JSON.stringify(cleanBio));
         
         const isLong = cleanBio.length > 500;
         const shortBio = isLong ? cleanBio.substring(0, 500) + '...' : cleanBio;
