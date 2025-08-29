@@ -163,12 +163,12 @@
 
 <!-- Create/Edit Playlist Modal -->
 <div id="playlistModal" class="modal">
-    <div class="modal-content" style="width: 90%; max-width: 600px;">
+    <div class="modal-content" style="width: 90%; max-width: 600px; max-height: 90vh;">
         <div class="modal-header">
             <h3 id="playlistModalTitle">Create Playlist</h3>
             <span class="modal-close" onclick="closePlaylistModal()">&times;</span>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="max-height: calc(90vh - 120px); overflow-y: auto;">
             <form id="playlistForm" onsubmit="savePlaylist(event)">
                 <input type="hidden" id="playlistId" value="">
                 
@@ -380,12 +380,12 @@
 
 <!-- Import Playlist Modal -->
 <div id="importPlaylistModal" class="modal">
-    <div class="modal-content" style="width: 90%; max-width: 700px;">
+    <div class="modal-content" style="width: 90%; max-width: 700px; max-height: 90vh;">
         <div class="modal-header">
             <h3>Import Playlist</h3>
             <span class="modal-close" onclick="closeImportPlaylistModal()">&times;</span>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="max-height: calc(90vh - 120px); overflow-y: auto;">
             <div class="import-tabs">
                 <button class="tab-button active" onclick="switchImportTab('url', this)">🔗 From URL</button>
                 <button class="tab-button" onclick="switchImportTab('file', this)">📄 From File</button>
@@ -550,6 +550,43 @@
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     white-space: nowrap;
+}
+
+/* Modal scrolling enhancements */
+.modal-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-primary, #4a9eff) var(--bg-tertiary, #333);
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: var(--bg-tertiary, #333);
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: var(--accent-primary, #4a9eff);
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary, #357abd);
+}
+
+/* Ensure dynamic config section is properly contained */
+.dynamic-config {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
 .thumbnail-section {
