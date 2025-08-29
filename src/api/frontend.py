@@ -55,6 +55,13 @@ def settings():
     return render_template("settings.html")
 
 
+@frontend_bp.route("/enrichment")
+@auth_required
+def enrichment():
+    """Metadata enrichment dashboard page"""
+    return render_template("enrichment.html")
+
+
 @frontend_bp.route("/themes")
 @auth_required
 def themes():
