@@ -4202,7 +4202,10 @@ function renderBasicInfo(artist, metadata) {
     }
     
     document.getElementById('basicInfoContent').innerHTML = basicInfoHtml;
-    updateSectionQuality('basicInfoQuality', 'basic', artist, metadata);
+    // Set quality class but remove text content
+    const quality = calculateSectionQuality('basic', artist, metadata);
+    document.getElementById('basicInfoQuality').className = 'data-quality-badge ' + quality;
+    document.getElementById('basicInfoQuality').textContent = '';
 }
 
 function renderMusicalInfo(artist, metadata) {
@@ -4297,7 +4300,7 @@ function renderMusicalInfo(artist, metadata) {
     
     document.getElementById('musicalInfoContent').innerHTML = musicalInfoHtml;
     document.getElementById('musicalInfoQuality').className = 'data-quality-badge ' + calculateSectionQuality('musical', artist, metadata);
-    document.getElementById('musicalInfoQuality').textContent = getQualityLabel(calculateSectionQuality('musical', artist, metadata));
+    document.getElementById('musicalInfoQuality').textContent = '';
 }
 
 function renderExternalLinks(artist, metadata) {
@@ -4470,7 +4473,7 @@ function renderBiography(artist, metadata) {
     }
     
     document.getElementById('biographyQuality').className = 'data-quality-badge ' + (bio ? 'good' : 'none');
-    document.getElementById('biographyQuality').textContent = bio ? 'Good' : 'None';
+    document.getElementById('biographyQuality').textContent = '';
 }
 
 function renderStatistics(artist) {
