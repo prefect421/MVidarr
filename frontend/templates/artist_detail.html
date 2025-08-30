@@ -2824,10 +2824,6 @@ div.artist-header-actions button.btn iconify-icon {
                                 Auto-import all
                             </label>
                             
-                            <label class="checkbox-compact">
-                                <input type="checkbox" id="smartImport">
-                                Smart import
-                            </label>
                             
                             <label class="checkbox-compact">
                                 <input type="checkbox" id="autoDownload">
@@ -2901,7 +2897,6 @@ div.artist-header-actions button.btn iconify-icon {
                             <button onclick="selectAllForImport()" class="btn btn-secondary">📋 Select All</button>
                             <button onclick="selectNoneForImport()" class="btn btn-secondary">❌ Select None</button>
                             <button onclick="selectByYear()" class="btn btn-secondary">📅 Select by Year</button>
-                            <button onclick="selectByQuality()" class="btn btn-secondary">⭐ Select High Quality</button>
                         </div>
                     </div>
                     
@@ -3567,6 +3562,7 @@ let currentArtistId = null;
 let currentArtistData = null;
 let activeTab = 'overview';
 let selectedVideos = new Set();
+let isBulkSelecting = false;  // Flag to prevent conflicts during bulk operations
 let currentStatusOperation = null; // 'single' or 'bulk'
 let currentVideoId = null;
 let navigationData = null; // Store navigation data for next/prev artists
@@ -5224,7 +5220,6 @@ function discoverVideos() {
     // Get enhanced discovery options
     const limit = parseInt(document.getElementById('discoverLimit').value) || 50;
     const autoImport = document.getElementById('autoImport').checked;
-    const smartImport = document.getElementById('smartImport').checked;
     const autoDownload = document.getElementById('autoDownload').checked;
     const includeExisting = document.getElementById('includeExisting').checked;
     
@@ -5249,7 +5244,6 @@ function discoverVideos() {
     const requestData = {
         limit: limit,
         auto_import: autoImport,
-        smart_import: smartImport,
         auto_download: autoDownload,
         filters: {
             year_from: yearFrom,
@@ -5434,7 +5428,6 @@ function clearDiscoverFilters() {
     document.getElementById('sortOrder').value = 'desc';
     document.getElementById('discoverLimit').value = '50';
     document.getElementById('autoImport').checked = false;
-    document.getElementById('smartImport').checked = false;
     document.getElementById('autoDownload').checked = false;
 }
 
@@ -5492,6 +5485,11 @@ function formatNumber(num) {
 }
 
 function toggleVideoSelection(videoId) {
+    // Skip if we're in the middle of a bulk operation
+    if (isBulkSelecting) {
+        return;
+    }
+    
     const videoCard = document.querySelector(`[data-video-id="${videoId}"]`);
     const checkbox = videoCard.querySelector('.video-select');
     
@@ -5884,6 +5882,7 @@ function updateVideoSelectionButtons() {
 }
 
 function selectAllVideos() {
+    isBulkSelecting = true;  // Set flag to prevent conflicts
     let selectedCount = 0;
     
     document.querySelectorAll('.video-select').forEach(checkbox => {
@@ -5898,6 +5897,7 @@ function selectAllVideos() {
         }
     });
     
+    isBulkSelecting = false;  // Clear flag
     updateVideoSelectionButtons();
     
     if (selectedCount > 0) {
@@ -5906,6 +5906,7 @@ function selectAllVideos() {
 }
 
 function deselectAllVideos() {
+    isBulkSelecting = true;  // Set flag to prevent conflicts
     let deselectedCount = 0;
     
     document.querySelectorAll('.video-select').forEach(checkbox => {
@@ -5920,6 +5921,7 @@ function deselectAllVideos() {
         }
     });
     
+    isBulkSelecting = false;  // Clear flag
     updateVideoSelectionButtons();
     
     if (deselectedCount > 0) {
@@ -7344,7 +7346,7 @@ function confirmStatusUpdate() {
         bulkBtn.textContent = 'Updating...';
         
         fetch('/api/videos/bulk/status', {
-            method: 'PUT',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -9246,25 +9248,7 @@ function selectByYear() {
     showInfo(`Selected ${selectedCount} videos from ${year} onwards`);
 }
 
-function selectByQuality() {
-    const checkboxes = document.querySelectorAll('.video-batch-select');
-    let selectedCount = 0;
-    
-    checkboxes.forEach(checkbox => {
-        const videoCard = checkbox.closest('.discovered-video-card');
-        const quality = videoCard.dataset.quality;
-        
-        if (videoCard.dataset.selectable === 'true' && ['Excellent', 'High', 'Good'].includes(quality)) {
-            checkbox.checked = true;
-            selectedCount++;
-        } else {
-            checkbox.checked = false;
-        }
-    });
-    
-    updateBatchSelection();
-    showInfo(`Selected ${selectedCount} high-quality videos`);
-}
+// selectByQuality function removed per issue #7
 
 // Batch import execution
 function executeBatchImport() {
@@ -10390,27 +10374,8 @@ function showMergeDialog(conflictData) {
     document.head.appendChild(style);
 }
 
-// Bulk action functions for artist videos
-function selectAllVideos() {
-    const checkboxes = document.querySelectorAll('.video-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = true;
-        const videoId = checkbox.dataset.videoId;
-        if (videoId) {
-            selectedVideos.add(parseInt(videoId));
-        }
-    });
-    updateSelectionUI();
-}
-
-function deselectAllVideos() {
-    const checkboxes = document.querySelectorAll('.video-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    selectedVideos.clear();
-    updateSelectionUI();
-}
+// Bulk action functions for artist videos - removed duplicate definitions
+// The correct selectAllVideos() and deselectAllVideos() functions are defined earlier in the file
 
 function bulkAddToPlaylist() {
     if (selectedVideos.size === 0) {

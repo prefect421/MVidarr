@@ -29,18 +29,32 @@ def test_endpoint():
 def get_current_user_from_session():
     """Get current user from session for simple auth system"""
     from flask import session
+    from dataclasses import dataclass
+    from src.database.models import UserRole
 
     username = session.get("username")
     if not username:
         return None
 
-    # Get the actual User object from database
+    # Get the actual User object from database and create a session-independent user info object
     with get_db() as session_db:
         user = session_db.query(User).filter(User.username == username).first()
         if user:
-            # Detach from session to avoid binding issues
-            session_db.expunge(user)
-        return user
+            # Create a simple user info object with pre-loaded data to avoid session issues
+            @dataclass
+            class UserInfo:
+                id: int
+                username: str
+                role: str
+                
+                def can_access_admin(self):
+                    return self.role in [UserRole.ADMIN.value, UserRole.MANAGER.value]
+                
+                def can_modify(self):
+                    return self.role in [UserRole.ADMIN.value, UserRole.MANAGER.value, UserRole.USER.value]
+            
+            return UserInfo(id=user.id, username=user.username, role=user.role.value if user.role else UserRole.USER.value)
+        return None
 
 
 @playlists_bp.route("/", methods=["GET"])
@@ -965,8 +979,8 @@ def refresh_dynamic_playlist(playlist_id):
 
             changes_made = dynamic_playlist_service.update_dynamic_playlist(playlist_id)
 
-            # Refresh playlist data
-            session.refresh(playlist)
+            # Query fresh playlist data instead of refreshing to avoid session conflicts
+            playlist = session.query(Playlist).filter(Playlist.id == playlist_id).first()
 
             logger.info(
                 f"User {user.username} refreshed dynamic playlist '{playlist.name}'"
@@ -1028,7 +1042,8 @@ def update_playlist_filters(playlist_id):
 
             changes_made = dynamic_playlist_service.update_dynamic_playlist(playlist_id)
 
-            session.refresh(playlist)
+            # Query fresh playlist data instead of refreshing to avoid session conflicts  
+            playlist = session.query(Playlist).filter(Playlist.id == playlist_id).first()
 
             logger.info(
                 f"User {user.username} updated filters for dynamic playlist '{playlist.name}'"

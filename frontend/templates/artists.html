@@ -897,6 +897,63 @@ function hideAddArtistModal() {
     document.getElementById('addArtistSearchResults').innerHTML = '<p>Enter a search term to find artists from IMVDb</p>';
 }
 
+async function searchThumbnailForArtist(artistId) {
+    console.log(`🔍 Searching for artist thumbnail for ID ${artistId}...`);
+    
+    try {
+        // Search for thumbnails from Wikipedia and YouTube
+        const searchResponse = await fetch(`/api/artists/${artistId}/thumbnail/search`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (!searchResponse.ok) {
+            throw new Error(`Thumbnail search failed: ${searchResponse.status}`);
+        }
+        
+        const searchData = await searchResponse.json();
+        
+        if (searchData.success && searchData.results && searchData.results.length > 0) {
+            // Use the first result (highest priority)
+            const bestResult = searchData.results[0];
+            console.log(`🔍 Found thumbnail from ${bestResult.source}: ${bestResult.url}`);
+            
+            // Download and set the thumbnail using the correct PUT endpoint
+            const setResponse = await fetch(`/api/artists/${artistId}/thumbnail`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    thumbnail_url: bestResult.url
+                }),
+                credentials: 'include'
+            });
+            
+            if (setResponse.ok) {
+                const setData = await setResponse.json();
+                if (setData.success) {
+                    console.log(`✅ Successfully downloaded and set thumbnail from ${bestResult.source}`);
+                    return true;
+                } else {
+                    throw new Error(setData.error || 'Failed to download thumbnail');
+                }
+            } else {
+                throw new Error(`Thumbnail download failed: ${setResponse.status}`);
+            }
+        } else {
+            console.log('🔍 No thumbnails found from priority sources');
+            return false;
+        }
+    } catch (error) {
+        console.log(`🔍 Thumbnail search error for artist ${artistId}: ${error.message}`);
+        throw error;
+    }
+}
+
 function addArtist() {
     const formData = new FormData(document.getElementById('addArtistForm'));
     const data = {
@@ -918,6 +975,13 @@ function addArtist() {
         if (result.error) {
             showError('Error: ' + result.error);
         } else {
+            // Search for thumbnail for the newly created artist
+            if (result.id) {
+                console.log(`🔍 Searching thumbnail for newly created artist ${result.id}: ${result.name}`);
+                searchThumbnailForArtist(result.id).catch(error => {
+                    console.log(`🔍 Thumbnail search failed for new artist ${result.id}:`, error);
+                });
+            }
             hideAddArtistModal();
             loadArtists();
         }
@@ -1350,7 +1414,7 @@ function proceedAddArtistFromImvdb(imvdbId, artistName) {
         })
     })
     .then(response => response.json())
-    .then(result => {
+    .then(async result => {
         if (result.error) {
             if (typeof showError === 'function') {
                 showError('Error: ' + result.error);
@@ -1362,6 +1426,56 @@ function proceedAddArtistFromImvdb(imvdbId, artistName) {
                 showSuccess(`Artist "${result.name}" added successfully!`);
             } else {
                 alert(`Artist "${result.name}" added successfully!`);
+            }
+            // Search for thumbnail and run full enrichment for the newly imported artist
+            if (result.id) {
+                try {
+                    // Search for thumbnail
+                    console.log(`🔍 Searching thumbnail for imported artist ${result.id}: ${result.name}`);
+                    const thumbnailSuccess = await searchThumbnailForArtist(result.id);
+                    if (thumbnailSuccess) {
+                        console.log(`🔍 Found thumbnail for "${result.name}"`);
+                    }
+                    
+                    // Run full metadata enrichment
+                    if (typeof showInfo === 'function') {
+                        showInfo(`Enriching metadata for "${result.name}" from all sources...`);
+                    }
+                    const enrichResponse = await fetch(`/api/metadata-enrichment/enrich/${result.id}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ force_refresh: true })
+                    });
+                    
+                    console.log(`🔍 Enrichment response status:`, enrichResponse.status);
+                    const enrichData = await enrichResponse.json();
+                    console.log(`🔍 Enrichment response data:`, enrichData);
+                    
+                    if (enrichResponse.ok && enrichData.success) {
+                        const sourcesUsed = enrichData.sources_used || [];
+                        const enrichedFields = enrichData.enriched_fields || [];
+                        console.log(`🔍 Sources used:`, sourcesUsed);
+                        console.log(`🔍 Fields enriched:`, enrichedFields);
+                        
+                        if (sourcesUsed.length > 0) {
+                            if (typeof showSuccess === 'function') {
+                                showSuccess(`"${result.name}" enriched from ${sourcesUsed.join(', ')}`);
+                            }
+                        } else {
+                            console.log(`⚠️ No sources returned data for ${result.name}`);
+                            if (typeof showWarning === 'function') {
+                                showWarning(`No additional metadata found for "${result.name}"`);
+                            }
+                        }
+                    } else {
+                        console.error(`❌ Enrichment failed for ${result.name}:`, enrichData);
+                        if (typeof showError === 'function') {
+                            showError(`Failed to enrich "${result.name}": ${enrichData.error || 'Unknown error'}`);
+                        }
+                    }
+                } catch (error) {
+                    console.log(`🔍 Enrichment failed for ${result.name}:`, error);
+                }
             }
             hideAddArtistModal();
             loadArtists(currentPage); // Refresh the artists list
@@ -1458,13 +1572,55 @@ function importArtist(imvdbId, artistName) {
             })
         })
         .then(response => response.json())
-        .then(result => {
+        .then(async result => {
             if (result.error) {
                 showError('Error: ' + result.error);
             } else {
                 showSuccess(`Artist "${result.name}" imported successfully!`);
                 hideDiscoveryModal();
                 loadArtists(currentPage); // Refresh the artists list
+                
+                // Search for thumbnail and run full enrichment
+                if (result.artist_id) {
+                    try {
+                        // Search for thumbnail
+                        const thumbnailSuccess = await searchThumbnailForArtist(result.artist_id);
+                        if (thumbnailSuccess) {
+                            console.log(`🔍 Found thumbnail for "${result.name}"`);
+                        }
+                        
+                        // Run full metadata enrichment
+                        showInfo(`Enriching metadata for "${result.name}" from all sources...`);
+                        const enrichResponse = await fetch(`/api/metadata-enrichment/enrich/${result.artist_id}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ force_refresh: true })
+                        });
+                        
+                        console.log(`🔍 Enrichment response status:`, enrichResponse.status);
+                        const enrichData = await enrichResponse.json();
+                        console.log(`🔍 Enrichment response data:`, enrichData);
+                        
+                        if (enrichResponse.ok && enrichData.success) {
+                            const sourcesUsed = enrichData.sources_used || [];
+                            const enrichedFields = enrichData.enriched_fields || [];
+                            console.log(`🔍 Sources used:`, sourcesUsed);
+                            console.log(`🔍 Fields enriched:`, enrichedFields);
+                            
+                            if (sourcesUsed.length > 0) {
+                                showSuccess(`"${result.name}" enriched from ${sourcesUsed.join(', ')}`);
+                            } else {
+                                console.log(`⚠️ No sources returned data for ${result.name}`);
+                                showWarning(`No additional metadata found for "${result.name}"`);
+                            }
+                        } else {
+                            console.error(`❌ Enrichment failed for ${result.name}:`, enrichData);
+                            showError(`Failed to enrich "${result.name}": ${enrichData.error || 'Unknown error'}`);
+                        }
+                    } catch (error) {
+                        console.log(`🔍 Enrichment failed for ${result.name}:`, error);
+                    }
+                }
             }
         })
         .catch(error => {

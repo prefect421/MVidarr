@@ -500,8 +500,20 @@ function showEnhancedError(error, context = '') {
 }
 
 function categorizeError(error, context) {
-    const errorMessage = error.message || error.toString();
-    const errorName = error.name || 'Error';
+    // Handle different error types more robustly
+    let errorMessage;
+    if (typeof error === 'string') {
+        errorMessage = error;
+    } else if (error && typeof error.message === 'string') {
+        errorMessage = error.message;
+    } else if (error && typeof error === 'object') {
+        // Try to extract meaningful information from error object
+        errorMessage = error.error || error.detail || JSON.stringify(error);
+    } else {
+        errorMessage = String(error);
+    }
+    
+    const errorName = (error && error.name) || 'Error';
     
     // Network errors
     if (errorName === 'TypeError' && errorMessage.includes('fetch')) {
@@ -604,6 +616,7 @@ function applyVideoFilters() {
     
     // Get all filter values
     const filters = {
+        q: document.getElementById('videoSearchInput').value,  // Add the main search query
         status: document.getElementById('videoStatusFilter').value,
         quality: document.getElementById('videoQualityFilter').value,
         has_thumbnail: document.getElementById('videoThumbnailFilter').value,

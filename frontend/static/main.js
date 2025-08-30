@@ -843,15 +843,7 @@ function updateServiceStatus(statusElementId, status, text) {
     }
 }
 
-function displaySearchResults(service, results) {
-    // Simple display for now - could be enhanced with modal or dedicated results area
-    if (results && results.length > 0) {
-        console.log(`${service} search results:`, results);
-        showInfo(`Found ${results.length} results for ${service}`);
-    } else {
-        showWarning(`No results found for ${service}`);
-    }
-}
+// Removed redundant displaySearchResults function - replaced with displayMetadataSearchResults
 
 function refreshArtistMetadata() {
     // Simple refresh for now - could be enhanced to update specific sections
@@ -1120,7 +1112,7 @@ async function searchMusicBrainz() {
         const results = response?.results || [];
         console.log('Final results passed to display:', results);
         
-        displaySearchResults('musicbrainz', results);
+        displayMetadataSearchResults('musicbrainz', results);
         
         if (results && results.length > 0) {
             showSuccess('MusicBrainz search completed');
@@ -1206,7 +1198,7 @@ async function searchLastfm() {
             return;
         }
         
-        displaySearchResults('lastfm', response.results || []);
+        displayMetadataSearchResults('lastfm', response.results || []);
         
         if (response.results && response.results.length > 0) {
             showSuccess('Last.fm search completed');
@@ -1263,7 +1255,7 @@ async function searchAllMusic() {
     showLoading('Searching AllMusic...');
     try {
         const response = await apiRequest(`/api/metadata-enrichment/search/allmusic?artist=${encodeURIComponent(artistName)}`);
-        displaySearchResults('allmusic', response.results || []);
+        displayMetadataSearchResults('allmusic', response.results || []);
         showSuccess('AllMusic search completed');
     } catch (error) {
         showError('AllMusic search failed: ' + error.message);
@@ -1311,7 +1303,7 @@ async function searchWikipedia() {
     showLoading('Searching Wikipedia...');
     try {
         const response = await apiRequest(`/api/metadata-enrichment/search/wikipedia?artist=${encodeURIComponent(artistName)}`);
-        displaySearchResults('wikipedia', response.results || []);
+        displayMetadataSearchResults('wikipedia', response.results || []);
         showSuccess('Wikipedia search completed');
     } catch (error) {
         showError('Wikipedia search failed: ' + error.message);
@@ -1502,11 +1494,11 @@ function updateServiceStatus(service, status) {
     }
 }
 
-function displaySearchResults(service, results) {
+function displayMetadataSearchResults(service, results) {
     console.log(`${service} search results:`, results);
     
     if (!results || results.length === 0) {
-        showWarning(`No results found on ${service}`);
+        showWarning(`No results found for ${service}`);
         return;
     }
     
@@ -1739,7 +1731,7 @@ async function searchImvdb() {
             return;
         }
         
-        displaySearchResults('imvdb', response.results || []);
+        displayMetadataSearchResults('imvdb', response.results || []);
         
         if (response.results && response.results.length > 0) {
             showSuccess('IMVDb search completed');
@@ -1794,6 +1786,63 @@ async function testMetadataServices() {
     }
 }
 
+async function searchThumbnailForArtist(artistId) {
+    console.log(`🔍 Searching for artist thumbnail for ID ${artistId}...`);
+    
+    try {
+        // Search for thumbnails from Wikipedia and YouTube
+        const searchResponse = await fetch(`/api/artists/${artistId}/thumbnail/search`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (!searchResponse.ok) {
+            throw new Error(`Thumbnail search failed: ${searchResponse.status}`);
+        }
+        
+        const searchData = await searchResponse.json();
+        
+        if (searchData.success && searchData.results && searchData.results.length > 0) {
+            // Use the first result (highest priority)
+            const bestResult = searchData.results[0];
+            console.log(`🔍 Found thumbnail from ${bestResult.source}: ${bestResult.url}`);
+            
+            // Download and set the thumbnail using the correct PUT endpoint
+            const setResponse = await fetch(`/api/artists/${artistId}/thumbnail`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    thumbnail_url: bestResult.url
+                }),
+                credentials: 'include'
+            });
+            
+            if (setResponse.ok) {
+                const setData = await setResponse.json();
+                if (setData.success) {
+                    console.log(`✅ Successfully downloaded and set thumbnail from ${bestResult.source}`);
+                    return true;
+                } else {
+                    throw new Error(setData.error || 'Failed to download thumbnail');
+                }
+            } else {
+                throw new Error(`Thumbnail download failed: ${setResponse.status}`);
+            }
+        } else {
+            console.log('🔍 No thumbnails found from priority sources');
+            return false;
+        }
+    } catch (error) {
+        console.log(`🔍 Thumbnail search error for artist ${artistId}: ${error.message}`);
+        throw error;
+    }
+}
+
 async function enrichAllArtists() {
     if (!confirm('This will enrich metadata for all artists. This may take a while. Continue?')) {
         return;
@@ -1819,6 +1868,24 @@ async function enrichAllArtists() {
             })
         });
         showSuccess(`Bulk enrichment completed. Processed ${response.total_processed} artists, ${response.successful} successful.`);
+        
+        // Search for thumbnails for all successfully enriched artists
+        if (response.successful > 0 && response.enriched_artists) {
+            console.log(`🔍 Searching thumbnails for ${response.enriched_artists.length} enriched artists...`);
+            const thumbnailPromises = response.enriched_artists.map(artistId => 
+                searchThumbnailForArtist(artistId).catch(error => {
+                    console.log(`🔍 Thumbnail search failed for artist ${artistId}:`, error);
+                    return false;
+                })
+            );
+            
+            Promise.allSettled(thumbnailPromises).then(results => {
+                const successCount = results.filter(r => r.status === 'fulfilled' && r.value === true).length;
+                if (successCount > 0) {
+                    showSuccess(`Found thumbnails for ${successCount} artists during bulk enrichment`);
+                }
+            });
+        }
     } catch (error) {
         showError('Bulk enrichment failed: ' + error.message);
     }
@@ -1881,7 +1948,7 @@ window.MVidarr = {
     getCurrentArtistName,
     getCurrentArtistId,
     updateServiceStatus,
-    displaySearchResults,
+    displayMetadataSearchResults,
     refreshArtistMetadata,
     // Additional service functions
     searchSpotify,

@@ -119,6 +119,11 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="videoAlbum">Album:</label>
+                    <input type="text" id="videoAlbum" name="album" placeholder="Enter album name">
+                </div>
+                
+                <div class="form-group">
                     <label>
                         <input type="checkbox" id="moveFile" name="move_file" checked>
                         Move file to artist folder if needed
@@ -847,6 +852,12 @@ function renderVideoDetails(video) {
                     <span class="genre-tags">${video.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join(' ')}</span>
                 </div>
             ` : ''}
+            ${video.album ? `
+                <div class="detail-group">
+                    <label>Album:</label>
+                    <span>${video.album}</span>
+                </div>
+            ` : ''}
             <div class="detail-group">
                 <label>Status:</label>
                 <span class="status-badge status-${video.status ? video.status.toLowerCase() : 'unknown'}">${video.status || 'Unknown'}</span>
@@ -933,8 +944,20 @@ function renderVideoDetails(video) {
             </button>
             <button onclick="editVideo()" class="btn btn-info">Edit Details</button>
             <button onclick="refreshMetadata()" class="btn btn-info">Refresh Metadata</button>
+            <button onclick="enhancedRefreshMetadata()" class="btn btn-success">Enhanced Metadata</button>
             ${video.local_path ? `<button onclick="extractFFmpegMetadata()" class="btn btn-secondary">Extract FFmpeg Metadata</button>` : ''}
-            <button onclick="updateStatus()" class="btn btn-secondary">Update Status</button>
+            <div class="status-dropdown" style="position: relative; display: inline-block;">
+                <button class="btn btn-secondary" type="button" id="statusDropdownBtn" onclick="toggleStatusDropdown()" style="min-width: 140px;">
+                    Status: ${video.status} ▼
+                </button>
+                <div id="statusDropdownMenu" class="status-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; background: var(--card-bg, #2a2a2a); border: 1px solid var(--border-color, #444); border-radius: 6px; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;">
+                    <a href="#" onclick="updateStatus('WANTED')" onmouseover="this.style.backgroundColor='rgba(0,212,255,0.1)'" onmouseout="this.style.backgroundColor=''" style="display: block; padding: 8px 12px; color: var(--text-color, #fff); text-decoration: none; border-bottom: 1px solid var(--border-color, #444); transition: background-color 0.2s;">WANTED</a>
+                    <a href="#" onclick="updateStatus('DOWNLOADING')" onmouseover="this.style.backgroundColor='rgba(0,212,255,0.1)'" onmouseout="this.style.backgroundColor=''" style="display: block; padding: 8px 12px; color: var(--text-color, #fff); text-decoration: none; border-bottom: 1px solid var(--border-color, #444); transition: background-color 0.2s;">DOWNLOADING</a>
+                    <a href="#" onclick="updateStatus('DOWNLOADED')" onmouseover="this.style.backgroundColor='rgba(0,212,255,0.1)'" onmouseout="this.style.backgroundColor=''" style="display: block; padding: 8px 12px; color: var(--text-color, #fff); text-decoration: none; border-bottom: 1px solid var(--border-color, #444); transition: background-color 0.2s;">DOWNLOADED</a>
+                    <a href="#" onclick="updateStatus('FAILED')" onmouseover="this.style.backgroundColor='rgba(0,212,255,0.1)'" onmouseout="this.style.backgroundColor=''" style="display: block; padding: 8px 12px; color: var(--text-color, #fff); text-decoration: none; border-bottom: 1px solid var(--border-color, #444); transition: background-color 0.2s;">FAILED</a>
+                    <a href="#" onclick="updateStatus('IGNORED')" onmouseover="this.style.backgroundColor='rgba(0,212,255,0.1)'" onmouseout="this.style.backgroundColor=''" style="display: block; padding: 8px 12px; color: var(--text-color, #fff); text-decoration: none; transition: background-color 0.2s;">IGNORED</a>
+                </div>
+            </div>
             <button onclick="deleteVideo()" class="btn btn-danger">Delete Video</button>
         </div>
     `;
@@ -1056,6 +1079,7 @@ function editVideo() {
     document.getElementById('videoDuration').value = currentVideo.duration || '';
     document.getElementById('videoImvdbId').value = currentVideo.imvdb_id || '';
     document.getElementById('videoGenres').value = currentVideo.genres ? currentVideo.genres.join(', ') : '';
+    document.getElementById('videoAlbum').value = currentVideo.album || '';
     document.getElementById('moveFile').checked = true;
     
     // Reset the identify artist button and hide suggestions
@@ -1084,6 +1108,58 @@ function refreshMetadata() {
     .catch(error => {
         console.error('Error refreshing metadata:', error);
         showError('Error refreshing metadata');
+    });
+}
+
+function enhancedRefreshMetadata() {
+    if (!currentVideo) return;
+    
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = 'Enriching...';
+    button.disabled = true;
+    
+    showInfo('Starting enhanced metadata enrichment from multiple sources...');
+    
+    fetch(`/api/videos/${currentVideo.id}/enhanced-refresh-metadata`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            force_refresh: true
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error || !result.success) {
+            showError('Enhanced metadata enrichment failed: ' + (result.error || 'Unknown error'));
+            if (result.errors && result.errors.length > 0) {
+                console.warn('Enrichment errors:', result.errors);
+            }
+        } else {
+            const sources = result.metadata_sources || [];
+            const fields = result.enriched_fields || [];
+            
+            let message = 'Enhanced metadata enrichment completed!';
+            if (sources.length > 0) {
+                message += ` Sources used: ${sources.join(', ')}.`;
+            }
+            if (fields.length > 0) {
+                message += ` Updated fields: ${fields.join(', ')}.`;
+            }
+            
+            showSuccess(message);
+            loadVideoDetails(); // Refresh to show updated data
+        }
+    })
+    .catch(error => {
+        console.error('Error during enhanced metadata enrichment:', error);
+        showError('Enhanced metadata enrichment failed');
+    })
+    .finally(() => {
+        button.textContent = originalText;
+        button.disabled = false;
     });
 }
 
@@ -1121,11 +1197,23 @@ function extractFFmpegMetadata() {
     });
 }
 
-function updateStatus() {
+function updateStatus(newStatus) {
     if (!currentVideo) return;
     
-    const newStatus = prompt('Enter new status (WANTED/DOWNLOADING/DOWNLOADED/FAILED/IGNORED):', currentVideo.status);
+    // Close dropdown
+    const dropdown = document.getElementById('statusDropdownMenu');
+    if (dropdown) {
+        dropdown.style.display = 'none';
+        document.removeEventListener('click', closeStatusDropdown);
+    }
+    
     if (newStatus) {
+        // Update button text immediately for better UX
+        const dropdownBtn = document.getElementById('statusDropdownBtn');
+        if (dropdownBtn) {
+            dropdownBtn.innerHTML = `Status: ${newStatus} ▼`;
+        }
+        
         fetch(`/api/videos/${currentVideo.id}/status`, {
             method: 'PUT',
             headers: {
@@ -1139,15 +1227,47 @@ function updateStatus() {
         .then(result => {
             if (result.error) {
                 showError('Error: ' + result.error);
+                // Revert button text on error
+                if (dropdownBtn) {
+                    dropdownBtn.innerHTML = `Status: ${currentVideo.status} ▼`;
+                }
             } else {
                 showSuccess('Status updated successfully');
-                loadVideoDetails(); // Refresh to show new status
+                currentVideo.status = newStatus; // Update current video object
             }
         })
         .catch(error => {
             console.error('Error updating status:', error);
             showError('Error updating status');
+            // Revert button text on error
+            if (dropdownBtn) {
+                dropdownBtn.innerHTML = `Status: ${currentVideo.status} ▼`;
+            }
         });
+    }
+}
+
+function toggleStatusDropdown() {
+    const dropdown = document.getElementById('statusDropdownMenu');
+    if (dropdown.style.display === 'none') {
+        dropdown.style.display = 'block';
+        // Close dropdown when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', closeStatusDropdown);
+        }, 0);
+    } else {
+        dropdown.style.display = 'none';
+        document.removeEventListener('click', closeStatusDropdown);
+    }
+}
+
+function closeStatusDropdown(event) {
+    const dropdown = document.getElementById('statusDropdownMenu');
+    const dropdownBtn = document.getElementById('statusDropdownBtn');
+    
+    if (dropdown && dropdownBtn && !dropdown.contains(event.target) && !dropdownBtn.contains(event.target)) {
+        dropdown.style.display = 'none';
+        document.removeEventListener('click', closeStatusDropdown);
     }
 }
 
@@ -1379,6 +1499,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 duration: formData.get('duration') ? parseInt(formData.get('duration')) : null,
                 imvdb_id: formData.get('imvdb_id') ? parseInt(formData.get('imvdb_id')) : null,
                 genres: formData.get('genres') ? formData.get('genres').split(',').map(g => g.trim()).filter(g => g) : [],
+                album: formData.get('album') || null,
                 move_file: formData.get('move_file') === 'on'
             };
             

@@ -23,7 +23,7 @@ class AllMusicService:
 
     def __init__(self):
         self.base_url = "https://www.allmusic.com"
-        self.search_url = f"{self.base_url}/search/artists"
+        self.search_url = f"{self.base_url}/search/all"  # Updated to working format
         self.user_agent = "MVidarr/0.9.8 (https://github.com/prefect421/mvidarr)"
         self.rate_limit_delay = 2.0  # Be respectful to AllMusic servers
         self.last_request_time = 0
@@ -97,9 +97,9 @@ class AllMusicService:
         Search for artist on AllMusic and return basic info with link
         """
         try:
-            # Construct search URL
-            search_params = f"?q={quote_plus(artist_name)}&filter=artists"
-            search_url = f"{self.search_url}{search_params}"
+            # Construct search URL using the working format
+            encoded_name = quote_plus(artist_name)
+            search_url = f"{self.search_url}/{encoded_name}"
 
             response = self._make_request(search_url)
             if not response:
@@ -167,10 +167,13 @@ class AllMusicService:
 
             soup = BeautifulSoup(response.content, "html.parser")
 
-            # Extract metadata using various selectors
+            # Extract metadata from JSON-LD structured data (modern approach)
+            json_ld_data = self._extract_json_ld_data(soup)
+            
+            # Extract metadata using both JSON-LD and HTML selectors for maximum coverage
             metadata = {
-                "name": self._extract_artist_name(soup),
-                "biography": self._extract_biography(soup),
+                "name": json_ld_data.get("name") or self._extract_artist_name(soup),
+                "biography": json_ld_data.get("description") or self._extract_biography(soup),
                 "genres": self._extract_genres(soup),
                 "styles": self._extract_styles(soup),
                 "moods": self._extract_moods(soup),
@@ -178,7 +181,7 @@ class AllMusicService:
                 "active_years": self._extract_active_years(soup),
                 "formed_year": self._extract_formed_year(soup),
                 "origin": self._extract_origin(soup),
-                "members": self._extract_members(soup),
+                "members": self._extract_members_from_json_ld(json_ld_data) or self._extract_members(soup),
                 "similar_artists": self._extract_similar_artists(soup),
                 "discography": self._extract_discography_summary(soup),
                 "rating": self._extract_allmusic_rating(soup),
@@ -186,6 +189,7 @@ class AllMusicService:
                 "confidence": 0.85,  # High confidence for direct page access
                 "source": "allmusic",
                 "extracted_at": datetime.now().isoformat(),
+                "image_url": json_ld_data.get("image"),  # Add image from JSON-LD
             }
 
             # Filter out None values
@@ -199,6 +203,39 @@ class AllMusicService:
         except Exception as e:
             logger.error(f"Error extracting AllMusic metadata for '{artist_name}': {e}")
             return None
+
+    def _extract_json_ld_data(self, soup: BeautifulSoup) -> Dict:
+        """Extract JSON-LD structured data from AllMusic page"""
+        try:
+            json_scripts = soup.find_all("script", type="application/ld+json")
+            for script in json_scripts:
+                try:
+                    json_data = json.loads(script.string)
+                    if json_data.get("@type") in ["MusicGroup", "Person"]:
+                        logger.debug(f"Found JSON-LD data: {json_data.keys()}")
+                        return json_data
+                except json.JSONDecodeError:
+                    continue
+            return {}
+        except Exception as e:
+            logger.debug(f"Error extracting JSON-LD data: {e}")
+            return {}
+
+    def _extract_members_from_json_ld(self, json_ld_data: Dict) -> List[str]:
+        """Extract members from JSON-LD structured data"""
+        try:
+            members = []
+            member_data = json_ld_data.get("member", [])
+            
+            if isinstance(member_data, list):
+                for member in member_data:
+                    if isinstance(member, dict) and member.get("name"):
+                        members.append(member["name"])
+            
+            return members
+        except Exception as e:
+            logger.debug(f"Error extracting members from JSON-LD: {e}")
+            return []
 
     def _extract_artist_name(self, soup: BeautifulSoup) -> Optional[str]:
         """Extract artist name from page"""
@@ -482,20 +519,30 @@ class AllMusicService:
             return None
 
     def _extract_members(self, soup: BeautifulSoup) -> List[str]:
-        """Extract band members information"""
+        """Extract band members information from HTML"""
         try:
             members = []
 
-            # Look for members section
-            member_section = soup.find(string=lambda text: text and "Member" in text)
-            if member_section:
-                parent = member_section.parent
-                if parent:
-                    member_links = parent.find_all("a")
-                    for link in member_links:
-                        member = link.get_text(strip=True)
-                        if member and member not in members:
-                            members.append(member)
+            # Look for modern group-members section
+            group_members_div = soup.find("div", class_="group-members")
+            if group_members_div:
+                member_links = group_members_div.find_all("a")
+                for link in member_links:
+                    member = link.get_text(strip=True)
+                    if member and member not in members:
+                        members.append(member)
+
+            # Fallback to older methods if needed
+            if not members:
+                member_section = soup.find(string=lambda text: text and "Member" in text)
+                if member_section:
+                    parent = member_section.parent
+                    if parent:
+                        member_links = parent.find_all("a")
+                        for link in member_links:
+                            member = link.get_text(strip=True)
+                            if member and member not in members:
+                                members.append(member)
 
             return members[:10]  # Limit to top 10 members
 

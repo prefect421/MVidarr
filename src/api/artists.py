@@ -1060,6 +1060,7 @@ def import_artist_from_imvdb():
             return (
                 jsonify(
                     {
+                        "artist_id": artist_id,
                         "id": artist_id,
                         "name": artist_name_final,
                         "imvdb_id": artist_imvdb_id,

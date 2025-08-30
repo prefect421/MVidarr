@@ -386,6 +386,7 @@ class Video(Base):
     view_count = Column(Integer, nullable=True)  # View count
     like_count = Column(Integer, nullable=True)  # Like count from video platforms
     genres = Column(JSON, nullable=True)  # Video genres
+    album = Column(String(500), nullable=True)  # Album name
     directors = Column(JSON, nullable=True)
     producers = Column(JSON, nullable=True)
     status = Column(SQLEnum(VideoStatus), default=VideoStatus.WANTED)
@@ -394,6 +395,7 @@ class Video(Base):
     imvdb_metadata = Column(JSON, nullable=True)  # Full IMVDB metadata
     search_keywords = Column(Text, nullable=True)  # Keywords for matching
     discovered_date = Column(DateTime, nullable=True)  # When video was first discovered
+    last_enriched = Column(DateTime, nullable=True)  # Last metadata enrichment timestamp
     
     # Quality checking fields
     available_qualities = Column(JSON, nullable=True)  # Available formats from YouTube

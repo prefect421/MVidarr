@@ -56,10 +56,12 @@ class DynamicPlaylistService:
 
             session.add(playlist)
             session.commit()
-            session.refresh(playlist)
+            
+            # Get the playlist ID before any potential refresh issues
+            playlist_id = playlist.id
 
-            # Populate with initial videos
-            self.update_dynamic_playlist(playlist.id, session=session)
+            # Populate with initial videos using the ID to avoid session binding issues
+            self.update_dynamic_playlist(playlist_id, session=session)
 
             self.logger.info(
                 f"Created dynamic playlist '{name}' (ID: {playlist.id}) for user {user_id}"

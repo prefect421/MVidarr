@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from src.database.connection import get_db
 from src.database.models import Artist, Download, Video, VideoStatus
 from src.services.imvdb_service import imvdb_service
+from src.services.metadata_enrichment_service import metadata_enrichment_service
 from src.services.video_indexing_service import VideoIndexingService
 from src.utils.logger import get_logger
 from src.utils.performance_monitor import monitor_performance
@@ -2930,6 +2931,39 @@ def refresh_video_metadata(video_id):
         return jsonify({"error": str(e), "details": error_details}), 500
 
 
+@videos_bp.route("/<int:video_id>/enhanced-refresh-metadata", methods=["POST"])
+def enhanced_refresh_video_metadata(video_id):
+    """Enhanced metadata refresh using multiple sources"""
+    import asyncio
+    try:
+        # Get force_refresh parameter
+        force_refresh = request.json.get("force_refresh", False) if request.json else False
+        
+        # Run the async enrichment function
+        result = asyncio.run(metadata_enrichment_service.enrich_video_metadata(
+            video_id, force_refresh=force_refresh
+        ))
+        
+        if result.success:
+            return jsonify({
+                "success": True,
+                "message": f"Enhanced metadata enrichment completed for video {video_id}",
+                "enriched_fields": result.enriched_fields,
+                "metadata_sources": result.metadata_sources,
+                "errors": result.errors
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Metadata enrichment failed",
+                "errors": result.errors
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Failed to run enhanced metadata refresh for video {video_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @videos_bp.route("/fix-title-artist-swap", methods=["POST"])
 def fix_title_artist_swap():
     """Fix videos where song title is in artist field and title is 'video'"""
@@ -4041,7 +4075,7 @@ def download_all_wanted_videos():
         return jsonify({"error": str(e)}), 500
 
 
-@videos_bp.route("/bulk/status", methods=["POST"])
+@videos_bp.route("/bulk/status", methods=["POST", "PUT"])
 @monitor_performance("api.videos.bulk_status_update")
 def bulk_update_video_status():
     """Update status for multiple videos"""

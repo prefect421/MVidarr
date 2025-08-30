@@ -184,7 +184,7 @@ class YtDlpService:
                 logger.warning(
                     f"Failed to get quality format string, using default: {quality_error}"
                 )
-                quality_format_string = "best[height<=2160]/best[height<=1080]/bestvideo[height<=1080]+bestaudio/best"
+                quality_format_string = "bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo[height<=1440]+bestaudio/best[height<=1440]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
 
             # Create download entry
             download_id = self._get_next_id()
@@ -327,7 +327,7 @@ class YtDlpService:
                 # Use quality format string from video quality service
                 quality_format = download_entry.get(
                     "quality_format_string",
-                    "best[height<=2160]/best[height<=1080]/bestvideo[height<=1080]+bestaudio/best",
+                    "bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo[height<=1440]+bestaudio/best[height<=1440]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
                 )
 
                 cmd = [
@@ -357,7 +357,7 @@ class YtDlpService:
                     youtube_extractor_args = [
                         "youtube:player_client=web,mweb",  # Avoid android client that requires PO Token
                         "youtube:formats=missing_pot",  # Enable formats that might be missing PO Token
-                        "youtube:skip=hls,dash",  # Skip problematic streaming formats
+                        # Removed skip=hls,dash to allow higher quality formats (issue #11)
                     ]
                     cmd.extend([
                         "--extractor-args", ";".join(youtube_extractor_args),

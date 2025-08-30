@@ -141,7 +141,7 @@ def bulk_download():
         return jsonify({"error": str(e)}), 500
 
 
-@bulk_bridge_bp.route("/api/videos/bulk/status", methods=["POST"])
+@bulk_bridge_bp.route("/api/videos/bulk/status", methods=["POST", "PUT"])
 def bulk_status():
     """
     Basic bulk status update - direct bridge to enhanced system
@@ -257,7 +257,7 @@ def enhanced_bulk_download():
         return jsonify({"error": str(e)}), 500
 
 
-@bulk_bridge_bp.route("/api/videos/bulk/enhanced-status", methods=["POST"])
+@bulk_bridge_bp.route("/api/videos/bulk/enhanced-status", methods=["POST", "PUT"])
 def enhanced_bulk_status():
     """
     Enhanced bulk status update using new backend system

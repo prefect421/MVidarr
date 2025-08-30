@@ -451,6 +451,7 @@
     width: 90vw;
     max-width: 1400px;
     height: auto;
+    max-height: 85vh; /* Limit height to 85% of viewport height */
     background: #000;
     border-radius: 12px;
     overflow: hidden;
@@ -460,7 +461,9 @@
 .cinematic-video-container video {
     width: 100%;
     height: auto;
+    max-height: 85vh; /* Match container max-height */
     display: block;
+    object-fit: contain; /* Preserve aspect ratio within constraints */
 }
 
 .cinematic-controls {
