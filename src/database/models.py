@@ -396,6 +396,7 @@ class Video(Base):
     search_keywords = Column(Text, nullable=True)  # Keywords for matching
     discovered_date = Column(DateTime, nullable=True)  # When video was first discovered
     last_enriched = Column(DateTime, nullable=True)  # Last metadata enrichment timestamp
+    lyrics = Column(Text, nullable=True)  # Song lyrics
     
     # Quality checking fields
     available_qualities = Column(JSON, nullable=True)  # Available formats from YouTube

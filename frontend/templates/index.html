@@ -166,13 +166,19 @@ function loadDownloadQueue() {
             // Auto-manage refresh based on active downloads
             if (hasActiveDownloads && !queueRefreshInterval) {
                 startQueueAutoRefresh();
-            } else if (!hasActiveDownloads && queueRefreshInterval) {
-                // Slow down refresh when no active downloads
-                clearInterval(queueRefreshInterval);
-                queueRefreshInterval = setInterval(() => {
-                    loadDownloadQueue();
-                    loadDownloadHistory(); // Also refresh history when checking queue
-                }, 10000); // Check every 10 seconds instead of 2
+            } else if (!hasActiveDownloads) {
+                // Stop polling when no active downloads and queue is empty
+                if (queueRefreshInterval && (!data.queue || data.queue.length === 0)) {
+                    clearInterval(queueRefreshInterval);
+                    queueRefreshInterval = null;
+                } else if (queueRefreshInterval && data.queue && data.queue.length > 0) {
+                    // Slow down refresh when no active downloads but queue has completed items
+                    clearInterval(queueRefreshInterval);
+                    queueRefreshInterval = setInterval(() => {
+                        loadDownloadQueue();
+                        loadDownloadHistory(); // Also refresh history when checking queue
+                    }, 10000); // Check every 10 seconds instead of 2
+                }
             }
             
             if (data.queue && data.queue.length > 0) {

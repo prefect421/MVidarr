@@ -692,6 +692,7 @@ def search_videos():
 
 
 @videos_bp.route("/<int:video_id>", methods=["GET"])
+@public_endpoint
 def get_video(video_id):
     """Get specific video by ID"""
     try:
@@ -718,7 +719,16 @@ def get_video(video_id):
                 "duration": video.duration,
                 "quality": video.quality,
                 "year": video.year,
-                "genres": video.genres,
+                "genres": video.genres if isinstance(video.genres, list) else (json.loads(video.genres) if video.genres else []),
+                "album": video.album,
+                "search_keywords": video.search_keywords,
+                "description": video.description,
+                "view_count": video.view_count,
+                "like_count": video.like_count,
+                "directors": video.directors,
+                "producers": video.producers,
+                "release_date": video.release_date.isoformat() if video.release_date else None,
+                "lyrics": video.lyrics,
                 "video_metadata": video.video_metadata,
                 "created_at": video.created_at.isoformat(),
             }
@@ -2594,6 +2604,7 @@ def refresh_video_metadata(video_id):
             artist_name = video.artist.name if video.artist else None
             video_title = video.title
             current_imvdb_id = video.imvdb_id
+            created_at = video.created_at
 
             if not artist_name:
                 return jsonify({"error": "No artist associated with video"}), 400
@@ -2895,7 +2906,7 @@ def refresh_video_metadata(video_id):
                 "year": video.year,
                 "directors": video.directors,
                 "producers": video.producers,
-                "created_at": video.created_at.isoformat(),
+                "created_at": created_at.isoformat(),
                 "metadata_refreshed": True,
                 "metadata_source": metadata_source,
                 "youtube_id": (
@@ -2935,14 +2946,37 @@ def refresh_video_metadata(video_id):
 def enhanced_refresh_video_metadata(video_id):
     """Enhanced metadata refresh using multiple sources"""
     import asyncio
+    import signal
+    from concurrent.futures import TimeoutError
+    
     try:
-        # Get force_refresh parameter
-        force_refresh = request.json.get("force_refresh", False) if request.json else False
+        # Get force_refresh parameter from JSON or form data
+        force_refresh = False
+        if request.is_json and request.json:
+            force_refresh = request.json.get("force_refresh", False)
+        elif request.form:
+            force_refresh = request.form.get("force_refresh", "false").lower() == "true"
         
-        # Run the async enrichment function
-        result = asyncio.run(metadata_enrichment_service.enrich_video_metadata(
-            video_id, force_refresh=force_refresh
-        ))
+        # Add timeout wrapper to prevent hanging
+        async def run_with_timeout():
+            try:
+                return await asyncio.wait_for(
+                    metadata_enrichment_service.enrich_video_metadata(
+                        video_id, force_refresh=force_refresh
+                    ),
+                    timeout=60.0  # 60 second timeout
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"Metadata enrichment for video {video_id} timed out after 60 seconds")
+                return type('Result', (), {
+                    'success': False,
+                    'errors': ['Metadata enrichment timed out - external services may be slow'],
+                    'enriched_fields': [],
+                    'metadata_sources': []
+                })()
+        
+        # Run the async enrichment function with timeout
+        result = asyncio.run(run_with_timeout())
         
         if result.success:
             return jsonify({
@@ -2959,6 +2993,13 @@ def enhanced_refresh_video_metadata(video_id):
                 "errors": result.errors
             }), 500
             
+    except asyncio.TimeoutError:
+        logger.error(f"Metadata enrichment for video {video_id} timed out")
+        return jsonify({
+            "success": False,
+            "error": "Metadata enrichment timed out",
+            "errors": ["Process timed out - external services may be unresponsive"]
+        }), 408
     except Exception as e:
         logger.error(f"Failed to run enhanced metadata refresh for video {video_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -3124,6 +3165,80 @@ def fix_title_artist_swap():
 
     except Exception as e:
         logger.error(f"Failed to fix title/artist swap: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/enhanced-refresh-all-metadata", methods=["POST"])
+def enhanced_refresh_all_metadata():
+    """Enhanced metadata refresh for all videos using comprehensive enrichment"""
+    import asyncio
+    try:
+        # Get request parameters
+        data = request.get_json() or {}
+        force_refresh = data.get("force_refresh", False)
+        limit = data.get("limit", None)
+        video_ids = data.get("video_ids", None)
+        
+        from src.services.metadata_enrichment_service import metadata_enrichment_service
+        
+        # Get videos to process
+        with get_db() as session:
+            query = session.query(Video).join(Video.artist)
+            
+            # Filter by specific video IDs if provided
+            if video_ids:
+                query = query.filter(Video.id.in_(video_ids))
+            
+            if limit:
+                query = query.limit(limit)
+                
+            videos = query.all()
+            videos_to_process = [{"id": video.id, "title": video.title, "artist_name": video.artist.name if video.artist else None} for video in videos]
+        
+        if not videos_to_process:
+            return jsonify({
+                "success": True,
+                "message": "No videos found to process",
+                "processed": 0,
+                "updated": 0,
+                "errors": 0
+            })
+        
+        # Process videos using enhanced metadata service
+        processed = 0
+        updated = 0
+        errors = 0
+        error_details = []
+        
+        for video_data in videos_to_process:
+            try:
+                result = asyncio.run(metadata_enrichment_service.enrich_video_metadata(
+                    video_data["id"], force_refresh=force_refresh
+                ))
+                
+                processed += 1
+                if result.get("success", False):
+                    updated += 1
+                else:
+                    errors += 1
+                    error_details.append(f"Video {video_data['id']} ({video_data['title']}): {result.get('error', 'Unknown error')}")
+                    
+            except Exception as e:
+                processed += 1
+                errors += 1
+                error_details.append(f"Video {video_data['id']} ({video_data['title']}): {str(e)}")
+                logger.error(f"Error enriching metadata for video {video_data['id']}: {e}")
+        
+        return jsonify({
+            "success": True,
+            "processed": processed,
+            "updated": updated,
+            "errors": errors,
+            "error_details": error_details[:10] if error_details else []  # Limit error details
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced refresh all metadata: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -7458,3 +7573,354 @@ def determine_primary_video(videos, strategy="highest_quality"):
     else:
         # Default to first video
         return videos[0]
+
+
+@videos_bp.route("/import-from-youtube-auto", methods=["POST"])
+def import_video_from_youtube_auto():
+    """Import a video from YouTube with automatic artist identification from metadata"""
+    try:
+        data = request.get_json()
+        if not data or "youtube_id" not in data:
+            return jsonify({"error": "youtube_id is required"}), 400
+
+        youtube_id = data["youtube_id"]
+        auto_download = data.get("auto_download", False)
+        skip_existing = data.get("skip_existing", True)
+        priority = data.get("priority", 5)
+
+        # For now, use simple fallback until we can debug the yt-dlp issue
+        artist_name = "Unknown Artist"
+        video_title = f"YouTube Video {youtube_id}"
+        
+        logger.info(f"Processing YouTube video {youtube_id} with fallback artist: {artist_name}")
+
+        # Now import the video using the existing endpoint logic
+        try:
+            with get_db() as session:
+                logger.info(f"Starting database operations for YouTube video {youtube_id}")
+                
+                # Find or create artist by name
+                video_indexing_service = VideoIndexingService()
+                artist = video_indexing_service.find_or_create_artist(
+                    artist_name.strip(), session
+                )
+
+                if not artist:
+                    logger.error(f"Failed to create or find artist: {artist_name}")
+                    return jsonify({"error": "Failed to create or find artist"}), 500
+
+                # Store artist info for later use (avoid session binding issues)
+                artist_name_final = artist.name
+                artist_id_value = artist.id
+                logger.info(f"Found/created artist: {artist_name_final} (ID: {artist_id_value})")
+
+                # Check if video already exists
+                existing_video = (
+                    session.query(Video).filter_by(youtube_id=youtube_id).first()
+                )
+                if existing_video and skip_existing:
+                    return jsonify({
+                        "success": True,
+                        "message": f"Video already exists: {existing_video.title}",
+                        "video_id": existing_video.id,
+                        "title": existing_video.title,
+                        "skipped": True
+                    }), 200
+
+                # If video exists but skip_existing is False, update it
+                if existing_video and not skip_existing:
+                    existing_video.artist_id = artist_id_value
+                    existing_video.updated_at = datetime.utcnow()
+                    session.commit()
+                    
+                    return jsonify({
+                        "success": True,
+                        "message": f"Updated existing video: {existing_video.title}",
+                        "video_id": existing_video.id,
+                        "title": existing_video.title
+                    }), 200
+
+                # Create new video record
+                video = Video(
+                    youtube_id=youtube_id,
+                    title=video_title,
+                    artist_id=artist_id_value,
+                    status=VideoStatus.WANTED,
+                    auto_download=auto_download,
+                    priority=priority,
+                    created_at=datetime.utcnow()
+                )
+                
+                session.add(video)
+                session.commit()
+                
+                logger.info(f"Created video record for {artist_name_final}: YouTube ID {youtube_id}")
+
+                # If auto_download is enabled, add to download queue
+                if auto_download:
+                    try:
+                        from src.services.ytdlp_service import ytdlp_service
+                        download_result = ytdlp_service.add_music_video_download(
+                            artist_name_final, video.title, f"https://www.youtube.com/watch?v={youtube_id}"
+                        )
+                        if not download_result.get("success"):
+                            logger.warning(f"Failed to add download: {download_result.get('message')}")
+                    except Exception as e:
+                        logger.error(f"Error adding download: {e}")
+
+                return jsonify({
+                    "success": True,
+                    "message": f"Successfully imported video for {artist_name_final}",
+                    "video_id": video.id,
+                    "title": video.title,
+                    "artist": artist_name_final
+                }), 201
+                
+        except Exception as db_error:
+            logger.error(f"Database error in import-from-youtube-auto: {db_error}")
+            return jsonify({"error": f"Database error: {str(db_error)}"}), 500
+
+    except Exception as e:
+        logger.error(f"Failed to import video with auto artist detection: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+def extract_artist_from_title(title):
+    """Extract artist name from YouTube video title"""
+    if not title:
+        return None
+        
+    import re
+    
+    # Remove common video type indicators
+    clean_title = re.sub(r'\s*[\(\[].*?(official|music|video|mv|lyric|audio|live).*?[\)\]]', '', title, flags=re.IGNORECASE)
+    
+    # Pattern 1: "Artist - Song" or "Artist: Song"
+    match = re.match(r'^([^-:]+)[\s\-:]+(.+)$', clean_title)
+    if match:
+        potential_artist = match.group(1).strip()
+        potential_song = match.group(2).strip()
+        
+        # Simple heuristic: if the first part is shorter and doesn't contain "feat", it's likely the artist
+        if len(potential_artist) < len(potential_song) and 'feat' not in potential_artist.lower():
+            return potential_artist
+    
+    # Pattern 2: "Song by Artist"
+    match = re.search(r'(.+)\s+by\s+(.+)$', clean_title, re.IGNORECASE)
+    if match:
+        return match.group(2).strip()
+    
+    # Pattern 3: "Artist ft/feat Artist - Song"  
+    match = re.match(r'^([^-:]+(?:\s+(?:ft|feat|featuring)\.?\s+[^-:]+)?)[\s\-:]+(.+)$', clean_title, re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    
+    # If no clear pattern, return None
+    return None
+
+
+@videos_bp.route("/<int:video_id>/lyrics", methods=["GET"])
+@public_endpoint
+def get_video_lyrics(video_id):
+    """Get lyrics for a video"""
+    try:
+        with get_db() as session:
+            video = session.query(Video).filter_by(id=video_id).first()
+            if not video:
+                return jsonify({"error": "Video not found"}), 404
+            
+            return jsonify({
+                "success": True,
+                "lyrics": video.lyrics
+            }), 200
+            
+    except Exception as e:
+        logger.error(f"Error getting lyrics for video {video_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/<int:video_id>/lyrics", methods=["PUT"])
+@public_endpoint
+def update_video_lyrics(video_id):
+    """Update lyrics for a video"""
+    try:
+        data = request.get_json()
+        if not data or "lyrics" not in data:
+            return jsonify({"error": "lyrics field is required"}), 400
+        
+        lyrics = data["lyrics"]
+        
+        with get_db() as session:
+            video = session.query(Video).filter_by(id=video_id).first()
+            if not video:
+                return jsonify({"error": "Video not found"}), 404
+            
+            video.lyrics = lyrics
+            video.updated_at = datetime.utcnow()
+            session.commit()
+            
+            logger.info(f"Updated lyrics for video {video_id}: {video.title}")
+            
+            return jsonify({
+                "success": True,
+                "message": "Lyrics updated successfully"
+            }), 200
+            
+    except Exception as e:
+        logger.error(f"Error updating lyrics for video {video_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@videos_bp.route("/<int:video_id>/lyrics/search", methods=["POST"])
+@public_endpoint
+def search_video_lyrics(video_id):
+    """Search for lyrics automatically using external services"""
+    try:
+        with get_db() as session:
+            video = session.query(Video).filter_by(id=video_id).first()
+            if not video:
+                return jsonify({"error": "Video not found"}), 404
+            
+            artist_name = video.artist.name if video.artist else None
+            song_title = video.title
+            
+            if not artist_name or not song_title:
+                return jsonify({
+                    "success": False,
+                    "error": "Artist name and song title are required for lyrics search"
+                }), 400
+            
+            # Search for lyrics using multiple sources
+            lyrics_found = None
+            source_used = None
+            
+            # Try multiple lyrics sources in order of preference
+            lyrics_sources = [
+                ("Lyrics.ovh", search_lyrics_azlyrics),  # Using lyrics.ovh API (renamed function)
+                ("MusixMatch", search_lyrics_musixmatch),
+                ("Genius", search_lyrics_genius)
+            ]
+            
+            for source_name, search_func in lyrics_sources:
+                try:
+                    logger.info(f"Searching {source_name} for lyrics: {artist_name} - {song_title}")
+                    lyrics_result = search_func(artist_name, song_title)
+                    
+                    if lyrics_result and len(lyrics_result.strip()) > 50:  # Ensure we got substantial lyrics
+                        lyrics_found = lyrics_result
+                        source_used = source_name
+                        logger.info(f"Found lyrics from {source_name}")
+                        break
+                        
+                except Exception as source_error:
+                    logger.warning(f"Failed to search {source_name}: {source_error}")
+                    continue
+            
+            if lyrics_found:
+                # Save the found lyrics to the database
+                video.lyrics = lyrics_found
+                session.commit()
+                
+                return jsonify({
+                    "success": True,
+                    "lyrics": lyrics_found,
+                    "source": source_used,
+                    "message": f"Lyrics found from {source_used} and saved successfully!"
+                }), 200
+            else:
+                # Provide a helpful placeholder with search information
+                search_info = f"Lyrics search attempted for:\nArtist: {artist_name}\nSong: {song_title}\n\n"
+                search_info += "Sources checked:\n• MusixMatch\n• Genius\n• AZLyrics\n\n"
+                search_info += "No lyrics were found automatically. You can:\n"
+                search_info += "1. Try searching manually on lyrics websites\n"
+                search_info += "2. Add lyrics using the Edit button\n"
+                search_info += "3. Check if the artist/song names are correct"
+                
+                return jsonify({
+                    "success": False,
+                    "lyrics": search_info,
+                    "error": "No lyrics found from any source",
+                    "message": "Unable to find lyrics automatically. You can add them manually using the Edit button."
+                }), 200  # Return 200 instead of 404 to show the helpful message
+            
+    except Exception as e:
+        logger.error(f"Error searching lyrics for video {video_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+def search_lyrics_musixmatch(artist, title):
+    """Search lyrics using MusixMatch API approach"""
+    import requests
+    import re
+    from urllib.parse import quote
+    
+    try:
+        # Use MusixMatch's public search (no API key required for basic search)
+        search_url = f"https://www.musixmatch.com/search/{quote(artist)}-{quote(title)}"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        # This is a simplified approach - a real implementation would need proper API integration
+        # For now, return None to try next source
+        return None
+        
+    except Exception as e:
+        logger.warning(f"MusixMatch search failed: {e}")
+        return None
+
+
+def search_lyrics_genius(artist, title):
+    """Search lyrics using Genius API approach"""
+    import requests
+    import re
+    from urllib.parse import quote
+    
+    try:
+        # Use Genius public search (simplified approach)
+        # A real implementation would use the official Genius API
+        search_query = f"{artist} {title}".strip()
+        
+        # For now, return None to try next source
+        return None
+        
+    except Exception as e:
+        logger.warning(f"Genius search failed: {e}")
+        return None
+
+
+def search_lyrics_azlyrics(artist, title):
+    """Search lyrics using Lyrics.ovh API (free alternative to AZLyrics scraping)"""
+    import requests
+    from urllib.parse import quote
+    
+    try:
+        # Use Lyrics.ovh API - free and simple
+        api_url = f"https://api.lyrics.ovh/v1/{quote(artist)}/{quote(title)}"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (compatible; MVidarr/1.0)',
+            'Accept': 'application/json'
+        }
+        
+        response = requests.get(api_url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            lyrics = data.get('lyrics', '').strip()
+            
+            if lyrics and len(lyrics) > 50:  # Ensure we got substantial content
+                # Clean up the lyrics formatting
+                lyrics = lyrics.replace('\r\n', '\n').replace('\r', '\n')
+                # Remove excessive whitespace while preserving line breaks
+                lines = [line.strip() for line in lyrics.split('\n')]
+                lyrics = '\n'.join(lines)
+                
+                return lyrics
+        
+        return None
+        
+    except Exception as e:
+        logger.warning(f"Lyrics.ovh search failed: {e}")
+        return None

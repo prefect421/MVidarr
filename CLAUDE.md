@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - update documentation after each issue or feature is completed
 - push to dev after each update.
 - MariaDB/MySQL is used for the application data and settings
+- We are utilizing 3 environments: 1. Dev is running on local server port 5000. 2. Docker is running on local machine docker install on port 5001. 3. Prod is running on 192.168.1.132:5050 in a docker install.
 
 ## Critical Thinking and Feedback
 

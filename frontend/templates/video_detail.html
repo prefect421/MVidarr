@@ -17,14 +17,14 @@
                 <div class="loading-placeholder">Loading video player...</div>
             </div>
             
-            <!-- Video Info -->
-            <div class="video-info-section" id="videoInfoSection">
-                <div class="loading-placeholder">Loading video information...</div>
-            </div>
-            
             <!-- Video Actions -->
             <div class="video-actions-section" id="videoActionsSection">
                 <div class="loading-placeholder">Loading video actions...</div>
+            </div>
+            
+            <!-- Video Info -->
+            <div class="video-info-section" id="videoInfoSection">
+                <div class="loading-placeholder">Loading video information...</div>
             </div>
         </div>
         
@@ -121,6 +121,22 @@
                 <div class="form-group">
                     <label for="videoAlbum">Album:</label>
                     <input type="text" id="videoAlbum" name="album" placeholder="Enter album name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoKeywords">Keywords:</label>
+                    <input type="text" id="videoKeywords" name="search_keywords" placeholder="Enter keywords separated by commas">
+                    <small class="help-text">Separate multiple keywords with commas</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoDescription">Description:</label>
+                    <textarea id="videoDescription" name="description" rows="4" placeholder="Enter video description"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="videoLyrics">Lyrics:</label>
+                    <textarea id="videoLyrics" name="lyrics" rows="8" placeholder="Enter song lyrics"></textarea>
                 </div>
                 
                 <div class="form-group">
@@ -779,6 +795,127 @@ function loadVideoDetails() {
         });
 }
 
+// Helper functions for rendering complex metadata fields
+function renderDirectorsField(directors) {
+    if (!directors) return '';
+    
+    let directorList = [];
+    
+    // Handle different data formats
+    if (Array.isArray(directors)) {
+        directorList = directors;
+    } else if (typeof directors === 'object') {
+        // If it's an object, try to extract names from common properties
+        if (directors.name) {
+            directorList = [directors.name];
+        } else if (directors.names) {
+            directorList = Array.isArray(directors.names) ? directors.names : [directors.names];
+        } else {
+            // If it's an object but doesn't have expected properties, convert to string
+            directorList = [JSON.stringify(directors)];
+        }
+    } else if (typeof directors === 'string') {
+        // If it's a string, split by common delimiters
+        directorList = directors.split(/[,;]/).map(d => d.trim()).filter(d => d);
+    }
+    
+    if (directorList.length === 0) return '';
+    
+    return `
+        <div class="detail-group">
+            <label>Directors:</label>
+            <span class="director-tags">${directorList.map(director => `<span class="director-tag">${escapeHtml(director)}</span>`).join(', ')}</span>
+        </div>
+    `;
+}
+
+function renderProducersField(producers) {
+    if (!producers) return '';
+    
+    let producerList = [];
+    
+    // Handle different data formats
+    if (Array.isArray(producers)) {
+        producerList = producers;
+    } else if (typeof producers === 'object') {
+        // If it's an object, try to extract names from common properties
+        if (producers.name) {
+            producerList = [producers.name];
+        } else if (producers.names) {
+            producerList = Array.isArray(producers.names) ? producers.names : [producers.names];
+        } else {
+            // If it's an object but doesn't have expected properties, convert to string
+            producerList = [JSON.stringify(producers)];
+        }
+    } else if (typeof producers === 'string') {
+        // If it's a string, split by common delimiters
+        producerList = producers.split(/[,;]/).map(p => p.trim()).filter(p => p);
+    }
+    
+    if (producerList.length === 0) return '';
+    
+    return `
+        <div class="detail-group">
+            <label>Producers:</label>
+            <span class="producer-tags">${producerList.map(producer => `<span class="producer-tag">${escapeHtml(producer)}</span>`).join(', ')}</span>
+        </div>
+    `;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatPersonList(data, cssClass) {
+    if (!data) return '';
+    
+    // Debug logging to see the actual data structure
+    console.log('formatPersonList called with:', data, 'Type:', typeof data, 'isArray:', Array.isArray(data));
+    
+    let people = [];
+    
+    // Handle different data formats - check Array.isArray() first
+    if (Array.isArray(data)) {
+        console.log('Processing array with', data.length, 'items');
+        // Process each item in the array
+        people = data.map(item => {
+            if (typeof item === 'string') {
+                return item;
+            } else if (typeof item === 'object' && item !== null) {
+                // Extract name from object - check IMVDb format first
+                return item.entity_name || item.name || item.title || item.value || JSON.stringify(item);
+            } else {
+                return String(item);
+            }
+        });
+        console.log('Processed array items:', people);
+    } else if (typeof data === 'object' && data !== null) {
+        console.log('Handling object with keys:', Object.keys(data));
+        // Try to extract from common object properties
+        if (data.name) {
+            people = [data.name];
+        } else if (data.names) {
+            people = Array.isArray(data.names) ? data.names : [data.names];
+        } else {
+            // Fallback: show object keys or convert to string
+            people = Object.values(data).filter(v => v && typeof v === 'string');
+            console.log('Object values filtered:', people);
+            if (people.length === 0) {
+                people = [JSON.stringify(data)];
+            }
+        }
+    } else if (typeof data === 'string') {
+        people = data.split(/[,;]/).map(p => p.trim()).filter(p => p);
+    } else {
+        people = [String(data)];
+    }
+    
+    console.log('Final people array:', people);
+    return people.map(person => `<span class="${cssClass}">${escapeHtml(String(person))}</span>`).join(', ');
+}
+
 function renderVideoDetails(video) {
     // Render header
     const headerHtml = `
@@ -846,7 +983,7 @@ function renderVideoDetails(video) {
                     <span>${formatDuration(video.duration)}</span>
                 </div>
             ` : ''}
-            ${video.genres && video.genres.length > 0 ? `
+            ${video.genres && Array.isArray(video.genres) && video.genres.length > 0 ? `
                 <div class="detail-group">
                     <label>Genres:</label>
                     <span class="genre-tags">${video.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join(' ')}</span>
@@ -856,6 +993,48 @@ function renderVideoDetails(video) {
                 <div class="detail-group">
                     <label>Album:</label>
                     <span>${video.album}</span>
+                </div>
+            ` : ''}
+            ${video.search_keywords ? `
+                <div class="detail-group">
+                    <label>Keywords:</label>
+                    <span class="keyword-tags">${video.search_keywords.split(',').map(keyword => `<span class="keyword-tag">${keyword.trim()}</span>`).join(' ')}</span>
+                </div>
+            ` : ''}
+            ${video.description ? `
+                <div class="detail-group">
+                    <label>Description:</label>
+                    <div class="description-text">${video.description}</div>
+                </div>
+            ` : ''}
+            ${video.view_count ? `
+                <div class="detail-group">
+                    <label>Views:</label>
+                    <span>${video.view_count.toLocaleString()}</span>
+                </div>
+            ` : ''}
+            ${video.like_count ? `
+                <div class="detail-group">
+                    <label>Likes:</label>
+                    <span>${video.like_count.toLocaleString()}</span>
+                </div>
+            ` : ''}
+            ${video.directors ? `
+                <div class="detail-group">
+                    <label>Directors:</label>
+                    <span class="director-tags">${formatPersonList(video.directors, 'director-tag')}</span>
+                </div>
+            ` : ''}
+            ${video.producers ? `
+                <div class="detail-group">
+                    <label>Producers:</label>
+                    <span class="producer-tags">${formatPersonList(video.producers, 'producer-tag')}</span>
+                </div>
+            ` : ''}
+            ${video.release_date ? `
+                <div class="detail-group">
+                    <label>Release Date:</label>
+                    <span>${new Date(video.release_date).toLocaleDateString()}</span>
                 </div>
             ` : ''}
             <div class="detail-group">
@@ -929,8 +1108,25 @@ function renderVideoDetails(video) {
                 </div>
             ` : ''}
         </div>
+        
+        <!-- Lyrics Section -->
+        <div class="lyrics-section" id="lyricsSection">
+            <div class="lyrics-header">
+                <h4>🎵 Lyrics</h4>
+                <div class="lyrics-actions">
+                    <button onclick="searchLyrics()" class="btn btn-small btn-secondary">🔍 Search Lyrics</button>
+                    <button onclick="editLyrics()" class="btn btn-small btn-info">✏️ Edit</button>
+                </div>
+            </div>
+            <div class="lyrics-content" id="lyricsContent">
+                <div class="lyrics-placeholder">No lyrics available. Click "Search Lyrics" to find them automatically.</div>
+            </div>
+        </div>
     `;
     document.getElementById('videoInfoSection').innerHTML = infoHtml;
+    
+    // Load and display lyrics if available
+    loadVideoLyrics();
     
     // Render actions
     const actionsHtml = `
@@ -943,9 +1139,7 @@ function renderVideoDetails(video) {
                 Upgrade Quality
             </button>
             <button onclick="editVideo()" class="btn btn-info">Edit Details</button>
-            <button onclick="refreshMetadata()" class="btn btn-info">Refresh Metadata</button>
             <button onclick="enhancedRefreshMetadata()" class="btn btn-success">Enhanced Metadata</button>
-            ${video.local_path ? `<button onclick="extractFFmpegMetadata()" class="btn btn-secondary">Extract FFmpeg Metadata</button>` : ''}
             <div class="status-dropdown" style="position: relative; display: inline-block;">
                 <button class="btn btn-secondary" type="button" id="statusDropdownBtn" onclick="toggleStatusDropdown()" style="min-width: 140px;">
                     Status: ${video.status} ▼
@@ -989,18 +1183,31 @@ function renderVideoDetails(video) {
 }
 
 function loadRelatedVideos(artistId) {
+    // Skip if artistId is null or undefined
+    if (!artistId) {
+        document.getElementById('relatedVideosList').innerHTML = '<p>Artist information not available</p>';
+        return;
+    }
+    
     // Load other videos by the same artist
     fetch(`/api/artists/${artistId}/detailed`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Artist not found (${response.status})`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.videos) {
                 const relatedVideos = data.videos.filter(v => v.id !== currentVideoId).slice(0, 10);
                 renderRelatedVideos(relatedVideos);
+            } else {
+                document.getElementById('relatedVideosList').innerHTML = '<p>No related videos found</p>';
             }
         })
         .catch(error => {
             console.error('Error loading related videos:', error);
-            document.getElementById('relatedVideosList').innerHTML = '<p>Failed to load related videos</p>';
+            document.getElementById('relatedVideosList').innerHTML = '<p>Artist not found - unable to load related videos</p>';
         });
 }
 
@@ -1069,6 +1276,15 @@ function playExternalVideo() {
 function editVideo() {
     if (!currentVideo) return;
     
+    // Debug: Check what data is available
+    console.log('editVideo - currentVideo data:', currentVideo);
+    console.log('editVideo - Enhanced fields check:');
+    console.log('  genres:', currentVideo.genres);
+    console.log('  album:', currentVideo.album);
+    console.log('  search_keywords:', currentVideo.search_keywords);
+    console.log('  description:', currentVideo.description);
+    console.log('  lyrics:', currentVideo.lyrics);
+    
     // Populate the form with current video data
     document.getElementById('videoTitle').value = currentVideo.title || '';
     document.getElementById('videoArtist').value = currentVideo.artist_name || '';
@@ -1078,8 +1294,34 @@ function editVideo() {
     document.getElementById('videoThumbnailUrl').value = currentVideo.thumbnail_url || '';
     document.getElementById('videoDuration').value = currentVideo.duration || '';
     document.getElementById('videoImvdbId').value = currentVideo.imvdb_id || '';
-    document.getElementById('videoGenres').value = currentVideo.genres ? currentVideo.genres.join(', ') : '';
-    document.getElementById('videoAlbum').value = currentVideo.album || '';
+    
+    // Handle enhanced metadata fields with proper checks
+    const genresField = document.getElementById('videoGenres');
+    if (genresField) {
+        genresField.value = currentVideo.genres ? 
+            (Array.isArray(currentVideo.genres) ? currentVideo.genres.join(', ') : currentVideo.genres) : '';
+    }
+    
+    const albumField = document.getElementById('videoAlbum');
+    if (albumField) {
+        albumField.value = currentVideo.album || '';
+    }
+    
+    const keywordsField = document.getElementById('videoKeywords');
+    if (keywordsField) {
+        keywordsField.value = currentVideo.search_keywords || '';
+    }
+    
+    const descriptionField = document.getElementById('videoDescription');
+    if (descriptionField) {
+        descriptionField.value = currentVideo.description || '';
+    }
+    
+    const lyricsField = document.getElementById('videoLyrics');
+    if (lyricsField) {
+        lyricsField.value = currentVideo.lyrics || '';
+    }
+    
     document.getElementById('moveFile').checked = true;
     
     // Reset the identify artist button and hide suggestions
@@ -1090,26 +1332,6 @@ function editVideo() {
     document.getElementById('editVideoModal').style.display = 'block';
 }
 
-function refreshMetadata() {
-    if (!currentVideo) return;
-    
-    fetch(`/api/videos/${currentVideo.id}/refresh-metadata`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.error) {
-            showError('Error: ' + result.error);
-        } else {
-            showSuccess('Metadata refreshed successfully');
-            loadVideoDetails(); // Refresh to show updated data
-        }
-    })
-    .catch(error => {
-        console.error('Error refreshing metadata:', error);
-        showError('Error refreshing metadata');
-    });
-}
 
 function enhancedRefreshMetadata() {
     if (!currentVideo) return;
@@ -1163,39 +1385,6 @@ function enhancedRefreshMetadata() {
     });
 }
 
-function extractFFmpegMetadata() {
-    if (!currentVideo || !currentVideo.local_path) return;
-    
-    const button = event.target;
-    const originalText = button.textContent;
-    button.textContent = 'Extracting...';
-    button.disabled = true;
-    
-    fetch(`/api/videos/${currentVideo.id}/extract-ffmpeg-metadata`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.error) {
-            showError('Error: ' + result.error);
-        } else {
-            if (result.updated) {
-                showSuccess('FFmpeg metadata extracted successfully!');
-                loadVideoDetails(); // Refresh to show updated data
-            } else {
-                showInfo('Video already has complete metadata');
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error extracting FFmpeg metadata:', error);
-        showError('Error extracting FFmpeg metadata');
-    })
-    .finally(() => {
-        button.textContent = originalText;
-        button.disabled = false;
-    });
-}
 
 function updateStatus(newStatus) {
     if (!currentVideo) return;
@@ -1766,6 +1955,117 @@ function checkQualityUpgrade() {
     });
 }
 
+// Lyrics Management Functions
+async function loadVideoLyrics() {
+    if (!currentVideo) return;
+    
+    try {
+        const response = await fetch(`/api/videos/${currentVideo.id}/lyrics`);
+        if (response.ok) {
+            const result = await response.json();
+            if (result.lyrics) {
+                displayLyrics(result.lyrics);
+            } else {
+                document.getElementById('lyricsContent').innerHTML = 
+                    '<div class="lyrics-placeholder">No lyrics available. Click "Search Lyrics" to find them automatically.</div>';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading lyrics:', error);
+        document.getElementById('lyricsContent').innerHTML = 
+            '<div class="lyrics-placeholder">Error loading lyrics.</div>';
+    }
+}
+
+function displayLyrics(lyrics) {
+    const lyricsContent = document.getElementById('lyricsContent');
+    lyricsContent.innerHTML = `<div class="lyrics-text">${lyrics}</div>`;
+}
+
+async function searchLyrics() {
+    if (!currentVideo) return;
+    
+    const searchBtn = event.target;
+    const originalText = searchBtn.textContent;
+    searchBtn.textContent = '🔍 Searching...';
+    searchBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`/api/videos/${currentVideo.id}/lyrics/search`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        if (response.ok && result.success) {
+            displayLyrics(result.lyrics);
+            showSuccess('Lyrics found and saved!');
+        } else {
+            showError('Failed to find lyrics: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error searching lyrics:', error);
+        showError('Error searching for lyrics: ' + error.message);
+    } finally {
+        searchBtn.textContent = originalText;
+        searchBtn.disabled = false;
+    }
+}
+
+function editLyrics() {
+    if (!currentVideo) return;
+    
+    const lyricsContent = document.getElementById('lyricsContent');
+    const currentLyrics = lyricsContent.querySelector('.lyrics-text')?.textContent || '';
+    
+    lyricsContent.innerHTML = `
+        <textarea class="lyrics-edit-area" id="lyricsEditArea">${currentLyrics}</textarea>
+        <div class="lyrics-edit-actions">
+            <button onclick="cancelEditLyrics()" class="btn btn-secondary">Cancel</button>
+            <button onclick="saveLyrics()" class="btn btn-primary">Save Lyrics</button>
+        </div>
+    `;
+    
+    document.getElementById('lyricsEditArea').focus();
+}
+
+function cancelEditLyrics() {
+    loadVideoLyrics(); // Reload original lyrics
+}
+
+async function saveLyrics() {
+    if (!currentVideo) return;
+    
+    const lyrics = document.getElementById('lyricsEditArea').value;
+    const saveBtn = event.target;
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Saving...';
+    saveBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`/api/videos/${currentVideo.id}/lyrics`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ lyrics: lyrics })
+        });
+        
+        const result = await response.json();
+        if (response.ok && result.success) {
+            displayLyrics(lyrics);
+            showSuccess('Lyrics saved successfully!');
+        } else {
+            showError('Failed to save lyrics: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving lyrics:', error);
+        showError('Error saving lyrics: ' + error.message);
+    } finally {
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+    }
+}
+
 </script>
 
 <style>
@@ -1928,6 +2228,101 @@ function checkQualityUpgrade() {
 
 #upgradeQualityBtn iconify-icon {
     vertical-align: middle;
+}
+
+/* Enhanced Metadata Styles */
+.keyword-tags, .director-tags, .producer-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.keyword-tag, .director-tag, .producer-tag {
+    background: var(--accent-primary, #00d4ff);
+    color: var(--text-on-accent, #000);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.description-text {
+    background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid var(--accent-primary, #00d4ff);
+    margin-top: 5px;
+    white-space: pre-wrap;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+/* Lyrics Section Styles */
+.lyrics-section {
+    margin-top: 25px;
+    background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+    border-radius: 8px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    overflow: hidden;
+}
+
+.lyrics-header {
+    background: var(--bg-secondary, rgba(255, 255, 255, 0.1));
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lyrics-header h4 {
+    margin: 0;
+    color: var(--text-primary, #fff);
+}
+
+.lyrics-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.lyrics-content {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.lyrics-text {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: var(--text-primary, #fff);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.lyrics-placeholder {
+    color: var(--text-secondary, #ccc);
+    font-style: italic;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.lyrics-edit-area {
+    width: 100%;
+    min-height: 200px;
+    background: var(--bg-primary, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+    border-radius: 6px;
+    padding: 15px;
+    color: var(--text-primary, #fff);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.lyrics-edit-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
 }
 </style>
 

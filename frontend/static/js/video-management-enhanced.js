@@ -139,12 +139,6 @@ class VideoManagementUI {
                 type: 'btn-success',
                 handler: 'addToPlaylist'
             },
-            {
-                icon: 'tabler:edit',
-                label: 'Edit',
-                type: 'btn-ghost',
-                handler: 'editVideo'
-            }
         ];
         
         const statusActions = {
@@ -763,9 +757,6 @@ class VideoManagementUI {
                     break;
                 case 'playVideo':
                     await this.playVideo(videoId);
-                    break;
-                case 'editVideo':
-                    this.openVideoEditModal(videoId);
                     break;
                 case 'addToPlaylist':
                     this.addSingleVideoToPlaylist(videoId);

@@ -5169,7 +5169,7 @@ function renderVideosTab(videos) {
                 <div class="video-metadata">
                     ${video.year ? `<span class="video-year">${video.year}</span>` : ''}
                     ${video.duration ? `<span class="video-duration">${formatDuration(video.duration)}</span>` : ''}
-                    ${video.directors && video.directors.length > 0 ? `<span class="video-directors">Dir: ${video.directors.join(', ')}</span>` : ''}
+                    ${video.directors ? `<span class="video-directors">Dir: ${formatDirectorList(video.directors)}</span>` : ''}
                 </div>
                 <div class="video-actions">
                     <button type="button" onclick="event.stopPropagation(); viewVideoDetails(${video.id})" class="btn btn-icon btn-info" title="View Details">
@@ -5181,7 +5181,7 @@ function renderVideosTab(videos) {
                     <button type="button" onclick="event.stopPropagation(); updateVideoStatus(${video.id})" class="btn btn-icon btn-secondary" title="Update Status">
                         <iconify-icon icon="tabler:edit"></iconify-icon>
                     </button>
-                    <button type="button" onclick="event.stopPropagation(); refreshVideoMetadata(${video.id})" class="btn btn-icon btn-warning" title="Refresh Metadata">
+                    <button type="button" onclick="event.stopPropagation(); refreshVideoMetadata(${video.id})" class="btn btn-icon btn-warning" title="Refresh Enhanced Metadata">
                         <iconify-icon icon="tabler:refresh"></iconify-icon>
                     </button>
                     <button 
@@ -5380,8 +5380,8 @@ function renderDiscoverResults(data) {
                         ${video.source === 'youtube' && video.view_count ? '<span class="meta-views">👁️ ' + formatNumber(video.view_count) + ' views</span>' : ''}
                         ${video.source === 'youtube' && video.like_count ? '<span class="meta-likes">👍 ' + formatNumber(video.like_count) + '</span>' : ''}
                         ${video.source === 'youtube' && video.published_at ? '<span class="meta-published">📅 ' + new Date(video.published_at).toLocaleDateString() + '</span>' : ''}
-                        ${video.source !== 'youtube' && video.directors && video.directors.length > 0 ? '<span class="meta-directors">🎥 ' + video.directors.join(', ') + '</span>' : ''}
-                        ${video.source !== 'youtube' && video.producers && video.producers.length > 0 ? '<span class="meta-producers">🎤 ' + video.producers.join(', ') + '</span>' : ''}
+                        ${video.source !== 'youtube' && video.directors ? '<span class="meta-directors">🎥 ' + formatDirectorList(video.directors) + '</span>' : ''}
+                        ${video.source !== 'youtube' && video.producers ? '<span class="meta-producers">🎤 ' + formatProducerList(video.producers) + '</span>' : ''}
                         ${video.source !== 'youtube' && video.album ? '<span class="meta-album">💿 ' + video.album + '</span>' : ''}
                         ${video.source !== 'youtube' && video.genre ? '<span class="meta-genre">🎵 ' + video.genre + '</span>' : ''}
                         ${video.duration ? '<span class="meta-duration">⏱️ ' + formatDuration(video.duration) + '</span>' : ''}
@@ -5465,6 +5465,70 @@ function formatDuration(seconds) {
     }
 }
 
+function formatDirectorList(directors) {
+    if (!directors) return '';
+    
+    let directorNames = [];
+    
+    // Handle different data formats that might cause "[object Object]" display
+    if (Array.isArray(directors)) {
+        // Process each item in the array
+        directorNames = directors.map(item => {
+            if (typeof item === 'string') {
+                return item;
+            } else if (typeof item === 'object' && item !== null) {
+                // Extract name from object - check common IMVDb format properties
+                return item.entity_name || item.name || item.title || item.value || String(item);
+            } else {
+                return String(item);
+            }
+        }).filter(name => name && name !== 'undefined' && name !== 'null');
+    } else if (typeof directors === 'object' && directors !== null) {
+        // Handle single director object
+        directorNames = [directors.entity_name || directors.name || directors.title || directors.value || String(directors)];
+    } else if (typeof directors === 'string') {
+        // Handle comma-separated string
+        directorNames = directors.split(/[,;]/).map(d => d.trim()).filter(d => d);
+    } else {
+        // Fallback for other types
+        directorNames = [String(directors)];
+    }
+    
+    return directorNames.filter(name => name && name !== '[object Object]').join(', ');
+}
+
+function formatProducerList(producers) {
+    if (!producers) return '';
+    
+    let producerNames = [];
+    
+    // Handle different data formats that might cause "[object Object]" display
+    if (Array.isArray(producers)) {
+        // Process each item in the array
+        producerNames = producers.map(item => {
+            if (typeof item === 'string') {
+                return item;
+            } else if (typeof item === 'object' && item !== null) {
+                // Extract name from object - check common IMVDb format properties
+                return item.entity_name || item.name || item.title || item.value || String(item);
+            } else {
+                return String(item);
+            }
+        }).filter(name => name && name !== 'undefined' && name !== 'null');
+    } else if (typeof producers === 'object' && producers !== null) {
+        // Handle single producer object
+        producerNames = [producers.entity_name || producers.name || producers.title || producers.value || String(producers)];
+    } else if (typeof producers === 'string') {
+        // Handle comma-separated string
+        producerNames = producers.split(/[,;]/).map(p => p.trim()).filter(p => p);
+    } else {
+        // Fallback for other types
+        producerNames = [String(producers)];
+    }
+    
+    return producerNames.filter(name => name && name !== '[object Object]').join(', ');
+}
+
 function formatFileSize(bytes) {
     if (!bytes) return 'Unknown';
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -5527,28 +5591,9 @@ function handleVideoCardClick(event, videoId) {
         event.preventDefault();
         toggleVideoSelection(videoId);
     } else {
-        // Double-click to edit video
-        if (event.detail === 2) {
-            editVideo(videoId);
-        }
     }
 }
 
-function editVideo(videoId) {
-    // Set current video for thumbnail manager
-    window.currentEditVideoId = videoId;
-    
-    // Load video details for editing
-    fetch(`/api/videos/${videoId}`)
-        .then(response => response.json())
-        .then(video => {
-            showVideoEditModal(video);
-        })
-        .catch(error => {
-            console.error('Error loading video:', error);
-            showError('Failed to load video details');
-        });
-}
 
 function showVideoEditModal(video) {
     const modalHtml = `
@@ -6193,18 +6238,21 @@ async function refreshVideoMetadata(videoId) {
             icon.setAttribute('icon', 'tabler:loader-2');
         }
         
-        safeShowInfo('Refreshing metadata...');
+        safeShowInfo('Enriching metadata from multiple sources...');
         
-        // Call the FFmpeg metadata extraction endpoint
-        const response = await fetch(`/api/videos/${videoId}/extract-ffmpeg-metadata`, {
+        // Call the enhanced metadata enrichment endpoint
+        const response = await fetch(`/api/videos/${videoId}/enhanced-refresh-metadata`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                force_refresh: false
+            })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            safeShowSuccess(`Metadata refreshed successfully! ${result.metadata_extracted ? 'Technical metadata extracted.' : ''}`);
+            safeShowSuccess(`Enhanced metadata enriched successfully! ${result.sources_used ? `Sources: ${result.sources_used.join(', ')}` : ''}`);
             
             // Refresh the videos display to show updated metadata
             if (typeof loadArtistVideos === 'function') {
@@ -6219,8 +6267,8 @@ async function refreshVideoMetadata(videoId) {
             throw new Error(result.error || 'Metadata refresh failed');
         }
     } catch (error) {
-        console.error('Error refreshing metadata:', error);
-        safeShowError(`Failed to refresh metadata: ${error.message}`);
+        console.error('Error refreshing enhanced metadata:', error);
+        safeShowError(`Failed to refresh enhanced metadata: ${error.message}`);
     } finally {
         // Reset button state
         const refreshBtn = document.querySelector(`button[onclick*="refreshVideoMetadata(${videoId})"]`);
@@ -7732,16 +7780,16 @@ function loadVideoPreview() {
                             <span class="metadata-value">${formatDuration(video.duration)}</span>
                         </div>
                     ` : ''}
-                    ${video.directors && video.directors.length > 0 ? `
+                    ${video.directors ? `
                         <div class="metadata-item">
                             <span class="metadata-label">Directors:</span>
-                            <span class="metadata-value">${video.directors.join(', ')}</span>
+                            <span class="metadata-value">${formatDirectorList(video.directors)}</span>
                         </div>
                     ` : ''}
-                    ${video.producers && video.producers.length > 0 ? `
+                    ${video.producers ? `
                         <div class="metadata-item">
                             <span class="metadata-label">Producers:</span>
-                            <span class="metadata-value">${video.producers.join(', ')}</span>
+                            <span class="metadata-value">${formatProducerList(video.producers)}</span>
                         </div>
                     ` : ''}
                     ${video.quality ? `

@@ -22,10 +22,53 @@ from src.services.lastfm_service import lastfm_service
 from src.services.musicbrainz_service import musicbrainz_service
 from src.services.settings_service import settings
 from src.services.spotify_service import spotify_service
+from src.services.video_indexing_service import VideoIndexingService
 from src.services.wikipedia_service import WikipediaService
 from src.utils.logger import get_logger
 
+# Lyrics search functionality
+import requests
+import urllib.parse
+
 logger = get_logger("mvidarr.services.metadata_enrichment")
+
+
+def search_lyrics_azlyrics(artist, title):
+    """Search for lyrics using Lyrics.ovh API (formerly azlyrics approach)"""
+    try:
+        # Clean artist and title for API request
+        artist_clean = artist.strip()
+        title_clean = title.strip()
+        
+        # URL encode the parameters to handle special characters
+        import urllib.parse
+        artist_encoded = urllib.parse.quote(artist_clean)
+        title_encoded = urllib.parse.quote(title_clean)
+        
+        # Use the free Lyrics.ovh API
+        url = f"https://api.lyrics.ovh/v1/{artist_encoded}/{title_encoded}"
+        
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            lyrics = data.get('lyrics', '')
+            
+            # Clean up the lyrics
+            if lyrics:
+                lyrics = lyrics.strip()
+                # Remove excessive whitespace and normalize line breaks
+                lyrics = '\n'.join(line.strip() for line in lyrics.split('\n') if line.strip())
+                
+                # Check if we got substantial content (more than just a few words)
+                if len(lyrics) > 50:
+                    return lyrics
+                    
+        return None
+        
+    except Exception as e:
+        logger.warning(f"Lyrics.ovh search failed for {artist} - {title}: {e}")
+        return None
 
 
 @dataclass
@@ -1631,7 +1674,9 @@ class MetadataEnrichmentService:
         """Enhanced video metadata enrichment using multiple sources"""
         try:
             with get_db() as session:
-                video = session.query(Video).filter(Video.id == video_id).first()
+                # Eagerly load the video with its artist relationship to avoid lazy loading issues
+                from sqlalchemy.orm import joinedload
+                video = session.query(Video).options(joinedload(Video.artist)).filter(Video.id == video_id).first()
 
                 if not video:
                     return EnrichmentResult(
@@ -1687,10 +1732,20 @@ class MetadataEnrichmentService:
                                     video.producers = imvdb_metadata["producers"]
                                     updated_fields.append("producers")
                                 
-                                if not video.thumbnail_url and imvdb_metadata.get("thumbnail_url"):
-                                    video.thumbnail_url = imvdb_metadata["thumbnail_url"]
-                                    video.thumbnail_source = "imvdb"
-                                    updated_fields.extend(["thumbnail_url", "thumbnail_source"])
+                                # Handle thumbnail extraction with validation and force refresh support
+                                thumbnail_url = imvdb_metadata.get("thumbnail_url")
+                                if thumbnail_url and thumbnail_url != "https://imvdb.com/" and len(thumbnail_url) > 20:
+                                    if (not video.thumbnail_url or force_refresh or not video.thumbnail_source):
+                                        video.thumbnail_url = thumbnail_url
+                                        video.thumbnail_source = "imvdb"
+                                        updated_fields.extend(["thumbnail_url", "thumbnail_source"])
+                                        logger.info(f"Added thumbnail from IMVDb for video {video_id}: {video.thumbnail_url}")
+                                elif video.thumbnail_url:
+                                    logger.debug(f"Video {video_id} already has thumbnail: {video.thumbnail_url}")
+                                elif not thumbnail_url:
+                                    logger.debug(f"No valid thumbnail available in IMVDb metadata for video {video_id}")
+                                else:
+                                    logger.debug(f"Rejected invalid IMVDb thumbnail for video {video_id}: {thumbnail_url}")
                                 
                                 # Store raw IMVDb metadata
                                 video.imvdb_metadata = imvdb_metadata.get("raw_metadata")
@@ -1738,7 +1793,7 @@ class MetadataEnrichmentService:
                                 video.duration = best_track["duration_ms"] // 1000  # Convert to seconds
                                 updated_fields.append("duration")
 
-                            # Get genres from artist or album
+                            # Get genres from artist or album  
                             if not video.genres:
                                 # Try to get genres from artist
                                 if video.artist.spotify_id:
@@ -1750,6 +1805,19 @@ class MetadataEnrichmentService:
                                     except Exception:
                                         pass
 
+                            # Extract Spotify album artwork as thumbnail if needed
+                            if (not video.thumbnail_url or force_refresh) and album_data.get("images"):
+                                # Get the highest quality image (first one is usually the best)
+                                album_images = album_data["images"]
+                                if album_images and len(album_images) > 0:
+                                    spotify_thumbnail_url = album_images[0].get("url")
+                                    if spotify_thumbnail_url:
+                                        video.thumbnail_url = spotify_thumbnail_url
+                                        video.thumbnail_source = "spotify"
+                                        updated_fields.extend(["thumbnail_url", "thumbnail_source"])
+                                        metadata_sources["Spotify Album Art"] = "Thumbnail extraction"
+                                        logger.info(f"Added Spotify album art thumbnail for video {video_id}: {spotify_thumbnail_url}")
+
                             # Store additional metadata
                             video_metadata = video.video_metadata or {}
                             video_metadata.update({
@@ -1757,6 +1825,7 @@ class MetadataEnrichmentService:
                                 "spotify_popularity": best_track.get("popularity"),
                                 "spotify_preview_url": best_track.get("preview_url"),
                                 "spotify_album_type": album_data.get("album_type"),
+                                "spotify_album_images": album_data.get("images", []),
                             })
                             video.video_metadata = video_metadata
                             updated_fields.append("video_metadata")
@@ -1828,14 +1897,127 @@ class MetadataEnrichmentService:
                 # 5. YouTube metadata enhancement (if we have YouTube ID)
                 try:
                     if video.youtube_id:
-                        # Get YouTube video details for additional metadata
-                        # Note: This would require YouTube API integration
-                        logger.debug(f"YouTube metadata enrichment not yet implemented for video {video_id}")
+                        # Extract YouTube thumbnail if no thumbnail exists or force refresh
+                        if not video.thumbnail_url or force_refresh:
+                            # YouTube thumbnail URLs follow a standard pattern
+                            youtube_thumbnail_url = f"https://img.youtube.com/vi/{video.youtube_id}/maxresdefault.jpg"
+                            
+                            # Verify the thumbnail exists by making a HEAD request
+                            try:
+                                response = requests.head(youtube_thumbnail_url, timeout=5)
+                                if response.status_code == 200:
+                                    video.thumbnail_url = youtube_thumbnail_url
+                                    video.thumbnail_source = "youtube"
+                                    updated_fields.extend(["thumbnail_url", "thumbnail_source"])
+                                    metadata_sources["YouTube"] = "Thumbnail extraction"
+                                    logger.info(f"Added YouTube thumbnail for video {video_id}: {youtube_thumbnail_url}")
+                                else:
+                                    # Try medium quality if maxres doesn't exist
+                                    youtube_thumbnail_url = f"https://img.youtube.com/vi/{video.youtube_id}/mqdefault.jpg"
+                                    response = requests.head(youtube_thumbnail_url, timeout=5)
+                                    if response.status_code == 200:
+                                        video.thumbnail_url = youtube_thumbnail_url
+                                        video.thumbnail_source = "youtube"
+                                        updated_fields.extend(["thumbnail_url", "thumbnail_source"])
+                                        metadata_sources["YouTube"] = "Thumbnail extraction"
+                                        logger.info(f"Added YouTube thumbnail (medium) for video {video_id}: {youtube_thumbnail_url}")
+                            except Exception as thumb_error:
+                                logger.debug(f"YouTube thumbnail verification failed for video {video_id}: {thumb_error}")
+                        
                         # TODO: Implement YouTube video metadata extraction
+                        logger.debug(f"YouTube metadata enrichment not yet implemented for video {video_id}")
 
                 except Exception as e:
                     errors.append(f"YouTube enrichment failed: {str(e)}")
                     logger.warning(f"YouTube enrichment failed for video {video_id}: {e}")
+
+                # 6. FFmpeg metadata extraction (if local file exists)
+                try:
+                    if video.local_path and (force_refresh or not video.video_metadata or 
+                                           not video.video_metadata.get('ffmpeg_extracted')):
+                        import os
+                        from pathlib import Path
+                        if os.path.exists(video.local_path):
+                            video_indexing_service = VideoIndexingService()
+                            ffmpeg_metadata = video_indexing_service.extract_ffmpeg_metadata(video.local_path)
+                            
+                            if ffmpeg_metadata:
+                                # Update direct fields
+                                if ffmpeg_metadata.get('duration') and not video.duration:
+                                    video.duration = ffmpeg_metadata['duration']
+                                    updated_fields.append("duration")
+                                
+                                if ffmpeg_metadata.get('quality') and not video.quality:
+                                    video.quality = ffmpeg_metadata['quality']
+                                    updated_fields.append("quality")
+                                
+                                # Update metadata JSON
+                                if not video.video_metadata:
+                                    video.video_metadata = {}
+                                
+                                video.video_metadata.update({
+                                    'width': ffmpeg_metadata.get('width'),
+                                    'height': ffmpeg_metadata.get('height'),
+                                    'video_codec': ffmpeg_metadata.get('video_codec'),
+                                    'audio_codec': ffmpeg_metadata.get('audio_codec'),
+                                    'fps': ffmpeg_metadata.get('fps'),
+                                    'bitrate': ffmpeg_metadata.get('bitrate'),
+                                    'file_size': ffmpeg_metadata.get('file_size'),
+                                    'ffmpeg_extracted': True,
+                                    'ffmpeg_extraction_date': datetime.utcnow().isoformat()
+                                })
+                                flag_modified(video, 'video_metadata')
+                                updated_fields.append("video_metadata")
+                                metadata_sources["FFmpeg"] = "Video file analysis"
+                                logger.info(f"FFmpeg metadata extracted for video {video_id}")
+
+                except Exception as e:
+                    errors.append(f"FFmpeg extraction failed: {str(e)}")
+                    logger.warning(f"FFmpeg extraction failed for video {video_id}: {e}")
+
+                # 7. Lyrics search (if no existing lyrics or force refresh)
+                try:
+                    logger.info(f"Starting lyrics search for video {video_id}. Current lyrics: {'exists' if video.lyrics else 'empty'}, force_refresh: {force_refresh}")
+                    if force_refresh or not video.lyrics:
+                        if video.artist and video.artist.name and video.title:
+                            logger.info(f"Searching lyrics for: '{video.artist.name}' - '{video.title}'")
+                            # Try lyrics search using the existing azlyrics function
+                            try:
+                                lyrics_result = search_lyrics_azlyrics(video.artist.name, video.title)
+                                if lyrics_result and len(lyrics_result.strip()) > 50:
+                                    video.lyrics = lyrics_result
+                                    updated_fields.append("lyrics")
+                                    metadata_sources["Lyrics.ovh"] = "Lyrics search"
+                                    logger.info(f"Lyrics found and saved for video {video_id} ({len(lyrics_result)} chars)")
+                                else:
+                                    logger.info(f"No substantial lyrics found for video {video_id} (result: {lyrics_result[:100] if lyrics_result else 'None'})")
+                            except Exception as lyrics_error:
+                                logger.warning(f"Lyrics search failed for video {video_id}: {lyrics_error}")
+                        else:
+                            logger.info(f"Cannot search lyrics for video {video_id}: missing artist name ({video.artist.name if video.artist else 'None'}) or title ({video.title})")
+
+                except Exception as e:
+                    errors.append(f"Lyrics search failed: {str(e)}")
+                    logger.warning(f"Lyrics search failed for video {video_id}: {e}")
+
+                # 8. Genre fallback - Use artist genres if video still has no genres
+                try:
+                    logger.info(f"Checking genre fallback for video {video_id}. Video genres: {video.genres}, Artist genres: {video.artist.genres if video.artist else 'No artist'}")
+                    if not video.genres and video.artist and video.artist.genres:
+                        video.genres = video.artist.genres[:3]  # Top 3 genres from artist
+                        updated_fields.append("genres")
+                        metadata_sources["Artist Database"] = "Genre fallback"
+                        logger.info(f"Applied genre fallback from artist for video {video_id}: {video.genres}")
+                    elif video.genres:
+                        logger.info(f"Video {video_id} already has genres: {video.genres}")
+                    elif not video.artist:
+                        logger.info(f"Video {video_id} has no artist for genre fallback")
+                    elif not video.artist.genres:
+                        logger.info(f"Video {video_id} artist has no genres for fallback")
+                        
+                except Exception as e:
+                    errors.append(f"Genre fallback failed: {str(e)}")
+                    logger.warning(f"Genre fallback failed for video {video_id}: {e}")
 
                 # Update enrichment timestamp
                 video.last_enriched = datetime.utcnow()

@@ -316,6 +316,10 @@ class SpotifyService:
         params = {"q": artist_name, "type": "artist", "limit": limit}
         return self._make_request("search", params)
 
+    def get_artist(self, artist_id: str) -> Dict:
+        """Get detailed information about a specific artist including genres"""
+        return self._make_request(f"artists/{artist_id}")
+
     def search_tracks(self, query: str, limit: int = 10) -> Dict:
         """Search for tracks on Spotify"""
         params = {"q": query, "type": "track", "limit": limit}
