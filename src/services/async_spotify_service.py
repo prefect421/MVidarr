@@ -556,7 +556,15 @@ class AsyncSpotifyService:
 
 # Global async Spotify service instance
 _global_spotify_service: Optional[AsyncSpotifyService] = None
-_spotify_lock = asyncio.Lock()
+_spotify_lock: Optional[asyncio.Lock] = None
+
+
+def _get_global_spotify_lock() -> asyncio.Lock:
+    """Get global Spotify lock, creating it if needed (lazy initialization)"""
+    global _spotify_lock
+    if _spotify_lock is None:
+        _spotify_lock = asyncio.Lock()
+    return _spotify_lock
 
 
 async def get_async_spotify_service() -> AsyncSpotifyService:
@@ -564,7 +572,8 @@ async def get_async_spotify_service() -> AsyncSpotifyService:
     global _global_spotify_service
     
     if _global_spotify_service is None:
-        async with _spotify_lock:
+        lock = _get_global_spotify_lock()
+        async with lock:
             if _global_spotify_service is None:
                 _global_spotify_service = AsyncSpotifyService()
                 logger.info("Created global async Spotify service instance")
