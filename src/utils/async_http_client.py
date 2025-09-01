@@ -79,13 +79,8 @@ class AsyncHttpClient:
     async def _get_session_lock(self) -> asyncio.Lock:
         """Get session lock, creating it if needed (lazy initialization)"""
         if self._session_lock is None:
-            try:
-                # Get current event loop to ensure lock is bound to correct loop
-                loop = asyncio.get_running_loop()
-                self._session_lock = asyncio.Lock()
-            except RuntimeError:
-                # No running loop, create lock without explicit loop binding
-                self._session_lock = asyncio.Lock()
+            # Always create lock in the current running loop context
+            self._session_lock = asyncio.Lock()
         return self._session_lock
 
     async def _get_session(self) -> aiohttp.ClientSession:
@@ -359,17 +354,12 @@ _global_client: Optional[AsyncHttpClient] = None
 _client_lock: Optional[asyncio.Lock] = None
 
 
-def _get_global_client_lock() -> asyncio.Lock:
+async def _get_global_client_lock() -> asyncio.Lock:
     """Get global client lock, creating it if needed (lazy initialization)"""
     global _client_lock
     if _client_lock is None:
-        try:
-            # Get current event loop to ensure lock is bound to correct loop
-            loop = asyncio.get_running_loop()
-            _client_lock = asyncio.Lock()
-        except RuntimeError:
-            # No running loop, create lock without explicit loop binding
-            _client_lock = asyncio.Lock()
+        # Always create lock in the current running loop context
+        _client_lock = asyncio.Lock()
     return _client_lock
 
 
@@ -378,7 +368,7 @@ async def get_global_http_client() -> AsyncHttpClient:
     global _global_client
     
     if _global_client is None:
-        lock = _get_global_client_lock()
+        lock = await _get_global_client_lock()
         async with lock:
             if _global_client is None:
                 _global_client = AsyncHttpClient(

@@ -58,25 +58,15 @@ class AsyncSpotifyService:
     async def _get_token_lock(self) -> asyncio.Lock:
         """Get token lock, creating it if needed (lazy initialization)"""
         if self._token_lock is None:
-            try:
-                # Get current event loop to ensure lock is bound to correct loop
-                loop = asyncio.get_running_loop()
-                self._token_lock = asyncio.Lock()
-            except RuntimeError:
-                # No running loop, create lock without explicit loop binding
-                self._token_lock = asyncio.Lock()
+            # Always create lock in the current running loop context
+            self._token_lock = asyncio.Lock()
         return self._token_lock
 
     async def _get_settings_lock(self) -> asyncio.Lock:
         """Get settings lock, creating it if needed (lazy initialization)"""
         if self._settings_lock is None:
-            try:
-                # Get current event loop to ensure lock is bound to correct loop
-                loop = asyncio.get_running_loop()
-                self._settings_lock = asyncio.Lock()
-            except RuntimeError:
-                # No running loop, create lock without explicit loop binding
-                self._settings_lock = asyncio.Lock()
+            # Always create lock in the current running loop context
+            self._settings_lock = asyncio.Lock()
         return self._settings_lock
 
     async def _load_settings(self):
@@ -571,17 +561,12 @@ _global_spotify_service: Optional[AsyncSpotifyService] = None
 _spotify_lock: Optional[asyncio.Lock] = None
 
 
-def _get_global_spotify_lock() -> asyncio.Lock:
+async def _get_global_spotify_lock() -> asyncio.Lock:
     """Get global Spotify lock, creating it if needed (lazy initialization)"""
     global _spotify_lock
     if _spotify_lock is None:
-        try:
-            # Get current event loop to ensure lock is bound to correct loop
-            loop = asyncio.get_running_loop()
-            _spotify_lock = asyncio.Lock()
-        except RuntimeError:
-            # No running loop, create lock without explicit loop binding
-            _spotify_lock = asyncio.Lock()
+        # Always create lock in the current running loop context
+        _spotify_lock = asyncio.Lock()
     return _spotify_lock
 
 
@@ -590,7 +575,7 @@ async def get_async_spotify_service() -> AsyncSpotifyService:
     global _global_spotify_service
     
     if _global_spotify_service is None:
-        lock = _get_global_spotify_lock()
+        lock = await _get_global_spotify_lock()
         async with lock:
             if _global_spotify_service is None:
                 _global_spotify_service = AsyncSpotifyService()
