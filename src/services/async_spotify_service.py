@@ -44,23 +44,36 @@ class AsyncSpotifyService:
         self.base_url = "https://api.spotify.com/v1"
         self.auth_url = "https://accounts.spotify.com/api/token"
         
-        # Thread-safe token management
+        # Thread-safe token management (lazy initialization to avoid event loop issues)
         self._token_info: Optional[SpotifyTokenInfo] = None
-        self._token_lock = asyncio.Lock()
+        self._token_lock: Optional[asyncio.Lock] = None
         
         # Cache for settings to avoid repeated calls
         self._client_id: Optional[str] = None
         self._client_secret: Optional[str] = None
         self._redirect_uri: Optional[str] = None
         self._settings_loaded = False
-        self._settings_lock = asyncio.Lock()
+        self._settings_lock: Optional[asyncio.Lock] = None
+
+    async def _get_token_lock(self) -> asyncio.Lock:
+        """Get token lock, creating it if needed (lazy initialization)"""
+        if self._token_lock is None:
+            self._token_lock = asyncio.Lock()
+        return self._token_lock
+
+    async def _get_settings_lock(self) -> asyncio.Lock:
+        """Get settings lock, creating it if needed (lazy initialization)"""
+        if self._settings_lock is None:
+            self._settings_lock = asyncio.Lock()
+        return self._settings_lock
 
     async def _load_settings(self):
         """Load settings once and cache them (thread-safe)"""
         if self._settings_loaded:
             return
 
-        async with self._settings_lock:
+        settings_lock = await self._get_settings_lock()
+        async with settings_lock:
             if self._settings_loaded:
                 return
 
@@ -168,7 +181,8 @@ class AsyncSpotifyService:
             )
 
             # Store token info
-            async with self._token_lock:
+            token_lock = await self._get_token_lock()
+            async with token_lock:
                 self._token_info = token_info
 
             logger.info("Successfully obtained Spotify access token")
@@ -180,7 +194,8 @@ class AsyncSpotifyService:
 
     async def refresh_access_token(self) -> SpotifyTokenInfo:
         """Refresh access token using refresh token"""
-        async with self._token_lock:
+        token_lock = await self._get_token_lock()
+        async with token_lock:
             if not self._token_info or not self._token_info.refresh_token:
                 raise ValueError("No refresh token available")
 
@@ -259,7 +274,8 @@ class AsyncSpotifyService:
                 scope=response_data.get("scope")
             )
 
-            async with self._token_lock:
+            token_lock = await self._get_token_lock()
+            async with token_lock:
                 self._token_info = token_info
 
             logger.info("Successfully obtained Spotify client credentials token")
@@ -271,7 +287,8 @@ class AsyncSpotifyService:
 
     async def _ensure_valid_token(self):
         """Ensure we have a valid access token"""
-        async with self._token_lock:
+        token_lock = await self._get_token_lock()
+        async with token_lock:
             if not self._token_info:
                 # Try to get client credentials token
                 await self.get_client_credentials_token()
@@ -293,7 +310,8 @@ class AsyncSpotifyService:
         """Make authenticated request to Spotify API"""
         await self._ensure_valid_token()
 
-        async with self._token_lock:
+        token_lock = await self._get_token_lock()
+        async with token_lock:
             access_token = self._token_info.access_token
 
         headers = {
