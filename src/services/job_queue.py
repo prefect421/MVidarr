@@ -200,6 +200,9 @@ class JobQueue:
                     'progress': job.progress,
                     'message': job.message
                 })
+                
+                # Broadcast to WebSocket clients
+                self._broadcast_websocket_update(job, 'progress')
     
     async def complete_job(self, job_id: str, result: Optional[Dict[str, Any]] = None):
         """Mark job as completed with optional result data"""
@@ -224,6 +227,9 @@ class JobQueue:
                     'elapsed_time': job.elapsed_time().total_seconds() if job.elapsed_time() else 0,
                     'result': job.result
                 })
+                
+                # Broadcast to WebSocket clients
+                self._broadcast_websocket_update(job, 'completed')
     
     async def fail_job(self, job_id: str, error: str, retry: bool = True):
         """Mark job as failed and optionally retry"""
@@ -273,6 +279,9 @@ class JobQueue:
                         'error': error,
                         'retry_count': job.retry_count
                     })
+                    
+                    # Broadcast to WebSocket clients
+                    self._broadcast_websocket_update(job, 'failed')
     
     async def cancel_job(self, job_id: str) -> bool:
         """Cancel a queued job"""
@@ -377,6 +386,27 @@ class JobQueue:
             logger.info(f"Cleaned up {removed_count} old jobs")
         
         return removed_count
+    
+    def _broadcast_websocket_update(self, job: BackgroundJob, event_type: str):
+        """Broadcast job update via WebSocket (non-blocking)"""
+        try:
+            from .websocket_job_events import get_job_event_broadcaster
+            broadcaster = get_job_event_broadcaster()
+            if broadcaster:
+                if event_type == 'progress':
+                    broadcaster.broadcast_job_progress(job)
+                elif event_type == 'completed':
+                    broadcaster.broadcast_job_completed(job)
+                elif event_type == 'failed':
+                    broadcaster.broadcast_job_failed(job)
+                elif event_type == 'status_change':
+                    # This requires old_status, so skip for now
+                    pass
+        except ImportError:
+            # WebSocket system not available
+            pass
+        except Exception as e:
+            logger.warning(f"Failed to broadcast WebSocket update: {e}")
 
 
 # Global job queue instance

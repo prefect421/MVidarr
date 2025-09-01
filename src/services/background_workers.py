@@ -94,12 +94,24 @@ class BackgroundWorkerManager:
         self.worker_tasks: List[asyncio.Task] = []
         self.shutdown_event = asyncio.Event()
         
-        # Register default workers
-        self.register_worker(JobType.METADATA_ENRICHMENT, DummyWorker)  # Temporary
-        self.register_worker(JobType.VIDEO_DOWNLOAD, DummyWorker)  # Temporary
-        self.register_worker(JobType.BULK_ARTIST_IMPORT, DummyWorker)  # Temporary
-        self.register_worker(JobType.THUMBNAIL_GENERATION, DummyWorker)  # Temporary
-        self.register_worker(JobType.PLAYLIST_SYNC, DummyWorker)  # Temporary
+        # Register workers
+        self._register_default_workers()
+        
+    def _register_default_workers(self):
+        """Register default worker implementations"""
+        # Import workers here to avoid circular imports
+        try:
+            from .workers.metadata_enrichment_worker import MetadataEnrichmentWorker
+            self.register_worker(JobType.METADATA_ENRICHMENT, MetadataEnrichmentWorker)
+        except ImportError as e:
+            logger.warning(f"Could not import MetadataEnrichmentWorker: {e}")
+            self.register_worker(JobType.METADATA_ENRICHMENT, DummyWorker)  # Fallback
+        
+        # Other workers use dummy for now
+        self.register_worker(JobType.VIDEO_DOWNLOAD, DummyWorker)  # TODO: Implement VideoDownloadWorker
+        self.register_worker(JobType.BULK_ARTIST_IMPORT, DummyWorker)  # TODO: Implement BulkImportWorker  
+        self.register_worker(JobType.THUMBNAIL_GENERATION, DummyWorker)  # TODO: Implement ThumbnailWorker
+        self.register_worker(JobType.PLAYLIST_SYNC, DummyWorker)  # TODO: Implement PlaylistSyncWorker
         
         # Statistics
         self.stats = {
