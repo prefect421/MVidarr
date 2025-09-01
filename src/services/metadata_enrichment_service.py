@@ -22,6 +22,7 @@ from src.services.lastfm_service import lastfm_service
 from src.services.musicbrainz_service import musicbrainz_service
 from src.services.settings_service import settings
 from src.services.spotify_service import spotify_service
+from src.services.async_spotify_service import get_async_spotify_service
 from src.services.video_indexing_service import VideoIndexingService
 from src.services.wikipedia_service import WikipediaService
 from src.utils.logger import get_logger
@@ -347,42 +348,24 @@ class MetadataEnrichmentService:
         """Gather metadata from all available sources"""
         metadata_sources = {}
 
-        # Spotify metadata - check if enabled
-        if hasattr(self.spotify, "enabled") and self.spotify.enabled:
-            try:
-                logger.debug(f"🎵 SPOTIFY ENRICHMENT: Starting for {artist_data['name']}")
-                
-                # Ensure Spotify has access token for enrichment (use client credentials)
-                try:
-                    if not self.spotify.access_token:
-                        logger.debug(f"🎵 SPOTIFY ENRICHMENT: Getting client credentials token")
-                        token_data = self.spotify.get_client_credentials_token()
-                        self.spotify.access_token = token_data.get("access_token")
-                        expires_in = token_data.get("expires_in", 3600)
-                        self.spotify.token_expires = datetime.now() + timedelta(seconds=expires_in)
-                        logger.debug(f"🎵 SPOTIFY ENRICHMENT: Got access token successfully")
-                except Exception as auth_e:
-                    logger.warning(f"🎵 SPOTIFY ENRICHMENT: Authentication failed: {auth_e}")
-                    raise auth_e
-                
-                spotify_metadata = await self._get_spotify_metadata(artist_data)
-                if spotify_metadata:
-                    logger.debug(f"🎵 SPOTIFY ENRICHMENT: Got metadata: {spotify_metadata}")
-                    logger.debug(f"🎵 SPOTIFY ENRICHMENT: Related artists: {spotify_metadata.related_artists}")
-                    logger.debug(f"🎵 SPOTIFY ENRICHMENT: Top tracks: {spotify_metadata.top_tracks}")
-                    metadata_sources["spotify"] = spotify_metadata
-                    logger.debug(
-                        f"Successfully gathered Spotify metadata for {artist_data['name']}"
-                    )
-                else:
-                    logger.debug(f"🎵 SPOTIFY ENRICHMENT: No metadata returned for {artist_data['name']}")
-            except Exception as e:
-                logger.warning(
-                    f"Failed to get Spotify metadata for {artist_data['name']}: {e}"
+        # Spotify metadata - using async service (always enabled if configured)
+        try:
+            logger.debug(f"🎵 ASYNC SPOTIFY ENRICHMENT: Starting for {artist_data['name']}")
+            
+            spotify_metadata = await self._get_spotify_metadata(artist_data)
+            if spotify_metadata:
+                logger.debug(f"🎵 ASYNC SPOTIFY ENRICHMENT: Got metadata: {spotify_metadata}")
+                logger.debug(f"🎵 ASYNC SPOTIFY ENRICHMENT: Related artists: {spotify_metadata.related_artists}")
+                logger.debug(f"🎵 ASYNC SPOTIFY ENRICHMENT: Top tracks: {spotify_metadata.top_tracks}")
+                metadata_sources["spotify"] = spotify_metadata
+                logger.debug(
+                    f"Successfully gathered async Spotify metadata for {artist_data['name']}"
                 )
-        else:
-            logger.debug(
-                f"Spotify integration disabled or not configured, skipping for {artist_data['name']}"
+            else:
+                logger.debug(f"🎵 ASYNC SPOTIFY ENRICHMENT: No metadata returned for {artist_data['name']}")
+        except Exception as e:
+            logger.warning(
+                f"Failed to get async Spotify metadata for {artist_data['name']}: {e}"
             )
 
         # Last.fm metadata - check if enabled
@@ -475,27 +458,28 @@ class MetadataEnrichmentService:
     async def _get_spotify_metadata(
         self, artist_data: Dict
     ) -> Optional[ArtistMetadata]:
-        """Get enhanced metadata from Spotify"""
+        """Get enhanced metadata from Spotify (using async service)"""
         try:
+            # Get async Spotify service
+            async_spotify = await get_async_spotify_service()
+            
             # Search for artist if we don't have Spotify ID
             spotify_artist = None
-            logger.debug(f"🎵 SPOTIFY METADATA: Processing {artist_data['name']}, spotify_id: {artist_data.get('spotify_id')}")
+            logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Processing {artist_data['name']}, spotify_id: {artist_data.get('spotify_id')}")
 
             if artist_data.get("spotify_id"):
                 # Get artist by ID
-                logger.debug(f"🎵 SPOTIFY METADATA: Getting artist by ID {artist_data['spotify_id']}")
-                spotify_artist = self.spotify._make_request(
-                    f"artists/{artist_data['spotify_id']}"
-                )
-                logger.debug(f"🎵 SPOTIFY METADATA: Got artist by ID: {spotify_artist is not None}")
+                logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Getting artist by ID {artist_data['spotify_id']}")
+                spotify_artist = await async_spotify.get_artist(artist_data['spotify_id'])
+                logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Got artist by ID: {spotify_artist is not None}")
             else:
                 # Search for artist
-                logger.debug(f"🎵 SPOTIFY METADATA: Searching for artist {artist_data['name']}")
-                search_results = self.spotify.search_artist(
+                logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Searching for artist {artist_data['name']}")
+                search_results = await async_spotify.search_artist(
                     artist_data["name"], limit=5
                 )
                 artists = search_results.get("artists", {}).get("items", [])
-                logger.debug(f"🎵 SPOTIFY METADATA: Search returned {len(artists)} artists")
+                logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Search returned {len(artists)} artists")
 
                 # Find best match
                 for candidate in artists:
@@ -506,44 +490,44 @@ class MetadataEnrichmentService:
                         break
 
             if not spotify_artist:
-                logger.debug(f"🎵 SPOTIFY METADATA: No matching artist found for {artist_data['name']}")
+                logger.debug(f"🎵 ASYNC SPOTIFY METADATA: No matching artist found for {artist_data['name']}")
                 return None
 
-            logger.debug(f"🎵 SPOTIFY METADATA: Found artist: {spotify_artist.get('name')} (ID: {spotify_artist['id']})")
+            logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Found artist: {spotify_artist.get('name')} (ID: {spotify_artist['id']})")
 
             # Get related artists
             related_artists = []
             try:
-                logger.debug(f"🎵 SPOTIFY METADATA: Getting related artists for {spotify_artist['id']}")
-                related_data = self.spotify._make_request(
-                    f"artists/{spotify_artist['id']}/related-artists"
+                logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Getting related artists for {spotify_artist['id']}")
+                related_data = await async_spotify.get_artist_related_artists(
+                    spotify_artist['id']
                 )
-                logger.debug(f"🎵 SPOTIFY METADATA: Raw related artists response: {related_data}")
+                logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Raw related artists response: {related_data}")
                 
                 if related_data and "artists" in related_data:
                     related_artists = [
                         a.get("name") for a in related_data.get("artists", [])[:5]
                     ]
-                    logger.debug(f"🎵 SPOTIFY METADATA: Processed {len(related_artists)} related artists: {related_artists}")
+                    logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Processed {len(related_artists)} related artists: {related_artists}")
                 else:
-                    logger.warning(f"🎵 SPOTIFY METADATA: No 'artists' key in related artists response: {related_data}")
+                    logger.warning(f"🎵 ASYNC SPOTIFY METADATA: No 'artists' key in related artists response: {related_data}")
                     
             except Exception as e:
-                logger.warning(f"🎵 SPOTIFY METADATA: Could not get related artists: {e}")
-                logger.exception(f"🎵 SPOTIFY METADATA: Full exception details:")
+                logger.warning(f"🎵 ASYNC SPOTIFY METADATA: Could not get related artists: {e}")
+                logger.exception(f"🎵 ASYNC SPOTIFY METADATA: Full exception details:")
 
             # Get top tracks
             top_tracks = []
             try:
-                logger.debug(f"🎵 SPOTIFY METADATA: Getting top tracks for {spotify_artist['id']}")
-                tracks_data = self.spotify.get_artist_top_tracks(spotify_artist["id"])
+                logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Getting top tracks for {spotify_artist['id']}")
+                tracks_data = await async_spotify.get_artist_top_tracks(spotify_artist["id"])
                 top_tracks = [t.get("name") for t in tracks_data.get("tracks", [])[:5]]
-                logger.debug(f"🎵 SPOTIFY METADATA: Got {len(top_tracks)} top tracks: {top_tracks}")
+                logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Got {len(top_tracks)} top tracks: {top_tracks}")
             except Exception as e:
-                logger.warning(f"🎵 SPOTIFY METADATA: Could not get top tracks: {e}")
+                logger.warning(f"🎵 ASYNC SPOTIFY METADATA: Could not get top tracks: {e}")
 
             # Create metadata object
-            logger.debug(f"🎵 SPOTIFY METADATA: Creating ArtistMetadata with related_artists: {related_artists}, top_tracks: {top_tracks}")
+            logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Creating ArtistMetadata with related_artists: {related_artists}, top_tracks: {top_tracks}")
             metadata = ArtistMetadata(
                 name=spotify_artist.get("name", artist_data["name"]),
                 source="spotify",
@@ -559,12 +543,12 @@ class MetadataEnrichmentService:
                 top_tracks=top_tracks,
                 raw_data=spotify_artist,
             )
-            logger.debug(f"🎵 SPOTIFY METADATA: Final metadata object - related_artists: {metadata.related_artists}, top_tracks: {metadata.top_tracks}")
+            logger.debug(f"🎵 ASYNC SPOTIFY METADATA: Final metadata object - related_artists: {metadata.related_artists}, top_tracks: {metadata.top_tracks}")
 
             return metadata
 
         except Exception as e:
-            logger.error(f"Error getting Spotify metadata: {e}")
+            logger.error(f"Error getting async Spotify metadata: {e}")
             return None
 
     async def _get_lastfm_metadata(self, artist_data: Dict) -> Optional[ArtistMetadata]:
