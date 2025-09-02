@@ -10,7 +10,7 @@ import logging
 
 from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
 from src.services.job_system_integration import get_job_system_status, get_job_system_health, is_job_system_enabled
-from src.api.auth_middleware import require_auth
+from src.middleware.simple_auth_middleware import auth_required
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ jobs_bp = Blueprint('jobs', __name__, url_prefix='/api/jobs')
 
 
 @jobs_bp.route('/health', methods=['GET'])
-async def health_check():
+def health_check():
     """Get job system health status"""
     try:
         if not is_job_system_enabled():
@@ -28,7 +28,7 @@ async def health_check():
                 'message': 'Job system is not enabled'
             }), 503
         
-        health_data = await get_job_system_health()
+        health_data = asyncio.run(get_job_system_health())
         status_code = 200 if health_data['status'] == 'healthy' else 503
         
         return jsonify(health_data), status_code
@@ -56,8 +56,8 @@ def system_status():
 
 
 @jobs_bp.route('/enqueue', methods=['POST'])
-@require_auth
-async def enqueue_job():
+@auth_required
+def enqueue_job():
     """
     Enqueue a new background job
     
@@ -124,8 +124,8 @@ async def enqueue_job():
             job.retry_delay = max(5, min(3600, int(data['retry_delay'])))  # Clamp to 5s-1h
         
         # Enqueue job
-        job_queue = await get_job_queue()
-        job_id = await job_queue.enqueue(job)
+        job_queue = asyncio.run(get_job_queue())
+        job_id = asyncio.run(job_queue.enqueue(job))
         
         logger.info(f"Enqueued job {job_id} ({job_type.value}) for user {job.created_by}")
         
@@ -144,8 +144,8 @@ async def enqueue_job():
 
 
 @jobs_bp.route('/<job_id>', methods=['GET'])
-@require_auth
-async def get_job_status(job_id: str):
+@auth_required
+def get_job_status(job_id: str):
     """Get status and progress of a specific job"""
     try:
         if not is_job_system_enabled():
@@ -153,7 +153,7 @@ async def get_job_status(job_id: str):
                 'error': 'Job system is not enabled'
             }), 503
         
-        job_queue = await get_job_queue()
+        job_queue = asyncio.run(get_job_queue())
         job = job_queue.get_job(job_id)
         
         if not job:
@@ -208,8 +208,8 @@ async def get_job_status(job_id: str):
 
 
 @jobs_bp.route('', methods=['GET'])
-@require_auth
-async def list_user_jobs():
+@auth_required
+def list_user_jobs():
     """List recent jobs for current user"""
     try:
         if not is_job_system_enabled():
@@ -226,7 +226,7 @@ async def list_user_jobs():
         status_filter = request.args.get('status')
         job_type_filter = request.args.get('type')
         
-        job_queue = await get_job_queue()
+        job_queue = asyncio.run(get_job_queue())
         user_jobs = job_queue.get_user_jobs(user_id, limit)
         
         # Apply filters
@@ -274,8 +274,8 @@ async def list_user_jobs():
 
 
 @jobs_bp.route('/<job_id>/cancel', methods=['POST'])
-@require_auth
-async def cancel_job(job_id: str):
+@auth_required
+def cancel_job(job_id: str):
     """Cancel a queued job"""
     try:
         if not is_job_system_enabled():
@@ -283,7 +283,7 @@ async def cancel_job(job_id: str):
                 'error': 'Job system is not enabled'
             }), 503
         
-        job_queue = await get_job_queue()
+        job_queue = asyncio.run(get_job_queue())
         job = job_queue.get_job(job_id)
         
         if not job:
@@ -299,7 +299,7 @@ async def cancel_job(job_id: str):
             }), 403
         
         # Try to cancel job
-        cancelled = await job_queue.cancel_job(job_id)
+        cancelled = asyncio.run(job_queue.cancel_job(job_id))
         
         if cancelled:
             logger.info(f"Job {job_id} cancelled by user {user_id}")
@@ -320,8 +320,8 @@ async def cancel_job(job_id: str):
 
 
 @jobs_bp.route('/enrich-metadata', methods=['POST'])
-@require_auth
-async def enqueue_metadata_enrichment():
+@auth_required
+def enqueue_metadata_enrichment():
     """
     Convenience endpoint for metadata enrichment jobs
     
@@ -353,7 +353,7 @@ async def enqueue_metadata_enrichment():
             'payload': job_payload
         }
         
-        return await enqueue_job()
+        return enqueue_job()
         
     except ValueError:
         return jsonify({'error': 'artist_id must be a valid integer'}), 400
@@ -398,7 +398,22 @@ def _get_job_type_description(job_type: JobType) -> str:
         JobType.THUMBNAIL_GENERATION: "Generate thumbnails for videos",
         JobType.PLAYLIST_SYNC: "Synchronize playlists with external services",
         JobType.BULK_VIDEO_DELETE: "Delete multiple videos in batch",
-        JobType.DATABASE_CLEANUP: "Clean up old data and optimize database"
+        JobType.DATABASE_CLEANUP: "Clean up old data and optimize database",
+        # Video quality operations
+        JobType.VIDEO_QUALITY_ANALYZE: "Analyze video quality and properties",
+        JobType.VIDEO_QUALITY_UPGRADE: "Upgrade single video to higher quality",
+        JobType.VIDEO_QUALITY_BULK_UPGRADE: "Upgrade multiple videos to higher quality",
+        JobType.VIDEO_QUALITY_CHECK_ALL: "Check and verify quality for all videos",
+        # Video indexing operations  
+        JobType.VIDEO_INDEX_ALL: "Index all videos in the music directory",
+        JobType.VIDEO_INDEX_SINGLE: "Index a specific video file",
+        # Video organization operations
+        JobType.VIDEO_ORGANIZE_ALL: "Organize all videos from downloads directory",
+        JobType.VIDEO_ORGANIZE_SINGLE: "Organize a specific video file",
+        JobType.VIDEO_REORGANIZE_EXISTING: "Reorganize existing videos in music directory",
+        # Scheduler operations
+        JobType.SCHEDULED_DOWNLOAD: "Scheduled download of wanted videos",
+        JobType.SCHEDULED_DISCOVERY: "Scheduled discovery of new videos for artists"
     }
     return descriptions.get(job_type, "Background task")
 
