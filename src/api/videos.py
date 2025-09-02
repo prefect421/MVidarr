@@ -742,10 +742,11 @@ def get_video(video_id):
 
 @videos_bp.route("/<int:video_id>/download", methods=["POST"])
 def download_video(video_id):
-    """Queue video for download"""
+    """Queue video for download using background job"""
     try:
         logger.info(f"Starting download for video {video_id}")
-
+        
+        # Get video details to validate
         with get_db() as session:
             video = session.query(Video).filter(Video.id == video_id).first()
 
@@ -753,115 +754,60 @@ def download_video(video_id):
                 logger.warning(f"Video {video_id} not found")
                 return jsonify({"error": "Video not found"}), 404
 
-            logger.info(f"Found video: {video.title}")
-
-            # Store video data for URL resolution
+            video_title = video.title or f"Video {video_id}"
             artist_name = video.artist.name if video.artist else "Unknown Artist"
-            logger.info(f"Artist: {artist_name}")
-
+            
             # Resolve video URL using helper function
-            logger.info("Attempting to resolve video URL")
             video_url = resolve_video_url(video, session)
-            logger.info(f"Resolved URL: {video_url}")
-
             if not video_url:
                 logger.warning(f"No URL found for video {video_id}")
-                return (
-                    jsonify(
-                        {
-                            "error": "Video has no URL to download and could not resolve one"
-                        }
-                    ),
-                    400,
-                )
+                return jsonify({
+                    "error": "Video has no URL to download and could not resolve one"
+                }), 400
 
-            # Import ytdlp service and settings
-            logger.info("Importing ytdlp service")
-            from src.services.settings_service import settings
-            from src.services.ytdlp_service import ytdlp_service
+        # Get quality preference from request data if provided
+        request_data = request.get_json() if request.is_json else {}
+        quality = request_data.get('quality', 'best')
+        force_redownload = request_data.get('force_redownload', False)
 
-            # Read subtitle settings from database
-            download_subtitles = settings.get_bool("download_subtitles", False)
-            subtitle_languages = settings.get("subtitle_languages", "en,en-US")
+        # Import job system
+        from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
 
-            # Check if video is already downloaded
-            logger.info(
-                f"Checking if video is already downloaded - status: {video.status}, local_path: '{video.local_path}'"
-            )
-            status_value = (
-                video.status.value if hasattr(video.status, "value") else video.status
-            )
-            if (
-                status_value == "DOWNLOADED"
-                and video.local_path
-                and video.local_path.strip()  # Ensure path is not empty or whitespace
-                and os.path.exists(video.local_path)
-            ):
-                logger.info("Video is already downloaded")
-                return (
-                    jsonify({"success": False, "error": "Video is already downloaded"}),
-                    400,
-                )
+        # Create background job for video download
+        job = BackgroundJob(
+            type=JobType.VIDEO_DOWNLOAD,
+            priority=JobPriority.HIGH,  # High priority for individual downloads
+            payload={
+                'video_id': video_id,
+                'quality': quality,
+                'force_redownload': force_redownload
+            }
+        )
 
-            # Add download to yt-dlp queue
-            logger.info(
-                f"Calling ytdlp_service.add_music_video_download with artist='{artist_name}', title='{video.title}', url='{video_url}'"
-            )
-            try:
-                result = ytdlp_service.add_music_video_download(
-                    artist=artist_name,
-                    title=video.title,
-                    url=video_url,
-                    quality="best",
-                    video_id=video_id,
-                    download_subtitles=download_subtitles,
-                    subtitle_languages=subtitle_languages,
-                )
-                logger.info(f"ytdlp_service result: {result}")
-            except Exception as ytdlp_error:
-                logger.error(f"ytdlp_service error: {ytdlp_error}")
-                return (
-                    jsonify({"error": f"Download service error: {str(ytdlp_error)}"}),
-                    500,
-                )
+        # Queue the job
+        job_queue = asyncio.run(get_job_queue())
+        job_id = asyncio.run(job_queue.enqueue(job))
 
-            if result and result.get("success"):
-                logger.info("Download queued successfully, updating video status")
-                # Update video status to indicate download started
-                # Re-query the video object to ensure it's bound to the current session
-                video = session.query(Video).filter(Video.id == video_id).first()
-                if video:
-                    video.status = VideoStatus.DOWNLOADING
-                    session.commit()
+        # Update video status to indicate download queued
+        with get_db() as session:
+            video = session.query(Video).filter(Video.id == video_id).first()
+            if video:
+                video.status = VideoStatus.DOWNLOADING
+                session.commit()
 
-                logger.info(f"Queued download for video {video_id}: {video.title}")
+        logger.info(f"Queued download job {job_id} for video {video_id}: {video_title}")
 
-                return (
-                    jsonify(
-                        {
-                            "success": True,
-                            "message": f'Download queued for "{video.title}"',
-                            "download_id": result.get("id"),
-                            "video_id": video_id,
-                        }
-                    ),
-                    200,
-                )
-            else:
-                error_msg = (
-                    result.get("error", "Failed to queue download")
-                    if result
-                    else "MeTube service unavailable"
-                )
-                logger.error(f"Download failed: {error_msg}")
-                return jsonify({"success": False, "error": error_msg}), 500
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "video_id": video_id,
+            "message": f'Download job queued for "{video_title}" by {artist_name}',
+            "video_title": video_title,
+            "artist_name": artist_name
+        }), 202  # 202 Accepted - processing started
 
     except Exception as e:
-        import traceback
-
-        error_details = traceback.format_exc()
-        logger.error(f"Failed to download video {video_id}: {e}")
-        logger.error(f"Full traceback: {error_details}")
+        logger.error(f"Failed to queue video download job: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -1063,10 +1009,12 @@ def delete_video(video_id):
 
 @videos_bp.route("/bulk/delete", methods=["POST"])
 def bulk_delete_videos():
-    """Delete multiple videos"""
+    """Delete multiple videos using background job queue"""
     try:
         data = request.get_json()
         video_ids = data.get("video_ids", [])
+        delete_files = data.get("delete_files", True)
+        blacklist = data.get("blacklist", False)
 
         if not video_ids:
             return jsonify({"error": "No video IDs provided"}), 400
@@ -1074,85 +1022,42 @@ def bulk_delete_videos():
         if not isinstance(video_ids, list):
             return jsonify({"error": "video_ids must be a list"}), 400
 
-        deleted_videos = []
-        failed_videos = []
+        # Validate that video IDs are integers
+        try:
+            video_ids = [int(vid) for vid in video_ids]
+        except (ValueError, TypeError):
+            return jsonify({"error": "All video IDs must be integers"}), 400
 
-        with get_db() as session:
-            for video_id in video_ids:
-                try:
-                    video = session.query(Video).filter(Video.id == video_id).first()
+        # Create bulk delete job
+        from ..services.job_queue import BackgroundJob, JobType, JobPriority, get_job_queue
+        
+        job = BackgroundJob(
+            type=JobType.BULK_VIDEO_DELETE,
+            priority=JobPriority.HIGH,
+            payload={
+                'operation_type': 'delete',
+                'video_ids': video_ids,
+                'params': {
+                    'delete_files': delete_files,
+                    'blacklist': blacklist
+                }
+            }
+        )
 
-                    if not video:
-                        failed_videos.append(
-                            {"id": video_id, "error": "Video not found"}
-                        )
-                        continue
+        job_queue = asyncio.run(get_job_queue())
+        job_id = asyncio.run(job_queue.enqueue(job))
+        
+        logger.info(f"Queued bulk delete job {job_id} for {len(video_ids)} videos")
 
-                    # Store video info for response
-                    video_info = {
-                        "id": video.id,
-                        "title": video.title,
-                        "artist_name": video.artist.name if video.artist else None,
-                    }
-
-                    # First, delete any playlist entries that reference this video
-                    from src.database.models import PlaylistEntry
-
-                    playlist_entries = (
-                        session.query(PlaylistEntry)
-                        .filter(PlaylistEntry.video_id == video_id)
-                        .all()
-                    )
-
-                    for entry in playlist_entries:
-                        session.delete(entry)
-
-                    # Delete any downloads that reference this video
-                    downloads = (
-                        session.query(Download)
-                        .filter(Download.video_id == video_id)
-                        .all()
-                    )
-
-                    for download in downloads:
-                        session.delete(download)
-
-                    # Now delete the video record
-                    session.delete(video)
-
-                    # Add counts to video info
-                    video_info["playlist_entries_removed"] = len(playlist_entries)
-                    video_info["downloads_removed"] = len(downloads)
-                    deleted_videos.append(video_info)
-
-                    logger.info(
-                        f"Bulk deleted video: {video_info['title']} by {video_info['artist_name']}"
-                    )
-
-                except Exception as e:
-                    failed_videos.append({"id": video_id, "error": str(e)})
-                    logger.error(
-                        f"Failed to delete video {video_id} in bulk operation: {e}"
-                    )
-
-            # Commit all successful deletes
-            session.commit()
-
-        response = {
-            "message": f"Bulk delete completed: {len(deleted_videos)} deleted, {len(failed_videos)} failed",
-            "deleted_count": len(deleted_videos),
-            "failed_count": len(failed_videos),
-            "deleted_videos": deleted_videos,
-            "failed_videos": failed_videos,
-        }
-
-        if failed_videos:
-            return jsonify(response), 207  # Multi-status
-        else:
-            return jsonify(response), 200
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "total_videos": len(video_ids),
+            "message": f"Bulk delete job queued for {len(video_ids)} videos. Job ID: {job_id}"
+        }), 202  # 202 Accepted - processing started
 
     except Exception as e:
-        logger.error(f"Failed to bulk delete videos: {e}")
+        logger.error(f"Failed to create bulk delete job: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -3896,7 +3801,7 @@ def update_video_status(video_id):
 
 @videos_bp.route("/bulk/download", methods=["POST"])
 def bulk_download_videos():
-    """Download multiple videos"""
+    """Download multiple videos using background job queue"""
     try:
         data = request.get_json()
         if not data or "video_ids" not in data:
@@ -3906,113 +3811,42 @@ def bulk_download_videos():
         if not isinstance(video_ids, list):
             return jsonify({"error": "video_ids must be an array"}), 400
 
-        results = []
-        success_count = 0
-        failed_count = 0
+        # Get operation parameters
+        quality = data.get('quality', 'best')
+        force_redownload = data.get('force_redownload', False)
 
-        # Import settings service for subtitle configuration
-        from src.services.settings_service import settings
+        # Import job system
+        from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
 
-        # Read subtitle settings from database once for all downloads
-        download_subtitles = settings.get_bool("download_subtitles", False)
-        subtitle_languages = settings.get("subtitle_languages", "en,en-US")
-
-        with get_db() as session:
-            for video_id in video_ids:
-                try:
-                    video = session.query(Video).filter(Video.id == video_id).first()
-
-                    if not video:
-                        results.append(
-                            {
-                                "video_id": video_id,
-                                "success": False,
-                                "error": "Video not found",
-                            }
-                        )
-                        failed_count += 1
-                        continue
-
-                    # Resolve video URL using helper function
-                    video_url = resolve_video_url(video, session)
-
-                    if not video_url:
-                        results.append(
-                            {
-                                "video_id": video_id,
-                                "success": False,
-                                "error": "No URL available for download",
-                            }
-                        )
-                        failed_count += 1
-                        continue
-
-                    # Import yt-dlp service
-                    from src.services.ytdlp_service import ytdlp_service
-
-                    # Queue download
-                    artist_name = video.artist.name if video.artist else "Unknown"
-                    result = ytdlp_service.add_music_video_download(
-                        artist=artist_name,
-                        title=video.title,
-                        url=video_url,
-                        quality="best",
-                        video_id=video_id,
-                        download_subtitles=download_subtitles,
-                        subtitle_languages=subtitle_languages,
-                    )
-
-                    if result and result.get("success"):
-                        # Re-query the video object to ensure it's bound to the current session
-                        video = (
-                            session.query(Video).filter(Video.id == video_id).first()
-                        )
-                        if video:
-                            video.status = VideoStatus.DOWNLOADING
-                            session.commit()
-
-                        results.append(
-                            {
-                                "video_id": video_id,
-                                "success": True,
-                                "title": video.title,
-                                "download_id": result.get("id"),
-                            }
-                        )
-                        success_count += 1
-                    else:
-                        error_msg = (
-                            result.get("error", "Failed to queue download")
-                            if result
-                            else "MeTube service unavailable"
-                        )
-                        results.append(
-                            {"video_id": video_id, "success": False, "error": error_msg}
-                        )
-                        failed_count += 1
-
-                except Exception as e:
-                    logger.error(f"Failed to download video {video_id}: {e}")
-                    results.append(
-                        {"video_id": video_id, "success": False, "error": str(e)}
-                    )
-                    failed_count += 1
-
-        return (
-            jsonify(
-                {
-                    "success": True,
-                    "message": f"Bulk download completed: {success_count} success, {failed_count} failed",
-                    "success_count": success_count,
-                    "failed_count": failed_count,
-                    "results": results,
+        # Create background job for bulk download operation
+        job = BackgroundJob(
+            type=JobType.BULK_VIDEO_DELETE,  # We'll use this job type for bulk operations
+            priority=JobPriority.NORMAL,
+            payload={
+                'operation_type': 'download',
+                'video_ids': video_ids,
+                'params': {
+                    'quality': quality,
+                    'force_redownload': force_redownload
                 }
-            ),
-            200,
+            }
         )
 
+        # Queue the job
+        job_queue = asyncio.run(get_job_queue())
+        job_id = asyncio.run(job_queue.enqueue(job))
+
+        logger.info(f"Queued bulk download job {job_id} for {len(video_ids)} videos")
+
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "total_videos": len(video_ids),
+            "message": f"Bulk download job queued for {len(video_ids)} videos. Job ID: {job_id}"
+        }), 202  # 202 Accepted - processing started
+
     except Exception as e:
-        logger.error(f"Failed to bulk download videos: {e}")
+        logger.error(f"Failed to create bulk download job: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -4193,7 +4027,7 @@ def download_all_wanted_videos():
 @videos_bp.route("/bulk/status", methods=["POST", "PUT"])
 @monitor_performance("api.videos.bulk_status_update")
 def bulk_update_video_status():
-    """Update status for multiple videos"""
+    """Update status for multiple videos using background job queue"""
     try:
         data = request.get_json()
         if not data or "video_ids" not in data or "status" not in data:
@@ -4213,67 +4047,42 @@ def bulk_update_video_status():
                 400,
             )
 
-        results = []
-        success_count = 0
-        failed_count = 0
+        # Validate that video IDs are integers
+        try:
+            video_ids = [int(vid) for vid in video_ids]
+        except (ValueError, TypeError):
+            return jsonify({"error": "All video IDs must be integers"}), 400
 
-        with get_db() as session:
-            for video_id in video_ids:
-                try:
-                    video = session.query(Video).filter(Video.id == video_id).first()
-
-                    if not video:
-                        results.append(
-                            {
-                                "video_id": video_id,
-                                "success": False,
-                                "error": "Video not found",
-                            }
-                        )
-                        failed_count += 1
-                        continue
-
-                    old_status = (
-                        video.status.value
-                        if hasattr(video.status, "value")
-                        else video.status
-                    )
-                    video.status = VideoStatus[new_status]
-                    session.commit()
-
-                    results.append(
-                        {
-                            "video_id": video_id,
-                            "success": True,
-                            "title": video.title,
-                            "old_status": old_status,
-                            "new_status": new_status,
-                        }
-                    )
-                    success_count += 1
-
-                except Exception as e:
-                    logger.error(f"Failed to update video {video_id} status: {e}")
-                    results.append(
-                        {"video_id": video_id, "success": False, "error": str(e)}
-                    )
-                    failed_count += 1
-
-        return (
-            jsonify(
-                {
-                    "success": True,
-                    "message": f"Bulk status update completed: {success_count} success, {failed_count} failed",
-                    "success_count": success_count,
-                    "failed_count": failed_count,
-                    "results": results,
+        # Create bulk status update job
+        from ..services.job_queue import BackgroundJob, JobType, JobPriority, get_job_queue
+        
+        job = BackgroundJob(
+            type=JobType.BULK_VIDEO_DELETE,  # Using the same job type, handled by operation_type
+            priority=JobPriority.NORMAL,
+            payload={
+                'operation_type': 'status_update',
+                'video_ids': video_ids,
+                'params': {
+                    'status': new_status
                 }
-            ),
-            200,
+            }
         )
 
+        job_queue = asyncio.run(get_job_queue())
+        job_id = asyncio.run(job_queue.enqueue(job))
+        
+        logger.info(f"Queued bulk status update job {job_id} for {len(video_ids)} videos to {new_status}")
+
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "total_videos": len(video_ids),
+            "new_status": new_status,
+            "message": f"Bulk status update job queued for {len(video_ids)} videos to '{new_status}'. Job ID: {job_id}"
+        }), 202  # 202 Accepted - processing started
+
     except Exception as e:
-        logger.error(f"Failed to bulk update video status: {e}")
+        logger.error(f"Failed to create bulk status update job: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -4406,13 +4215,11 @@ def bulk_edit_videos():
 
 @videos_bp.route("/bulk/refresh-metadata", methods=["POST"])
 def bulk_refresh_metadata():
-    """Refresh metadata from IMVDb for multiple videos"""
+    """Refresh metadata from IMVDb for multiple videos using background job queue"""
     try:
-        from src.services.imvdb_service import imvdb_service
-        from src.services.settings_service import settings
-
         data = request.get_json()
         video_ids = data.get("video_ids", [])
+        force_refresh = data.get("force_refresh", True)
 
         if not video_ids:
             return jsonify({"error": "No video IDs provided"}), 400
@@ -4420,144 +4227,42 @@ def bulk_refresh_metadata():
         if not isinstance(video_ids, list):
             return jsonify({"error": "video_ids must be a list"}), 400
 
-        # Force reload settings cache to ensure we have the latest API key
-        settings.reload_cache()
+        # Validate that video IDs are integers
+        try:
+            video_ids = [int(vid) for vid in video_ids]
+        except (ValueError, TypeError):
+            return jsonify({"error": "All video IDs must be integers"}), 400
 
-        updated_videos = []
-        failed_videos = []
-        skipped_videos = []
-
-        with get_db() as session:
-            for video_id in video_ids:
-                try:
-                    video = session.query(Video).filter(Video.id == video_id).first()
-
-                    if not video:
-                        failed_videos.append(
-                            {"id": video_id, "error": "Video not found"}
-                        )
-                        continue
-
-                    # Extract data we need
-                    artist_name = video.artist.name if video.artist else None
-                    video_title = video.title
-                    current_imvdb_id = video.imvdb_id
-
-                    if not artist_name:
-                        skipped_videos.append(
-                            {
-                                "id": video_id,
-                                "title": video_title,
-                                "reason": "No artist associated with video",
-                            }
-                        )
-                        continue
-
-                    logger.info(
-                        f"Bulk refreshing metadata for video: {video_title} by {artist_name}"
-                    )
-
-                    # Try to find best match on IMVDb
-                    imvdb_data = None
-
-                    # If we have an existing IMVDb ID, try to get detailed info
-                    if current_imvdb_id:
-                        imvdb_data = imvdb_service.get_video_by_id(current_imvdb_id)
-
-                    # If no IMVDb ID or the lookup failed, try searching
-                    if not imvdb_data:
-                        imvdb_data = imvdb_service.find_best_video_match(
-                            artist_name, video_title
-                        )
-
-                    if not imvdb_data:
-                        skipped_videos.append(
-                            {
-                                "id": video_id,
-                                "title": video_title,
-                                "artist": artist_name,
-                                "reason": "No IMVDb match found",
-                            }
-                        )
-                        continue
-
-                    # Update video with new metadata
-                    updated = False
-
-                    if imvdb_data.get("id") and video.imvdb_id != imvdb_data["id"]:
-                        video.imvdb_id = imvdb_data["id"]
-                        updated = True
-
-                    if imvdb_data.get("year") and video.year != imvdb_data["year"]:
-                        video.year = imvdb_data["year"]
-                        updated = True
-
-                    if imvdb_data.get("directors") and video.directors != ", ".join(
-                        imvdb_data["directors"]
-                    ):
-                        video.directors = ", ".join(imvdb_data["directors"])
-                        updated = True
-
-                    if imvdb_data.get("producers") and video.producers != ", ".join(
-                        imvdb_data["producers"]
-                    ):
-                        video.producers = ", ".join(imvdb_data["producers"])
-                        updated = True
-
-                    if (
-                        imvdb_data.get("thumbnail")
-                        and video.thumbnail != imvdb_data["thumbnail"]
-                    ):
-                        video.thumbnail = imvdb_data["thumbnail"]
-                        updated = True
-
-                    if updated:
-                        video.updated_at = datetime.utcnow()
-                        session.commit()
-
-                        updated_videos.append(
-                            {
-                                "id": video.id,
-                                "title": video.title,
-                                "artist": artist_name,
-                            }
-                        )
-
-                        logger.info(
-                            f"Successfully updated metadata for: {video_title} by {artist_name}"
-                        )
-                    else:
-                        skipped_videos.append(
-                            {
-                                "id": video_id,
-                                "title": video_title,
-                                "artist": artist_name,
-                                "reason": "No new metadata to update",
-                            }
-                        )
-
-                except Exception as e:
-                    failed_videos.append({"id": video_id, "error": str(e)})
-                    logger.error(
-                        f"Failed to refresh metadata for video {video_id}: {e}"
-                    )
-
-        return (
-            jsonify(
-                {
-                    "updated_count": len(updated_videos),
-                    "failed_count": len(failed_videos),
-                    "skipped_count": len(skipped_videos),
-                    "updated_videos": updated_videos,
-                    "failed_videos": failed_videos,
-                    "skipped_videos": skipped_videos,
+        # Create bulk metadata refresh job
+        from ..services.job_queue import BackgroundJob, JobType, JobPriority, get_job_queue
+        
+        job = BackgroundJob(
+            type=JobType.BULK_VIDEO_DELETE,  # Using the same job type, handled by operation_type
+            priority=JobPriority.NORMAL,
+            payload={
+                'operation_type': 'metadata_refresh',
+                'video_ids': video_ids,
+                'params': {
+                    'force_refresh': force_refresh
                 }
-            ),
-            200,
+            }
         )
 
+        job_queue = asyncio.run(get_job_queue())
+        job_id = asyncio.run(job_queue.enqueue(job))
+        
+        logger.info(f"Queued bulk metadata refresh job {job_id} for {len(video_ids)} videos")
+
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "total_videos": len(video_ids),
+            "force_refresh": force_refresh,
+            "message": f"Bulk metadata refresh job queued for {len(video_ids)} videos. Job ID: {job_id}"
+        }), 202  # 202 Accepted - processing started
+
     except Exception as e:
-        logger.error(f"Failed to bulk refresh metadata: {e}")
+        logger.error(f"Failed to create bulk metadata refresh job: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -7924,3 +7629,86 @@ def search_lyrics_azlyrics(artist, title):
     except Exception as e:
         logger.warning(f"Lyrics.ovh search failed: {e}")
         return None
+
+
+def get_wanted_videos_for_download(limit=50):
+    """Get videos that are marked as WANTED for downloading
+    
+    Args:
+        limit: Maximum number of videos to return
+        
+    Returns:
+        list: Videos with WANTED status ready for download
+    """
+    try:
+        with get_db() as session:
+            wanted_videos = (
+                session.query(Video)
+                .filter(Video.status == VideoStatus.WANTED)
+                .order_by(Video.created_date.desc())
+                .limit(limit)
+                .all()
+            )
+            
+            # Convert to dict format for scheduler
+            video_list = []
+            for video in wanted_videos:
+                video_dict = {
+                    'id': video.id,
+                    'title': video.title,
+                    'artist_name': video.artist.name if video.artist else 'Unknown',
+                    'youtube_url': video.youtube_url,
+                    'status': video.status.value if hasattr(video.status, 'value') else video.status
+                }
+                video_list.append(video_dict)
+            
+            return video_list
+            
+    except Exception as e:
+        logger.error(f"Error getting wanted videos for download: {e}")
+        return []
+
+
+def start_video_download(video_id):
+    """Start download for a specific video using background jobs
+    
+    Args:
+        video_id: ID of the video to download
+        
+    Returns:
+        dict: Result of the download request
+    """
+    try:
+        import asyncio
+        from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+        
+        # Create background job for video download
+        job = BackgroundJob(
+            type=JobType.VIDEO_DOWNLOAD,
+            priority=JobPriority.NORMAL,
+            payload={
+                'video_id': video_id,
+                'quality': 'best',
+                'scheduled': True  # Mark as scheduled download
+            }
+        )
+        
+        # Enqueue job
+        async def queue_job():
+            job_queue = await get_job_queue()
+            return await job_queue.enqueue(job)
+        
+        job_id = asyncio.run(queue_job())
+        
+        return {
+            "success": True,
+            "job_id": job_id,
+            "message": f"Download job queued for video {video_id}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error starting video download for {video_id}: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
