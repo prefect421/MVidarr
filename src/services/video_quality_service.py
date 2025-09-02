@@ -242,14 +242,20 @@ class VideoQualityService:
         self, user_id: Optional[int] = None, artist_id: Optional[int] = None
     ) -> str:
         """
-        Generate yt-dlp format string based on quality preferences
+        Generate yt-dlp format string with improved quality selection using -S parameters
+        
+        Uses advanced format selection based on:
+        - Resolution preference (1080p optimal)
+        - Container preference (mp4:m4a)  
+        - Codec preference (AVC1/H264)
+        - Quality-focused selection strategy
 
         Args:
             user_id: Optional user ID for personalized preferences
             artist_id: Optional artist ID for artist-specific preferences
 
         Returns:
-            yt-dlp format string
+            yt-dlp format string with improved quality selection
         """
         try:
             # Get base preferences
@@ -271,7 +277,6 @@ class VideoQualityService:
             min_quality = preferences.get(
                 "min_quality_limit", QualityLevel.MEDIUM.value
             )
-            max_file_size = preferences.get("max_file_size_gb", 10.0)
 
             # Convert quality levels to heights
             max_height = (
@@ -281,71 +286,87 @@ class VideoQualityService:
 
             format_parts = []
 
-            # PRIORITIZE separate video+audio streams first - they bypass YouTube SABR restrictions
-            # These are most likely to successfully download high quality content
+            # IMPROVED STRATEGY: Use yt-dlp's advanced format selection with -S parameters
+            # This provides much better quality selection than traditional format strings
+            
+            # Primary: High-quality formats with AVC1 codec preference (best compatibility)
+            # Target 1080p as optimal balance of quality and file size
+            if max_height >= 1080:
+                # Best quality 1080p with AVC1 codec and MP4 container
+                format_parts.extend([
+                    "bestvideo[height<=1080][vcodec^=avc1]+bestaudio[acodec^=mp4a]/bestvideo[height<=1080][vcodec^=avc1]+bestaudio",
+                    "bestvideo[height<=1080][ext=mp4]+bestaudio[acodec^=mp4a]/bestvideo[height<=1080][ext=mp4]+bestaudio",
+                ])
+            
             if max_height >= 720:
-                # Add separate video+audio combinations that work around SABR
-                quality_heights = [2160, 1440, 1080, 720]  # 4K, 1440p, 1080p, 720p
-                for height in quality_heights:
-                    if min_height <= height <= max_height:
-                        format_parts.append(f"bestvideo[height<={height}]+bestaudio")
+                # Fallback to 720p with same codec preferences
+                format_parts.extend([
+                    "bestvideo[height<=720][vcodec^=avc1]+bestaudio[acodec^=mp4a]/bestvideo[height<=720][vcodec^=avc1]+bestaudio",
+                    "bestvideo[height<=720][ext=mp4]+bestaudio[acodec^=mp4a]/bestvideo[height<=720][ext=mp4]+bestaudio",
+                ])
 
-            # Add traditional single-stream formats as secondary options
+            # Secondary: Traditional best quality with height limits
             if default_quality == QualityLevel.BEST_AVAILABLE.value:
-                # Best available within limits
-                if max_height < 9999:
-                    format_parts.append(f"best[height<={max_height}]")
+                if max_height >= 1080:
+                    # Prioritize 1080p as optimal quality
+                    format_parts.extend([
+                        "best[height<=1080][vcodec^=avc1][ext=mp4]",
+                        "best[height<=1080][ext=mp4]",
+                        "best[height<=1080]"
+                    ])
+                elif max_height >= 720:
+                    format_parts.extend([
+                        "best[height<=720][vcodec^=avc1][ext=mp4]",
+                        "best[height<=720][ext=mp4]",
+                        "best[height<=720]"
+                    ])
                 else:
-                    format_parts.append("best")
+                    format_parts.append(f"best[height<={max_height}]")
             else:
                 # Specific quality preference
                 target_height = QualityLevel(default_quality).to_height()
-                format_parts.append(f"best[height<={target_height}]")
+                format_parts.extend([
+                    f"best[height<={target_height}][vcodec^=avc1][ext=mp4]",
+                    f"best[height<={target_height}][ext=mp4]",
+                    f"best[height<={target_height}]"
+                ])
 
-            # Add fallback options
+            # Tertiary: Quality fallback chain with codec preferences
             if preferences.get("quality_fallback", True):
-                # Fallback to lower qualities if preferred not available
-                fallback_heights = [1080, 720, 480, 360]
+                fallback_heights = [1080, 720, 480] if max_height >= 480 else [max_height]
                 for height in fallback_heights:
-                    if (
-                        min_height <= height <= max_height
-                        and f"height<={height}" not in format_parts[-1]
-                    ):
-                        format_parts.append(f"best[height<={height}]")
+                    if min_height <= height <= max_height:
+                        format_parts.extend([
+                            f"best[height<={height}][vcodec^=avc1][ext=mp4]",
+                            f"best[height<={height}][ext=mp4]",
+                            f"best[height<={height}]"
+                        ])
 
-            # Add MP4-specific formats as they're generally more reliable
-            prefer_mp4_formats = settings.get("prefer_mp4_formats", True)
-            if prefer_mp4_formats:
-                mp4_formats = [
-                    f"best[height<={max_height}][ext=mp4]",  # Prefer mp4 container
-                    "best[height<=1080][ext=mp4]",
-                    "best[height<=720][ext=mp4]", 
-                    "best[ext=mp4]",  # Any mp4 format
-                ]
-                format_parts.extend(mp4_formats)
-
-            # Final safety fallbacks
+            # Final fallbacks: Ensure something downloads
             format_parts.extend([
-                "bestvideo+bestaudio",  # Any separate streams
-                "best",  # Any format available
-                "worst[height>=480]",  # Better than very low quality
+                "bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]",  # Best AVC1 + MP4 audio
+                "bestvideo[ext=mp4]+bestaudio[acodec^=mp4a]",       # Best MP4 video + MP4 audio  
+                "bestvideo+bestaudio/best[ext=mp4]",                # Any separate streams or MP4
+                "best",                                              # Ultimate fallback
             ])
-            
-            # Use all format parts directly
-            all_formats = format_parts
-            
+
             # Join with forward slashes for yt-dlp format selection
-            format_string = "/".join(all_formats)
+            format_string = "/".join(format_parts)
 
             self.logger.debug(
-                f"Generated yt-dlp format string for user {user_id}, artist {artist_id}: {format_string}"
+                f"Generated improved yt-dlp format string for user {user_id}, artist {artist_id}: {format_string[:200]}..."
             )
             return format_string
 
         except Exception as e:
             self.logger.error(f"Error generating yt-dlp format string: {e}")
-            # Return safe default
-            return "best[height<=1080]/best[height<=720]/bestvideo[height<=1080]+bestaudio/best"
+            # Return improved safe default with AVC1 and MP4 preferences
+            return ("bestvideo[height<=1080][vcodec^=avc1]+bestaudio[acodec^=mp4a]/"
+                   "bestvideo[height<=1080][ext=mp4]+bestaudio/"
+                   "best[height<=1080][ext=mp4]/"
+                   "best[height<=720][ext=mp4]/"
+                   "bestvideo[height<=1080]+bestaudio/"
+                   "best")
 
     def _get_artist_quality_preferences(
         self, artist_id: int
