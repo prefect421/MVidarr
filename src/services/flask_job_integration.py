@@ -124,8 +124,10 @@ class FlaskJobSystemIntegrator:
                     
                     # Start job system components synchronously within the Flask context
                     try:
-                        # Run the async startup in the event loop
-                        asyncio.ensure_future(self._start_job_system_deferred())
+                        # Create task properly so it gets awaited
+                        task = loop.create_task(self._start_job_system_deferred())
+                        # Store task reference to prevent it from being garbage collected
+                        self._startup_task = task
                         logger.info("Job system startup initiated successfully")
                     except Exception as startup_error:
                         logger.error(f"Failed to schedule job system startup: {startup_error}")

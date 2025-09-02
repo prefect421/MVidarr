@@ -14,7 +14,7 @@ from src.middleware.simple_auth_middleware import auth_required
 
 logger = logging.getLogger(__name__)
 
-# Create blueprint
+# Create blueprint  
 jobs_bp = Blueprint('jobs', __name__, url_prefix='/jobs')
 
 
