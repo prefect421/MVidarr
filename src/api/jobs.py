@@ -98,6 +98,7 @@ def enqueue_job():
     }
     """
     try:
+        from flask import session
         if not is_job_system_enabled():
             return jsonify({
                 'error': 'Job system is not enabled'
@@ -139,7 +140,7 @@ def enqueue_job():
             type=job_type,
             priority=priority,
             payload=data['payload'],
-            created_by=getattr(request, 'user_id', None)  # From auth middleware
+            created_by=session.get('username')  # From session
         )
         
         # Add optional fields
@@ -187,7 +188,8 @@ def get_job_status(job_id: str):
             }), 404
         
         # Check if user has permission to view this job
-        user_id = getattr(request, 'user_id', None)
+        from flask import session
+        user_id = session.get('username')
         if job.created_by and job.created_by != user_id:
             # TODO: Add admin role check
             return jsonify({
@@ -250,7 +252,9 @@ def list_user_jobs():
                 }
             })
         
-        user_id = getattr(request, 'user_id', None)
+        # Get user ID from session instead of request attribute
+        from flask import session
+        user_id = session.get('username')  # Using username as user_id since we don't have numeric IDs
         if not user_id:
             return jsonify({'error': 'User authentication required'}), 401
         
@@ -324,7 +328,8 @@ def cancel_job(job_id: str):
             }), 404
         
         # Check permission
-        user_id = getattr(request, 'user_id', None)
+        from flask import session
+        user_id = session.get('username')
         if job.created_by and job.created_by != user_id:
             return jsonify({
                 'error': 'Access denied'
