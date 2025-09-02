@@ -107,8 +107,69 @@ class BackgroundWorkerManager:
             logger.warning(f"Could not import MetadataEnrichmentWorker: {e}")
             self.register_worker(JobType.METADATA_ENRICHMENT, DummyWorker)  # Fallback
         
-        # Other workers use dummy for now
-        self.register_worker(JobType.VIDEO_DOWNLOAD, DummyWorker)  # TODO: Implement VideoDownloadWorker
+        # Import and register new workers
+        try:
+            from .workers.video_download_worker import VideoDownloadWorker
+            self.register_worker(JobType.VIDEO_DOWNLOAD, VideoDownloadWorker)
+        except ImportError as e:
+            logger.warning(f"Could not import VideoDownloadWorker: {e}")
+            self.register_worker(JobType.VIDEO_DOWNLOAD, DummyWorker)
+        
+        try:
+            from .workers.bulk_operations_worker import BulkOperationsWorker
+            self.register_worker(JobType.BULK_VIDEO_DELETE, BulkOperationsWorker)
+            # Note: Bulk operations worker handles multiple operation types based on payload
+        except ImportError as e:
+            logger.warning(f"Could not import BulkOperationsWorker: {e}")
+            self.register_worker(JobType.BULK_VIDEO_DELETE, DummyWorker)
+        
+        # Video quality workers
+        try:
+            from .workers.video_quality_worker import VideoQualityWorker
+            self.register_worker(JobType.VIDEO_QUALITY_ANALYZE, VideoQualityWorker)
+            self.register_worker(JobType.VIDEO_QUALITY_UPGRADE, VideoQualityWorker)
+            self.register_worker(JobType.VIDEO_QUALITY_BULK_UPGRADE, VideoQualityWorker)
+            self.register_worker(JobType.VIDEO_QUALITY_CHECK_ALL, VideoQualityWorker)
+        except ImportError as e:
+            logger.warning(f"Could not import VideoQualityWorker: {e}")
+            self.register_worker(JobType.VIDEO_QUALITY_ANALYZE, DummyWorker)
+            self.register_worker(JobType.VIDEO_QUALITY_UPGRADE, DummyWorker)
+            self.register_worker(JobType.VIDEO_QUALITY_BULK_UPGRADE, DummyWorker)
+            self.register_worker(JobType.VIDEO_QUALITY_CHECK_ALL, DummyWorker)
+        
+        # Video indexing workers
+        try:
+            from .workers.video_indexing_worker import VideoIndexingWorker
+            self.register_worker(JobType.VIDEO_INDEX_ALL, VideoIndexingWorker)
+            self.register_worker(JobType.VIDEO_INDEX_SINGLE, VideoIndexingWorker)
+        except ImportError as e:
+            logger.warning(f"Could not import VideoIndexingWorker: {e}")
+            self.register_worker(JobType.VIDEO_INDEX_ALL, DummyWorker)
+            self.register_worker(JobType.VIDEO_INDEX_SINGLE, DummyWorker)
+        
+        # Video organization workers
+        try:
+            from .workers.video_organization_worker import VideoOrganizationWorker
+            self.register_worker(JobType.VIDEO_ORGANIZE_ALL, VideoOrganizationWorker)
+            self.register_worker(JobType.VIDEO_ORGANIZE_SINGLE, VideoOrganizationWorker)
+            self.register_worker(JobType.VIDEO_REORGANIZE_EXISTING, VideoOrganizationWorker)
+        except ImportError as e:
+            logger.warning(f"Could not import VideoOrganizationWorker: {e}")
+            self.register_worker(JobType.VIDEO_ORGANIZE_ALL, DummyWorker)
+            self.register_worker(JobType.VIDEO_ORGANIZE_SINGLE, DummyWorker)
+            self.register_worker(JobType.VIDEO_REORGANIZE_EXISTING, DummyWorker)
+        
+        # Scheduler workers
+        try:
+            from .workers.scheduler_worker import SchedulerWorker
+            self.register_worker(JobType.SCHEDULED_DOWNLOAD, SchedulerWorker)
+            self.register_worker(JobType.SCHEDULED_DISCOVERY, SchedulerWorker)
+        except ImportError as e:
+            logger.warning(f"Could not import SchedulerWorker: {e}")
+            self.register_worker(JobType.SCHEDULED_DOWNLOAD, DummyWorker)
+            self.register_worker(JobType.SCHEDULED_DISCOVERY, DummyWorker)
+        
+        # Other workers use dummy for now until implemented
         self.register_worker(JobType.BULK_ARTIST_IMPORT, DummyWorker)  # TODO: Implement BulkImportWorker  
         self.register_worker(JobType.THUMBNAIL_GENERATION, DummyWorker)  # TODO: Implement ThumbnailWorker
         self.register_worker(JobType.PLAYLIST_SYNC, DummyWorker)  # TODO: Implement PlaylistSyncWorker

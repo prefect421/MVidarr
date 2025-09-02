@@ -109,13 +109,32 @@ class FlaskJobSystemIntegrator:
             """Ensure job system is started on first request"""
             if self.app.config['JOB_SYSTEM_ENABLED'] and not self._started:
                 try:
-                    # Start job system in background
-                    asyncio.create_task(self._start_job_system())
+                    # Set started flag early to prevent multiple startup attempts
                     self._started = True
-                    logger.info("Job system startup initiated")
+                    
+                    # Create or get event loop for job system startup
+                    try:
+                        loop = asyncio.get_event_loop()
+                        if loop.is_closed():
+                            raise RuntimeError("Loop is closed")
+                    except RuntimeError:
+                        # No event loop exists, create one
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                    
+                    # Start job system components synchronously within the Flask context
+                    try:
+                        # Run the async startup in the event loop
+                        asyncio.ensure_future(self._start_job_system_deferred())
+                        logger.info("Job system startup initiated successfully")
+                    except Exception as startup_error:
+                        logger.error(f"Failed to schedule job system startup: {startup_error}")
+                        # Reset flag on failure
+                        self._started = False
                     
                 except Exception as e:
                     logger.error(f"Failed to start job system: {e}")
+                    self._started = False
         
         # Register cleanup on app shutdown
         atexit.register(self._cleanup_on_exit)
@@ -147,6 +166,14 @@ class FlaskJobSystemIntegrator:
             logger.error(f"Failed to start job system: {e}")
             self._started = False
             raise
+    
+    async def _start_job_system_deferred(self):
+        """Deferred startup method that handles its own exceptions"""
+        try:
+            await self._start_job_system()
+        except Exception as e:
+            logger.error(f"Deferred job system startup failed: {e}")
+            self._started = False
     
     async def _schedule_periodic_cleanup(self, days_to_keep: int):
         """Schedule periodic cleanup of old jobs"""

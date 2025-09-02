@@ -78,26 +78,41 @@ def get_ytdlp_format_string():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@video_quality_bp.route("/analyze/<int:video_id>", methods=["GET"])
+@video_quality_bp.route("/analyze/<int:video_id>", methods=["POST"])
 def analyze_video_quality(video_id):
-    """Analyze the quality of a specific video"""
+    """Analyze the quality of a specific video (background job)"""
     try:
-        from src.database.connection import get_db
-        from src.database.models import Video
-
-        with get_db() as session:
-            video = session.query(Video).filter(Video.id == video_id).first()
-            if not video:
-                return jsonify({"error": "Video not found"}), 404
-
-            analysis = video_quality_service.analyze_video_quality(video)
-
-            return jsonify(
-                {"success": True, "video_id": video_id, "analysis": analysis}
-            )
+        import asyncio
+        from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+        from src.middleware.simple_auth_middleware import auth_required
+        
+        # Create background job for video quality analysis
+        job = BackgroundJob(
+            type=JobType.VIDEO_QUALITY_ANALYZE,
+            priority=JobPriority.NORMAL,
+            payload={
+                'video_id': video_id
+            },
+            created_by=getattr(request, 'user_id', None)
+        )
+        
+        # Enqueue job
+        async def queue_job():
+            job_queue = await get_job_queue()
+            return await job_queue.enqueue(job)
+        
+        job_id = asyncio.run(queue_job())
+        
+        logger.info(f"Enqueued video quality analysis job {job_id} for video {video_id}")
+        
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "message": f"Video quality analysis job queued for video {video_id}"
+        }), 202
 
     except Exception as e:
-        logger.error(f"Error analyzing video quality for video {video_id}: {e}")
+        logger.error(f"Error queueing video quality analysis for video {video_id}: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
@@ -127,8 +142,11 @@ def find_upgradeable_videos():
 
 @video_quality_bp.route("/upgrade/<int:video_id>", methods=["POST"])
 def upgrade_video_quality(video_id):
-    """Upgrade a video to higher quality"""
+    """Upgrade a video to higher quality (background job)"""
     try:
+        import asyncio
+        from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+        
         # Handle both JSON and empty requests
         try:
             data = request.get_json() or {}
@@ -138,14 +156,35 @@ def upgrade_video_quality(video_id):
             data = {}
         
         user_id = data.get("user_id")
-
-        result = video_quality_service.upgrade_video_quality(video_id, user_id)
-
-        status_code = 200 if result.get("success") else 400
-        return jsonify(result), status_code
+        
+        # Create background job for video quality upgrade
+        job = BackgroundJob(
+            type=JobType.VIDEO_QUALITY_UPGRADE,
+            priority=JobPriority.HIGH,  # Quality upgrades are high priority
+            payload={
+                'video_id': video_id,
+                'user_id': user_id
+            },
+            created_by=getattr(request, 'user_id', user_id)
+        )
+        
+        # Enqueue job
+        async def queue_job():
+            job_queue = await get_job_queue()
+            return await job_queue.enqueue(job)
+        
+        job_id = asyncio.run(queue_job())
+        
+        logger.info(f"Enqueued video quality upgrade job {job_id} for video {video_id}")
+        
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "message": f"Video quality upgrade job queued for video {video_id}"
+        }), 202
 
     except Exception as e:
-        logger.error(f"Error upgrading video {video_id}: {e}")
+        logger.error(f"Error queueing video quality upgrade for video {video_id}: {e}")
         import traceback
         logger.error(f"Full traceback: {traceback.format_exc()}")
         return jsonify({"success": False, "error": str(e)}), 500
@@ -153,8 +192,11 @@ def upgrade_video_quality(video_id):
 
 @video_quality_bp.route("/bulk-upgrade", methods=["POST"])
 def bulk_upgrade_videos():
-    """Upgrade multiple videos to higher quality"""
+    """Upgrade multiple videos to higher quality (background job)"""
     try:
+        import asyncio
+        from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+        
         data = request.get_json()
         if not data or "video_ids" not in data:
             return jsonify({"error": "video_ids array is required"}), 400
@@ -164,14 +206,35 @@ def bulk_upgrade_videos():
 
         if not isinstance(video_ids, list) or not video_ids:
             return jsonify({"error": "video_ids must be a non-empty array"}), 400
-
-        result = video_quality_service.bulk_upgrade_videos(video_ids, user_id)
-
-        status_code = 200 if result.get("success") else 400
-        return jsonify(result), status_code
+        
+        # Create background job for bulk video quality upgrade
+        job = BackgroundJob(
+            type=JobType.VIDEO_QUALITY_BULK_UPGRADE,
+            priority=JobPriority.HIGH,  # Bulk upgrades are high priority
+            payload={
+                'video_ids': video_ids,
+                'user_id': user_id
+            },
+            created_by=getattr(request, 'user_id', user_id)
+        )
+        
+        # Enqueue job
+        async def queue_job():
+            job_queue = await get_job_queue()
+            return await job_queue.enqueue(job)
+        
+        job_id = asyncio.run(queue_job())
+        
+        logger.info(f"Enqueued bulk video quality upgrade job {job_id} for {len(video_ids)} videos")
+        
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "message": f"Bulk video quality upgrade job queued for {len(video_ids)} videos"
+        }), 202
 
     except Exception as e:
-        logger.error(f"Error bulk upgrading videos: {e}")
+        logger.error(f"Error queueing bulk video quality upgrade: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
@@ -303,35 +366,48 @@ def get_available_quality_levels():
 
 @video_quality_bp.route("/check-all-qualities", methods=["POST"])
 def check_all_video_qualities():
-    """Manually trigger quality checks for multiple videos"""
+    """Manually trigger quality checks for multiple videos (background job)"""
     try:
+        import asyncio
+        from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+        
         data = request.get_json() or {}
         limit = data.get("limit")  # None means check all videos
         only_unchecked = data.get("only_unchecked", True)
         
-        from src.services.youtube_quality_check_service import youtube_quality_check_service
-        
         limit_msg = f"up to {limit}" if limit else "all"
-        logger.info(f"Starting manual quality check for {limit_msg} videos (only_unchecked={only_unchecked})")
+        logger.info(f"Queueing quality check for {limit_msg} videos (only_unchecked={only_unchecked})")
         
-        # Run the quality check
-        summary = youtube_quality_check_service.check_all_videos(
-            limit=limit, 
-            only_unchecked=only_unchecked
+        # Create background job for quality check
+        job = BackgroundJob(
+            type=JobType.VIDEO_QUALITY_CHECK_ALL,
+            priority=JobPriority.NORMAL,
+            payload={
+                'limit': limit,
+                'only_unchecked': only_unchecked
+            },
+            created_by=getattr(request, 'user_id', None)
         )
         
-        logger.info(f"Quality check completed: {summary}")
+        # Enqueue job
+        async def queue_job():
+            job_queue = await get_job_queue()
+            return await job_queue.enqueue(job)
+        
+        job_id = asyncio.run(queue_job())
+        
+        logger.info(f"Enqueued quality check job {job_id} for {limit_msg} videos")
         
         return jsonify({
             "success": True,
-            "summary": summary,
-            "message": f"Quality check completed: {summary['successful_checks']}/{summary['total_checked']} videos checked successfully"
-        })
+            "job_id": job_id,
+            "message": f"Quality check job queued for {limit_msg} videos"
+        }), 202
 
     except Exception as e:
         import traceback
         error_trace = traceback.format_exc()
-        logger.error(f"Error running quality check: {e}")
+        logger.error(f"Error queueing quality check job: {e}")
         logger.error(f"Full traceback: {error_trace}")
         return jsonify({"success": False, "error": str(e)}), 500
 

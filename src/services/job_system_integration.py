@@ -258,25 +258,34 @@ def init_job_system(app: Flask) -> JobSystemManager:
 
 def get_job_system_status() -> dict:
     """Get current job system status (Flask context)"""
-    if hasattr(current_app, 'extensions') and 'job_system' in current_app.extensions:
-        return current_app.extensions['job_system'].get_status()
-    return {'enabled': False, 'started': False, 'error': 'Job system not initialized'}
+    try:
+        # Use the new Flask job integrator
+        from .flask_job_integration import get_flask_job_system_status
+        return get_flask_job_system_status()
+    except Exception as e:
+        return {'enabled': False, 'started': False, 'error': f'Job system not available: {e}'}
 
 
 async def get_job_system_health() -> dict:
     """Get job system health check (Flask context)"""
-    if hasattr(current_app, 'extensions') and 'job_system' in current_app.extensions:
-        return await current_app.extensions['job_system'].health_check()
-    return {'status': 'not_initialized', 'message': 'Job system not initialized'}
+    try:
+        # Use the new Flask job integrator
+        from .flask_job_integration import get_flask_job_system_health
+        return await get_flask_job_system_health()
+    except Exception as e:
+        return {'status': 'not_initialized', 'message': f'Job system not available: {e}'}
 
 
 # Utility functions for external use
 
 def is_job_system_enabled() -> bool:
     """Check if job system is enabled"""
-    if hasattr(current_app, 'extensions') and 'job_system' in current_app.extensions:
-        return current_app.extensions['job_system']._started
-    return False
+    try:
+        # Use the new Flask job integrator
+        from .flask_job_integration import is_job_system_enabled as flask_is_enabled
+        return flask_is_enabled()
+    except Exception:
+        return False
 
 
 def get_job_system_config() -> dict:

@@ -25,118 +25,101 @@ logger = get_logger("mvidarr.api.metadata_enrichment")
 @metadata_enrichment_bp.route("/enrich/<int:artist_id>", methods=["POST"])
 @auth_required
 def enrich_artist_metadata(artist_id: int):
-    """Enrich metadata for a specific artist"""
+    """Enrich metadata for a specific artist using background job"""
     try:
         force_refresh = (
             request.json.get("force_refresh", False) if request.is_json else False
         )
+        enrich_videos = (
+            request.json.get("enrich_videos", True) if request.is_json else True
+        )
 
-        # Run async enrichment with Flask app context
-        from flask import current_app
+        # Import job system and asyncio
+        import asyncio
+        from ..services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+
+        # Create background job for artist metadata enrichment
+        job = BackgroundJob(
+            type=JobType.METADATA_ENRICHMENT,
+            priority=JobPriority.NORMAL,
+            payload={
+                'artist_id': artist_id,
+                'force_refresh': force_refresh,
+                'enrich_videos': enrich_videos,
+                'enrichment_type': 'artist'
+            }
+        )
+
+        # Queue the job using asyncio.run to handle the async function
+        async def queue_job():
+            job_queue = await get_job_queue()
+            return await job_queue.enqueue(job)
         
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            # Pass Flask app context to async function
-            result = loop.run_until_complete(
-                metadata_enrichment_service.enrich_artist_metadata(
-                    artist_id, force_refresh, app_context=current_app
-                )
-            )
-        finally:
-            loop.close()
+        job_id = asyncio.run(queue_job())
 
-        if result.success:
-            return (
-                jsonify(
-                    {
-                        "success": True,
-                        "artist_id": artist_id,
-                        "sources_used": result.sources_used,
-                        "enriched_fields": result.enriched_fields,
-                        "metadata_found": result.metadata_found,
-                        "confidence_score": result.confidence_score,
-                        "processing_time": result.processing_time,
-                    }
-                ),
-                200,
-            )
-        else:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "artist_id": artist_id,
-                        "errors": result.errors,
-                        "processing_time": result.processing_time,
-                    }
-                ),
-                400,
-            )
+        logger.info(f"Queued artist metadata enrichment job {job_id} for artist {artist_id}")
+
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "artist_id": artist_id,
+            "message": f"Artist metadata enrichment job queued. Job ID: {job_id}"
+        }), 202  # 202 Accepted - processing started
 
     except Exception as e:
-        logger.error(f"Failed to enrich metadata for artist {artist_id}: {e}")
+        logger.error(f"Failed to queue artist metadata enrichment job: {e}")
         return jsonify({"error": str(e)}), 500
 
 
 @metadata_enrichment_bp.route("/enrich/video/<int:video_id>", methods=["POST"])
 @auth_required
 def enrich_video_metadata(video_id: int):
-    """Enrich metadata for a specific video using multiple sources"""
+    """Enrich metadata for a specific video using background job"""
     try:
         force_refresh = (
             request.json.get("force_refresh", False) if request.is_json else False
         )
 
-        # Run async enrichment
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            result = loop.run_until_complete(
-                metadata_enrichment_service.enrich_video_metadata(
-                    video_id, force_refresh
-                )
-            )
-        finally:
-            loop.close()
+        # Import job system
+        from ..services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
 
-        if result.success:
-            return (
-                jsonify(
-                    {
-                        "success": True,
-                        "video_id": video_id,
-                        "enriched_fields": result.enriched_fields,
-                        "metadata_sources": result.metadata_sources,
-                        "errors": result.errors,
-                        "processing_time": result.processing_time,
-                        "message": f"Video metadata enriched from {', '.join(result.metadata_sources)}",
-                    }
-                ),
-                200,
-            )
-        else:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "video_id": video_id,
-                        "errors": result.errors,
-                        "processing_time": result.processing_time,
-                    }
-                ),
-                400,
-            )
+        # Create background job for video metadata enrichment
+        job = BackgroundJob(
+            type=JobType.METADATA_ENRICHMENT,
+            priority=JobPriority.NORMAL,
+            payload={
+                'video_id': video_id,
+                'force_refresh': force_refresh,
+                'enrichment_type': 'video'
+            }
+        )
+
+        # Queue the job using asyncio.run to handle the async function
+        import asyncio
+        async def queue_job():
+            job_queue = await get_job_queue()
+            return await job_queue.enqueue(job)
+        
+        job_id = asyncio.run(queue_job())
+
+        logger.info(f"Queued video metadata enrichment job {job_id} for video {video_id}")
+
+        return jsonify({
+            "success": True,
+            "job_id": job_id,
+            "video_id": video_id,
+            "message": f"Video metadata enrichment job queued. Job ID: {job_id}"
+        }), 202  # 202 Accepted - processing started
 
     except Exception as e:
-        logger.error(f"Failed to enrich metadata for video {video_id}: {e}")
+        logger.error(f"Failed to queue video metadata enrichment job: {e}")
         return jsonify({"error": str(e)}), 500
 
 
 @metadata_enrichment_bp.route("/enrich/batch", methods=["POST"])
 @auth_required
 def enrich_multiple_artists():
-    """Enrich metadata for multiple artists"""
+    """Enrich metadata for multiple artists using background jobs"""
     try:
         if not request.is_json:
             return jsonify({"error": "JSON payload required"}), 400
@@ -144,6 +127,7 @@ def enrich_multiple_artists():
         data = request.get_json()
         artist_ids = data.get("artist_ids", [])
         force_refresh = data.get("force_refresh", False)
+        enrich_videos = data.get("enrich_videos", True)
 
         if not artist_ids:
             return jsonify({"error": "artist_ids list is required"}), 400
@@ -157,49 +141,46 @@ def enrich_multiple_artists():
         except (ValueError, TypeError):
             return jsonify({"error": "All artist_ids must be valid integers"}), 400
 
-        # Run async batch enrichment with Flask app context
-        from flask import current_app
-        
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            results = loop.run_until_complete(
-                metadata_enrichment_service.enrich_multiple_artists(
-                    artist_ids, force_refresh, app_context=current_app
+        # Import job system and asyncio
+        import asyncio
+        from ..services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+
+        # Queue all jobs using asyncio.run
+        async def queue_jobs():
+            job_queue = await get_job_queue()
+            job_ids = []
+            
+            # Create individual jobs for each artist
+            for artist_id in artist_ids:
+                job = BackgroundJob(
+                    type=JobType.METADATA_ENRICHMENT,
+                    priority=JobPriority.NORMAL,
+                    payload={
+                        'artist_id': artist_id,
+                        'force_refresh': force_refresh,
+                        'enrich_videos': enrich_videos,
+                        'enrichment_type': 'artist'
+                    },
+                    tags={'batch_operation': True}
                 )
-            )
-        finally:
-            loop.close()
+                
+                job_id = await job_queue.enqueue(job)
+                job_ids.append(job_id)
+            
+            return job_ids
 
-        # Process results
-        successful = [r for r in results if r.success]
-        failed = [r for r in results if not r.success]
+        job_ids = asyncio.run(queue_jobs())
+        logger.info(f"Queued {len(job_ids)} artist metadata enrichment jobs: {job_ids}")
 
-        return (
-            jsonify(
-                {
-                    "total_processed": len(results),
-                    "successful": len(successful),
-                    "failed": len(failed),
-                    "results": [
-                        {
-                            "artist_id": r.artist_id,
-                            "success": r.success,
-                            "sources_used": r.sources_used,
-                            "metadata_found": r.metadata_found if r.success else None,
-                            "errors": r.errors if not r.success else None,
-                            "confidence_score": r.confidence_score,
-                            "processing_time": r.processing_time,
-                        }
-                        for r in results
-                    ],
-                }
-            ),
-            200,
-        )
+        return jsonify({
+            "success": True,
+            "job_ids": job_ids,
+            "total_artists": len(artist_ids),
+            "message": f"Queued {len(job_ids)} metadata enrichment jobs for batch processing"
+        }), 202  # 202 Accepted - processing started
 
     except Exception as e:
-        logger.error(f"Failed to enrich multiple artists: {e}")
+        logger.error(f"Failed to queue batch metadata enrichment jobs: {e}")
         return jsonify({"error": str(e)}), 500
 
 

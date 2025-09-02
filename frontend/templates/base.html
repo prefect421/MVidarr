@@ -1361,10 +1361,17 @@
         </main>
     </div>
 
+    <!-- Job Dashboard Modal -->
+    {% include 'components/job_dashboard_modal.html' %}
+
 
     <script src="{{ url_for('frontend.static_files', filename='toast.js') }}"></script>
     <script src="{{ url_for('frontend.static_files', filename='main.js') }}"></script>
     <script src="{{ url_for('frontend.static_files', filename='loading-feedback.js') }}"></script>
+    
+    <!-- Background Jobs System -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('frontend.static_files', filename='js/background-jobs.js') }}"></script>
     <script>
         
         

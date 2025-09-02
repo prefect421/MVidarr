@@ -14,6 +14,7 @@ from src.api.enhanced_scheduler import enhanced_scheduler_bp
 from src.api.genres import genres_bp
 from src.api.health import health_bp
 from src.api.imvdb import imvdb_bp
+from src.api.jobs import jobs_bp
 from src.api.lastfm import lastfm_bp
 from src.api.lidarr import lidarr_bp
 from src.api.metadata_enrichment import metadata_enrichment_bp
@@ -68,6 +69,7 @@ def register_routes(app):
     api_bp.register_blueprint(playlists_bp)
     api_bp.register_blueprint(migrations_bp)
     api_bp.register_blueprint(health_bp)
+    api_bp.register_blueprint(jobs_bp)
     api_bp.register_blueprint(users_bp)
     api_bp.register_blueprint(video_org_bp)
     api_bp.register_blueprint(video_indexing_bp)

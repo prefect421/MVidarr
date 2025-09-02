@@ -121,6 +121,10 @@ input:checked + .slider:before {
             <h1 class="text-h1">Settings</h1>
         </div>
         <div class="action-group" role="group" aria-label="Settings actions">
+            <button onclick="showJobDashboard()" class="btn btn-secondary" aria-label="Open job management dashboard">
+                <iconify-icon icon="tabler:activity" aria-hidden="true"></iconify-icon>
+                Job Management
+            </button>
             <button onclick="saveSettings()" class="btn btn-primary" aria-label="Save current settings">
                 <iconify-icon icon="mdi:content-save" aria-hidden="true"></iconify-icon>
                 Save Settings
@@ -1180,6 +1184,33 @@ input:checked + .slider:before {
                 <span id="progress-text">Processing...</span>
             </div>
             <div id="indexing-results" class="results-container" style="display: none;"></div>
+        </div>
+
+        <div class="settings-section">
+            <h2>Background Job Management</h2>
+            <div class="form-group">
+                <label>Job System Status:</label>
+                <div id="job-system-status">
+                    <span id="job-status-loading">Checking...</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <p>Monitor and manage background jobs for metadata enrichment, video downloads, and bulk operations.</p>
+            </div>
+            <div class="job-management-actions">
+                <button type="button" onclick="showJobDashboard()" class="btn btn-primary">
+                    <iconify-icon icon="tabler:activity" style="margin-right: 0.5rem;"></iconify-icon>
+                    Open Job Dashboard
+                </button>
+                <button onclick="refreshJobSystemStatus()" class="btn btn-info">
+                    <iconify-icon icon="tabler:refresh" style="margin-right: 0.5rem;"></iconify-icon>
+                    Refresh Status
+                </button>
+            </div>
+            <div id="job-system-details" class="details-container" style="display: none; margin-top: 1rem;">
+                <h4>System Details:</h4>
+                <div id="job-system-info"></div>
+            </div>
         </div>
 
         <div class="settings-section">
@@ -8308,6 +8339,72 @@ document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closeAddToBlacklistModal();
         closeConfirmRemoveModal();
+    }
+});
+
+// Job System Management Functions
+async function refreshJobSystemStatus() {
+    const statusElement = document.getElementById('job-system-status');
+    const loadingElement = document.getElementById('job-status-loading');
+    const detailsContainer = document.getElementById('job-system-details');
+    const detailsInfo = document.getElementById('job-system-info');
+    
+    loadingElement.textContent = 'Checking...';
+    loadingElement.style.color = 'var(--text-secondary)';
+    
+    try {
+        const response = await fetch('/api/jobs/health', {
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.status === 'healthy') {
+            loadingElement.innerHTML = '<span style="color: var(--success-color, #10b981);"><iconify-icon icon="tabler:check-circle"></iconify-icon> System Running</span>';
+            
+            // Show system details
+            detailsInfo.innerHTML = `
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 6px; margin-top: 0.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div><strong>Queue Status:</strong> ${data.queue_status || 'Active'}</div>
+                        <div><strong>Worker Status:</strong> ${data.worker_status || 'Running'}</div>
+                        <div><strong>Active Jobs:</strong> ${data.active_jobs || 0}</div>
+                        <div><strong>Queued Jobs:</strong> ${data.queued_jobs || 0}</div>
+                    </div>
+                    ${data.uptime ? `<div style="margin-top: 0.5rem;"><strong>Uptime:</strong> ${data.uptime}</div>` : ''}
+                </div>
+            `;
+            detailsContainer.style.display = 'block';
+        } else if (data.status === 'disabled') {
+            loadingElement.innerHTML = '<span style="color: var(--warning-color, #f59e0b);"><iconify-icon icon="tabler:alert-circle"></iconify-icon> System Disabled</span>';
+            detailsContainer.style.display = 'none';
+        } else {
+            loadingElement.innerHTML = '<span style="color: var(--danger-color, #ef4444);"><iconify-icon icon="tabler:x-circle"></iconify-icon> System Error</span>';
+            detailsInfo.innerHTML = `<div style="color: var(--danger-color); margin-top: 0.5rem;">${data.error || 'Unknown error'}</div>`;
+            detailsContainer.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Failed to check job system status:', error);
+        loadingElement.innerHTML = '<span style="color: var(--danger-color, #ef4444);"><iconify-icon icon="tabler:wifi-off"></iconify-icon> Connection Error</span>';
+        detailsInfo.innerHTML = `<div style="color: var(--danger-color); margin-top: 0.5rem;">Failed to connect to job system</div>`;
+        detailsContainer.style.display = 'block';
+    }
+}
+
+// Initialize job system status when the system tab is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we're on the system tab or refresh status when tab is clicked
+    const systemTab = document.getElementById('tab-system');
+    if (systemTab) {
+        systemTab.addEventListener('click', function() {
+            setTimeout(refreshJobSystemStatus, 100);
+        });
+    }
+    
+    // If system tab is already active on page load, refresh status
+    const systemTabPanel = document.getElementById('system-tab');
+    if (systemTabPanel && systemTabPanel.classList.contains('active')) {
+        refreshJobSystemStatus();
     }
 });
 

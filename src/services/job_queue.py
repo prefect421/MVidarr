@@ -25,6 +25,21 @@ class JobType(Enum):
     PLAYLIST_SYNC = "playlist_sync"
     BULK_VIDEO_DELETE = "bulk_video_delete"
     DATABASE_CLEANUP = "database_cleanup"
+    # Video quality operations
+    VIDEO_QUALITY_ANALYZE = "video_quality_analyze"
+    VIDEO_QUALITY_UPGRADE = "video_quality_upgrade"
+    VIDEO_QUALITY_BULK_UPGRADE = "video_quality_bulk_upgrade"
+    VIDEO_QUALITY_CHECK_ALL = "video_quality_check_all"
+    # Video indexing operations
+    VIDEO_INDEX_ALL = "video_index_all"
+    VIDEO_INDEX_SINGLE = "video_index_single"
+    # Video organization operations
+    VIDEO_ORGANIZE_ALL = "video_organize_all"
+    VIDEO_ORGANIZE_SINGLE = "video_organize_single"
+    VIDEO_REORGANIZE_EXISTING = "video_reorganize_existing"
+    # Scheduler operations
+    SCHEDULED_DOWNLOAD = "scheduled_download"
+    SCHEDULED_DISCOVERY = "scheduled_discovery"
 
 
 class JobStatus(Enum):

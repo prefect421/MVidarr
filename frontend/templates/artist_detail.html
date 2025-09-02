@@ -5590,7 +5590,6 @@ function handleVideoCardClick(event, videoId) {
     if (isInBulkSelectionMode() || event.ctrlKey || event.metaKey) {
         event.preventDefault();
         toggleVideoSelection(videoId);
-    } else {
     }
 }
 
@@ -6947,7 +6946,44 @@ function importFromImvdb() {
     });
 }
 
-function enrichMetadataAllSources(event) {
+async function autoMatchServices() {
+    if (!currentArtistId) {
+        showError('No artist selected');
+        return;
+    }
+    
+    if (!confirm('Auto-match this artist across all connected services? This will attempt to find and link corresponding profiles on IMVDb, MusicBrainz, Spotify, and other services.')) {
+        return;
+    }
+    
+    try {
+        showInfo('Starting auto-match process...');
+        
+        const response = await fetch(`/api/artists/${currentArtistId}/auto-match`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showSuccess(`Auto-match completed: ${data.message}`);
+            // Refresh artist data to show updated links
+            loadArtistDetails();
+        } else {
+            showError('Auto-match failed: ' + (data.error || 'Unknown error'));
+        }
+        
+    } catch (error) {
+        console.error('Auto-match error:', error);
+        showError('Auto-match failed: ' + error.message);
+    }
+}
+
+async function enrichMetadataAllSources(event) {
     if (!currentArtistId) {
         showError('No artist selected');
         return;
@@ -6960,107 +6996,59 @@ function enrichMetadataAllSources(event) {
     const btn = event.target;
     const originalHtml = btn.innerHTML;
     btn.disabled = true;
+    btn.innerHTML = '<iconify-icon icon="tabler:loader-2" class="spin"></iconify-icon> Starting...';
     
-    // Show enhanced progress modal
-    showEnrichmentProgressModal();
-    
-    const sources = ['IMVDb', 'AllMusic', 'MusicBrainz', 'Last.fm', 'Spotify'];
-    let currentStep = 0;
-    
-    // Update progress with each source
-    const progressInterval = setInterval(() => {
-        if (currentStep < sources.length) {
-            updateEnrichmentProgress(currentStep + 1, sources.length, `Processing ${sources[currentStep]}...`);
-            currentStep++;
-        }
-    }, 1000);
-    
-    fetch(`/api/metadata-enrichment/enrich/${currentArtistId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ force_refresh: true })
-    })
-    .then(response => response.json())
-    .then(data => {
-        clearInterval(progressInterval);
-        hideEnrichmentProgressModal();
+    try {
+        console.log('🚀 Starting metadata enrichment job for artist:', currentArtistId);
         
-        
-        if (data.success) {
-            const sourcesUsed = data.sources_used || [];
-            // Handle enriched_fields as either array or object
-            const enrichedFields = Array.isArray(data.enriched_fields) 
-                ? data.enriched_fields 
-                : (data.enriched_fields ? Object.keys(data.enriched_fields) : []);
-            const enrichmentSummary = data.enrichment_summary || {};
-            
-            // Show simple success toast message
-            const sourcesText = sourcesUsed && sourcesUsed.length > 0 ? sourcesUsed.join(', ') : 'multiple sources';
-            const fieldsText = enrichedFields && enrichedFields.length > 0 ? `${enrichedFields.length} fields updated` : 'metadata updated';
-            
-            console.log('🔍 SHOWING SUCCESS TOAST for enrichment');
-            if (typeof showSuccess === 'function') {
-                showSuccess(`Metadata enriched from ${sourcesText}. ${fieldsText}.`);
-            } else {
-                alert(`Metadata enriched from ${sourcesText}. ${fieldsText}.`);
-            }
-            
-            // Reload artist data to show updated metadata with animation
-            console.log('🔍 METADATA FOUND CHECK:', {
-                has_metadata_found: !!data.metadata_found,
-                metadata_found_content: data.metadata_found
-            });
-            if (data.metadata_found) {
-                console.log('🔍 UPDATING ARTIST DATA AND RELOADING...');
-                currentArtistData = { ...currentArtistData, ...data.metadata_found };
+        // Start background job for metadata enrichment
+        const jobId = await window.backgroundJobs.startMetadataEnrichment(currentArtistId, {
+            force_refresh: true,
+            enrich_videos: true,
+            priority: 'normal',
+            onComplete: (error, result) => {
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
                 
-                // Always search for better thumbnail during enrichment
-                console.log('🔍 Searching for artist thumbnail during enrichment...');
-                console.log('🔍 Current thumbnail URL:', currentArtistData.thumbnail_url);
-                searchArtistThumbnail().then(() => {
-                    console.log('🔍 Thumbnail search completed, refreshing view...');
-                    animateMetadataUpdate();
-                    loadArtistDetails(); // Refresh the entire view
-                }).catch(error => {
-                    console.log('🔍 Thumbnail search failed, continuing with metadata update...');
-                    console.error('Thumbnail search error:', error);
-                    animateMetadataUpdate();
-                    loadArtistDetails(); // Refresh the entire view
-                });
-            } else {
-                console.log('❌ NO metadata_found, not reloading view');
+                if (error) {
+                    console.error('Enrichment job failed:', error);
+                    showError(`Enrichment failed: ${error.message}`);
+                } else {
+                    console.log('Enrichment job completed:', result);
+                    
+                    // Show success message
+                    const sourcesUsed = result.sources_updated || [];
+                    const fieldsUpdated = result.metadata_fields_updated || [];
+                    const sourcesText = sourcesUsed.length > 0 ? sourcesUsed.join(', ') : 'multiple sources';
+                    const fieldsText = fieldsUpdated.length > 0 ? `${fieldsUpdated.length} fields updated` : 'metadata updated';
+                    
+                    showSuccess(`Metadata enriched from ${sourcesText}. ${fieldsText}.`);
+                    
+                    // Refresh artist data
+                    loadArtistDetails();
+                }
             }
-        } else {
-            const errorMessage = data.error || 'Failed to enrich metadata';
-            showEnrichmentError(errorMessage, data.failed_sources || []);
-        }
-    })
-    .catch(error => {
-        clearInterval(progressInterval);
-        hideEnrichmentProgressModal();
-        console.error('Enrichment error:', error);
+        });
         
-        // Provide user-friendly error messages
-        let userMessage = 'Failed to enrich metadata from external sources';
-        let suggestions = [];
+        console.log(`✅ Metadata enrichment job ${jobId} started successfully`);
         
-        if (error.message && error.message.includes('404')) {
-            userMessage = 'Artist not found in external metadata sources';
-            suggestions.push('Try checking the artist name spelling');
-            suggestions.push('Verify the artist exists in external databases');
-        } else if (error.message && error.message.includes('network')) {
-            userMessage = 'Network error while fetching metadata';
-            suggestions.push('Check your internet connection');
-            suggestions.push('Try again in a few moments');
-        }
+        // Update button to show job started
+        btn.innerHTML = '<iconify-icon icon="tabler:activity"></iconify-icon> Enriching...';
         
-        showEnrichmentError(userMessage, [], suggestions);
-    })
-    .finally(() => {
+        // Show info message
+        showInfo('Metadata enrichment started. Progress will be shown in the job panel.');
+        
+    } catch (error) {
+        console.error('Failed to start enrichment job:', error);
+        showError(`Failed to start enrichment: ${error.message}`);
+        
+        // Re-enable button
         btn.disabled = false;
         btn.innerHTML = originalHtml;
-    });
+    }
 }
+
 
 // Enhanced enrichment UI functions
 function showEnrichmentProgressModal() {

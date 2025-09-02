@@ -34,6 +34,16 @@ class MetadataEnrichmentWorker(HybridWorker):
     async def process_hybrid(self):
         """Process metadata enrichment job with database and network operations"""
         
+        # Determine enrichment type (artist or video)
+        enrichment_type = self.job.payload.get('enrichment_type', 'artist')
+        
+        if enrichment_type == 'video':
+            await self._process_video_enrichment()
+        else:
+            await self._process_artist_enrichment()
+    
+    async def _process_artist_enrichment(self):
+        """Process artist metadata enrichment"""
         # Validate job payload
         if not self.validate_payload(['artist_id']):
             await self.fail("Invalid payload: artist_id is required")
@@ -287,3 +297,88 @@ class MetadataEnrichmentWorker(HybridWorker):
             logger.error(f"Error enriching artist videos: {e}")
         
         return enriched_count
+    
+    async def _process_video_enrichment(self):
+        """Process video metadata enrichment"""
+        # Validate job payload
+        if not self.validate_payload(['video_id']):
+            await self.fail("Invalid payload: video_id is required")
+            return
+        
+        video_id = self.job.payload['video_id']
+        force_refresh = self.job.payload.get('force_refresh', False)
+        
+        logger.info(f"Starting metadata enrichment for video {video_id} (force_refresh={force_refresh})")
+        
+        try:
+            await self.update_progress(5, "Initializing video enrichment...")
+            
+            # Initialize enrichment service
+            self.enrichment_service = MetadataEnrichmentService()
+            
+            await self.update_progress(10, "Verifying video exists...")
+            
+            # Verify video exists and get basic info
+            video_info = await self.get_data(
+                lambda session: session.query(Video).filter(Video.id == video_id).first()
+            )
+            
+            if not video_info:
+                await self.fail(f"Video {video_id} not found in database")
+                return
+            
+            video_title = video_info.title or f"Video {video_id}"
+            artist_name = video_info.artist.name if video_info.artist else "Unknown Artist"
+            
+            await self.update_progress(15, f"Enriching metadata for: {video_title}")
+            
+            # Perform video metadata enrichment using the existing service
+            enrichment_result = await self.run_async_service(
+                lambda: self.enrichment_service.enrich_video_metadata(
+                    video_id,
+                    force_refresh=force_refresh
+                )
+            )
+            
+            await self.update_progress(90, "Processing enrichment results...")
+            
+            # Process the enrichment result
+            if enrichment_result and enrichment_result.get('success'):
+                enriched_fields = enrichment_result.get('enriched_fields', [])
+                metadata_sources = enrichment_result.get('metadata_sources', [])
+                
+                result_message = f"Video metadata enriched for {video_title}"
+                if enriched_fields:
+                    result_message += f" - Updated fields: {', '.join(enriched_fields)}"
+                if metadata_sources:
+                    result_message += f" - Sources: {', '.join(metadata_sources)}"
+                
+                await self.update_progress(95, result_message)
+                
+                # Complete with success details
+                await self.complete({
+                    'video_id': video_id,
+                    'video_title': video_title,
+                    'artist_name': artist_name,
+                    'enriched_fields': enriched_fields,
+                    'metadata_sources': metadata_sources,
+                    'message': result_message
+                })
+                
+            else:
+                # No metadata found or enrichment failed
+                error_msg = enrichment_result.get('error', 'No metadata sources provided updates')
+                logger.warning(f"Video enrichment had limited results for {video_id}: {error_msg}")
+                
+                await self.complete({
+                    'video_id': video_id,
+                    'video_title': video_title,
+                    'artist_name': artist_name,
+                    'enriched_fields': [],
+                    'metadata_sources': [],
+                    'message': f"Limited enrichment results for {video_title}: {error_msg}"
+                })
+        
+        except Exception as e:
+            logger.error(f"Video metadata enrichment failed for {video_id}: {e}")
+            await self.fail(f"Video metadata enrichment failed: {str(e)}")
