@@ -15,7 +15,7 @@ from src.middleware.simple_auth_middleware import auth_required
 logger = logging.getLogger(__name__)
 
 # Create blueprint
-jobs_bp = Blueprint('jobs', __name__, url_prefix='/api/jobs')
+jobs_bp = Blueprint('jobs', __name__, url_prefix='/jobs')
 
 
 @jobs_bp.route('/health', methods=['GET'])
