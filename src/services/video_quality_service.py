@@ -711,30 +711,40 @@ class VideoQualityService:
                 )
                 session.commit()  # Commit the upgrade flag immediately
 
-                # Queue the upgrade download with timestamp to ensure uniqueness
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                download_result = ytdlp_service.add_music_video_download(
-                    artist=artist_name,
-                    title=f"{video.title} (Quality Upgrade {timestamp})",
-                    url=video_url,
-                    quality="best",  # Will be overridden by format string
-                    video_id=video_id,
-                    download_subtitles=False,
+                # Queue the upgrade download using background job system
+                import asyncio
+                from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+                
+                # Create background job for video download
+                download_job = BackgroundJob(
+                    type=JobType.VIDEO_DOWNLOAD,
+                    priority=JobPriority.HIGH,  # Quality upgrades are high priority
+                    payload={
+                        'video_id': video_id,
+                        'quality': 'best',  # Will be overridden by format string
+                        'force_redownload': True,  # Always redownload for upgrades
+                        'upgrade_mode': True,  # Flag this as an upgrade
+                        'original_quality': current_analysis.get("current_quality"),
+                        'target_quality': user_prefs.get("default_quality")
+                    }
                 )
+                
+                # Queue the download job
+                async def queue_download_job():
+                    job_queue = await get_job_queue()
+                    return await job_queue.enqueue(download_job)
+                
+                download_job_id = asyncio.run(queue_download_job())
+                
+                self.logger.info(f"Queued video download job {download_job_id} for quality upgrade of video {video_id}")
 
-                if download_result.get("success"):
-                    return {
-                        "success": True,
-                        "message": "Video upgrade queued",
-                        "download_id": download_result.get("id"),
-                        "current_quality": current_analysis.get("current_quality"),
-                        "target_quality": user_prefs.get("default_quality"),
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to queue upgrade: {download_result.get('error')}",
-                    }
+                return {
+                    "success": True,
+                    "message": "Video upgrade download queued",
+                    "download_job_id": download_job_id,
+                    "current_quality": current_analysis.get("current_quality"),
+                    "target_quality": user_prefs.get("default_quality"),
+                }
 
         except Exception as e:
             self.logger.error(f"Error upgrading video {video_id}: {e}")
