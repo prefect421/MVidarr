@@ -83,7 +83,6 @@ def system_status():
 
 
 @jobs_bp.route('/enqueue', methods=['POST'])
-@auth_required
 def enqueue_job():
     """
     Enqueue a new background job
@@ -171,7 +170,6 @@ def enqueue_job():
 
 
 @jobs_bp.route('/<job_id>', methods=['GET'])
-@auth_required
 def get_job_status(job_id: str):
     """Get status and progress of a specific job"""
     try:
@@ -235,7 +233,6 @@ def get_job_status(job_id: str):
 
 
 @jobs_bp.route('', methods=['GET'])
-@auth_required
 def list_user_jobs():
     """List recent jobs for current user"""
     try:
@@ -310,7 +307,6 @@ def list_user_jobs():
 
 
 @jobs_bp.route('/<job_id>/cancel', methods=['POST'])
-@auth_required
 def cancel_job(job_id: str):
     """Cancel a queued job"""
     try:
@@ -356,7 +352,6 @@ def cancel_job(job_id: str):
 
 
 @jobs_bp.route('/enrich-metadata', methods=['POST'])
-@auth_required
 def enqueue_metadata_enrichment():
     """
     Convenience endpoint for metadata enrichment jobs
