@@ -32,6 +32,42 @@ class AsyncSubprocessManager:
             self._thread_pool = ThreadPoolExecutor(max_workers=self.max_workers)
         return self._thread_pool
     
+    async def run_command_async(
+        self, 
+        cmd: Union[List[str], str], 
+        timeout: Optional[float] = None,
+        capture_output: bool = True,
+        text: bool = True,
+        check: bool = False,
+        cwd: Optional[Union[str, Path]] = None,
+        env: Optional[Dict[str, str]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        Run subprocess command asynchronously with proper result format
+        
+        Returns:
+            Dict with 'success', 'stdout', 'stderr', 'returncode' keys
+        """
+        try:
+            result = await self.run_in_thread_pool(
+                cmd, timeout, capture_output, text, check, cwd, env, **kwargs
+            )
+            
+            return {
+                "success": result.returncode == 0,
+                "stdout": result.stdout or "",
+                "stderr": result.stderr or "",
+                "returncode": result.returncode
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "stdout": "",
+                "stderr": str(e),
+                "returncode": -1
+            }
+    
     async def run_in_thread_pool(
         self, 
         cmd: Union[List[str], str], 

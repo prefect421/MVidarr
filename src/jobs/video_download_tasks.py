@@ -6,6 +6,7 @@ Phase 2: Media Processing Optimization - yt-dlp Background Jobs
 import os
 import subprocess
 import tempfile
+import json
 from typing import Dict, Any, Optional, List
 from celery import current_task
 from datetime import datetime
@@ -564,6 +565,105 @@ def extract_video_info(self, video_url: str) -> Dict[str, Any]:
         self.update_progress(-1, f"Info extraction failed: {str(e)}")
         raise
 
+@celery_app.task(base=VideoProcessingTask, bind=True, name='video_download_tasks.bulk_download_videos')
+def bulk_download_videos(self, video_data: List[Dict[str, Any]], download_options: Dict[str, Any] = None) -> Dict[str, Any]:
+    """
+    Download multiple videos in a single background job
+    
+    Args:
+        video_data: List of video info dicts with 'url' and optionally 'video_id'
+        download_options: Common download options for all videos
+        
+    Returns:
+        Dict with bulk download results
+    """
+    try:
+        task_id = self.request.id
+        total_videos = len(video_data)
+        results = []
+        
+        self.update_progress(0, f"Starting bulk download of {total_videos} videos")
+        
+        for i, video_info in enumerate(video_data):
+            video_url = video_info.get('url')
+            video_id = video_info.get('video_id')
+            
+            if not video_url:
+                results.append({
+                    'video_id': video_id,
+                    'success': False,
+                    'error': 'No URL provided'
+                })
+                continue
+            
+            # Update progress
+            progress_percent = int((i / total_videos) * 90)  # Leave 10% for final processing
+            self.update_progress(progress_percent, f"Downloading video {i+1}/{total_videos}: {video_url}")
+            
+            try:
+                # Perform individual video download within the bulk task
+                individual_options = {**(download_options or {}), 'video_id': video_id}
+                
+                # Use yt-dlp directly (same logic as individual download task)
+                output_dir = individual_options.get('output_dir', '/tmp')
+                format_spec = individual_options.get('format', 'best[height<=720]')
+                
+                cmd = [
+                    'yt-dlp',
+                    '--format', format_spec,
+                    '--output', f'{output_dir}/%(title)s.%(ext)s',
+                    '--no-playlist',
+                    video_url
+                ]
+                
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 minutes per video
+                )
+                
+                if result.returncode == 0:
+                    results.append({
+                        'video_id': video_id,
+                        'video_url': video_url,
+                        'success': True,
+                        'output': result.stdout
+                    })
+                else:
+                    results.append({
+                        'video_id': video_id,
+                        'video_url': video_url,
+                        'success': False,
+                        'error': result.stderr
+                    })
+                
+            except Exception as e:
+                logger.error(f"Failed to download video {video_url}: {e}")
+                results.append({
+                    'video_id': video_id,
+                    'video_url': video_url,
+                    'success': False,
+                    'error': str(e)
+                })
+        
+        # Final processing
+        self.update_progress(100, f"Completed bulk download: {len([r for r in results if r['success']])} successful, {len([r for r in results if not r['success']])} failed")
+        
+        return {
+            'success': True,
+            'total_videos': total_videos,
+            'successful_downloads': len([r for r in results if r['success']]),
+            'failed_downloads': len([r for r in results if not r['success']]),
+            'results': results,
+            'completed_at': datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Bulk download failed: {e}")
+        self.update_progress(-1, f"Bulk download failed: {str(e)}")
+        raise
+
 # Utility functions for task management
 def submit_video_download(video_url: str, download_options: Dict[str, Any] = None) -> str:
     """Submit video download job and return task ID"""
@@ -581,6 +681,12 @@ def submit_video_info_extraction(video_url: str) -> str:
     """Submit video info extraction job and return task ID"""
     task = extract_video_info.delay(video_url)
     logger.info(f"Submitted video info extraction job {task.id} for URL: {video_url}")
+    return task.id
+
+def submit_bulk_download(video_data: List[Dict[str, Any]], download_options: Dict[str, Any] = None) -> str:
+    """Submit bulk video download job and return task ID"""
+    task = bulk_download_videos.delay(video_data, download_options)
+    logger.info(f"Submitted bulk download job {task.id} for {len(video_data)} videos")
     return task.id
 
 if __name__ == '__main__':

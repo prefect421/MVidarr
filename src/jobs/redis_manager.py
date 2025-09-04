@@ -18,14 +18,21 @@ logger = get_logger("mvidarr.jobs.redis_manager")
 class RedisManager:
     """Manages Redis connections and operations for background jobs"""
     
-    def __init__(self, redis_url: Optional[str] = None):
+    def __init__(self, redis_url: Optional[str] = None, auto_connect: bool = False):
         self.redis_url = redis_url or os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
         self.redis_client = None
         self.connection_pool = None
-        self._initialize_connection()
+        self._connected = False
+        
+        # Only auto-connect if explicitly requested
+        if auto_connect:
+            self._initialize_connection()
     
     def _initialize_connection(self):
         """Initialize Redis connection with connection pooling"""
+        if self._connected:
+            return True
+            
         try:
             # Create connection pool for better performance
             self.connection_pool = redis.ConnectionPool.from_url(
@@ -47,14 +54,24 @@ class RedisManager:
             
             # Test connection
             self.redis_client.ping()
+            self._connected = True
             logger.info("Redis connection established successfully")
+            return True
             
         except redis.RedisError as e:
-            logger.error(f"Failed to connect to Redis: {e}")
-            raise
+            logger.warning(f"Redis connection failed: {e}")
+            self._connected = False
+            return False
         except Exception as e:
-            logger.error(f"Unexpected error connecting to Redis: {e}")
-            raise
+            logger.warning(f"Unexpected error connecting to Redis: {e}")
+            self._connected = False
+            return False
+    
+    def ensure_connection(self):
+        """Ensure Redis connection is available, attempt to connect if not"""
+        if not self._connected:
+            return self._initialize_connection()
+        return True
     
     def health_check(self) -> Dict[str, Any]:
         """Check Redis connection health"""
@@ -86,6 +103,10 @@ class RedisManager:
     # Job Progress Tracking
     def set_job_progress(self, job_id: str, progress: Dict[str, Any], expire_seconds: int = 3600):
         """Set job progress information"""
+        if not self.ensure_connection():
+            logger.debug(f"Redis unavailable, skipping job progress for {job_id}")
+            return False
+            
         try:
             key = f"job_progress:{job_id}"
             progress_data = {
@@ -344,8 +365,51 @@ class RedisManager:
         except Exception as e:
             logger.error(f"Error closing Redis connection: {e}")
 
-# Global Redis manager instance
-redis_manager = RedisManager()
+    # Async Methods for better integration
+    async def set_json(self, key: str, value: Dict[str, Any], ttl: Optional[int] = None):
+        """Async version of JSON set operation"""
+        if not self.ensure_connection():
+            return False
+        
+        try:
+            json_value = json.dumps(value)
+            if ttl:
+                return self.redis_client.setex(key, ttl, json_value)
+            else:
+                return self.redis_client.set(key, json_value)
+        except Exception as e:
+            logger.error(f"Error setting JSON key {key}: {e}")
+            return False
+    
+    async def get_json(self, key: str) -> Optional[Dict[str, Any]]:
+        """Async version of JSON get operation"""
+        if not self.ensure_connection():
+            return None
+        
+        try:
+            value = self.redis_client.get(key)
+            if value:
+                return json.loads(value)
+            return None
+        except Exception as e:
+            logger.error(f"Error getting JSON key {key}: {e}")
+            return None
+    
+    async def publish_json(self, channel: str, data: Dict[str, Any]):
+        """Async version of JSON publish operation"""
+        if not self.ensure_connection():
+            return False
+        
+        try:
+            json_data = json.dumps(data)
+            self.redis_client.publish(channel, json_data)
+            return True
+        except Exception as e:
+            logger.error(f"Error publishing to channel {channel}: {e}")
+            return False
+
+# Global Redis manager instance (without auto-connection)
+redis_manager = RedisManager(auto_connect=False)
 
 # Convenience functions
 def set_job_progress(job_id: str, progress: Dict[str, Any], expire_seconds: int = 3600):

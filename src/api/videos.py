@@ -789,23 +789,19 @@ def download_video(video_id):
         quality = request_data.get('quality', 'best')
         force_redownload = request_data.get('force_redownload', False)
 
-        # Import job system
-        from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+        # Import new Celery job system
+        from src.jobs.video_download_tasks import submit_video_download
 
-        # Create background job for video download
-        job = BackgroundJob(
-            type=JobType.VIDEO_DOWNLOAD,
-            priority=JobPriority.HIGH,  # High priority for individual downloads
-            payload={
-                'video_id': video_id,
-                'quality': quality,
-                'force_redownload': force_redownload
-            }
-        )
+        # Prepare download options for Celery task
+        download_options = {
+            'video_id': video_id,
+            'quality': quality,
+            'force_redownload': force_redownload,
+            'format': f'best[height<=720]' if quality == 'best' else quality
+        }
 
-        # Queue the job
-        job_queue = asyncio.run(get_job_queue())
-        job_id = asyncio.run(job_queue.enqueue(job))
+        # Submit background job using new Celery system
+        job_id = submit_video_download(video_url, download_options)
 
         # Update video status to indicate download queued
         with get_db() as session:
@@ -3834,34 +3830,43 @@ def bulk_download_videos():
         quality = data.get('quality', 'best')
         force_redownload = data.get('force_redownload', False)
 
-        # Import job system
-        from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
+        # Import new Celery job system
+        from src.jobs.video_download_tasks import submit_bulk_download
 
-        # Create background job for bulk download operation
-        job = BackgroundJob(
-            type=JobType.BULK_VIDEO_DELETE,  # We'll use this job type for bulk operations
-            priority=JobPriority.NORMAL,
-            payload={
-                'operation_type': 'download',
-                'video_ids': video_ids,
-                'params': {
-                    'quality': quality,
-                    'force_redownload': force_redownload
-                }
-            }
-        )
+        # Get video information and resolve URLs
+        video_data = []
+        with get_db() as session:
+            for video_id in video_ids:
+                video = session.query(Video).filter(Video.id == video_id).first()
+                if video:
+                    video_url = resolve_video_url(video, session)
+                    if video_url:
+                        video_data.append({
+                            'video_id': video_id,
+                            'url': video_url,
+                            'title': video.title or f"Video {video_id}"
+                        })
 
-        # Queue the job
-        job_queue = asyncio.run(get_job_queue())
-        job_id = asyncio.run(job_queue.enqueue(job))
+        if not video_data:
+            return jsonify({"error": "No valid videos found or could not resolve URLs"}), 400
 
-        logger.info(f"Queued bulk download job {job_id} for {len(video_ids)} videos")
+        # Prepare download options for Celery task
+        download_options = {
+            'quality': quality,
+            'force_redownload': force_redownload,
+            'format': f'best[height<=720]' if quality == 'best' else quality
+        }
+
+        # Submit bulk download job using new Celery system
+        job_id = submit_bulk_download(video_data, download_options)
+
+        logger.info(f"Queued bulk download job {job_id} for {len(video_data)} videos")
 
         return jsonify({
             "success": True,
             "job_id": job_id,
-            "total_videos": len(video_ids),
-            "message": f"Bulk download job queued for {len(video_ids)} videos. Job ID: {job_id}"
+            "total_videos": len(video_data),
+            "message": f"Bulk download job queued for {len(video_data)} videos. Job ID: {job_id}"
         }), 202  # 202 Accepted - processing started
 
     except Exception as e:

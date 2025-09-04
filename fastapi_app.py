@@ -92,9 +92,15 @@ templates = Jinja2Templates(directory="frontend/templates")
 # Include API routers
 from src.api.fastapi.jobs import router as jobs_router
 from src.api.fastapi.video_quality import router as video_quality_router
+from src.api.fastapi.media_processing import router as media_processing_router
+from src.api.fastapi.image_processing import router as image_processing_router
+from src.api.fastapi.advanced_image_processing import router as advanced_image_router
 
 app.include_router(jobs_router)
 app.include_router(video_quality_router)
+app.include_router(media_processing_router)
+app.include_router(image_processing_router)
+app.include_router(advanced_image_router)
 
 
 # Basic health check
@@ -112,16 +118,38 @@ async def health_check():
 # Root redirect for now
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """Root endpoint - temporary redirect to Flask during migration"""
+    """Root endpoint - FastAPI with Phase 2 advanced processing"""
     return """
     <html>
-        <head><title>MVidarr - FastAPI Migration</title></head>
+        <head><title>MVidarr - FastAPI with Advanced Processing</title></head>
         <body>
             <h1>MVidarr FastAPI</h1>
-            <p>FastAPI migration in progress...</p>
-            <p><a href="http://localhost:5000">Continue to Flask app</a></p>
+            <p>Phase 2 Week 21 Advanced Processing Ready!</p>
+            <p><strong>Advanced FFmpeg Operations Available</strong></p>
+            <ul>
+                <li>Advanced Video Format Conversion</li>
+                <li>Concurrent Video Quality Analysis</li>
+                <li>Bulk Thumbnail Creation</li>
+                <li>Enhanced Video Validation</li>
+            </ul>
+            <p><strong>Image Processing Thread Pools Available</strong></p>
+            <ul>
+                <li>Concurrent Thumbnail Generation</li>
+                <li>Bulk Image Optimization</li>
+                <li>Parallel Image Analysis</li>
+                <li>Memory-Efficient Processing</li>
+            </ul>
+            <p><strong>Advanced Image Operations Available</strong></p>
+            <ul>
+                <li>Bulk Image Collection Analysis (5000+ images)</li>
+                <li>Concurrent Format Conversion (JPEG/PNG/WEBP/TIFF)</li>
+                <li>Automated Quality Enhancement</li>
+                <li>Parallel Metadata Extraction</li>
+                <li>AI-Driven Quality Issue Detection</li>
+            </ul>
             <p><a href="/docs">FastAPI API Documentation</a></p>
             <p><a href="/health">Health Check</a></p>
+            <p><a href="http://192.168.1.152:5010">Flask Frontend</a></p>
         </body>
     </html>
     """
@@ -137,7 +165,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "fastapi_app:app", 
         host="0.0.0.0", 
-        port=8000,  # Different port from Flask during migration
+        port=5000,  # Standard MVidarr port
         reload=True,
         log_level="info"
     )

@@ -26,6 +26,7 @@ celery_app = Celery(
         'src.jobs.video_download_tasks',
         'src.jobs.metadata_tasks', 
         'src.jobs.image_processing_tasks',
+        'src.jobs.ffmpeg_processing_tasks',
     ]
 )
 
@@ -36,6 +37,7 @@ celery_app.conf.update(
         'src.jobs.video_download_tasks.*': {'queue': 'video_downloads'},
         'src.jobs.metadata_tasks.*': {'queue': 'metadata'},
         'src.jobs.image_processing_tasks.*': {'queue': 'image_processing'},
+        'src.jobs.ffmpeg_processing_tasks.*': {'queue': 'ffmpeg_processing'},
     },
     
     # Queue definitions
@@ -43,6 +45,7 @@ celery_app.conf.update(
         Queue('video_downloads', routing_key='video_downloads'),
         Queue('metadata', routing_key='metadata'), 
         Queue('image_processing', routing_key='image_processing'),
+        Queue('ffmpeg_processing', routing_key='ffmpeg_processing'),
         Queue('default', routing_key='default'),
     ),
     task_default_queue='default',

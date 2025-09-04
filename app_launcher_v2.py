@@ -51,7 +51,7 @@ class MVidarrLauncherV2:
                 'name': 'MVidarr FastAPI (Migration Mode)',
                 'description': 'FastAPI with native async job system - Phase 1 migration',
                 'framework': 'fastapi',
-                'port': 8000,
+                'port': 5000,
                 'concurrent_flask': True  # Run alongside Flask during migration
             },
             'fastapi_full': {
@@ -67,6 +67,18 @@ class MVidarrLauncherV2:
     def get_migration_status(self):
         """Determine current migration status from roadmap and system state"""
         try:
+            # Check for Phase 2 completion files first
+            phase2_week19_complete = self.base_dir / 'PHASE_2_WEEK19_COMPLETION.md'
+            phase2_week18_complete = self.base_dir / 'PHASE_2_WEEK18_COMPLETION.md'
+            
+            if phase2_week19_complete.exists():
+                logger.info("Phase 2 Week 19 completion detected - Advanced FFmpeg operations available")
+                return 'fastapi_hybrid'  # Phase 2 Week 19 complete
+            elif phase2_week18_complete.exists():
+                logger.info("Phase 2 Week 18 completion detected - FFmpeg streaming available")
+                return 'fastapi_hybrid'  # Phase 2 Week 18 complete
+            
+            # Fallback to roadmap checking
             roadmap_path = self.base_dir / 'MILESTONE_ROADMAP.md'
             if roadmap_path.exists():
                 content = roadmap_path.read_text()
@@ -182,13 +194,14 @@ class MVidarrLauncherV2:
             os.execv(sys.executable, [sys.executable, str(app_file)])
     
     def start_hybrid_mode(self, config):
-        """Start FastAPI app with Flask fallback (migration mode)"""
+        """Start FastAPI app with Phase 2 advanced processing"""
         app_file = self.base_dir / config['file']
         
-        logger.info("🔄 Starting HYBRID mode (FastAPI + Flask)")
+        logger.info("🚀 Starting Phase 2 Advanced Processing mode")
         logger.info(f"⚡ FastAPI: {config['name']} on port {config['port']}")
-        logger.info(f"🌶️  Flask: Running on port 5000")
-        logger.info("📖 See MILESTONE_ROADMAP.md for migration status")
+        logger.info("🎯 Advanced FFmpeg Operations: ENABLED")
+        logger.info("🐳 Docker configurations available for production deployment")
+        logger.info("📖 See PHASE_2_WEEK19_COMPLETION.md for features")
         
         # For hybrid mode, we'll start FastAPI (Flask will be available separately)
         # In production, you might want to run both simultaneously using process managers

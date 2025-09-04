@@ -27,51 +27,42 @@ class BackgroundJobManager {
     
     connectWebSocket() {
         try {
-            // Use Socket.IO if available, fallback to WebSocket
-            if (typeof io !== 'undefined') {
-                this.socket = io();
-                this.setupSocketIOListeners();
-            } else {
-                console.warn('Socket.IO not available, job progress will be limited');
-                this.setupPollingFallback();
-            }
+            // Use FastAPI WebSocket for real-time job progress
+            const wsUrl = `ws://${window.location.host}/ws/jobs`;
+            this.socket = new WebSocket(wsUrl);
+            this.setupWebSocketListeners();
         } catch (error) {
             console.error('Failed to connect WebSocket:', error);
             this.setupPollingFallback();
         }
     }
     
-    setupSocketIOListeners() {
-        this.socket.on('connect', () => {
+    setupWebSocketListeners() {
+        this.socket.onopen = () => {
             console.log('📡 Connected to job progress WebSocket');
             this.reconnectAttempts = 0;
             this.showConnectionStatus('connected');
-        });
+        };
         
-        this.socket.on('disconnect', () => {
+        this.socket.onclose = () => {
             console.log('📡 Disconnected from job progress WebSocket');
             this.showConnectionStatus('disconnected');
             this.attemptReconnection();
-        });
+        };
         
-        this.socket.on('job_update', (data) => {
-            console.log('📊 Job update received:', data);
-            this.handleJobUpdate(data);
-        });
+        this.socket.onerror = (error) => {
+            console.error('📡 WebSocket error:', error);
+            this.showError('WebSocket connection error');
+        };
         
-        this.socket.on('job_status', (data) => {
-            console.log('📊 Job status received:', data);
-            this.handleJobStatus(data);
-        });
-        
-        this.socket.on('subscription_confirmed', (data) => {
-            console.log('📡 Subscription confirmed for job:', data.job_id);
-        });
-        
-        this.socket.on('error', (data) => {
-            console.error('📡 WebSocket error:', data.message);
-            this.showError('Connection error: ' + data.message);
-        });
+        this.socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                this.handleWebSocketMessage(data);
+            } catch (e) {
+                console.error('Failed to parse WebSocket message:', event.data);
+            }
+        };
     }
     
     attemptReconnection() {
@@ -204,21 +195,61 @@ class BackgroundJobManager {
     }
     
     subscribeToJob(jobId) {
-        if (this.socket && this.socket.connected) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             console.log(`📡 Subscribing to job ${jobId}`);
-            this.socket.emit('subscribe_job_progress', { job_id: jobId });
+            this.socket.send(JSON.stringify({
+                type: 'subscribe_job',
+                job_id: jobId
+            }));
         }
     }
     
     unsubscribeFromJob(jobId) {
-        if (this.socket && this.socket.connected) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             console.log(`📡 Unsubscribing from job ${jobId}`);
-            this.socket.emit('unsubscribe_job_progress', { job_id: jobId });
+            this.socket.send(JSON.stringify({
+                type: 'unsubscribe_job',
+                job_id: jobId
+            }));
+        }
+    }
+    
+    handleWebSocketMessage(data) {
+        switch (data.type) {
+            case 'connected':
+                console.log('📡 Welcome message:', data.message);
+                break;
+            case 'job_update':
+                console.log('📊 Job update received:', data);
+                this.handleJobUpdate(data);
+                break;
+            case 'job_status':
+                console.log('📊 Job status received:', data);
+                this.handleJobStatus(data);
+                break;
+            case 'subscription_response':
+                console.log('📡 Subscription response:', data.message);
+                if (data.success) {
+                    console.log(`📡 Successfully subscribed to job ${data.job_id}`);
+                }
+                break;
+            case 'unsubscription_response':
+                console.log('📡 Unsubscription response:', data.message);
+                break;
+            case 'active_jobs':
+                console.log('📊 Active jobs:', data.data);
+                break;
+            case 'error':
+                console.error('📡 WebSocket error:', data.message);
+                this.showError('WebSocket error: ' + data.message);
+                break;
+            default:
+                console.log('📡 Unknown message type:', data.type);
         }
     }
     
     cancelJob(jobId) {
-        if (this.socket && this.socket.connected) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             fetch(`/api/jobs/${jobId}/cancel`, {
                 method: 'POST',
                 credentials: 'include'
@@ -539,6 +570,7 @@ class BackgroundJobManager {
         const displayNames = {
             metadata_enrichment: 'Metadata Enrichment',
             video_download: 'Video Download',
+            bulk_video_download: 'Bulk Video Download',
             bulk_artist_import: 'Bulk Import',
             thumbnail_generation: 'Thumbnail Generation',
             playlist_sync: 'Playlist Sync',

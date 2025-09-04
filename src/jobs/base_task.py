@@ -154,8 +154,25 @@ class BaseTask(Task):
             }
         )
     
-    def update_progress(self, percent: int, message: str, **kwargs):
-        """Update task progress"""
+    async def update_progress(self, percent: int, message: str, **kwargs):
+        """Update task progress (async version for background tasks)"""
+        if self.job_id:
+            progress_data = {
+                'percent': max(0, min(100, percent)),  # Clamp between 0-100
+                'message': message,
+                'status': 'PROGRESS',
+                'updated_at': datetime.utcnow().isoformat(),
+                **kwargs
+            }
+            
+            redis_manager.set_job_progress(self.job_id, progress_data)
+            
+            # Also log progress at certain intervals
+            if percent % 10 == 0 or percent in [25, 50, 75, 90, 95]:
+                logger.info(f"Task {self.name} progress: {percent}% - {message}")
+                
+    def update_progress_sync(self, percent: int, message: str, **kwargs):
+        """Update task progress (sync version for compatibility)"""
         if self.job_id:
             progress_data = {
                 'percent': max(0, min(100, percent)),  # Clamp between 0-100
