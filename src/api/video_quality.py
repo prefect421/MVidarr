@@ -86,6 +86,10 @@ def analyze_video_quality(video_id):
         from src.services.job_queue import JobType, JobPriority, BackgroundJob, get_job_queue
         from src.middleware.simple_auth_middleware import auth_required
         
+        # Get current user from session for job tracking
+        from flask import session
+        current_user = session.get('username')
+        
         # Create background job for video quality analysis
         job = BackgroundJob(
             type=JobType.VIDEO_QUALITY_ANALYZE,
@@ -93,7 +97,7 @@ def analyze_video_quality(video_id):
             payload={
                 'video_id': video_id
             },
-            created_by=getattr(request, 'user_id', None)
+            created_by=current_user
         )
         
         # Enqueue job
@@ -157,6 +161,10 @@ def upgrade_video_quality(video_id):
         
         user_id = data.get("user_id")
         
+        # Get current user from session for job tracking
+        from flask import session
+        current_user = session.get('username')
+        
         # Create background job for video quality upgrade
         job = BackgroundJob(
             type=JobType.VIDEO_QUALITY_UPGRADE,
@@ -165,7 +173,7 @@ def upgrade_video_quality(video_id):
                 'video_id': video_id,
                 'user_id': user_id
             },
-            created_by=getattr(request, 'user_id', user_id)
+            created_by=current_user or user_id
         )
         
         # Enqueue job

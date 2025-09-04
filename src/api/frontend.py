@@ -55,6 +55,13 @@ def settings():
     return render_template("settings.html")
 
 
+@frontend_bp.route("/jobs")
+@auth_required
+def jobs():
+    """Background jobs management page"""
+    return render_template("jobs.html")
+
+
 @frontend_bp.route("/enrichment")
 @auth_required
 def enrichment():

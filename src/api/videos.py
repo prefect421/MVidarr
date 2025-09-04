@@ -2,6 +2,7 @@
 Videos API endpoints
 """
 
+import json
 import mimetypes
 import os
 import subprocess
@@ -24,6 +25,24 @@ from src.utils.performance_monitor import monitor_performance
 
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 logger = get_logger("mvidarr.api.videos")
+
+
+def _safe_parse_genres(genres):
+    """Safely parse genres field that may be JSON string or list"""
+    if isinstance(genres, list):
+        return genres
+    if not genres:
+        return []
+    if isinstance(genres, str):
+        try:
+            genres = genres.strip()
+            if not genres:
+                return []
+            return json.loads(genres)
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.warning(f"Failed to parse genres JSON: {genres}, error: {e}")
+            return []
+    return []
 
 
 def public_endpoint(f):
@@ -719,7 +738,7 @@ def get_video(video_id):
                 "duration": video.duration,
                 "quality": video.quality,
                 "year": video.year,
-                "genres": video.genres if isinstance(video.genres, list) else (json.loads(video.genres) if video.genres else []),
+                "genres": _safe_parse_genres(video.genres),
                 "album": video.album,
                 "search_keywords": video.search_keywords,
                 "description": video.description,

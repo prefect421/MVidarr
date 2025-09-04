@@ -1846,31 +1846,31 @@ function checkVideoUpgradeAvailability(video) {
         return;
     }
     
-    // Make API call to check if video is upgradeable
-    fetch(`/api/video-quality/analyze/${video.id}`)
+    // Make API call to check if video is upgradeable (fixed endpoint)
+    fetch(`/api/video-quality/upgradeable`)
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.analysis) {
-                const analysis = data.analysis;
+            if (data.success && data.upgradeable_videos) {
                 const upgradeBtn = document.getElementById('upgradeQualityBtn');
                 
-                if (analysis.upgrade_recommended) {
+                // Check if current video is in the upgradeable list
+                const upgradeableVideo = data.upgradeable_videos.find(v => v.video_id === video.id);
+                
+                if (upgradeableVideo) {
                     // Show upgrade button with current quality info
                     upgradeBtn.style.display = 'inline-block';
                     
                     // Update button text with quality info
-                    const currentQuality = analysis.current_quality || 'Unknown';
-                    const currentHeight = analysis.current_height;
-                    const qualityText = currentHeight ? `${currentHeight}p` : currentQuality;
+                    const currentQuality = upgradeableVideo.current_quality || 'Unknown';
                     
                     upgradeBtn.innerHTML = `
                         <iconify-icon icon="material-symbols:high-quality" style="margin-right: 5px;"></iconify-icon>
-                        Upgrade Quality (from ${qualityText})
+                        Upgrade Quality (from ${currentQuality})
                     `;
                     
-                    // Store analysis data for later use
+                    // Store video data for the upgrade action
                     upgradeBtn.dataset.videoId = video.id;
-                    upgradeBtn.dataset.currentQuality = qualityText;
+                    upgradeBtn.dataset.currentQuality = currentQuality;
                 }
             }
         })

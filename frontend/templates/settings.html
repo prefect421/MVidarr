@@ -121,10 +121,10 @@ input:checked + .slider:before {
             <h1 class="text-h1">Settings</h1>
         </div>
         <div class="action-group" role="group" aria-label="Settings actions">
-            <button onclick="showJobDashboard()" class="btn btn-secondary" aria-label="Open job management dashboard">
+            <a href="/jobs" class="btn btn-secondary" aria-label="Open job management page">
                 <iconify-icon icon="tabler:activity" aria-hidden="true"></iconify-icon>
                 Job Management
-            </button>
+            </a>
             <button onclick="saveSettings()" class="btn btn-primary" aria-label="Save current settings">
                 <iconify-icon icon="mdi:content-save" aria-hidden="true"></iconify-icon>
                 Save Settings
@@ -1198,10 +1198,10 @@ input:checked + .slider:before {
                 <p>Monitor and manage background jobs for metadata enrichment, video downloads, and bulk operations.</p>
             </div>
             <div class="job-management-actions">
-                <button type="button" onclick="showJobDashboard()" class="btn btn-primary">
+                <a href="/jobs" class="btn btn-primary">
                     <iconify-icon icon="tabler:activity" style="margin-right: 0.5rem;"></iconify-icon>
                     Open Job Dashboard
-                </button>
+                </a>
                 <button onclick="refreshJobSystemStatus()" class="btn btn-info">
                     <iconify-icon icon="tabler:refresh" style="margin-right: 0.5rem;"></iconify-icon>
                     Refresh Status
