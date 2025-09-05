@@ -107,6 +107,7 @@ from src.api.fastapi.media_processing import router as media_processing_router
 from src.api.fastapi.image_processing import router as image_processing_router
 from src.api.fastapi.advanced_image_processing import router as advanced_image_router
 from src.api.fastapi.bulk_operations import router as bulk_operations_router
+from src.api.fastapi.videos import router as fastapi_videos_router
 from src.api.system_health import router as system_health_router
 
 app.include_router(jobs_router)
@@ -115,6 +116,7 @@ app.include_router(media_processing_router)
 app.include_router(image_processing_router)
 app.include_router(advanced_image_router)
 app.include_router(bulk_operations_router)
+app.include_router(fastapi_videos_router)
 app.include_router(system_health_router)
 
 
@@ -139,7 +141,7 @@ async def root():
         <head><title>MVidarr - FastAPI with Advanced Processing</title></head>
         <body>
             <h1>MVidarr FastAPI</h1>
-            <p>Phase 2 Week 23 Advanced Caching & Performance Ready!</p>
+            <p>Phase 3 Week 27 Videos API Migration Complete!</p>
             <p><strong>Advanced FFmpeg Operations Available</strong></p>
             <ul>
                 <li>Advanced Video Format Conversion</li>
@@ -169,6 +171,16 @@ async def root():
                 <li>Automated Cleanup Operations</li>
                 <li>Real-Time Progress Tracking</li>
                 <li>WebSocket Progress Updates</li>
+            </ul>
+            <p><strong>FastAPI Videos API Available</strong></p>
+            <ul>
+                <li>Complete Video CRUD Operations (async)</li>
+                <li>Advanced Video Search & Filtering</li>
+                <li>HTTP Range-based Video Streaming</li>
+                <li>Thumbnail Management System</li>
+                <li>Download Queue & Priority Management</li>
+                <li>Bulk Operations (delete, download, status updates)</li>
+                <li>Pydantic Validation & Type Safety</li>
             </ul>
             <p><strong>Advanced Caching & Performance Available</strong></p>
             <ul>
