@@ -84,6 +84,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add performance monitoring middleware
+from src.middleware.performance_middleware import (
+    PerformanceTrackingMiddleware,
+    CacheHeadersMiddleware, 
+    ResourceMonitoringMiddleware
+)
+
+app.add_middleware(ResourceMonitoringMiddleware, track_memory=True)
+app.add_middleware(CacheHeadersMiddleware, default_cache_ttl=300)
+app.add_middleware(PerformanceTrackingMiddleware)
+
 # Static files and templates
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 app.mount("/css", StaticFiles(directory="frontend/CSS"), name="css")
@@ -95,12 +106,16 @@ from src.api.fastapi.video_quality import router as video_quality_router
 from src.api.fastapi.media_processing import router as media_processing_router
 from src.api.fastapi.image_processing import router as image_processing_router
 from src.api.fastapi.advanced_image_processing import router as advanced_image_router
+from src.api.fastapi.bulk_operations import router as bulk_operations_router
+from src.api.system_health import router as system_health_router
 
 app.include_router(jobs_router)
 app.include_router(video_quality_router)
 app.include_router(media_processing_router)
 app.include_router(image_processing_router)
 app.include_router(advanced_image_router)
+app.include_router(bulk_operations_router)
+app.include_router(system_health_router)
 
 
 # Basic health check
@@ -124,7 +139,7 @@ async def root():
         <head><title>MVidarr - FastAPI with Advanced Processing</title></head>
         <body>
             <h1>MVidarr FastAPI</h1>
-            <p>Phase 2 Week 21 Advanced Processing Ready!</p>
+            <p>Phase 2 Week 23 Advanced Caching & Performance Ready!</p>
             <p><strong>Advanced FFmpeg Operations Available</strong></p>
             <ul>
                 <li>Advanced Video Format Conversion</li>
@@ -146,6 +161,22 @@ async def root():
                 <li>Automated Quality Enhancement</li>
                 <li>Parallel Metadata Extraction</li>
                 <li>AI-Driven Quality Issue Detection</li>
+            </ul>
+            <p><strong>Bulk Media Operations Available</strong></p>
+            <ul>
+                <li>Large-Scale Metadata Enrichment (10,000+ files)</li>
+                <li>Collection Import from Directories</li>
+                <li>Automated Cleanup Operations</li>
+                <li>Real-Time Progress Tracking</li>
+                <li>WebSocket Progress Updates</li>
+            </ul>
+            <p><strong>Advanced Caching & Performance Available</strong></p>
+            <ul>
+                <li>Redis-based Media Metadata Caching</li>
+                <li>Real-Time System Performance Monitoring</li>
+                <li>Intelligent Cache Invalidation & Optimization</li>
+                <li>System Health Monitoring & Alerting</li>
+                <li>Performance Metrics & Reporting</li>
             </ul>
             <p><a href="/docs">FastAPI API Documentation</a></p>
             <p><a href="/health">Health Check</a></p>

@@ -35,6 +35,8 @@ except ImportError:
     np = None
 
 from src.services.image_thread_pool import get_image_processing_pool
+from src.services.media_cache_manager import get_media_cache_manager, CacheType
+from src.services.performance_monitor import track_media_processing_time
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.advanced_image")
@@ -396,8 +398,10 @@ class AdvancedImageAnalyzer:
     
     async def analyze_image_collection(self, image_paths: List[Path], 
                                      progress_callback: Optional[callable] = None) -> List[ImageMetadata]:
-        """Analyze a large collection of images concurrently"""
+        """Analyze a large collection of images concurrently with caching integration"""
+        start_time = time.time()
         pool = get_image_processing_pool()
+        cache_manager = await get_media_cache_manager()
         
         if not pool.pool.is_running():
             await pool.start()
@@ -409,36 +413,76 @@ class AdvancedImageAnalyzer:
         if len(valid_paths) != len(image_paths):
             logger.warning(f"⚠️ {len(image_paths) - len(valid_paths)} image files not found")
         
-        # Submit analysis jobs
-        jobs = [(self._analyze_single_image, (path,), {}) for path in valid_paths]
+        # Check cache for existing analysis results
+        cached_results = []
+        uncached_paths = []
+        cache_hits = 0
+        
+        for path in valid_paths:
+            cached_analysis = await cache_manager.get(CacheType.IMAGE_ANALYSIS, str(path))
+            if cached_analysis:
+                # Convert cached dict back to ImageMetadata
+                metadata = ImageMetadata(**cached_analysis)
+                cached_results.append((metadata, str(path)))
+                cache_hits += 1
+            else:
+                uncached_paths.append(path)
+        
+        logger.info(f"📊 Cache performance: {cache_hits}/{len(valid_paths)} hits ({cache_hits/len(valid_paths)*100:.1f}%)")
+        
+        # Process uncached images
+        jobs = [(self._analyze_single_image, (path,), {}) for path in uncached_paths]
         results = []
         completed = 0
         
-        with pool.pool.batch_execution(jobs) as batch_futures:
-            for future in batch_futures:
-                try:
-                    metadata = future.result()
-                    results.append(metadata)
-                except Exception as e:
-                    logger.error(f"❌ Image analysis job failed: {e}")
-                    # Create placeholder metadata for failed job
-                    results.append(ImageMetadata(
-                        file_path="unknown",
-                        filename="unknown",
-                        file_size=0,
-                        format="unknown",
-                        mode="unknown",
-                        width=0,
-                        height=0,
-                        aspect_ratio=0.0,
-                        megapixels=0.0
-                    ))
-                
-                completed += 1
-                if progress_callback:
-                    progress_callback(completed, len(valid_paths))
+        # Add cached results first
+        for metadata, path in cached_results:
+            results.append(metadata)
+            completed += 1
+            if progress_callback:
+                progress_callback(completed, len(valid_paths), f"Cached: {Path(path).name}")
         
-        logger.info(f"✅ Image collection analysis completed: {len(results)} images processed")
+        if uncached_paths:
+            with pool.pool.batch_execution(jobs) as batch_futures:
+                for future, path in zip(batch_futures, uncached_paths):
+                    try:
+                        metadata = future.result()
+                        results.append(metadata)
+                        
+                        # Cache the analysis result
+                        await cache_manager.set(
+                            CacheType.IMAGE_ANALYSIS, 
+                            str(path), 
+                            metadata.to_dict(),
+                            ttl=3600  # Cache for 1 hour
+                        )
+                        
+                    except Exception as e:
+                        logger.error(f"❌ Image analysis job failed for {path}: {e}")
+                        # Create placeholder metadata for failed job
+                        failed_metadata = ImageMetadata(
+                            file_path=str(path),
+                            filename=path.name,
+                            file_size=0,
+                            format="unknown",
+                            mode="unknown",
+                            width=0,
+                            height=0,
+                            aspect_ratio=0.0,
+                            megapixels=0.0
+                        )
+                        results.append(failed_metadata)
+                    
+                    completed += 1
+                    if progress_callback:
+                        progress_callback(completed, len(valid_paths), f"Processed: {path.name}")
+        
+        # Track overall performance
+        total_time = time.time() - start_time
+        await track_media_processing_time("image_collection_analysis", total_time, f"{len(valid_paths)}_images")
+        
+        logger.info(f"✅ Image collection analysis completed: {len(results)} images processed in {total_time:.2f}s")
+        logger.info(f"📊 Performance: {len(valid_paths)/total_time:.1f} images/sec, {cache_hits} cache hits")
         return results
 
 

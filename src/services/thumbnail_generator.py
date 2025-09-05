@@ -22,6 +22,8 @@ except ImportError:
     Image = None
 
 from src.services.image_thread_pool import get_image_processing_pool, ThreadPoolConfig
+from src.services.media_cache_manager import get_media_cache_manager, CacheType
+from src.services.performance_monitor import track_media_processing_time
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.thumbnail_generator")
@@ -206,14 +208,42 @@ class ConcurrentThumbnailGenerator:
         
         logger.info(f"🖼️ Thumbnail generator initialized: output={output_dir}")
     
-    def _generate_single_thumbnail(self, source_path: Path, config: ThumbnailConfig) -> ThumbnailResult:
-        """Generate a single thumbnail (thread worker function)"""
+    async def _generate_single_thumbnail(self, source_path: Path, config: ThumbnailConfig) -> ThumbnailResult:
+        """Generate a single thumbnail (thread worker function) with Redis caching integration"""
         start_time = time.time()
         
         try:
-            # Check cache first
+            # Check Redis cache first for thumbnail metadata
+            cache_manager = await get_media_cache_manager()
+            cache_key = f"{source_path}_{config.width}x{config.height}_{config.format}"
+            cached_thumbnail = await cache_manager.get(CacheType.THUMBNAIL, cache_key)
+            
+            if cached_thumbnail and Path(cached_thumbnail["path"]).exists():
+                await track_media_processing_time("thumbnail_generation_cached", time.time() - start_time, str(source_path))
+                return ThumbnailResult(
+                    success=True,
+                    source_path=str(source_path),
+                    thumbnail_path=cached_thumbnail["path"],
+                    config=config,
+                    file_size=cached_thumbnail["file_size"],
+                    processing_time=time.time() - start_time,
+                    cached=True
+                )
+            
+            # Check local cache (fallback)
             cached_path = self.cache.get_cached_thumbnail(source_path, config)
             if cached_path:
+                # Update Redis cache with local cache info
+                thumbnail_info = {
+                    "path": str(cached_path),
+                    "file_size": cached_path.stat().st_size,
+                    "width": config.width,
+                    "height": config.height,
+                    "format": config.format
+                }
+                await cache_manager.set(CacheType.THUMBNAIL, cache_key, thumbnail_info, ttl=86400)  # 24 hours
+                
+                await track_media_processing_time("thumbnail_generation_local_cached", time.time() - start_time, str(source_path))
                 return ThumbnailResult(
                     success=True,
                     source_path=str(source_path),

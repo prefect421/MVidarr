@@ -27,6 +27,7 @@ from src.services.thumbnail_generator import (
     ThumbnailConfig
 )
 from src.services.image_thread_pool import get_image_processing_pool
+from src.services.performance_monitor import track_api_response_time
 from src.utils.logger import get_logger
 
 logger = get_logger("mvidarr.api.image_processing")
@@ -98,6 +99,9 @@ async def generate_thumbnails(
     This endpoint processes multiple images to generate thumbnails in various sizes.
     Processing is done in the background using thread pools for maximum performance.
     """
+    import time
+    start_time = time.time()
+    
     try:
         # Validate paths exist
         source_paths = [Path(p) for p in request.source_paths]
@@ -132,13 +136,23 @@ async def generate_thumbnails(
         
         logger.info(f"🖼️ Thumbnail generation task submitted: {task_id}")
         
+        # Track API performance
+        response_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        await track_api_response_time("/api/image-processing/thumbnails/generate", response_time, 200)
+        
         return {
             "task_id": task_id,
             "status": "submitted",
             "message": f"Processing {len(source_paths)} images for thumbnail generation"
         }
         
+    except HTTPException:
+        response_time = (time.time() - start_time) * 1000
+        await track_api_response_time("/api/image-processing/thumbnails/generate", response_time, 400)
+        raise
     except Exception as e:
+        response_time = (time.time() - start_time) * 1000
+        await track_api_response_time("/api/image-processing/thumbnails/generate", response_time, 500)
         logger.error(f"❌ Thumbnail generation request failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
