@@ -100,7 +100,7 @@ app = FastAPI(
     - **Background Jobs**: Native asyncio-based job system for long-running tasks
 
     ---
-    **Version**: 0.9.8 - Phase 3 Week 31 OpenAPI Documentation Complete
+    **Version**: 0.9.8 - Phase 3 Week 32 Pydantic Validation Complete
     """,
     version="0.9.8",
     contact={
@@ -197,6 +197,7 @@ from src.api.fastapi.admin import router as fastapi_admin_router
 from src.api.fastapi.settings import router as fastapi_settings_router
 from src.api.fastapi.auth import router as fastapi_auth_router
 # from src.api.system_health import router as system_health_router
+from src.api.fastapi.model_demo import router as model_demo_router
 
 # app.include_router(jobs_router)
 # app.include_router(video_quality_router)
@@ -211,6 +212,7 @@ app.include_router(fastapi_admin_router)
 app.include_router(fastapi_settings_router)
 app.include_router(fastapi_auth_router)
 # app.include_router(system_health_router)
+app.include_router(model_demo_router)
 
 # Setup enhanced OpenAPI documentation
 app.openapi = lambda: custom_openapi_schema(app)
@@ -239,7 +241,7 @@ async def root():
         <head><title>MVidarr - FastAPI with Advanced Processing</title></head>
         <body>
             <h1>MVidarr FastAPI</h1>
-            <p>Phase 3 Week 31 OpenAPI Documentation Complete!</p>
+            <p>Phase 3 Week 32 Pydantic Validation Complete!</p>
             <p><strong>Advanced FFmpeg Operations Available</strong></p>
             <ul>
                 <li>Advanced Video Format Conversion</li>
@@ -308,6 +310,17 @@ async def root():
                 <li>API Versioning and Change History</li>
                 <li>Developer-Friendly Testing Interface</li>
                 <li>External Documentation Integration</li>
+            </ul>
+            <p><strong>Centralized Pydantic Validation Available</strong></p>
+            <ul>
+                <li>100+ Centralized Pydantic Models with Type Safety</li>
+                <li>Advanced Validation Patterns and Business Logic</li>
+                <li>Custom Validators and Field Constraints</li>
+                <li>Model Inheritance and Composition Architecture</li>
+                <li>Comprehensive Field Documentation and Examples</li>
+                <li>Built-in Model Testing and Validation Utilities</li>
+                <li>Consistent Request/Response Schema Standards</li>
+                <li>Enterprise-Grade Data Validation Framework</li>
             </ul>
             <p><a href="/docs">FastAPI API Documentation</a></p>
             <p><a href="/health">Health Check</a></p>
