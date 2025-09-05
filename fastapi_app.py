@@ -212,7 +212,7 @@ async def root():
             </ul>
             <p><a href="/docs">FastAPI API Documentation</a></p>
             <p><a href="/health">Health Check</a></p>
-            <p><a href="http://192.168.1.152:5010">Flask Frontend</a></p>
+            <p><a href="http://192.168.1.145:5010">Flask Frontend</a></p>
         </body>
     </html>
     """
