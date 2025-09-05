@@ -109,6 +109,7 @@ from src.api.fastapi.advanced_image_processing import router as advanced_image_r
 from src.api.fastapi.bulk_operations import router as bulk_operations_router
 from src.api.fastapi.videos import router as fastapi_videos_router
 from src.api.fastapi.artists import router as fastapi_artists_router
+from src.api.fastapi.playlists import router as fastapi_playlists_router
 from src.api.system_health import router as system_health_router
 
 app.include_router(jobs_router)
@@ -119,6 +120,7 @@ app.include_router(advanced_image_router)
 app.include_router(bulk_operations_router)
 app.include_router(fastapi_videos_router)
 app.include_router(fastapi_artists_router)
+app.include_router(fastapi_playlists_router)
 app.include_router(system_health_router)
 
 
@@ -143,7 +145,7 @@ async def root():
         <head><title>MVidarr - FastAPI with Advanced Processing</title></head>
         <body>
             <h1>MVidarr FastAPI</h1>
-            <p>Phase 3 Week 28 Artists API Migration Complete!</p>
+            <p>Phase 3 Week 29 Playlists API Migration Complete!</p>
             <p><strong>Advanced FFmpeg Operations Available</strong></p>
             <ul>
                 <li>Advanced Video Format Conversion</li>
@@ -174,14 +176,17 @@ async def root():
                 <li>Real-Time Progress Tracking</li>
                 <li>WebSocket Progress Updates</li>
             </ul>
-            <p><strong>FastAPI Videos & Artists APIs Available</strong></p>
+            <p><strong>FastAPI Videos, Artists & Playlists APIs Available</strong></p>
             <ul>
-                <li>Complete Video & Artist CRUD Operations (async)</li>
+                <li>Complete Video, Artist & Playlist CRUD Operations (async)</li>
                 <li>Advanced Search & Filtering with Authentication</li>
                 <li>HTTP Range-based Video Streaming</li>
                 <li>Thumbnail Management System</li>
                 <li>Download Queue & Priority Management</li>
                 <li>Bulk Operations (delete, download, status updates)</li>
+                <li>Dynamic Playlists with Auto-Update</li>
+                <li>Playlist File Upload & Management</li>
+                <li>Advanced Access Control & Permissions</li>
                 <li>IMVDb Integration & Auto-Discovery</li>
                 <li>Security-Enhanced with Authentication</li>
                 <li>Pydantic Validation & Type Safety</li>
