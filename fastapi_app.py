@@ -110,6 +110,9 @@ from src.api.fastapi.bulk_operations import router as bulk_operations_router
 from src.api.fastapi.videos import router as fastapi_videos_router
 from src.api.fastapi.artists import router as fastapi_artists_router
 from src.api.fastapi.playlists import router as fastapi_playlists_router
+from src.api.fastapi.admin import router as fastapi_admin_router
+from src.api.fastapi.settings import router as fastapi_settings_router
+from src.api.fastapi.auth import router as fastapi_auth_router
 from src.api.system_health import router as system_health_router
 
 app.include_router(jobs_router)
@@ -121,6 +124,9 @@ app.include_router(bulk_operations_router)
 app.include_router(fastapi_videos_router)
 app.include_router(fastapi_artists_router)
 app.include_router(fastapi_playlists_router)
+app.include_router(fastapi_admin_router)
+app.include_router(fastapi_settings_router)
+app.include_router(fastapi_auth_router)
 app.include_router(system_health_router)
 
 
@@ -145,7 +151,7 @@ async def root():
         <head><title>MVidarr - FastAPI with Advanced Processing</title></head>
         <body>
             <h1>MVidarr FastAPI</h1>
-            <p>Phase 3 Week 29 Playlists API Migration Complete!</p>
+            <p>Phase 3 Week 30 Admin API Migration Complete!</p>
             <p><strong>Advanced FFmpeg Operations Available</strong></p>
             <ul>
                 <li>Advanced Video Format Conversion</li>
@@ -176,9 +182,12 @@ async def root():
                 <li>Real-Time Progress Tracking</li>
                 <li>WebSocket Progress Updates</li>
             </ul>
-            <p><strong>FastAPI Videos, Artists & Playlists APIs Available</strong></p>
+            <p><strong>FastAPI Core & Admin APIs Available</strong></p>
             <ul>
                 <li>Complete Video, Artist & Playlist CRUD Operations (async)</li>
+                <li>System Administration & User Management</li>
+                <li>Settings Management & Application Control</li>
+                <li>Authentication & OAuth Management</li>
                 <li>Advanced Search & Filtering with Authentication</li>
                 <li>HTTP Range-based Video Streaming</li>
                 <li>Thumbnail Management System</li>
@@ -187,6 +196,8 @@ async def root():
                 <li>Dynamic Playlists with Auto-Update</li>
                 <li>Playlist File Upload & Management</li>
                 <li>Advanced Access Control & Permissions</li>
+                <li>System Health & Performance Monitoring</li>
+                <li>Application Restart & Service Control</li>
                 <li>IMVDb Integration & Auto-Discovery</li>
                 <li>Security-Enhanced with Authentication</li>
                 <li>Pydantic Validation & Type Safety</li>
