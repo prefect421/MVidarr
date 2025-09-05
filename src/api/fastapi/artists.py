@@ -30,7 +30,14 @@ from src.services.youtube_search_service import youtube_search_service
 from src.utils.logger import get_logger
 from src.utils.performance_monitor import monitor_performance
 
-router = APIRouter(prefix="/api/artists", tags=["artists"])
+router = APIRouter(
+    prefix="/api/artists", 
+    tags=["artists"],
+    responses={
+        404: {"description": "Artist not found"},
+        422: {"description": "Validation error"}
+    }
+)
 logger = get_logger("mvidarr.api.fastapi.artists")
 
 # ========================================================================================

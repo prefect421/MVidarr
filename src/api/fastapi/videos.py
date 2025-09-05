@@ -30,7 +30,14 @@ from src.services.video_indexing_service import VideoIndexingService
 from src.utils.logger import get_logger
 from src.utils.performance_monitor import monitor_performance
 
-router = APIRouter(prefix="/api/videos", tags=["videos"])
+router = APIRouter(
+    prefix="/api/videos", 
+    tags=["videos"],
+    responses={
+        404: {"description": "Video not found"},
+        422: {"description": "Validation error"}
+    }
+)
 logger = get_logger("mvidarr.api.fastapi.videos")
 
 # ========================================================================================

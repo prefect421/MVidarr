@@ -21,7 +21,14 @@ from src.services.thumbnail_service import ThumbnailService
 from src.utils.logger import get_logger
 from src.utils.performance_monitor import monitor_performance
 
-router = APIRouter(prefix="/api/playlists", tags=["playlists"])
+router = APIRouter(
+    prefix="/api/playlists", 
+    tags=["playlists"],
+    responses={
+        404: {"description": "Playlist not found"},
+        422: {"description": "Validation error"}
+    }
+)
 logger = get_logger("mvidarr.api.fastapi.playlists")
 
 # ========================================================================================

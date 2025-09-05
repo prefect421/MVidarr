@@ -23,6 +23,9 @@ from src.utils.logger import get_logger
 from src.services.job_queue import get_job_queue, cleanup_job_queue
 from src.services.background_workers import start_background_workers, stop_background_workers
 
+# OpenAPI documentation configuration
+from src.api.openapi_config import custom_openapi_schema, setup_custom_docs, add_openapi_metadata_to_routers
+
 logger = get_logger("mvidarr.fastapi")
 
 # Global references for cleanup
@@ -67,12 +70,92 @@ async def lifespan(app: FastAPI):
             logger.error(f"Error during shutdown: {e}")
 
 
-# Create FastAPI app
+# Create FastAPI app with comprehensive OpenAPI configuration
 app = FastAPI(
-    title="MVidarr",
-    description="Music Video Management and Automation System",
+    title="MVidarr API",
+    description="""
+    ## MVidarr - Music Video Management and Automation System
+
+    **Complete FastAPI implementation with advanced async operations and comprehensive admin functionality.**
+
+    ### Key Features
+    - **Video Management**: Complete CRUD operations with HTTP range-based streaming
+    - **Artist Management**: Full artist lifecycle with metadata enrichment
+    - **Playlist Management**: Dynamic playlists with auto-update capabilities
+    - **System Administration**: User management, settings, authentication, and monitoring
+    - **Advanced Processing**: FFmpeg operations, image processing, bulk operations
+    - **Performance Monitoring**: Real-time system health and performance tracking
+
+    ### Authentication
+    This API uses session-based authentication with support for:
+    - OAuth providers (Google, GitHub, Authentik)
+    - Two-factor authentication (2FA)
+    - Role-based access control (USER, MANAGER, ADMIN)
+    - Session management and audit logging
+
+    ### API Architecture
+    - **Async Operations**: All endpoints use async/await patterns for optimal performance
+    - **Pydantic Validation**: Type-safe request/response models with comprehensive validation
+    - **Database Integration**: SQLAlchemy ORM with async database operations
+    - **Background Jobs**: Native asyncio-based job system for long-running tasks
+
+    ---
+    **Version**: 0.9.8 - Phase 3 Week 31 OpenAPI Documentation Complete
+    """,
     version="0.9.8",
-    lifespan=lifespan
+    contact={
+        "name": "MVidarr Development Team",
+        "url": "https://github.com/prefect421/mvidarr",
+        "email": "support@mvidarr.local"
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT"
+    },
+    servers=[
+        {
+            "url": "http://192.168.1.145:5000",
+            "description": "Development server"
+        },
+        {
+            "url": "http://localhost:5000", 
+            "description": "Local development server"
+        }
+    ],
+    openapi_tags=[
+        {
+            "name": "videos",
+            "description": "Video management operations including CRUD, streaming, thumbnails, and bulk operations"
+        },
+        {
+            "name": "artists", 
+            "description": "Artist management with metadata enrichment, IMVDb integration, and video associations"
+        },
+        {
+            "name": "playlists",
+            "description": "Playlist management with dynamic filtering, file uploads, and advanced access control"
+        },
+        {
+            "name": "admin",
+            "description": "System administration including user management, audit logs, and system control"
+        },
+        {
+            "name": "settings",
+            "description": "Application settings management, scheduler control, and database configuration"
+        },
+        {
+            "name": "authentication",
+            "description": "Authentication, OAuth, session management, and credential handling"
+        },
+        {
+            "name": "system",
+            "description": "System health monitoring, performance metrics, and application status"
+        }
+    ],
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 # Add CORS middleware
@@ -129,6 +212,11 @@ app.include_router(fastapi_settings_router)
 app.include_router(fastapi_auth_router)
 # app.include_router(system_health_router)
 
+# Setup enhanced OpenAPI documentation
+app.openapi = lambda: custom_openapi_schema(app)
+setup_custom_docs(app)
+add_openapi_metadata_to_routers(app)
+
 
 # Basic health check
 @app.get("/health")
@@ -151,7 +239,7 @@ async def root():
         <head><title>MVidarr - FastAPI with Advanced Processing</title></head>
         <body>
             <h1>MVidarr FastAPI</h1>
-            <p>Phase 3 Week 30 Admin API Migration Complete!</p>
+            <p>Phase 3 Week 31 OpenAPI Documentation Complete!</p>
             <p><strong>Advanced FFmpeg Operations Available</strong></p>
             <ul>
                 <li>Advanced Video Format Conversion</li>
@@ -209,6 +297,17 @@ async def root():
                 <li>Intelligent Cache Invalidation & Optimization</li>
                 <li>System Health Monitoring & Alerting</li>
                 <li>Performance Metrics & Reporting</li>
+            </ul>
+            <p><strong>Enhanced API Documentation Available</strong></p>
+            <ul>
+                <li>Interactive Swagger UI with Custom Styling</li>
+                <li>Comprehensive ReDoc API Reference</li>
+                <li>OpenAPI 3.0 Schema with Authentication Support</li>
+                <li>Detailed Endpoint Descriptions and Examples</li>
+                <li>Request/Response Model Documentation</li>
+                <li>API Versioning and Change History</li>
+                <li>Developer-Friendly Testing Interface</li>
+                <li>External Documentation Integration</li>
             </ul>
             <p><a href="/docs">FastAPI API Documentation</a></p>
             <p><a href="/health">Health Check</a></p>
