@@ -81,8 +81,8 @@ class ArtistUpdateRequest(BaseModel):
 
 class ArtistSearchRequest(BaseModel):
     query: Optional[str] = None
-    sort_by: str = Field("name", regex="^(name|video_count|created_at|updated_at)$")
-    sort_order: str = Field("asc", regex="^(asc|desc)$")
+    sort_by: str = Field("name", pattern="^(name|video_count|created_at|updated_at)$")
+    sort_order: str = Field("asc", pattern="^(asc|desc)$")
     limit: int = Field(50, ge=1, le=500)
     offset: int = Field(0, ge=0)
     has_videos: Optional[bool] = None
@@ -98,7 +98,7 @@ class BulkEditRequest(BulkArtistRequest):
     updates: Dict[str, Any] = Field(..., min_items=1)
 
 class ThumbnailSearchRequest(BaseModel):
-    source: str = Field("auto", regex="^(auto|wikipedia|youtube|imvdb)$")
+    source: str = Field("auto", pattern="^(auto|wikipedia|youtube|imvdb)$")
     query: Optional[str] = None
 
 class IMVDbImportRequest(BaseModel):
@@ -167,8 +167,8 @@ async def ensure_artist_folder_path(artist: Artist, session: Session) -> str:
 @router.get("/", response_model=Dict[str, Any])
 async def list_artists(
     query: Optional[str] = Query(None, description="Search query"),
-    sort_by: str = Query("name", regex="^(name|video_count|created_at|updated_at)$"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    sort_by: str = Query("name", pattern="^(name|video_count|created_at|updated_at)$"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     has_videos: Optional[bool] = Query(None, description="Filter by video existence"),
@@ -579,8 +579,8 @@ async def advanced_search(
     formed_after: Optional[int] = Query(None, description="Formed after year"),
     formed_before: Optional[int] = Query(None, description="Formed before year"),
     location: Optional[str] = Query(None, description="Location search"),
-    sort_by: str = Query("name", regex="^(name|video_count|formed_year|created_at)$"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    sort_by: str = Query("name", pattern="^(name|video_count|formed_year|created_at)$"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     current_user: dict = Depends(require_authentication),
@@ -871,7 +871,7 @@ async def preview_imvdb_artist(
 @router.get("/{artist_id}/thumbnail")
 async def get_artist_thumbnail(
     artist_id: int = FastAPIPath(..., ge=1),
-    size: Optional[str] = Query(None, regex="^(small|medium|large)$"),
+    size: Optional[str] = Query(None, pattern="^(small|medium|large)$"),
     session: Session = Depends(get_db)
 ):
     """Serve artist thumbnail image"""

@@ -7,7 +7,7 @@ import time
 import logging
 from typing import Callable, Optional
 from fastapi import Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.services.performance_monitor import track_api_response_time, get_performance_monitor, track_error_rate
 from src.utils.logger import get_logger

@@ -84,50 +84,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add performance monitoring middleware
-from src.middleware.performance_middleware import (
-    PerformanceTrackingMiddleware,
-    CacheHeadersMiddleware, 
-    ResourceMonitoringMiddleware
-)
+# Add performance monitoring middleware (temporarily disabled for startup)
+# from src.middleware.performance_middleware import (
+#     PerformanceTrackingMiddleware,
+#     CacheHeadersMiddleware, 
+#     ResourceMonitoringMiddleware
+# )
 
-app.add_middleware(ResourceMonitoringMiddleware, track_memory=True)
-app.add_middleware(CacheHeadersMiddleware, default_cache_ttl=300)
-app.add_middleware(PerformanceTrackingMiddleware)
+# app.add_middleware(ResourceMonitoringMiddleware, track_memory=True)
+# app.add_middleware(CacheHeadersMiddleware, default_cache_ttl=300)
+# app.add_middleware(PerformanceTrackingMiddleware)
 
 # Static files and templates
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 app.mount("/css", StaticFiles(directory="frontend/CSS"), name="css")
 templates = Jinja2Templates(directory="frontend/templates")
 
-# Include API routers
-from src.api.fastapi.jobs import router as jobs_router
-from src.api.fastapi.video_quality import router as video_quality_router
-from src.api.fastapi.media_processing import router as media_processing_router
-from src.api.fastapi.image_processing import router as image_processing_router
-from src.api.fastapi.advanced_image_processing import router as advanced_image_router
-from src.api.fastapi.bulk_operations import router as bulk_operations_router
+# Include API routers (some temporarily disabled due to Redis dependencies)
+# from src.api.fastapi.jobs import router as jobs_router
+# from src.api.fastapi.video_quality import router as video_quality_router
+# from src.api.fastapi.media_processing import router as media_processing_router
+# from src.api.fastapi.image_processing import router as image_processing_router
+# from src.api.fastapi.advanced_image_processing import router as advanced_image_router
+# from src.api.fastapi.bulk_operations import router as bulk_operations_router
 from src.api.fastapi.videos import router as fastapi_videos_router
 from src.api.fastapi.artists import router as fastapi_artists_router
 from src.api.fastapi.playlists import router as fastapi_playlists_router
 from src.api.fastapi.admin import router as fastapi_admin_router
 from src.api.fastapi.settings import router as fastapi_settings_router
 from src.api.fastapi.auth import router as fastapi_auth_router
-from src.api.system_health import router as system_health_router
+# from src.api.system_health import router as system_health_router
 
-app.include_router(jobs_router)
-app.include_router(video_quality_router)
-app.include_router(media_processing_router)
-app.include_router(image_processing_router)
-app.include_router(advanced_image_router)
-app.include_router(bulk_operations_router)
+# app.include_router(jobs_router)
+# app.include_router(video_quality_router)
+# app.include_router(media_processing_router)
+# app.include_router(image_processing_router)
+# app.include_router(advanced_image_router)
+# app.include_router(bulk_operations_router)
 app.include_router(fastapi_videos_router)
 app.include_router(fastapi_artists_router)
 app.include_router(fastapi_playlists_router)
 app.include_router(fastapi_admin_router)
 app.include_router(fastapi_settings_router)
 app.include_router(fastapi_auth_router)
-app.include_router(system_health_router)
+# app.include_router(system_health_router)
 
 
 # Basic health check

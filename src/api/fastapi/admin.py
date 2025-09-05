@@ -77,14 +77,14 @@ async def require_admin_access(current_user: UserInfo = Depends(get_current_user
 class UserCreateRequest(BaseModel):
     """Request model for creating a new user"""
     username: str = Field(..., min_length=3, max_length=50)
-    email: str = Field(..., regex=r'^[^@]+@[^@]+\.[^@]+$')
+    email: str = Field(..., pattern=r'^[^@]+@[^@]+\.[^@]+$')
     password: str = Field(..., min_length=8)
-    role: str = Field(default="USER", regex=r'^(USER|MANAGER|ADMIN)$')
+    role: str = Field(default="USER", pattern=r'^(USER|MANAGER|ADMIN)$')
 
 
 class UserRoleUpdateRequest(BaseModel):
     """Request model for updating user role"""
-    role: str = Field(..., regex=r'^(USER|MANAGER|ADMIN)$')
+    role: str = Field(..., pattern=r'^(USER|MANAGER|ADMIN)$')
 
 
 class UserSessionInfo(BaseModel):

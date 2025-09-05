@@ -89,14 +89,14 @@ class BulkDownloadRequest(BulkVideoRequest):
     pass
 
 class BulkStatusUpdateRequest(BulkVideoRequest):
-    status: str = Field(..., regex="^(wanted|ignored|downloaded|failed)$")
+    status: str = Field(..., pattern="^(wanted|ignored|downloaded|failed)$")
 
 class VideoStatusUpdateRequest(BaseModel):
-    status: str = Field(..., regex="^(wanted|ignored|downloaded|failed)$")
+    status: str = Field(..., pattern="^(wanted|ignored|downloaded|failed)$")
 
 class ThumbnailSearchRequest(BaseModel):
     query: Optional[str] = None
-    source: str = Field(default="auto", regex="^(auto|youtube|imvdb|google)$")
+    source: str = Field(default="auto", pattern="^(auto|youtube|imvdb|google)$")
 
 class DownloadRequest(BaseModel):
     priority: int = Field(default=1, ge=1, le=10)
@@ -227,7 +227,7 @@ async def list_videos(
     limit: int = Query(50, le=500, ge=1),
     offset: int = Query(0, ge=0),
     sort_by: str = Query("created_at"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     status: Optional[str] = Query(None),
     artist_id: Optional[int] = Query(None),
     session: Session = Depends(get_db)
@@ -476,7 +476,7 @@ async def search_videos(
     limit: int = Query(50, le=500, ge=1),
     offset: int = Query(0, ge=0),
     sort_by: str = Query("created_at"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     session: Session = Depends(get_db)
 ):
     """Search videos with filters"""
@@ -664,7 +664,7 @@ async def stream_video(
 @router.get("/{video_id}/thumbnail")
 async def get_video_thumbnail(
     video_id: int = FastAPIPath(..., ge=1),
-    size: Optional[str] = Query(None, regex="^(small|medium|large)$"),
+    size: Optional[str] = Query(None, pattern="^(small|medium|large)$"),
     session: Session = Depends(get_db)
 ):
     """Get video thumbnail"""
